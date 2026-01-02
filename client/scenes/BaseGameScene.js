@@ -26,7 +26,6 @@ import SettingsUI from '../ui/SettingsUI.js';
 import SkillManagerUI from '../ui/SkillManagerUI.js';
 import SideMenuUI from '../ui/SideMenuUI.js';
 import VirtualPadUI from '../ui/VirtualPadUI.js';
-import SkillManagerUI from '../ui/SkillManagerUI.js';
 import { SKILLS } from '../data/skills.js';
 import SummonedBeast from '../entities/SummonedBeast.js';
 
@@ -95,7 +94,6 @@ export default class BaseGameScene extends Phaser.Scene {
         this.inventoryUI.createUI();
         this.player = new Player(this, x, y, true, null);
         console.log('Player spawn:', x, y);
-        createPlayerAnimations(this);
         createPlayerAnimations(this);
         this.cursors = this.input.keyboard.createCursorKeys();
 
