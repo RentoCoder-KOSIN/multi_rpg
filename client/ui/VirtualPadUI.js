@@ -13,18 +13,13 @@ export default class VirtualPadUI {
 
         // 会話ボタン (Cキー相当)
         this.createActionButton(-100, 0, '💬', '#ffff00', () => {
-            if (this.scene.dialogue) {
-                // 会話キーをエミュレートするか、直接DialogueManagerを呼ぶ
-                // 既存の DialogueManager.js は BaseGameScene で管理されている
-                const interactionKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C);
-                this.scene.input.keyboard.emit('keydown-C');
-            }
+            this.scene.handleInteraction();
         }, 'Talk');
 
         // スキルボタン 1, 2, 3
-        this.createActionButton(0, -100, '1', '#5eff5e', () => this.scene.input.keyboard.emit('keydown-ONE'), 'Skill 1');
-        this.createActionButton(60, -60, '2', '#5eff5e', () => this.scene.input.keyboard.emit('keydown-TWO'), 'Skill 2');
-        this.createActionButton(100, 0, '3', '#5eff5e', () => this.scene.input.keyboard.emit('keydown-THREE'), 'Skill 3');
+        this.createActionButton(0, -100, '1', '#5eff5e', () => this.scene.handleSkillUse(0), 'Skill 1');
+        this.createActionButton(60, -60, '2', '#5eff5e', () => this.scene.handleSkillUse(1), 'Skill 2');
+        this.createActionButton(100, 0, '3', '#5eff5e', () => this.scene.handleSkillUse(2), 'Skill 3');
     }
 
     createActionButton(x, y, label, color, action, name) {

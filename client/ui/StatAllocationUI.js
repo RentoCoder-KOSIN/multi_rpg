@@ -6,7 +6,7 @@ export default class StatAllocationUI extends BaseWindowUI {
             title: '📊 STATS ALLOCATION',
             width: 480,
             height: 480,
-            depth: 1000,
+            depth: 200000,
             themeColor: 0x4a90e2
         });
     }
@@ -28,11 +28,11 @@ export default class StatAllocationUI extends BaseWindowUI {
 
         // ステータス項目
         const stats = [
-            { key: 'str', label: 'STR', desc: '物理攻撃', effect: 'Phy ATK', y: -120 },
-            { key: 'int', label: 'INT', desc: '魔法攻撃', effect: 'Mag ATK', y: -60 },
-            { key: 'vit', label: 'VIT', desc: 'HP', effect: 'HP +10', y: 0 },
-            { key: 'men', label: 'MEN', desc: 'MP', effect: 'MP +5', y: 60 },
-            { key: 'dex', label: 'DEX', desc: 'クリ/速度', effect: 'Crit +1%', y: 120 }
+            { key: 'str', label: '[1] STR', desc: '物理攻撃', effect: 'Phy ATK', y: -120 },
+            { key: 'int', label: '[2] INT', desc: '魔法攻撃', effect: 'Mag ATK', y: -60 },
+            { key: 'vit', label: '[3] VIT', desc: 'HP', effect: 'HP +10', y: 0 },
+            { key: 'men', label: '[4] MEN', desc: 'MP', effect: 'MP +5', y: 60 },
+            { key: 'dex', label: '[5] DEX', desc: 'クリ/速度', effect: 'Crit +1%', y: 120 }
         ];
 
         this.statTexts = {};
@@ -60,39 +60,41 @@ export default class StatAllocationUI extends BaseWindowUI {
                 color: '#00ff00'
             });
 
-            // +ボタン
-            const plusBtn = this.scene.add.rectangle(width / 2 - 80, stat.y, 30, 25, 0x00aa00)
-                .setStrokeStyle(2, 0x00ff00)
+            // +ボタン (サイズ超拡大: モバイル対応)
+            const plusBtn = this.scene.add.rectangle(width / 2 - 120, stat.y, 60, 60, 0x00aa00)
+                .setStrokeStyle(3, 0x00ff00)
                 .setInteractive({ useHandCursor: true });
 
-            const plusText = this.scene.add.text(width / 2 - 80, stat.y, '+', {
-                fontSize: '16px',
+            const plusText = this.scene.add.text(width / 2 - 120, stat.y, '+', {
+                fontSize: '28px',
                 fontFamily: 'Press Start 2P',
                 color: '#ffffff'
             }).setOrigin(0.5);
 
             plusBtn.on('pointerover', () => plusBtn.setFillStyle(0x00ff00));
             plusBtn.on('pointerout', () => plusBtn.setFillStyle(0x00aa00));
-            plusBtn.on('pointerdown', () => {
+            plusBtn.on('pointerdown', (pointer, x, y, event) => {
+                if (event) event.stopPropagation();
                 if (this.scene.player.allocateStatPoint(stat.key, 1)) {
                     this.refresh();
                 }
             });
 
-            // +5ボタン
-            const plus5Btn = this.scene.add.rectangle(width / 2 - 40, stat.y, 40, 25, 0x0088aa)
-                .setStrokeStyle(2, 0x00aaff)
+            // +5ボタン (サイズ超拡大: モバイル対応)
+            const plus5Btn = this.scene.add.rectangle(width / 2 - 50, stat.y, 70, 60, 0x0088aa)
+                .setStrokeStyle(3, 0x00aaff)
                 .setInteractive({ useHandCursor: true });
 
-            const plus5Text = this.scene.add.text(width / 2 - 40, stat.y, '+5', {
-                fontSize: '12px',
+            const plus5Text = this.scene.add.text(width / 2 - 50, stat.y, '+5', {
+                fontSize: '18px',
                 fontFamily: 'Press Start 2P',
                 color: '#ffffff'
             }).setOrigin(0.5);
 
             plus5Btn.on('pointerover', () => plus5Btn.setFillStyle(0x00aaff));
             plus5Btn.on('pointerout', () => plus5Btn.setFillStyle(0x0088aa));
-            plus5Btn.on('pointerdown', () => {
+            plus5Btn.on('pointerdown', (pointer, x, y, event) => {
+                if (event) event.stopPropagation();
                 if (this.scene.player.allocateStatPoint(stat.key, 5)) {
                     this.refresh();
                 }
@@ -105,7 +107,25 @@ export default class StatAllocationUI extends BaseWindowUI {
             ]);
         });
 
-        // キーボード操作 (Pキー)
+        // キーボード操作 (1-5キー)
+        this.scene.input.keyboard.on('keydown', (event) => {
+            if (!this.isOpen) return;
+
+            // Pキー以外の入力
+            const keys = {
+                'Digit1': 'str', 'Digit2': 'int', 'Digit3': 'vit', 'Digit4': 'men', 'Digit5': 'dex',
+                'Numpad1': 'str', 'Numpad2': 'int', 'Numpad3': 'vit', 'Numpad4': 'men', 'Numpad5': 'dex'
+            };
+
+            const statKey = keys[event.code];
+            if (statKey) {
+                if (this.scene.player.allocateStatPoint(statKey, 1)) {
+                    this.refresh();
+                }
+            }
+        });
+
+        // キーボード操作 (Pキーでトグル)
         this.scene.input.keyboard.on('keydown-P', () => {
             if (!this.scene.inventoryUI?.isOpen && !this.scene.shopUI?.isOpen && !this.scene.equipmentUI?.isOpen) {
                 this.toggle();
@@ -125,11 +145,11 @@ export default class StatAllocationUI extends BaseWindowUI {
 
         if (this.pointsText) this.pointsText.setText(`残りポイント: ${player.stats.statPoints}`);
 
-        this.statTexts.str?.setText(`STR: ${player.stats.str || 5}`);
-        this.statTexts.int?.setText(`INT: ${player.stats.int || 5}`);
-        this.statTexts.vit?.setText(`VIT: ${player.stats.vit || 5}`);
-        this.statTexts.men?.setText(`MEN: ${player.stats.men || 5}`);
-        this.statTexts.dex?.setText(`DEX: ${player.stats.dex || 5}`);
+        this.statTexts.str?.setText(`[1] STR: ${player.stats.str || 5}`);
+        this.statTexts.int?.setText(`[2] INT: ${player.stats.int || 5}`);
+        this.statTexts.vit?.setText(`[3] VIT: ${player.stats.vit || 5}`);
+        this.statTexts.men?.setText(`[4] MEN: ${player.stats.men || 5}`);
+        this.statTexts.dex?.setText(`[5] DEX: ${player.stats.dex || 5}`);
 
         // PlayerStatsUIも更新
         if (this.scene.playerStatsUI) {

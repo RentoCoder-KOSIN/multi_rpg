@@ -10,22 +10,36 @@ export default class SideMenuUI {
     createUI() {
         const { width, height } = this.scene.scale;
 
-        // メインコンテナ（左端中央に配置）
-        this.container = this.scene.add.container(20, height / 2).setScrollFactor(0).setDepth(150000);
+        // メインコンテナ（少し右に寄せて安全圏へ）
+        this.container = this.scene.add.container(50, height / 2).setScrollFactor(0).setDepth(300000);
 
         // トグルボタン（ハンバーガーメニュー風）
         this.toggleBtn = this.scene.add.container(0, 0);
-        const toggleBg = this.scene.add.circle(0, 0, 25, 0x1a1a2e, 0.8).setStrokeStyle(2, 0x4a90e2);
-        const toggleIcon = this.scene.add.text(0, 0, '☰', {
-            fontSize: '24px', color: '#ffffff', fontFamily: 'Arial'
+        // ☰ボタンの背景を大きくする (モバイル対応を極端に強化)
+        const toggleBg = this.scene.add.circle(0, 0, 45, 0x1a1a2e, 0.9).setStrokeStyle(4, 0x4a90e2);
+        const toggleIcon = this.scene.add.text(0, -8, '☰', {
+            fontSize: '40px', color: '#ffffff', fontFamily: 'Arial'
         }).setOrigin(0.5);
 
-        this.toggleBtn.add([toggleBg, toggleIcon]);
-        this.toggleBtn.setSize(50, 50);
-        this.toggleBtn.setInteractive({ useHandCursor: true });
-        this.toggleBtn.on('pointerdown', () => this.toggle());
-        this.toggleBtn.on('pointerover', () => toggleBg.setStrokeStyle(3, 0xffffff));
-        this.toggleBtn.on('pointerout', () => toggleBg.setStrokeStyle(2, 0x4a90e2));
+        const toggleLabel = this.scene.add.text(0, 22, '[M]', {
+            fontSize: '12px', color: '#ffffff', fontFamily: '"Press Start 2P"'
+        }).setOrigin(0.5);
+
+        this.toggleBtn.add([toggleBg, toggleIcon, toggleLabel]);
+
+        // トグルボタンの当たり判定設定
+        const toggleHitArea = this.scene.add.rectangle(0, 0, 90, 90, 0x000000, 0)
+            .setInteractive({ useHandCursor: true });
+        this.toggleBtn.add(toggleHitArea);
+        this.toggleBtn.sendToBack(toggleHitArea);
+        this.toggleBtn.sendToBack(toggleBg);
+
+        toggleHitArea.on('pointerdown', (pointer, x, y, event) => {
+            if (event) event.stopPropagation();
+            this.toggle();
+        });
+        toggleHitArea.on('pointerover', () => toggleBg.setStrokeStyle(3, 0xffffff));
+        toggleHitArea.on('pointerout', () => toggleBg.setStrokeStyle(2, 0x4a90e2));
 
         this.container.add(this.toggleBtn);
 
@@ -34,26 +48,34 @@ export default class SideMenuUI {
         this.container.add(this.menuItems);
 
         const items = [
-            { icon: '🎒', label: 'Inventory', color: '#e94560', action: () => this.scene.inventoryUI.toggle() },
-            { icon: '🛡️', label: 'Equipment', color: '#4a90e2', action: () => this.scene.equipmentUI.toggle() },
-            { icon: '📊', label: 'Stats', color: '#ffd700', action: () => this.scene.statAllocationUI.open() },
-            { icon: '🔮', label: 'Skills', color: '#533483', action: () => this.scene.skillManagerUI.toggle() },
-            { icon: '⚙️', label: 'Settings', color: '#aaaaaa', action: () => this.scene.settingsUI.toggle() }
+            { icon: '🎒', label: 'Inv', key: 'I', color: '#e94560', action: () => this.scene.inventoryUI.toggle() },
+            { icon: '🛡️', label: 'Equ', key: 'S', color: '#4a90e2', action: () => this.scene.equipmentUI.toggle() },
+            { icon: '📊', label: 'Sta', key: 'P', color: '#ffd700', action: () => this.scene.statAllocationUI.toggle() },
+            { icon: '🔮', label: 'Skl', key: 'K', color: '#533483', action: () => this.scene.skillManagerUI.toggle() },
+            { icon: '⚙️', label: 'Set', key: 'O', color: '#aaaaaa', action: () => this.scene.settingsUI.toggle() }
         ];
 
         items.forEach((item, index) => {
-            const spacing = 60;
+            const spacing = 75; // 間隔を広げる
             const y = (index - (items.length - 1) / 2) * spacing;
 
             const btn = this.scene.add.container(0, y);
-            const bg = this.scene.add.circle(0, 0, 22, 0x1a1a2e, 0.9).setStrokeStyle(2, item.color);
-            const icon = this.scene.add.text(0, 0, item.icon, { fontSize: '20px' }).setOrigin(0.5);
+            const bg = this.scene.add.circle(0, 0, 32, 0x1a1a2e, 0.9).setStrokeStyle(2, item.color);
+            const icon = this.scene.add.text(0, -5, item.icon, { fontSize: '28px' }).setOrigin(0.5);
 
-            btn.add([bg, icon]);
-            btn.setSize(44, 44);
+            // ショートカットキーのラベル追加
+            const keyLabel = this.scene.add.text(0, 20, `[${item.key}]`, {
+                fontSize: '10px',
+                fontFamily: '"Press Start 2P"',
+                color: '#ffffff'
+            }).setOrigin(0.5);
+
+            btn.add([bg, icon, keyLabel]);
+            btn.setSize(64, 64); // 当たり判定を大きく
             btn.setInteractive({ useHandCursor: true });
 
-            btn.on('pointerdown', () => {
+            btn.on('pointerdown', (pointer, x, y, event) => {
+                if (event) event.stopPropagation();
                 item.action();
                 this.toggle(); // メニューを閉じる
             });

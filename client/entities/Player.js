@@ -68,6 +68,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             equipment: saved.equipment || { weapon: null, armor: null },
             jobExp: saved.jobExp || 0,
             unlockedSkills: saved.unlockedSkills || [],
+            skillLevels: saved.skillLevels || {}, // { skillId: level }
             activeSkills: saved.activeSkills || [null, null, null]
         };
 
@@ -187,6 +188,40 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         if (this.scene.notificationUI) {
             this.scene.notificationUI.show(`スキル「${skillDef.name}」を習得した！`, 'success');
+        }
+
+        // 初期レベルを1に設定
+        this.stats.skillLevels[skillId] = 1;
+        this.saveStats();
+
+        return true;
+    }
+
+    levelUpSkill(skillId) {
+        if (!this.isLocal) return false;
+        if (!this.stats.unlockedSkills.includes(skillId)) return false;
+
+        const currentLevel = this.stats.skillLevels[skillId] || 1;
+        if (currentLevel >= 10) {
+            if (this.scene.notificationUI) this.scene.notificationUI.show('スキルレベルが最大です(Lv.10)', 'error');
+            return false;
+        }
+
+        const skillDef = SKILLS[skillId];
+        // コスト: (現在レベル * 20) Job Exp など
+        const cost = (currentLevel + 1) * 20;
+
+        if (this.stats.jobExp < cost) {
+            if (this.scene.notificationUI) this.scene.notificationUI.show(`Job EXPが足りません (必要: ${cost})`, 'error');
+            return false;
+        }
+
+        this.stats.jobExp -= cost;
+        this.stats.skillLevels[skillId] = currentLevel + 1;
+        this.saveStats();
+
+        if (this.scene.notificationUI) {
+            this.scene.notificationUI.show(`${skillDef.name} が Lv.${currentLevel + 1} に上がった！`, 'success');
         }
         return true;
     }

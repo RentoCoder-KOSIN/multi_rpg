@@ -8,7 +8,7 @@ export default class SkillManagerUI extends BaseWindowUI {
             title: '🔮 SKILL MANAGER',
             width: 700,
             height: 500,
-            depth: 20000,
+            depth: 120000,
             themeColor: 0x4a90e2,
             overlayAlpha: 0.7
         });
@@ -48,8 +48,8 @@ export default class SkillManagerUI extends BaseWindowUI {
         this.container.add(this.listContainer);
 
         // Guidance Text
-        this.guidanceText = this.scene.add.text(0, panelHeight / 2 - 30, 'Arrows: Select | Enter: Unlock/Set | 1-3: Set to Slot', {
-            fontSize: '12px', fontFamily: '"Press Start 2P"', color: '#888888', align: 'center'
+        this.guidanceText = this.scene.add.text(0, panelHeight / 2 - 30, 'Arrows: Move | Enter: Unlock | 1-3: Set | L: Level UP', {
+            fontSize: '12px', fontFamily: '"Press Start 2P"', color: '#ffffff', align: 'center', stroke: '#000', strokeThickness: 2
         }).setOrigin(0.5);
         this.container.add(this.guidanceText);
 
@@ -67,6 +67,11 @@ export default class SkillManagerUI extends BaseWindowUI {
             } else if (['Digit1', 'Digit2', 'Digit3'].includes(event.code)) {
                 const slot = parseInt(event.key) - 1;
                 this.handleSetSlot(slot);
+            } else if (event.code === 'KeyL') {
+                const item = this.listItems[this.selectedIndex];
+                if (item && item.isUnlocked) {
+                    this.handleLevelUp(item.skillId);
+                }
             }
         });
     }
@@ -160,10 +165,14 @@ export default class SkillManagerUI extends BaseWindowUI {
             const name = this.scene.add.text(-220, -10, skillDef.name, {
                 fontSize: '16px', fontFamily: '"Press Start 2P"', color: nameColor
             });
+            const skillLevel = player.stats.skillLevels[skillInfo.id] || 1;
+            const levelText = this.scene.add.text(name.x + name.width + 10, -10, `Lv.${skillLevel}`, {
+                fontSize: '12px', color: '#00ff00', fontFamily: '"Press Start 2P"'
+            });
             const desc = this.scene.add.text(-220, 15, skillDef.description, {
                 fontSize: '10px', color: '#aaaaaa'
             });
-            container.add([name, desc]);
+            container.add([name, levelText, desc]);
 
             // Status / Cost
             let statusTextStr = '';
@@ -185,12 +194,32 @@ export default class SkillManagerUI extends BaseWindowUI {
             }).setOrigin(1, 0.5);
             container.add(statusText);
 
+            // レベルアップボタン (解放済みの場合)
+            if (isUnlocked && skillLevel < 10) {
+                const lvUpBtn = this.scene.add.rectangle(80, 0, 80, 30, 0x00aa00).setInteractive({ useHandCursor: true });
+                const lvUpTxt = this.scene.add.text(80, 0, 'Level UP', { fontSize: '10px', color: '#ffffff', fontFamily: '"Press Start 2P"' }).setOrigin(0.5);
+
+                const upCost = (skillLevel + 1) * 20;
+                lvUpBtn.on('pointerover', () => lvUpBtn.setFillStyle(0x00ff00));
+                lvUpBtn.on('pointerout', () => lvUpBtn.setFillStyle(0x00aa00));
+                lvUpBtn.on('pointerdown', (pointer, x, y, event) => {
+                    if (event) event.stopPropagation();
+                    this.handleLevelUp(skillInfo.id);
+                });
+                container.add([lvUpBtn, lvUpTxt]);
+            }
+
             this.listContainer.add(container);
 
-            // インタラクティブ化 (タップ対応)
-            container.setSize(600, 60);
-            container.setInteractive({ useHandCursor: true });
-            container.on('pointerdown', () => {
+            // インタラクティブ化 (背景をクリック判定にする)
+            const itemHitArea = this.scene.add.rectangle(0, 0, 600, 60, 0x000000, 0)
+                .setInteractive({ useHandCursor: true });
+            container.add(itemHitArea);
+            container.sendToBack(itemHitArea);
+            container.sendToBack(bg);
+
+            itemHitArea.on('pointerdown', (p, x, y, event) => {
+                if (event) event.stopPropagation();
                 this.selectedIndex = index;
                 this.updateSelection();
                 this.handleAction();
@@ -247,6 +276,12 @@ export default class SkillManagerUI extends BaseWindowUI {
             if (this.scene.notificationUI) {
                 this.scene.notificationUI.show('数字キー(1-3)でセットしてください', 'info');
             }
+        }
+    }
+
+    handleLevelUp(skillId) {
+        if (this.scene.player.levelUpSkill(skillId)) {
+            this.refreshList();
         }
     }
 

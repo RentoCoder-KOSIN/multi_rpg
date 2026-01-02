@@ -68,7 +68,9 @@ export default class PlayerStatsUI {
         // ステータス画面へのショートカット
         this.bg.setInteractive(new Phaser.Geom.Rectangle(0, 0, 250, 155), Phaser.Geom.Rectangle.Contains);
         this.bg.on('pointerdown', () => {
-            if (this.scene.statAllocationUI) this.scene.statAllocationUI.toggle();
+            if (this.scene.statAllocationUI && !this.scene.statAllocationUI.isOpen) {
+                this.scene.statAllocationUI.open();
+            }
         });
 
         this.update();

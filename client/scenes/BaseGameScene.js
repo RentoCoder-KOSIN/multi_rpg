@@ -231,15 +231,30 @@ export default class BaseGameScene extends Phaser.Scene {
         this.equipmentUI = new EquipmentUI(this);
         this.equipmentUI.createUI();
         this.statAllocationUI = new StatAllocationUI(this);
+        this.statAllocationUI.createUI();
         this.skillManagerUI = new SkillManagerUI(this);
+        this.skillManagerUI.createUI();
         this.settingsUI = new SettingsUI(this);
+        this.settingsUI.createUI();
         this.sideMenuUI = new SideMenuUI(this);
         this.virtualPadUI = new VirtualPadUI(this);
+
+        this.isMobile = !this.sys.game.device.os.desktop;
+        if (!this.isMobile) {
+            if (this.virtualPadUI && this.virtualPadUI.container) this.virtualPadUI.container.setVisible(false);
+        }
 
         // Settings key (O)
         this.input.keyboard.on('keydown-O', () => {
             if (this.settingsUI) {
                 this.settingsUI.toggle();
+            }
+        });
+
+        // Menu key (M)
+        this.input.keyboard.on('keydown-M', () => {
+            if (this.sideMenuUI) {
+                this.sideMenuUI.toggle();
             }
         });
 
@@ -279,19 +294,24 @@ export default class BaseGameScene extends Phaser.Scene {
         });
 
         // --- タップで移動対応 (スマホ/マウス) ---
-        this.input.on('pointerdown', (pointer) => {
-            // UI上のクリックなら無視
+        // --- 地面クリック移動 (モバイルのみ / PCは無効化) ---
+        this.input.on('pointerdown', (pointer, currentlyOver) => {
+            // 画面左端 (メニューボタン付近) のクリックなら移動させない
+            if (pointer.x < 100) return;
+
+            // UI上のクリックなら即終了 (currentlyOverには現在重なっているインタラクティブなオブジェクトが入る)
+            if (currentlyOver && currentlyOver.length > 0) return;
+
+            // 会話中も移動禁止
             if (this.dialogue && this.dialogue.isTalking) return;
-            if (this.inventoryUI?.isOpen || this.shopUI?.isOpen || this.skillManagerUI?.isOpen || this.statAllocationUI?.isOpen || this.settingsUI?.isOpen) return;
 
-            // 画面の左端（メニュー）や下（スキルバー）付近のクリックも安全のためにチェック
-            if (pointer.x < 100 || (this.sideMenuUI && this.sideMenuUI.isExpanded)) return;
+            // インベントリ等が開いている時も移動禁止
+            const isAnyWindowOpen = this.inventoryUI?.isOpen || this.shopUI?.isOpen || this.skillManagerUI?.isOpen || this.statAllocationUI?.isOpen || (this.settingsUI && this.settingsUI.visible);
+            if (isAnyWindowOpen) return;
 
-            // ワールド座標に変換
-            const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-
-            // プレイヤーに目標地点をセット (Player.jsに移動ロジックを追加する必要あり)
-            if (this.player && this.player.active) {
+            // プレイヤーに目標地点をセット (モバイル環境のみ)
+            if (this.isMobile && this.player && this.player.active) {
+                const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
                 this.player.moveTo(worldPoint.x, worldPoint.y);
             }
         });
@@ -396,20 +416,57 @@ export default class BaseGameScene extends Phaser.Scene {
         return enemy;
     }
 
+    handleSkillUse(index) {
+        if (!this.player || !this.player.active) return;
+        const skillId = this.player.stats.activeSkills?.[index];
+        if (skillId) {
+            this.usePlayerSkill(skillId);
+        }
+    }
+
+    handleInteraction() {
+        if (!this.player || !this.player.active) return;
+        // 近隣のNPCを探して会話
+        const distanceThreshold = 50;
+        let targetNPC = null;
+
+        for (const npc of this.npcs) {
+            const distance = Phaser.Math.Distance.Between(npc.x, npc.y, this.player.x, this.player.y);
+            if (distance < distanceThreshold) {
+                targetNPC = npc;
+                break;
+            }
+        }
+
+        if (targetNPC && this.dialogue && !this.dialogue.isTalking) {
+            this.dialogue.startDialogue(targetNPC);
+            // クエスト進行（interactionHelper.js と同じロジックをここにも持たせるか、向こうを呼び出しやすくする）
+            if (targetNPC.questId) {
+                const quest = this.questManager.quests[targetNPC.questId];
+                if (quest && quest.type === 'talk' && quest.status === 'active') {
+                    quest.progress++;
+                    if (quest.progress >= quest.required) {
+                        this.questManager.completeQuest(targetNPC.questId);
+                    }
+                }
+            }
+        }
+    }
+
     update(time, delta) {
         if (!this.player || !this.player.active) return;
 
         // クルソル入力を取得
         this.player.update(this.cursors);
 
+        // インベントリ等が開いている時はスキル使用禁止
+        const isAnyWindowOpen = this.inventoryUI?.isOpen || this.shopUI?.isOpen || this.skillManagerUI?.isOpen || this.statAllocationUI?.isOpen || (this.settingsUI && this.settingsUI.visible);
+
         // スキル使用 (1-3キー)
-        if (this.skillKeys) {
+        if (!isAnyWindowOpen && this.skillKeys) {
             this.skillKeys.forEach((key, index) => {
                 if (Phaser.Input.Keyboard.JustDown(key)) {
-                    const skillId = this.player.stats.activeSkills?.[index];
-                    if (skillId) {
-                        this.usePlayerSkill(skillId);
-                    }
+                    this.handleSkillUse(index);
                 }
             });
         }
@@ -481,6 +538,10 @@ export default class BaseGameScene extends Phaser.Scene {
         const skill = SKILLS[skillId];
         if (!skill) return;
 
+        // UIが開いている間はスキル使用不可 (モバイル対策)
+        const isAnyWindowOpen = this.inventoryUI?.isOpen || this.shopUI?.isOpen || this.skillManagerUI?.isOpen || this.statAllocationUI?.isOpen || (this.settingsUI && this.settingsUI.visible);
+        if (isAnyWindowOpen) return;
+
         const now = Date.now();
         const lastUse = player.skillCooldowns[skillId] || 0;
         const cdTime = skill.cd || 2000;
@@ -537,8 +598,14 @@ export default class BaseGameScene extends Phaser.Scene {
             return;
         }
 
-        // 範囲攻撃判定
-        const range = skill.range || 80;
+        // 範囲攻撃判定 (レベルに応じて強化)
+        const skillLevel = player.stats.skillLevels?.[skillId] || 1;
+        const damageBonus = 1 + (skillLevel - 1) * 0.15; // 1レベルごとに15%ダメージ増
+        const rangeBonus = 1 + (skillLevel - 1) * 0.1;  // 1レベルごとに10%範囲増
+
+        const range = (skill.range || 80) * rangeBonus;
+        const damageMultiplier = (skill.damageMult || 1) * damageBonus;
+
         const rangeType = skill.rangeType || 'circle';
         const enemies = this.children.list.filter(child => child instanceof Enemy && child.active);
 
@@ -565,7 +632,7 @@ export default class BaseGameScene extends Phaser.Scene {
             }
 
             if (isHit) {
-                const damageData = player.getDamage(skill.damageMult || 1, enemy);
+                const damageData = player.getDamage(damageMultiplier, enemy);
                 const damage = damageData.amount;
 
                 // 会心演出

@@ -52,6 +52,14 @@ export default class InventoryUI extends BaseWindowUI {
 
         // キーボード登録 (BaseWindowUI の Esc 以外)
         this.scene.input.keyboard.on('keydown', (event) => {
+            // Iキーは常に（閉じている時でも）反応するように
+            if (event.code === 'KeyI') {
+                if (!this.scene.shopUI?.isOpen) {
+                    this.toggle();
+                }
+                return;
+            }
+
             if (!this.isOpen || (this.scene.shopUI && this.scene.shopUI.isOpen)) return;
 
             const itemsPerRow = 5;
@@ -67,8 +75,6 @@ export default class InventoryUI extends BaseWindowUI {
             } else if (event.code === 'Enter') {
                 const itemId = this.inventory[this.selectedIndex];
                 if (itemId) this.handleItemClick(itemId);
-            } else if (event.code === 'KeyI') {
-                this.toggle();
             }
             this.updateSelection();
         });
@@ -125,7 +131,8 @@ export default class InventoryUI extends BaseWindowUI {
             // インタラクティブ化 (タップ対応)
             slot.setSize(96, 96);
             slot.setInteractive({ useHandCursor: true });
-            slot.on('pointerdown', () => {
+            slot.on('pointerdown', (p, x, y, event) => {
+                if (event) event.stopPropagation();
                 this.selectedIndex = index;
                 this.updateSelection();
                 this.handleItemClick(itemId);

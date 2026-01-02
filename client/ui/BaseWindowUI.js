@@ -28,7 +28,7 @@ export default class BaseWindowUI {
         // 1. Overlay
         this.overlay = this.scene.add.rectangle(0, 0, sceneWidth, sceneHeight, 0x000000, overlayAlpha)
             .setOrigin(0).setScrollFactor(0).setDepth(depth - 1).setInteractive().setVisible(false);
-        this.overlay.on('pointerdown', () => this.toggle());
+        // Removed: this.overlay.on('pointerdown', () => this.toggle()); (User wants to stop accidental closes)
 
         // 2. Main Container
         this.container = this.scene.add.container(sceneWidth / 2, sceneHeight / 2);
@@ -38,6 +38,17 @@ export default class BaseWindowUI {
         this.bgGfx = this.scene.add.graphics();
         this.drawBackground(width, height);
         this.container.add(this.bgGfx);
+
+        // 3.1. Hit Blocking Area (invisible rectangle at the back of container)
+        // This prevents clicks on the window from reaching the map, but allows clicks on internal buttons.
+        this.blocker = this.scene.add.rectangle(0, 0, width, height, 0x000000, 0)
+            .setInteractive()
+            .on('pointerdown', (pointer, x, y, event) => {
+                if (event) event.stopPropagation();
+            });
+        this.container.add(this.blocker);
+        this.container.sendToBack(this.blocker);
+        this.container.sendToBack(this.bgGfx);
 
         // 4. Header / Title
         const titleText = this.scene.add.text(0, -height / 2 + 35, title, {
