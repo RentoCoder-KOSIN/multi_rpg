@@ -66,7 +66,7 @@ export default class PlayerStatsUI {
         this.container.add([this.weaponText, this.armorText, this.goldText, this.skillText, this.statPointsText]);
 
         // ステータス画面へのショートカット
-        this.bg.setInteractive(new Phaser.Geom.RoundedRect(0, 0, 250, 155, 10), Phaser.Geom.RoundedRect.Contains);
+        this.bg.setInteractive(new Phaser.Geom.Rectangle(0, 0, 250, 155), Phaser.Geom.Rectangle.Contains);
         this.bg.on('pointerdown', () => {
             if (this.scene.statAllocationUI) this.scene.statAllocationUI.toggle();
         });
