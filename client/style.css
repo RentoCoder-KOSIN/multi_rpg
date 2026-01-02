@@ -1,0 +1,28 @@
+* {
+    margin: 0 auto;
+    padding: 0;
+}
+
+/* ピクセルアートを滑らかに補間しない（タイルの継ぎ目を目立たなくする） */
+html, body, canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    -ms-interpolation-mode: nearest-neighbor;
+}
+
+/* キャンバスをフルサイズにして中央揃え */
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: rgb(16, 9, 56)
+}
+
+canvas {
+    display: block;
+    /* キャンバスをブラウザのCSSスケーリングで拡大しない（ピクセルアート崩れ防止） */
+    max-width: none;
+    width: auto;
+    height: auto;
+}

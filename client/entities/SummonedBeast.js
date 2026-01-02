@@ -1,0 +1,249 @@
+import Enemy from './Enemy.js';
+
+export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
+    constructor(scene, x, y, owner, isMega = false) {
+        // メガサモンの場合は見た目を変える (本来は texture を変えるが、ここでは tint と scale で対応)
+        super(scene, x, y, isMega ? 'dragon_boss' : 'slime');
+        this.owner = owner;
+        this.isSummon = true;
+        this.isMega = isMega;
+
+        scene.add.existing(this);
+        scene.physics.add.existing(this);
+
+        if (!isMega) {
+            this.setTint(0x9370db);
+            this.setScale(0.8);
+        } else {
+            this.setTint(0xff00ff); // より派手な色
+            this.setScale(1.2); // 大きく
+        }
+
+        // ステータス設定
+        const baseHp = isMega ? 150000 : 50000;
+        const atkMultiplier = isMega ? 1.5 : 0.8;
+        const speedBonus = isMega ? 50 : 0;
+
+        this.maxHp = baseHp;
+        this.hp = baseHp;
+        this.atk = Math.ceil(owner.stats.int * (isMega ? 3 : 2) + owner.stats.atk * atkMultiplier);
+        this.speed = 120 + (owner.stats.dex * 2) + speedBonus;
+        this.searchRange = (350 + (owner.stats.int * 15)) * (isMega ? 1.5 : 1);
+
+        // クールダウン用
+        this.lastAttackTime = 0;
+        this.lastMpDrainTime = 0;
+        this.target = null;
+
+        // HPバー
+        this.hpBarBg = scene.add.rectangle(0, 0, 30, 4, 0x000000).setDepth(10);
+        this.hpBar = scene.add.rectangle(0, 0, 30, 4, isMega ? 0xff00ff : 0x9370db).setDepth(11);
+
+        // パーティクルエフェクト
+        this.emitter = scene.add.particles(0, 0, 'water', {
+            speed: { min: -20, max: 20 },
+            scale: { start: isMega ? 0.3 : 0.1, end: 0 },
+            alpha: { start: 0.5, end: 0 },
+            lifespan: 500,
+            blendMode: 'ADD',
+            tint: isMega ? 0xff00ff : 0x9370db,
+            frequency: 100,
+            follow: this
+        });
+    }
+
+    updateSummon() {
+        if (!this.active) return;
+
+        // リモートプレイヤーの召喚獣はAIで動かない（位置同期のみ）
+        if (this.owner && !this.owner.isLocal) {
+            // HPバーのみ更新
+            const hpPercent = Math.max(0, this.hp / this.maxHp);
+            this.hpBar.width = 30 * hpPercent;
+            this.hpBarBg.setPosition(this.x, this.y - 25);
+            this.hpBar.setPosition(this.x, this.y - 25);
+            return;
+        }
+
+        const now = this.scene.time.now;
+
+        // HPバー更新
+        const hpPercent = Math.max(0, this.hp / this.maxHp);
+        this.hpBar.width = 30 * hpPercent;
+        this.hpBarBg.setPosition(this.x, this.y - 25);
+        this.hpBar.setPosition(this.x, this.y - 25);
+
+        // MP維持コスト (1秒ごとに消費)
+        if (!this.lastMpDrainTime || now - this.lastMpDrainTime > 1000) {
+            const upkeepCost = this.isMega ? 5 : 2; // メガサモンは維持費が高い
+
+            if (this.owner && this.owner.stats) {
+                // MPを減らす
+                this.owner.stats.mp = Math.max(0, this.owner.stats.mp - upkeepCost);
+                this.owner.saveStats(); // UI更新のため保存
+
+                // 消費エフェクト (プレイヤーの頭上)
+                const drainText = this.scene.add.text(this.owner.x, this.owner.y - 40, `-${upkeepCost} MP`, {
+                    fontSize: '10px', color: '#5e5eff', fontFamily: '"Press Start 2P"'
+                }).setOrigin(0.5);
+                this.scene.tweens.add({
+                    targets: drainText, y: this.owner.y - 70, alpha: 0, duration: 800,
+                    onComplete: () => drainText.destroy()
+                });
+
+                // MPが切れたら消滅
+                if (this.owner.stats.mp <= 0) {
+                    if (this.scene.notificationUI) {
+                        this.scene.notificationUI.show('MPが尽きたため召喚獣が帰還しました', 'warning');
+                    }
+                    this.scene.destroySummon(this);
+                    return;
+                }
+            }
+            this.lastMpDrainTime = now;
+        }
+
+        // ターゲットが有効かチェック
+        if (this.target && (!this.target.active || Phaser.Math.Distance.Between(this.x, this.y, this.target.x, this.target.y) > this.searchRange * 1.5)) {
+            this.target = null;
+        }
+
+        // ターゲットがいない場合は新しいターゲットを探す
+        if (!this.target) {
+            this.findNewTarget();
+        }
+
+        if (this.target) {
+            // ターゲットに向かって移動
+            this.scene.physics.moveToObject(this, this.target, this.speed);
+            const dist = Phaser.Math.Distance.Between(this.x, this.y, this.target.x, this.target.y);
+
+            // 攻撃
+            if (dist < 50) {
+                if (now - this.lastAttackTime > 800) { // 攻撃速度も少し向上
+                    let damage = this.atk;
+                    let isCrit = false;
+
+                    // クリティカル判定 (プレイヤーのクリティカル率を参照)
+                    const critChance = (this.owner && this.owner.stats) ? (this.owner.stats.critChance || 0) : 0;
+                    // メガサモンならさらにクリティカル率アップ
+                    const netCritChance = critChance + (this.isMega ? 0.1 : 0);
+
+                    if (Math.random() < netCritChance) {
+                        damage = Math.ceil(damage * 1.5);
+                        isCrit = true;
+                    }
+
+                    this.target.takeDamage(damage, this.owner);
+
+                    // クリティカル演出
+                    if (isCrit) {
+                        if (this.scene && this.scene.showHitEffect) {
+                            this.scene.showHitEffect(this.target.x, this.target.y - 20, 0xffff00);
+                        }
+                        const critText = this.scene.add.text(this.target.x, this.target.y - 40, 'CRITICAL!', {
+                            fontSize: '12px', color: '#ffff00', fontFamily: '"Press Start 2P"', stroke: '#000', strokeThickness: 3
+                        }).setOrigin(0.5);
+                        this.scene.tweens.add({ targets: critText, y: this.target.y - 80, alpha: 0, duration: 800, onComplete: () => critText.destroy() });
+                    }
+
+                    this.lastAttackTime = now;
+
+                    // ジャンピングアタック風エフェクト
+                    this.scene.tweens.add({
+                        targets: this,
+                        y: this.y - 10,
+                        duration: 100,
+                        yoyo: true
+                    });
+                }
+                this.setVelocity(0, 0);
+            }
+        } else {
+            // 敵がいない場合はプレイヤーを追尾
+            const distToOwner = Phaser.Math.Distance.Between(this.x, this.y, this.owner.x, this.owner.y);
+            if (distToOwner > 60) {
+                this.scene.physics.moveToObject(this, this.owner, this.speed);
+            } else {
+                this.setVelocity(0, 0);
+            }
+        }
+    }
+
+    findNewTarget() {
+        if (!this.scene) return;
+        const enemies = this.scene.children.list.filter(child => child instanceof Enemy && child.active);
+        let nearest = null;
+        let minDist = this.searchRange;
+
+        enemies.forEach(enemy => {
+            const dist = Phaser.Math.Distance.Between(this.x, this.y, enemy.x, enemy.y);
+            if (dist < minDist) {
+                minDist = dist;
+                nearest = enemy;
+            }
+        });
+
+        this.target = nearest;
+    }
+
+    takeDamage(amount) {
+        if (!this.active) return;
+        this.hp -= amount;
+
+        // ダメージ表示
+        const damageText = this.scene.add.text(this.x, this.y - 30, `-${amount}`, {
+            fontSize: '10px',
+            color: '#9370db',
+            fontFamily: 'Press Start 2P',
+            stroke: '#000',
+            strokeThickness: 2
+        }).setOrigin(0.5);
+
+        this.scene.tweens.add({
+            targets: damageText,
+            y: this.y - 60,
+            alpha: 0,
+            duration: 800,
+            onComplete: () => damageText.destroy()
+        });
+
+        if (this.hp <= 0) {
+            this.scene.destroySummon(this);
+        }
+    }
+
+    commandAttack() {
+        if (!this.active) return;
+
+        // 攻撃クールダウンをリセット
+        this.lastAttackTime = 0;
+
+        // ターゲット再検索
+        if (!this.target) this.findNewTarget();
+
+        if (this.target) {
+            // 一時的にスピードアップ
+            const originalSpeed = this.speed;
+            this.speed *= 2;
+
+            this.scene.time.delayedCall(3000, () => {
+                if (this.active) this.speed = originalSpeed;
+            });
+
+            // エフェクト
+            const text = this.scene.add.text(this.x, this.y - 40, '突撃！', {
+                fontSize: '12px', color: '#ff0000', fontFamily: '"Press Start 2P"', stroke: '#000', strokeThickness: 3
+            }).setOrigin(0.5);
+            this.scene.tweens.add({ targets: text, y: this.y - 80, alpha: 0, duration: 1000, onComplete: () => text.destroy() });
+
+            // ターゲットに向かって突進 (物理挙動があればベロシティ適用だが、moveToObjectで制御されているのでspeed変更で十分)
+        }
+    }
+
+    preDestroy() {
+        if (this.hpBar) this.hpBar.destroy();
+        if (this.hpBarBg) this.hpBarBg.destroy();
+        if (this.emitter) this.emitter.destroy();
+    }
+}
