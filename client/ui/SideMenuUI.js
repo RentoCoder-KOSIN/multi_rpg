@@ -52,6 +52,7 @@ export default class SideMenuUI {
             { icon: '🛡️', label: 'Equ', key: 'S', color: '#4a90e2', action: () => this.scene.equipmentUI.toggle() },
             { icon: '📊', label: 'Sta', key: 'P', color: '#ffd700', action: () => this.scene.statAllocationUI.toggle() },
             { icon: '🔮', label: 'Skl', key: 'K', color: '#533483', action: () => this.scene.skillManagerUI.toggle() },
+            { icon: '👥', label: 'Pty', key: 'Y', color: '#00ff00', action: () => this.scene.partyUI.toggle() },
             { icon: '⚙️', label: 'Set', key: 'O', color: '#aaaaaa', action: () => this.scene.settingsUI.toggle() }
         ];
 

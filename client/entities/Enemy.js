@@ -223,39 +223,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         }
 
         if (this.hp <= 0) {
-            if (attacker && typeof attacker.gainExp === 'function') {
-                attacker.gainExp(this.expValue);
-            }
-            if (attacker && typeof attacker.gainGold === 'function') {
-                attacker.gainGold(this.goldValue);
-
-                // ゴールドドロップのビジュアルエフェクト
-                const goldText = this.scene.add.text(this.x, this.y - 30, `+${this.goldValue} G`, {
-                    fontSize: '14px',
-                    color: '#ffd700',
-                    fontFamily: 'Press Start 2P',
-                    stroke: '#000',
-                    strokeThickness: 3
-                });
-                goldText.setOrigin(0.5);
-
-                // コインアイコンのエフェクト
-                const coinIcon = this.scene.add.text(this.x - 20, this.y - 30, '🪙', {
-                    fontSize: '16px'
-                });
-
-                this.scene.tweens.add({
-                    targets: [goldText, coinIcon],
-                    y: this.y - 70,
-                    alpha: 0,
-                    duration: 1200,
-                    ease: 'Power2',
-                    onComplete: () => {
-                        goldText.destroy();
-                        coinIcon.destroy();
-                    }
-                });
-            }
+            // ゴールドドロップのビジュアルエフェクトは維持したいが、
+            // サーバーからの確定値（goldValue）を使用するように考慮
             this.die();
         }
     }

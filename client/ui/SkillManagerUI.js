@@ -126,10 +126,22 @@ export default class SkillManagerUI extends BaseWindowUI {
         const currentLevel = player.stats.level;
         const unlockedSkills = player.stats.unlockedSkills;
 
-        // Gather all skills for current job
+        // 職業の系譜を遡る（ファイター -> ナイト、など）
+        let lineage = [currentJob];
+        let checkJobId = currentJob;
+        while (true) {
+            let parent = Object.values(JOBS).find(j => j.nextJob === checkJobId);
+            if (parent) {
+                lineage.push(parent.id);
+                checkJobId = parent.id;
+            } else {
+                break;
+            }
+        }
+
         let allSkills = [];
 
-        // 上位職への転職チェック
+        // 上位職への転職チェック (現在の職業のみ)
         if (jobDef && jobDef.nextJob) {
             const nextJobDef = JOBS[jobDef.nextJob];
             if (nextJobDef) {
@@ -142,13 +154,42 @@ export default class SkillManagerUI extends BaseWindowUI {
             }
         }
 
-        if (jobDef && jobDef.skills) {
-            Object.keys(jobDef.skills).sort((a, b) => parseInt(a) - parseInt(b)).forEach(level => {
-                jobDef.skills[level].forEach(skillId => {
-                    allSkills.push({ isPromotion: false, id: skillId, reqLevel: parseInt(level) });
+        // 全職業系譜のスキルを集約
+        lineage.forEach(jId => {
+            const j = JOBS[jId];
+            if (j && j.skills) {
+                Object.entries(j.skills).forEach(([lvl, skills]) => {
+                    const levelReq = parseInt(lvl);
+                    skills.forEach(skillId => {
+                        const existing = allSkills.find(s => s.id === skillId);
+                        if (!existing) {
+                            allSkills.push({ isPromotion: false, id: skillId, reqLevel: levelReq, isLineage: true });
+                        } else if (!existing.isPromotion) {
+                            if (levelReq < existing.reqLevel) existing.reqLevel = levelReq;
+                            existing.isLineage = true;
+                        }
+                    });
                 });
-            });
-        }
+            }
+        });
+
+        // 習得済みスキルをチェック
+        unlockedSkills.forEach(skillId => {
+            const existing = allSkills.find(s => s.id === skillId);
+            if (!existing) {
+                // 系譜外だが既に習得しているスキル（過去の職業の遺産など）
+                allSkills.push({ isPromotion: false, id: skillId, reqLevel: 0, isLineage: false });
+            }
+        });
+
+        // ソート（転職情報を上、それ以外を必要レベル順。系譜外は基本下に）
+        allSkills.sort((a, b) => {
+            if (a.isPromotion) return -1;
+            if (b.isPromotion) return 1;
+            // 両方スキルなら、まず系譜かどうかで並べる
+            if (a.isLineage !== b.isLineage) return b.isLineage ? 1 : -1;
+            return a.reqLevel - b.reqLevel;
+        });
 
         const startY = -120;
         const itemHeight = 70;
@@ -238,7 +279,7 @@ export default class SkillManagerUI extends BaseWindowUI {
                     const lvUpBtn = this.scene.add.rectangle(80, 0, 80, 30, 0x00aa00).setInteractive({ useHandCursor: true });
                     const lvUpTxt = this.scene.add.text(80, 0, 'Level UP', { fontSize: '10px', color: '#ffffff', fontFamily: '"Press Start 2P"' }).setOrigin(0.5);
 
-                    const upCost = (skillLevel + 1) * 20;
+                    const upCost = (skillLevel + 1) * 100;
                     lvUpBtn.on('pointerover', () => lvUpBtn.setFillStyle(0x00ff00));
                     lvUpBtn.on('pointerout', () => lvUpBtn.setFillStyle(0x00aa00));
                     lvUpBtn.on('pointerdown', (pointer, x, y, event) => {

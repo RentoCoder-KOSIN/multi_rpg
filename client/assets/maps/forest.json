@@ -313,12 +313,12 @@
         }, 
         {
          "draworder":"topdown",
-         "id":8,
+         "id":9,
          "name":"enemy_spawn",
          "objects":[
                 {
                  "height":0,
-                 "id":22,
+                 "id":56,
                  "name":"",
                  "properties":[
                         {
@@ -330,12 +330,12 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":408,
-                 "y":608
+                 "x":404,
+                 "y":584
                 }, 
                 {
                  "height":0,
-                 "id":23,
+                 "id":57,
                  "name":"",
                  "properties":[
                         {
@@ -347,12 +347,12 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":624,
-                 "y":696
+                 "x":892,
+                 "y":816
                 }, 
                 {
                  "height":0,
-                 "id":24,
+                 "id":59,
                  "name":"",
                  "properties":[
                         {
@@ -364,12 +364,12 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":496,
-                 "y":956
+                 "x":654.666666666667,
+                 "y":1062.66666666667
                 }, 
                 {
                  "height":0,
-                 "id":25,
+                 "id":60,
                  "name":"",
                  "properties":[
                         {
@@ -381,80 +381,12 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":568,
-                 "y":1204
+                 "x":921.333333333333,
+                 "y":1022.66666666667
                 }, 
                 {
                  "height":0,
-                 "id":26,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"dire_wolf"
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":1460,
-                 "y":1200
-                }, 
-                {
-                 "height":0,
-                 "id":27,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"dire_wolf"
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":1220,
-                 "y":1048
-                }, 
-                {
-                 "height":0,
-                 "id":28,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"dire_wolf"
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":904,
-                 "y":1048
-                }, 
-                {
-                 "height":0,
-                 "id":29,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"dire_wolf"
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":988,
-                 "y":1284
-                }, 
-                {
-                 "height":0,
-                 "id":30,
+                 "id":61,
                  "name":"",
                  "properties":[
                         {
@@ -466,12 +398,12 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":1056,
-                 "y":792
+                 "x":562.666666666667,
+                 "y":817.333333333333
                 }, 
                 {
                  "height":0,
-                 "id":31,
+                 "id":62,
                  "name":"",
                  "properties":[
                         {
@@ -483,382 +415,382 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":1304,
-                 "y":628
+                 "x":974.666666666667,
+                 "y":1325.33333333333
                 }, 
                 {
                  "height":0,
-                 "id":32,
+                 "id":63,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"forest_slime"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":1968,
-                 "y":912
+                 "x":569.69696969697,
+                 "y":1554.54545454545
                 }, 
                 {
                  "height":0,
-                 "id":33,
+                 "id":64,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"forest_slime"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":1616,
-                 "y":772
+                 "x":957.575757575758,
+                 "y":1687.87878787879
                 }, 
                 {
                  "height":0,
-                 "id":34,
+                 "id":65,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"forest_slime"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":1692,
-                 "y":1076
+                 "x":784.848484848485,
+                 "y":1354.54545454545
                 }, 
                 {
                  "height":0,
-                 "id":35,
+                 "id":66,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"forest_slime"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":1972,
-                 "y":1356
+                 "x":1387.87878787879,
+                 "y":736.363636363636
                 }, 
                 {
                  "height":0,
-                 "id":36,
+                 "id":67,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"forest_slime"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":2276,
-                 "y":1164
+                 "x":900,
+                 "y":560.606060606061
                 }, 
                 {
                  "height":0,
-                 "id":37,
+                 "id":68,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"skeleton"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":1572,
-                 "y":1412
+                 "x":1248.48484848485,
+                 "y":1024.24242424242
                 }, 
                 {
                  "height":0,
-                 "id":38,
+                 "id":69,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"skeleton"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":1412,
-                 "y":1688
+                 "x":1351.51515151515,
+                 "y":1336.36363636364
                 }, 
                 {
                  "height":0,
-                 "id":39,
+                 "id":70,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"skeleton"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":1328,
-                 "y":1472
+                 "x":1809.09090909091,
+                 "y":1118.18181818182
                 }, 
                 {
                  "height":0,
-                 "id":40,
+                 "id":71,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"skeleton"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":1096,
-                 "y":1588
+                 "x":1560.60606060606,
+                 "y":1481.81818181818
                 }, 
                 {
-                 "height":4,
-                 "id":41,
+                 "height":0,
+                 "id":72,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"skeleton"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":692,
-                 "y":1832
+                 "x":1327.27272727273,
+                 "y":1657.57575757576
                 }, 
                 {
                  "height":0,
-                 "id":42,
+                 "id":73,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"skeleton"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":660,
-                 "y":1608
+                 "x":1142.42424242424,
+                 "y":1854.54545454545
                 }, 
                 {
                  "height":0,
-                 "id":43,
+                 "id":74,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"skeleton"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":1152,
-                 "y":1904
+                 "x":1439.39393939394,
+                 "y":1963.63636363636
                 }, 
                 {
                  "height":0,
-                 "id":44,
+                 "id":75,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"skeleton"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":1688,
-                 "y":2000
+                 "x":1754.54545454545,
+                 "y":1842.42424242424
                 }, 
                 {
                  "height":0,
-                 "id":45,
+                 "id":76,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":4,
-                 "x":1768,
-                 "y":1884
-                }, 
-                {
-                 "height":0,
-                 "id":46,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"dire_wolf"
+                         "value":"skeleton"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":2056,
-                 "y":2072
+                 "x":1948.48484848485,
+                 "y":1581.81818181818
                 }, 
                 {
                  "height":0,
-                 "id":47,
+                 "id":77,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"skeleton"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":2012,
-                 "y":2364
+                 "x":2145.45454545455,
+                 "y":1875.75757575758
                 }, 
                 {
                  "height":0,
-                 "id":48,
+                 "id":78,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"skeleton"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":2048,
-                 "y":2644
+                 "x":2109.09090909091,
+                 "y":2142.42424242424
                 }, 
                 {
                  "height":0,
-                 "id":49,
+                 "id":79,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"skeleton"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":2332,
-                 "y":2412
+                 "x":1942.42424242424,
+                 "y":2036.36363636364
                 }, 
                 {
                  "height":0,
-                 "id":50,
+                 "id":80,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"skeleton"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":2792,
-                 "y":2464
+                 "x":1642.42424242424,
+                 "y":845.454545454545
                 }, 
                 {
                  "height":0,
-                 "id":51,
+                 "id":81,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"skeleton"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":2424,
-                 "y":2560
+                 "x":1963.63636363636,
+                 "y":715.151515151515
                 }, 
                 {
                  "height":0,
-                 "id":52,
+                 "id":82,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"skeleton"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":3092,
-                 "y":2788
+                 "x":2278.78787878788,
+                 "y":996.969696969697
                 }, 
                 {
                  "height":0,
-                 "id":53,
+                 "id":83,
                  "name":"",
                  "properties":[
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"dire_wolf"
+                         "value":"skeleton"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":2108,
-                 "y":1780
+                 "x":2169.69696969697,
+                 "y":1269.69696969697
+                }, 
+                {
+                 "height":0,
+                 "id":84,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"skeleton"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":1845.45454545455,
+                 "y":1300
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -977,8 +909,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":9,
- "nextobjectid":55,
+ "nextlayerid":10,
+ "nextobjectid":85,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",

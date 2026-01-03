@@ -181,7 +181,8 @@ export default class DialogueManager {
 
         // --- 職業選択メニュー ---
         if (npc.jobs) {
-            const jobList = Object.values(JOBS);
+            // 基本職業のみ（reqLevelが設定されていないもの）を抽出
+            const jobList = Object.values(JOBS).filter(job => !job.reqLevel);
             let jobText = (canReselect && qm.isFinished(npc.questId))
                 ? "【職業再選択】チュートリアル中なので何度でも変更可能です。\nどの職業になりますか？\n"
                 : "どの職業になりますか？\n";

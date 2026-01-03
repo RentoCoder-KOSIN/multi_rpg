@@ -49,17 +49,17 @@ function generateId(type) {
    敵ステータス
 ===================== */
 const ENEMY_STATS = {
-    slime: { hp: 30, atk: 5, exp: 12, gold: 5, drops: [{ id: 'potion', chance: 0.1 }, { id: 'mp_potion', chance: 0.1 }] },
-    bat: { hp: 45, atk: 8, exp: 35, gold: 7, drops: [{ id: 'potion', chance: 0.15 }, { id: 'mp_potion', chance: 0.1 }] },
-    forest_slime: { hp: 100, atk: 15, exp: 120, gold: 25, drops: [{ id: 'potion', chance: 0.2 }, { id: 'mp_potion', chance: 0.15 }] },
-    skeleton: { hp: 150, atk: 25, exp: 250, gold: 40, drops: [{ id: 'high_potion', chance: 0.05 }, { id: 'mp_potion', chance: 0.1 }] },
-    red_slime: { hp: 200, atk: 35, exp: 350, gold: 60, drops: [{ id: 'high_potion', chance: 0.1 }, { id: 'high_mp_potion', chance: 0.05 }] },
-    goblin: { hp: 280, atk: 45, exp: 450, gold: 120, drops: [{ id: 'high_potion', chance: 0.15 }, { id: 'high_mp_potion', chance: 0.1 }] },
-    ghost: { hp: 350, atk: 55, exp: 650, gold: 320, drops: [{ id: 'high_potion', chance: 0.1 }, { id: 'high_mp_potion', chance: 0.1 }] },
-    orc: { hp: 500, atk: 75, exp: 1000, gold: 1000, drops: [{ id: 'high_potion', chance: 0.2 }, { id: 'high_mp_potion', chance: 0.2 }] },
-    dire_wolf: { hp: 750, atk: 100, exp: 1800, gold: 1400, drops: [{ id: 'high_potion', chance: 0.3 }, { id: 'high_mp_potion', chance: 0.3 }] },
-    boss: { hp: 3000, atk: 180, exp: 8000, gold: 25000, drops: [{ id: 'hero_sword', chance: 0.1 }, { id: 'high_potion', chance: 1.0 }, { id: 'high_mp_potion', chance: 1.0 }] },
-    dragon_boss: { hp: 8000, atk: 350, exp: 25000, gold: 100000, drops: [{ id: 'dragon_scale_armor', chance: 0.2 }, { id: 'high_potion', chance: 1.0 }, { id: 'high_mp_potion', chance: 1.0 }] }
+    slime: { hp: 150, atk: 5, exp: 22, gold: 5, drops: [{ id: 'potion', chance: 0.05 }, { id: 'mp_potion', chance: 0.05 }, { id: 'holy_weapon', chance: 0.002 }] },
+    bat: { hp: 330, atk: 80, exp: 45, gold: 7, drops: [{ id: 'potion', chance: 0.15 }, { id: 'mp_potion', chance: 0.1 }, { id: 'holy_weapon', chance: 0.002 }] },
+    forest_slime: { hp: 400, atk: 75, exp: 120, gold: 25, drops: [{ id: 'potion', chance: 0.2 }, { id: 'mp_potion', chance: 0.15 }, { id: 'holy_weapon', chance: 0.002 }] },
+    skeleton: { hp: 1300, atk: 120, exp: 450, gold: 40, drops: [{ id: 'high_potion', chance: 0.05 }, { id: 'mp_potion', chance: 0.1 }, { id: 'holy_weapon', chance: 0.002 }] },
+    red_slime: { hp: 2000, atk: 350, exp: 650, gold: 60, drops: [{ id: 'high_potion', chance: 0.1 }, { id: 'high_mp_potion', chance: 0.05 }, { id: 'holy_weapon', chance: 0.002 }] },
+    goblin: { hp: 2800, atk: 450, exp: 950, gold: 120, drops: [{ id: 'high_potion', chance: 0.15 }, { id: 'high_mp_potion', chance: 0.1 }, { id: 'holy_weapon', chance: 0.02 }] },
+    ghost: { hp: 35000, atk: 505, exp: 1250, gold: 320, drops: [{ id: 'high_potion', chance: 0.1 }, { id: 'high_mp_potion', chance: 0.1 }, { id: 'holy_weapon', chance: 0.002 }] },
+    orc: { hp: 50000, atk: 750, exp: 1500, gold: 1000, drops: [{ id: 'high_potion', chance: 0.2 }, { id: 'high_mp_potion', chance: 0.2 }, { id: 'holy_weapon', chance: 0.002 }] },
+    dire_wolf: { hp: 75000, atk: 1900, exp: 80000, gold: 1400, drops: [{ id: 'high_potion', chance: 0.3 }, { id: 'high_mp_potion', chance: 0.3 }, { id: 'holy_weapon', chance: 0.002 }] },
+    boss: { hp: 3000000, atk: 18000, exp: 800000, gold: 2500000, drops: [{ id: 'hero_sword', chance: 0.1 }, { id: 'high_potion', chance: 1.0 }, { id: 'high_mp_potion', chance: 1.0 }] },
+    dragon_boss: { hp: 8000000, atk: 35000, exp: 25000000, gold: 10000000, drops: [{ id: 'dragon_scale_armor', chance: 0.2 }, { id: 'high_potion', chance: 1.0 }, { id: 'high_mp_potion', chance: 1.0 }] }
 };
 
 function getEnemyStats(type) {
@@ -103,6 +103,8 @@ function getEnemiesOnMap(mapKey) {
    起動時 初期化
 ===================== */
 const knownMaps = ["tutorial", "city", "battle", "forest", "guild1f", "guild2f", "wetland"];
+const parties = {}; // partyId -> { leader: socketId, members: [socketId] }
+const playerToParty = {}; // socketId -> partyId
 
 knownMaps.forEach(mapKey => {
     const spawns = loadEnemySpawnPointsFromMap(mapKey);
@@ -157,6 +159,32 @@ io.on("connection", socket => {
     socket.data.inLobby = false;
 
     // 初回接続時はマップに参加せず、クライアントからのlobbyJoinまたはnewPlayerイベントを待つ
+
+    // --- Auto Join Party ---
+    const DEFAULT_PARTY_ID = 'party-1';
+    if (!parties[DEFAULT_PARTY_ID]) {
+        parties[DEFAULT_PARTY_ID] = {
+            leader: playerId,
+            members: []
+        };
+    }
+
+    // パーティーに参加していなければ追加
+    if (!playerToParty[playerId]) {
+        if (!parties[DEFAULT_PARTY_ID].members.includes(playerId)) {
+            parties[DEFAULT_PARTY_ID].members.push(playerId);
+        }
+        playerToParty[playerId] = DEFAULT_PARTY_ID;
+        console.log(`[AutoJoin] ${playerId} joined ${DEFAULT_PARTY_ID}`);
+    } else {
+        // 既にパーティーにいる場合も、再接続時などのために整合性をチェックしたいが、
+        // ここでは単純に現在のパーティー情報を送るだけにする
+        const currentPId = playerToParty[playerId];
+        setTimeout(() => broadcastPartyUpdate(currentPId), 500);
+    }
+
+    // 他のメンバーにも更新通知
+    setTimeout(() => broadcastPartyUpdate(DEFAULT_PARTY_ID), 500);
 
     /* ===== ロビー ===== */
     socket.on("lobbyJoin", () => {
@@ -254,18 +282,28 @@ io.on("connection", socket => {
         });
     });
 
-    socket.on("playerStatsUpdate", ({ hp, maxHp, level }) => {
+    socket.on("playerStatsUpdate", ({ hp, maxHp, level, mp, maxMp }) => {
         if (!players[socket.data.playerId]) return;
         if (hp !== undefined) players[socket.data.playerId].hp = hp;
         if (maxHp !== undefined) players[socket.data.playerId].maxHp = maxHp;
         if (level !== undefined) players[socket.data.playerId].level = level;
+        if (mp !== undefined) players[socket.data.playerId].mp = mp;
+        if (maxMp !== undefined) players[socket.data.playerId].maxMp = maxMp;
 
         socket.to(`map:${socket.data.map}`).emit("playerStatUpdate", {
             id: socket.data.playerId,
             hp: players[socket.data.playerId].hp,
             maxHp: players[socket.data.playerId].maxHp,
-            level: players[socket.data.playerId].level
+            level: players[socket.data.playerId].level,
+            mp: players[socket.data.playerId].mp,
+            maxMp: players[socket.data.playerId].maxMp
         });
+
+        // パーティーメンバーにも通知
+        const partyId = playerToParty[socket.data.playerId];
+        if (partyId) {
+            broadcastPartyUpdate(partyId);
+        }
     });
 
     socket.on("summonUpdate", (data) => {
@@ -376,14 +414,36 @@ io.on("connection", socket => {
                 });
             }
 
-            io.to(`map:${mapKey}`).emit("enemyDefeated", {
-                id,
-                type: enemy.type,
-                killedBy: socket.data.playerId,
-                exp: enemy.exp,
-                gold: enemy.gold,
-                drops: drops
-            });
+
+            // パーティー報酬の分配
+            const partyId = playerToParty[socket.data.playerId];
+            if (partyId && parties[partyId]) {
+                const membersInMap = parties[partyId].members.filter(mId => players[mId]?.map === mapKey);
+                const shareCount = membersInMap.length;
+
+                membersInMap.forEach(mId => {
+                    const mSocket = [...io.sockets.sockets.values()].find(s => s.data.playerId === mId);
+                    if (mSocket) {
+                        mSocket.emit("enemyDefeated", {
+                            id,
+                            type: enemy.type,
+                            killedBy: socket.data.playerId,
+                            exp: Math.ceil(enemy.exp / shareCount),
+                            gold: Math.ceil(enemy.gold / shareCount),
+                            drops: mId === socket.data.playerId ? drops : [] // ドロップはキラーのみ
+                        });
+                    }
+                });
+            } else {
+                io.to(`map:${mapKey}`).emit("enemyDefeated", {
+                    id,
+                    type: enemy.type,
+                    killedBy: socket.data.playerId,
+                    exp: enemy.exp,
+                    gold: enemy.gold,
+                    drops: drops
+                });
+            }
 
             setTimeout(() => {
                 spawnEnemy(mapKey, enemy);
@@ -398,36 +458,133 @@ io.on("connection", socket => {
         }
     });
 
-    /* ===== 敵撃破 ===== */
-    socket.on("enemyDefeat", ({ id }) => {
-        const mapKey = socket.data.map;
-        const enemy = enemies[mapKey]?.[id];
-        if (!enemy) return;
 
-        delete enemies[mapKey][id];
 
-        const drops = [];
-        if (enemy.drops) {
-            enemy.drops.forEach(drop => {
-                if (Math.random() < drop.chance) {
-                    drops.push(drop.id);
-                }
-            });
+    /* ===== パーティー関連 ===== */
+    socket.on("partyInvite", ({ targetId }) => {
+        const partyId = playerToParty[socket.data.playerId];
+        console.log(`[partyInvite] from: ${socket.data.playerId} to: ${targetId}`);
+        // ターゲットのスケットを取得
+        const targetSocket = [...io.sockets.sockets.values()].find(s => s.data.playerId === targetId);
+        if (!targetSocket) return;
+
+        targetSocket.emit("partyInvited", {
+            fromId: socket.data.playerId,
+            fromName: playerNames[socket.data.playerId] || "Unknown",
+            partyId: partyId || `party-${socket.data.playerId}`
+        });
+    });
+
+    socket.on("partyJoin", ({ partyId }) => {
+        console.log(`[partyJoin] player: ${socket.data.playerId} join: ${partyId}`);
+        // 既に別のパーティーにいる場合は抜ける
+        if (playerToParty[socket.data.playerId]) {
+            leaveParty(socket);
         }
 
-        io.to(`map:${mapKey}`).emit("enemyDefeated", {
-            id,
-            type: enemy.type,
-            killedBy: socket.data.playerId,
-            exp: enemy.exp,
-            gold: enemy.gold,
-            drops: drops
+        if (!parties[partyId]) {
+            // 新規パーティー作成
+            parties[partyId] = {
+                leader: partyId.replace("party-", ""),
+                members: []
+            };
+        }
+
+        // パーティーに参加（リーダーがまだ入っていない場合は追加）
+        const leaderId = parties[partyId].leader;
+        if (!parties[partyId].members.includes(leaderId)) {
+            parties[partyId].members.push(leaderId);
+            playerToParty[leaderId] = partyId;
+        }
+
+        if (!parties[partyId].members.includes(socket.data.playerId)) {
+            parties[partyId].members.push(socket.data.playerId);
+            playerToParty[socket.data.playerId] = partyId;
+        }
+
+        broadcastPartyUpdate(partyId);
+    });
+
+    socket.on("partyLeave", () => {
+        console.log(`[partyLeave] player: ${socket.data.playerId}`);
+        leaveParty(socket);
+    });
+
+    socket.on("playerHeal", ({ targetId, amount }) => {
+        const targetSocket = [...io.sockets.sockets.values()].find(s => s.data.playerId === targetId);
+        if (targetSocket) {
+            targetSocket.emit("playerHealed", { amount, fromId: socket.data.playerId });
+        }
+    });
+
+    socket.on("playerBuff", ({ targetId, type, value, duration }) => {
+        const targetSocket = [...io.sockets.sockets.values()].find(s => s.data.playerId === targetId);
+        if (targetSocket) {
+            targetSocket.emit("playerBuffApplied", { type, value, duration, fromId: socket.data.playerId });
+        }
+    });
+
+    socket.on("playerSkill", (data) => {
+        // 同じマップにいる他のプレイヤーにスキル使用を通知
+        const mapKey = socket.data.map;
+        if (mapKey) {
+            socket.to(`map:${mapKey}`).emit("playerSkillUsed", {
+                id: socket.data.playerId,
+                skillId: data.skillId,
+                x: data.x,
+                y: data.y,
+                direction: data.direction
+            });
+        }
+    });
+
+    function leaveParty(s) {
+        const pId = playerToParty[s.data.playerId];
+        if (!pId || !parties[pId]) return;
+
+        parties[pId].members = parties[pId].members.filter(id => id !== s.data.playerId);
+        delete playerToParty[s.data.playerId];
+
+        if (parties[pId].members.length === 0) {
+            delete parties[pId];
+        } else {
+            // リーダーが抜けた場合は次の人をリーダーに
+            if (parties[pId].leader === s.data.playerId) {
+                parties[pId].leader = parties[pId].members[0];
+            }
+            broadcastPartyUpdate(pId);
+        }
+    }
+
+    function broadcastPartyUpdate(pId) {
+        const party = parties[pId];
+        if (!party) return;
+
+        const memberData = party.members.map(mId => {
+            const p = players[mId];
+            return {
+                id: mId,
+                name: playerNames[mId] || "Unknown",
+                hp: p?.hp || 0,
+                maxHp: p?.maxHp || 0,
+                mp: p?.mp || 0,
+                maxMp: p?.maxMp || 0,
+                level: p?.level || 1,
+                map: p?.map || "unknown"
+            };
         });
 
-        setTimeout(() => {
-            spawnEnemy(mapKey, enemy);
-        }, enemy.respawnDelay);
-    });
+        party.members.forEach(mId => {
+            const mSocket = [...io.sockets.sockets.values()].find(s => s.data.playerId === mId);
+            if (mSocket) {
+                mSocket.emit("partyUpdate", {
+                    partyId: pId,
+                    leader: party.leader,
+                    members: memberData
+                });
+            }
+        });
+    }
 
     /* ===== 切断 ===== */
     socket.on("disconnect", () => {

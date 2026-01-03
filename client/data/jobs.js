@@ -28,7 +28,7 @@ export const JOBS = {
         skills: {
             1: ['fireball'],
             3: ['ice_needle'],
-            5: ['big_fireball'],
+            5: ['big_fireball', 'heal'],
             8: ['dark_nova'],
             10: ['meteor_swarm'],
             12: ['thunder_storm'],
@@ -48,6 +48,7 @@ export const JOBS = {
             1: ['guard'],
             3: ['whirlwind'],
             5: ['iron_defense'],
+            7: ['heal'],
             10: ['shield_bash'],
             15: ['immovable_body']
         },
@@ -129,7 +130,7 @@ export const JOBS = {
         hpBonus: 200,
         reqLevel: 30,
         skills: {
-            30: ['holy_sanctuary'],
+            30: ['holy_sanctuary', 'heal'],
             35: ['shield_bash'],
             40: ['iron_defense']
         }
@@ -160,8 +161,24 @@ export const JOBS = {
         reqLevel: 30,
         skills: {
             30: ['demon_lord_summon'],
-            35: ['mega_summon'],
+            35: ['mega_summon', 'heal'],
             40: ['command_attack']
         }
+    },
+    priest: {
+        id: 'priest',
+        type: 'magical',
+        name: 'プリースト',
+        description: '神の祝福を授ける聖職者。仲間の能力を強化する。',
+        atkBonus: 5,
+        defBonus: 5,
+        hpBonus: 30,
+        skills: {
+            1: ['heal', 'attack_buff'],
+            5: ['defense_buff'],
+            10: ['speed_buff'],
+            15: ['summon_boost']
+        },
+        nextJob: 'high_priest' // 将来的な拡張用
     }
 };

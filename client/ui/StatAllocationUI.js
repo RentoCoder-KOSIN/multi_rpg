@@ -54,13 +54,13 @@ export default class StatAllocationUI extends BaseWindowUI {
             });
 
             // 効果表示
-            const effectText = this.scene.add.text(-width / 2 + 40, stat.y + 15, stat.effect, {
+            const effectText = this.scene.add.text(-width / 2 + 40, stat.y + 12, stat.effect, {
                 fontSize: '8px',
                 fontFamily: 'Press Start 2P',
                 color: '#00ff00'
             });
 
-            // +ボタン (サイズ調整: 位置をテキストと合わせる)
+            // +ボタン (判定を下にずらす: stat.y + 10)
             const plusBtn = this.scene.add.rectangle(width / 2 - 120, stat.y + 10, 60, 50, 0x00aa00)
                 .setStrokeStyle(3, 0x00ff00)
                 .setInteractive({ useHandCursor: true });
@@ -80,7 +80,7 @@ export default class StatAllocationUI extends BaseWindowUI {
                 }
             });
 
-            // +5ボタン (高さ調整)
+            // +5ボタン (判定を下にずらす: stat.y + 10)
             const plus5Btn = this.scene.add.rectangle(width / 2 - 50, stat.y + 10, 70, 50, 0x0088aa)
                 .setStrokeStyle(3, 0x00aaff)
                 .setInteractive({ useHandCursor: true });

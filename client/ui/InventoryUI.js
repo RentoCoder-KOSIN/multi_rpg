@@ -31,11 +31,21 @@ export default class InventoryUI extends BaseWindowUI {
         detailBg.fillRoundedRect(-panelWidth / 2 + 20, panelHeight / 2 - 85, panelWidth - 40, 70, 10);
         this.container.add(detailBg);
 
-        this.detailText = this.scene.add.text(0, panelHeight / 2 - 50, '十字キーで選択、Enterで装備/使用', {
+        this.detailText = this.scene.add.text(0, panelHeight / 2 - 50, '十字キーで選択、Enterで装備/使用\nDeleteで捨てる', {
             fontSize: '11px', fontFamily: '"Press Start 2P"', color: '#e0e0e0',
             wordWrap: { width: panelWidth - 60 }, align: 'center'
         }).setOrigin(0.5);
         this.container.add(this.detailText);
+
+        // ゴミ箱ボタン
+        this.trashBtn = this.scene.add.text(panelWidth / 2 - 40, panelHeight / 2 - 25, '🗑️', { fontSize: '24px' })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true });
+        this.trashBtn.on('pointerdown', (e) => {
+            if (e) e.stopPropagation();
+            this.handleItemDiscard();
+        });
+        this.container.add(this.trashBtn);
 
         // マスクエリア
         const { width: sceneWidth, height: sceneHeight } = this.scene.scale;
@@ -75,6 +85,8 @@ export default class InventoryUI extends BaseWindowUI {
             } else if (event.code === 'Enter') {
                 const itemId = this.inventory[this.selectedIndex];
                 if (itemId) this.handleItemClick(itemId);
+            } else if (event.code === 'Delete' || event.code === 'Backspace') {
+                this.handleItemDiscard();
             }
             this.updateSelection();
         });
@@ -221,5 +233,34 @@ export default class InventoryUI extends BaseWindowUI {
         if (idx > -1) player.stats.inventory.splice(idx, 1);
         player.saveStats();
         if (this.scene.playerStatsUI) this.scene.playerStatsUI.update();
+    }
+
+    handleItemDiscard() {
+        const itemId = this.inventory[this.selectedIndex];
+        if (!itemId || !this.scene.player) return;
+
+        const item = ITEMS[itemId];
+        // 装備中のアイテムは捨てられないようにする
+        if (this.scene.player.stats.equipment.weapon === itemId || this.scene.player.stats.equipment.armor === itemId) {
+            if (this.scene.notificationUI) this.scene.notificationUI.show('装備中のアイテムは捨てられません', 'error');
+            return;
+        }
+
+        const confirmDiscard = confirm(`${item.name} を捨てますか？`);
+        if (confirmDiscard) {
+            const idx = this.scene.player.stats.inventory.indexOf(itemId);
+            if (idx > -1) {
+                this.scene.player.stats.inventory.splice(idx, 1);
+                this.scene.player.saveStats();
+                if (this.scene.notificationUI) this.scene.notificationUI.show(`${item.name} を捨てました`, 'info');
+                this.refreshList();
+
+                // 選択インデックス調整
+                if (this.selectedIndex >= this.scene.player.stats.inventory.length) {
+                    this.selectedIndex = Math.max(0, this.scene.player.stats.inventory.length - 1);
+                }
+                this.updateSelection();
+            }
+        }
     }
 }

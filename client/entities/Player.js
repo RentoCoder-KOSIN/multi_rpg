@@ -137,7 +137,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         localStorage.setItem('playerStats', JSON.stringify(this.stats));
 
         if (this.scene.networkManager) {
-            this.scene.networkManager.sendPlayerStats(this.stats.hp, this.stats.maxHp, this.stats.level);
+            this.scene.networkManager.sendPlayerStats(this.stats.hp, this.stats.maxHp, this.stats.level, this.stats.mp, this.stats.maxMp);
         }
     }
 
@@ -234,8 +234,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         const skillDef = SKILLS[skillId];
-        // コスト: (現在レベル * 20) Job Exp など
-        const cost = (currentLevel + 1) * 20;
+        // コスト大幅引き上げ: (現在レベル * 100) Job Exp
+        const cost = (currentLevel + 1) * 100;
 
         if (this.stats.jobExp < cost) {
             if (this.scene.notificationUI) this.scene.notificationUI.show(`Job EXPが足りません (必要: ${cost})`, 'error');
@@ -573,10 +573,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.scene.scene.restart();
     }
 
-    setStats(hp, maxHp, level) {
+    setStats(hp, maxHp, level, mp, maxMp) {
         if (hp !== undefined) this.stats.hp = hp;
         if (maxHp !== undefined) this.stats.maxHp = maxHp;
         if (level !== undefined) this.stats.level = level;
+        if (mp !== undefined) this.stats.mp = mp;
+        if (maxMp !== undefined) this.stats.maxMp = maxMp;
 
         // 名前表示UIの更新
         if (this.nameUI) {

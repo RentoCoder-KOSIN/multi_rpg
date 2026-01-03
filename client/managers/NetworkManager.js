@@ -19,8 +19,12 @@ export default class NetworkManager {
             onEnemySpawned: null,
             onEnemyRemoved: null,
             onEnemyKilled: null,
-            onSummonUpdate: null
+            onSummonUpdate: null,
+            onPartyUpdate: null,
+            onPartyInvited: null,
+            onHealed: null
         };
+        this.partyData = null; // { partyId, leader, members: [] }
 
         // 永続的なプレイヤーIDを取得または生成
         this.playerId = localStorage.getItem('game_player_id');
@@ -137,7 +141,7 @@ export default class NetworkManager {
             console.log('[NetworkManager] Received newPlayer event:', data);
             if (data.id !== this.playerId) {
                 console.log('[NetworkManager] Adding other player:', data.id);
-                this.addOtherPlayer(data.id, data.x, data.y, data.hp, data.maxHp, data.level);
+                this.addOtherPlayer(data.id, data.x, data.y, data.hp, data.maxHp, data.level, data.mp, data.maxMp);
             } else {
                 console.log('[NetworkManager] Ignoring own player');
             }
@@ -150,7 +154,7 @@ export default class NetworkManager {
             const op = this.otherPlayers[data.id];
             if (op) {
                 if (op.setStats) {
-                    op.setStats(data.hp, data.maxHp, data.level);
+                    op.setStats(data.hp, data.maxHp, data.level, data.mp, data.maxMp);
                 }
             }
         });
@@ -161,8 +165,8 @@ export default class NetworkManager {
         this.socket.on("enemySpawned", (data) => this.spawnEnemyFromServer(data));
         this.socket.on("enemyDefeated", (data) => {
             this.removeEnemyById(data.id);
-            if (data.type && this.callbacks.onEnemyKilled && data.killedBy !== this.playerId) {
-                this.callbacks.onEnemyKilled(data.type);
+            if (data.type && this.callbacks.onEnemyKilled) {
+                this.callbacks.onEnemyKilled(data);
             }
         });
         this.socket.on("enemyMoved", (data) => {
@@ -182,6 +186,38 @@ export default class NetworkManager {
         this.socket.on("summonUpdate", (data) => {
             if (this.callbacks.onSummonUpdate) {
                 this.callbacks.onSummonUpdate(data);
+            }
+        });
+
+        // ===== パーティー関連 =====
+        this.socket.on("partyUpdate", (data) => {
+            this.partyData = data;
+            if (this.callbacks.onPartyUpdate) {
+                this.callbacks.onPartyUpdate(data);
+            }
+        });
+
+        this.socket.on("partyInvited", (data) => {
+            if (this.callbacks.onPartyInvited) {
+                this.callbacks.onPartyInvited(data);
+            }
+        });
+
+        this.socket.on("playerHealed", (data) => {
+            if (this.callbacks.onHealed) {
+                this.callbacks.onHealed(data);
+            }
+        });
+
+        this.socket.on("playerBuffApplied", (data) => {
+            if (this.callbacks.onBuffApplied) {
+                this.callbacks.onBuffApplied(data);
+            }
+        });
+
+        this.socket.on("playerSkillUsed", (data) => {
+            if (this.callbacks.onSkillUsed) {
+                this.callbacks.onSkillUsed(data);
             }
         });
 
@@ -215,7 +251,7 @@ export default class NetworkManager {
         const playersToProcess = [...this.pendingPlayers];
         this.pendingPlayers = [];
         playersToProcess.forEach(p => {
-            this.addOtherPlayer(p.id, p.x, p.y, p.hp, p.maxHp, p.level);
+            this.addOtherPlayer(p.id, p.x, p.y, p.hp, p.maxHp, p.level, p.mp, p.maxMp);
         });
 
         // pendingEnemies を処理
@@ -232,7 +268,7 @@ export default class NetworkManager {
             const playersToProcess = [...this.pendingPlayers];
             this.pendingPlayers = [];
             playersToProcess.forEach(p => {
-                this.addOtherPlayer(p.id, p.x, p.y, p.hp, p.maxHp, p.level);
+                this.addOtherPlayer(p.id, p.x, p.y, p.hp, p.maxHp, p.level, p.mp, p.maxMp);
             });
         }
 
@@ -261,15 +297,15 @@ export default class NetworkManager {
         Object.keys(players).forEach(id => {
             if (id !== this.playerId) {
                 const p = players[id];
-                this.addOtherPlayer(id, p.x, p.y, p.hp, p.maxHp, p.level);
+                this.addOtherPlayer(id, p.x, p.y, p.hp, p.maxHp, p.level, p.mp, p.maxMp);
             }
         });
     }
 
-    addOtherPlayer(id, x, y, hp = 100, maxHp = 100, level = 1) {
+    addOtherPlayer(id, x, y, hp = 100, maxHp = 100, level = 1, mp = 50, maxMp = 50) {
         console.log('[NetworkManager] addOtherPlayer called:', id, 'at', x, y, 'scene active:', this.scene?.sys?.isActive());
         if (!this.scene || !this.scene.sys || !this.scene.sys.isActive()) {
-            this.pendingPlayers.push({ id, x, y, hp, maxHp, level });
+            this.pendingPlayers.push({ id, x, y, hp, maxHp, level, mp, maxMp });
             console.warn('[NetworkManager] Scene not active, queuing player:', id);
             return;
         }
@@ -280,7 +316,7 @@ export default class NetworkManager {
             if (existing.active && existing.scene === this.scene) {
                 console.log('[NetworkManager] Player already exists and active, updating position:', id);
                 existing.setPosition(x, y);
-                if (existing.setStats) existing.setStats(hp, maxHp, level);
+                if (existing.setStats) existing.setStats(hp, maxHp, level, mp, maxMp);
                 return existing;
             } else {
                 console.log('[NetworkManager] Existing player sprite is dead or from old scene, re-creating:', id);
@@ -291,7 +327,7 @@ export default class NetworkManager {
 
         console.log('[NetworkManager] Creating new player:', id);
         const other = new Player(this.scene, x, y, false);
-        if (other.setStats) other.setStats(hp, maxHp, level);
+        if (other.setStats) other.setStats(hp, maxHp, level, mp, maxMp);
         this.otherPlayers[id] = other;
 
         if (this.callbacks.onPlayerAdded) {
@@ -366,7 +402,7 @@ export default class NetworkManager {
     }
 
     sendPlayerPosition(x, y) { if (this.socket && this.socket.connected) this.socket.emit('playerMove', { x, y }); }
-    sendPlayerStats(hp, maxHp, level) { if (this.socket && this.socket.connected) this.socket.emit('playerStatsUpdate', { hp, maxHp, level }); }
+    sendPlayerStats(hp, maxHp, level, mp, maxMp) { if (this.socket && this.socket.connected) this.socket.emit('playerStatsUpdate', { hp, maxHp, level, mp, maxMp }); }
     sendSummonUpdate(data) { if (this.socket && this.socket.connected) this.socket.emit('summonUpdate', data); }
     changeMap(mapKey, x, y) {
         if (this.socket && this.socket.connected) {
@@ -378,6 +414,24 @@ export default class NetworkManager {
         }
     }
     notifyEnemyDefeat(enemyId) { if (this.socket && this.socket.connected) this.socket.emit('enemyDefeat', { id: enemyId }); }
+
+    // パーティー系
+    inviteToParty(targetId) {
+        console.log('[NetworkManager] inviteToParty:', targetId);
+        if (this.socket && this.socket.connected) this.socket.emit('partyInvite', { targetId });
+    }
+    joinParty(partyId) {
+        console.log('[NetworkManager] joinParty:', partyId);
+        if (this.socket && this.socket.connected) this.socket.emit('partyJoin', { partyId });
+    }
+    leaveParty() {
+        console.log('[NetworkManager] leaveParty');
+        if (this.socket && this.socket.connected) this.socket.emit('partyLeave');
+    }
+    healPlayer(targetId, amount) { if (this.socket && this.socket.connected) this.socket.emit('playerHeal', { targetId, amount }); }
+    healPlayer(targetId, amount) { if (this.socket && this.socket.connected) this.socket.emit('playerHeal', { targetId, amount }); }
+    sendBuff(targetId, type, value, duration) { if (this.socket && this.socket.connected) this.socket.emit('playerBuff', { targetId, type, value, duration }); }
+    sendSkillUse(skillId, x, y, direction) { if (this.socket && this.socket.connected) this.socket.emit('playerSkill', { skillId, x, y, direction }); }
 
     setCallback(name, callback) { if (this.callbacks.hasOwnProperty(name)) this.callbacks[name] = callback; }
 

@@ -1,7 +1,7 @@
 import Enemy from './Enemy.js';
 
 export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
-    constructor(scene, x, y, owner, type = 'normal') {
+    constructor(scene, x, y, owner, type = 'normal', skillLevel = 1) {
         // type: 'normal', 'mega', 'demon_lord'
         let texture = 'slime';
         if (type === 'mega' || type === 'mega_summon') texture = 'dragon_boss';
@@ -45,11 +45,14 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
             atkBaseMult = 5;
         }
 
-        this.maxHp = baseHp;
-        this.hp = baseHp;
-        this.atk = Math.ceil(owner.stats.int * atkBaseMult + owner.stats.atk * atkMultiplier);
-        this.speed = 120 + (owner.stats.dex * 2) + speedBonus;
-        this.searchRange = (350 + (owner.stats.int * 15)) * (type !== 'normal' ? 1.5 : 1);
+        // スキルレベルによる倍率 (レベル1で1.0倍、レベル10で2.25倍程度)
+        const levelMult = 1 + (skillLevel - 1) * 0.15;
+
+        this.maxHp = Math.ceil(baseHp * levelMult);
+        this.hp = this.maxHp;
+        this.atk = Math.ceil((owner.stats.int * atkBaseMult + owner.stats.atk * atkMultiplier) * levelMult);
+        this.speed = 120 + (owner.stats.dex * 2) + speedBonus + (skillLevel * 5);
+        this.searchRange = (350 + (owner.stats.int * 15)) * (type !== 'normal' ? 1.5 : 1) * (1 + (skillLevel - 1) * 0.05);
 
         // クールダウン用
         this.lastAttackTime = 0;
@@ -113,6 +116,11 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
             // 精霊の共鳴 (パッシブ): 維持コスト-50%
             if (this.owner.stats.unlockedSkills?.includes('spirit_link')) {
                 upkeepCost = Math.ceil(upkeepCost * 0.5);
+            }
+
+            // 聖なる武器: 維持コスト0
+            if (this.owner.stats.equipment && this.owner.stats.equipment.weapon === 'holy_weapon') {
+                upkeepCost = 0;
             }
 
             if (this.owner && this.owner.stats) {

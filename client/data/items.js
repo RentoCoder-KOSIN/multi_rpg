@@ -1,5 +1,18 @@
 export const ITEMS = {
-    // --- 武器 ---
+    // --- 武器 --
+    holy_weapon: {
+        id: 'holy_weapon',
+        name: '聖なる武器',
+        type: 'weapon',
+        atk: 15,
+        matk: 15,
+        def: 15,
+        speed: 5,
+        critChance: 0.1,
+        price: 999999,
+        description: 'これを装備しているものはMPが減らず、クールタイムが短くなる'
+    },
+
     beginner_sword: {
         id: 'beginner_sword',
         name: '初心者の剣',
