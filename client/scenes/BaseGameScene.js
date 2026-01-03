@@ -637,6 +637,11 @@ export default class BaseGameScene extends Phaser.Scene {
         if (this.playerNameUI) this.playerNameUI.updatePosition();
         if (this.playerStatsUI) this.playerStatsUI.update();
 
+        // バフの期限チェック
+        if (this.player) {
+            this.player.updateBuffs();
+        }
+
         // --- MP自然回復 ---
         if (this.player && this.player.stats) {
             // 聖なる武器装備時は常にMAX
@@ -817,73 +822,77 @@ export default class BaseGameScene extends Phaser.Scene {
 
         if (isPartySkill) {
             // パーティーメンバー（自分を含む）を回復/バフ
-            const partyIds = this.networkManager.partyData?.members.map(m => m.id) || [this.networkManager.getPlayerId()];
-            const targets = [];
+            const myId = this.networkManager.getPlayerId();
 
-            // 自分
-            targets.push(player);
+            // パーティメンバーIDリストを取得
+            const partyMemberIds = this.networkManager.partyData?.members?.map(m => m.id) || [myId];
 
-            // 他プレイヤー
-            const otherPlayers = this.networkManager.getOtherPlayers();
-            Object.keys(otherPlayers).forEach(id => {
-                if (partyIds.includes(id)) {
-                    targets.push(otherPlayers[id]);
-                }
-            });
+            // 自分自身を含むターゲットリスト
+            const targets = [
+                { player: player, id: myId, dist: 0 }
+            ];
 
-            targets.forEach(target => {
-                // targetId を特定
-                let targetId = null;
-                if (target === player) {
-                    targetId = this.networkManager.getPlayerId();
-                } else {
-                    targetId = Object.keys(otherPlayers).find(id => otherPlayers[id] === target);
-                }
+            // 他のパーティメンバーを追加
+            partyMemberIds.forEach(memberId => {
+                if (memberId === myId) return; // 自分は既に追加済み
 
-                if (!targetId) return;
+                const remotePlayer = this.remotePlayers.get(memberId);
+                if (!remotePlayer || !remotePlayer.active) return;
 
-                const dx = target.x - player.x;
-                const dy = target.y - (player.y - 20);
+                const dx = remotePlayer.x - player.x;
+                const dy = remotePlayer.y - player.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
 
                 if (dist < range) {
-                    if (skillId === 'heal') {
-                        // 回復量計算: (基本回復量 + INT * 2) * スキルレベルボーナス
-                        const baseHeal = skill.healPower || 50;
-                        const intBonus = (player.stats.int || 0) * 2;
-                        const healAmount = Math.ceil((baseHeal + intBonus) * healBonus);
-                        target.stats.hp = Math.min(target.stats.maxHp, target.stats.hp + healAmount);
+                    targets.push({ player: remotePlayer, id: memberId, dist });
+                }
+            });
 
-                        // エフェクト
-                        const healText = this.add.text(target.x, target.y - 40, `+${healAmount}`, {
-                            fontSize: '14px', color: '#00ff00', fontFamily: '"Press Start 2P"'
-                        }).setOrigin(0.5);
-                        this.tweens.add({ targets: healText, y: target.y - 80, alpha: 0, duration: 800, onComplete: () => healText.destroy() });
-                        this.showHitEffect(target.x, target.y, 0x00ff00);
+            // 各ターゲットにスキル効果を適用
+            targets.forEach(({ player: target, id: targetId, dist }) => {
+                if (skillId === 'heal') {
+                    const skillLevel = player.stats.skillLevels?.[skillId] || 1;
+                    const int = player.stats.int || 5;
+                    const baseHeal = skill.heal || 50;
+                    const healAmount = Math.ceil(baseHeal * (1 + (int * 0.1)) * (1 + (skillLevel - 1) * 0.2));
 
-                        // HP同期
-                        if (target === player) {
-                            this.networkManager.sendPlayerStats(player.stats.hp, player.stats.maxHp);
-                        } else {
-                            this.networkManager.healPlayer(targetId, healAmount);
-                        }
+                    target.stats.hp = Math.min(target.stats.maxHp, target.stats.hp + healAmount);
+                    const healText = this.add.text(target.x, target.y - 40, `+${healAmount}`, {
+                        fontSize: '16px', color: '#00ff00', fontFamily: '"Press Start 2P"', stroke: '#000', strokeThickness: 3
+                    }).setOrigin(0.5);
+                    this.tweens.add({ targets: healText, y: target.y - 80, alpha: 0, duration: 800, onComplete: () => healText.destroy() });
+                    this.showHitEffect(target.x, target.y, 0x00ff00);
 
-                    } else if (skillId === 'attack_buff') {
-                        // 攻撃力 +50%
-                        const buffValue = Math.ceil(target.stats.atk * 0.5);
-                        this.networkManager.sendBuff(targetId, 'attack_buff', buffValue, 30000);
-                    } else if (skillId === 'defense_buff') {
-                        // 防御力 +50%
-                        const buffValue = Math.ceil(target.stats.def * 0.5);
-                        this.networkManager.sendBuff(targetId, 'defense_buff', buffValue, 30000);
-                    } else if (skillId === 'speed_buff') {
-                        // 速度 +50
-                        this.networkManager.sendBuff(targetId, 'speed_buff', 50, 30000);
-                    } else if (skillId === 'summon_boost') {
-                        // 召喚獣強化
-                        const buffValue = Math.ceil(player.stats.int * 2); // 知力依存
-                        this.networkManager.sendBuff(targetId, 'summon_power_up', buffValue, 45000);
+                    // HP同期
+                    if (target === player) {
+                        this.networkManager.sendPlayerStats(player.stats.hp, player.stats.maxHp);
+                    } else {
+                        this.networkManager.healPlayer(targetId, healAmount);
                     }
+
+                } else if (skillId === 'attack_buff') {
+                    // 攻撃力 +50%
+                    const buffValue = Math.ceil(target.stats.atk * 0.5);
+                    target.applyBuff('attack_buff', buffValue, 30000);
+                    this.applyBuffVisual(target, 'attack_buff', buffValue, 30000);
+                    this.networkManager.sendBuff(targetId, 'attack_buff', buffValue, 30000);
+                } else if (skillId === 'defense_buff') {
+                    // 防御力 +50%
+                    const buffValue = Math.ceil(target.stats.def * 0.5);
+                    target.applyBuff('defense_buff', buffValue, 30000);
+                    this.applyBuffVisual(target, 'defense_buff', buffValue, 30000);
+                    this.networkManager.sendBuff(targetId, 'defense_buff', buffValue, 30000);
+                } else if (skillId === 'speed_buff') {
+                    // 速度 +50
+                    target.applyBuff('speed_buff', 50, 30000);
+                    this.applyBuffVisual(target, 'speed_buff', 50, 30000);
+                    this.networkManager.sendBuff(targetId, 'speed_buff', 50, 30000);
+                } else if (skillId === 'summon_boost') {
+                    // 召喚獣強化
+                    const buffValue = Math.ceil(player.stats.int * 2); // 知力依存
+                    target.applyBuff('summon_power_up', buffValue, 45000);
+                    this.applyBuffVisual(target, 'summon_power_up', buffValue, 45000);
+                    this.networkManager.sendBuff(targetId, 'summon_power_up', buffValue, 45000);
                 }
             });
 
@@ -1072,7 +1081,7 @@ export default class BaseGameScene extends Phaser.Scene {
                 quantity: 15
             });
             this.time.delayedCall(1200, () => emitter.destroy());
-        } else if (skillId === 'sonic_wave' || skillId === 'ice_needle') {
+        } else if (skillId === 'sonic_wave' || skillId === 'ice_needle' || skillId === 'holy_arrow') {
             // 射出系
             const color = skill.color || 0x00ffff;
             const range = skill.range || 200;
@@ -1088,15 +1097,21 @@ export default class BaseGameScene extends Phaser.Scene {
             emitter.explode(10, startX, startY);
 
             // 衝撃波本体
-            const wave = this.add.arc(startX, startY, 30, -30, 30, false, color, 0.8);
-            wave.setAngle(direction === 1 ? 0 : 180);
+            let projectile;
+            if (skillId === 'holy_arrow') {
+                projectile = this.add.rectangle(startX, startY, 40, 4, color, 1);
+            } else {
+                projectile = this.add.arc(startX, startY, 30, -30, 30, false, color, 0.8);
+            }
+
+            projectile.setAngle(direction === 1 ? 0 : 180);
             this.tweens.add({
-                targets: wave,
+                targets: projectile,
                 x: startX + (direction * range),
-                scale: 2,
+                scale: 1.5,
                 alpha: 0,
                 duration: 500,
-                onComplete: () => wave.destroy()
+                onComplete: () => projectile.destroy()
             });
         }
         else {
@@ -1114,6 +1129,127 @@ export default class BaseGameScene extends Phaser.Scene {
             rotation: 1,
             duration: 200,
             onComplete: () => flash.destroy()
+        });
+    }
+
+    applyBuffVisual(target, buffType, buffValue, duration) {
+        // バフアイコンの定義
+        const buffIcons = {
+            'attack_buff': { emoji: '⚔️', color: 0xff4444, name: '攻撃力UP' },
+            'defense_buff': { emoji: '🛡️', color: 0x4444ff, name: '防御力UP' },
+            'speed_buff': { emoji: '💨', color: 0x44ff44, name: '速度UP' },
+            'summon_power_up': { emoji: '🐲', color: 0xff44ff, name: '召喚強化' }
+        };
+
+        const buffInfo = buffIcons[buffType];
+        if (!buffInfo) return;
+
+        // バフアイコンを表示（プレイヤーの上）
+        const buffIcon = this.add.container(target.x, target.y - 60);
+
+        // 背景円
+        const bg = this.add.circle(0, 0, 18, buffInfo.color, 0.8);
+        const bgStroke = this.add.circle(0, 0, 18, 0xffffff, 0).setStrokeStyle(2, 0xffffff, 1);
+
+        // アイコン
+        const icon = this.add.text(0, 0, buffInfo.emoji, {
+            fontSize: '20px'
+        }).setOrigin(0.5);
+
+        buffIcon.add([bg, bgStroke, icon]);
+        buffIcon.setDepth(1000);
+
+        // バフアイコンをプレイヤーに追従させる
+        if (!target.buffIcons) target.buffIcons = [];
+        target.buffIcons.push({ container: buffIcon, type: buffType });
+
+        // アイコンの位置を更新するループ
+        const updateIconPosition = () => {
+            if (buffIcon.active && target.active) {
+                const index = target.buffIcons.findIndex(b => b.container === buffIcon);
+                buffIcon.setPosition(target.x + (index * 25) - 12, target.y - 60);
+            }
+        };
+
+        this.events.on('update', updateIconPosition);
+
+        // 出現アニメーション
+        buffIcon.setScale(0);
+        this.tweens.add({
+            targets: buffIcon,
+            scale: 1,
+            duration: 300,
+            ease: 'Back.easeOut'
+        });
+
+        // パルスアニメーション
+        this.tweens.add({
+            targets: bg,
+            scale: { from: 1, to: 1.2 },
+            alpha: { from: 0.8, to: 0.5 },
+            duration: 800,
+            yoyo: true,
+            repeat: -1
+        });
+
+        // エフェクト（光の粒子）
+        const particles = this.add.particles(target.x, target.y - 40, 'water', {
+            speed: { min: 20, max: 40 },
+            scale: { start: 0.3, end: 0 },
+            alpha: { start: 0.8, end: 0 },
+            lifespan: 1000,
+            blendMode: 'ADD',
+            tint: buffInfo.color,
+            frequency: 100,
+            quantity: 2
+        });
+        particles.setDepth(999);
+
+        // 通知表示
+        if (this.notificationUI) {
+            this.notificationUI.show(`${buffInfo.name} +${buffValue}`, 'success');
+        }
+
+        // バフテキスト表示
+        const buffText = this.add.text(target.x, target.y - 50, `${buffInfo.name}`, {
+            fontSize: '12px',
+            color: '#ffff00',
+            fontFamily: '"Press Start 2P"',
+            stroke: '#000',
+            strokeThickness: 3
+        }).setOrigin(0.5);
+        buffText.setDepth(1001);
+
+        this.tweens.add({
+            targets: buffText,
+            y: target.y - 90,
+            alpha: 0,
+            duration: 1500,
+            onComplete: () => buffText.destroy()
+        });
+
+        // 持続時間後に削除
+        this.time.delayedCall(duration, () => {
+            // アイコンリストから削除
+            if (target.buffIcons) {
+                const index = target.buffIcons.findIndex(b => b.container === buffIcon);
+                if (index !== -1) target.buffIcons.splice(index, 1);
+            }
+
+            // フェードアウト
+            this.tweens.add({
+                targets: buffIcon,
+                alpha: 0,
+                scale: 0,
+                duration: 300,
+                onComplete: () => {
+                    buffIcon.destroy();
+                    this.events.off('update', updateIconPosition);
+                }
+            });
+
+            particles.stop();
+            this.time.delayedCall(2000, () => particles.destroy());
         });
     }
 

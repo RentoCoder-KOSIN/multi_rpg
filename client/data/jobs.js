@@ -28,7 +28,7 @@ export const JOBS = {
         skills: {
             1: ['fireball'],
             3: ['ice_needle'],
-            5: ['big_fireball', 'heal'],
+            5: ['big_fireball'],
             8: ['dark_nova'],
             10: ['meteor_swarm'],
             12: ['thunder_storm'],
@@ -48,7 +48,7 @@ export const JOBS = {
             1: ['guard'],
             3: ['whirlwind'],
             5: ['iron_defense'],
-            7: ['heal'],
+            7: [],
             10: ['shield_bash'],
             15: ['immovable_body']
         },
@@ -130,7 +130,7 @@ export const JOBS = {
         hpBonus: 200,
         reqLevel: 30,
         skills: {
-            30: ['holy_sanctuary', 'heal'],
+            30: ['holy_sanctuary'],
             35: ['shield_bash'],
             40: ['iron_defense']
         }
@@ -161,7 +161,7 @@ export const JOBS = {
         reqLevel: 30,
         skills: {
             30: ['demon_lord_summon'],
-            35: ['mega_summon', 'heal'],
+            35: ['mega_summon'],
             40: ['command_attack']
         }
     },
@@ -175,6 +175,7 @@ export const JOBS = {
         hpBonus: 30,
         skills: {
             1: ['heal', 'attack_buff'],
+            3: ['holy_arrow'],
             5: ['defense_buff'],
             10: ['speed_buff'],
             15: ['summon_boost']

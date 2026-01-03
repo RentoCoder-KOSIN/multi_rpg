@@ -278,13 +278,15 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
         const socketToUse = socket || this.socket;
 
-        // サーバー管理の敵の場合は、サーバーに撃破を通知
-        if (this.isServerManaged && socketToUse && this.id) {
-            socketToUse.emit('enemyDefeat', { id: this.id });
-        }
+
+        // サーバー管理の敵の場合は、撃破報告はenemyHitで行われるため、ここでの明示的な報告は不要
+        // if (this.isServerManaged && socketToUse && this.id) {
+        //    socketToUse.emit('enemyDefeat', { id: this.id });
+        // }
 
         if (this.moveEvent) this.moveEvent.remove();
-        if (this.scene.questManager) this.scene.questManager.onEnemyKilled(this.type);
+        // クエスト進行はサーバーからの enemyDefeated イベントで行うため削除
+        // if (this.scene.questManager) this.scene.questManager.onEnemyKilled(this.type);
 
         // サーバー管理の敵の場合は、removeEnemyByIdで削除されるため
         // ここでは配列操作を行わない

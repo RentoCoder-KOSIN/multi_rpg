@@ -83,8 +83,9 @@ export default class InventoryUI extends BaseWindowUI {
             } else if (event.code === 'ArrowUp') {
                 if (this.selectedIndex - itemsPerRow >= 0) this.selectedIndex -= itemsPerRow;
             } else if (event.code === 'Enter') {
-                const itemId = this.inventory[this.selectedIndex];
-                if (itemId) this.handleItemClick(itemId);
+                if (this.inventory[this.selectedIndex]) {
+                    this.handleItemClick(this.selectedIndex);
+                }
             } else if (event.code === 'Delete' || event.code === 'Backspace') {
                 this.handleItemDiscard();
             }
@@ -116,7 +117,11 @@ export default class InventoryUI extends BaseWindowUI {
             return;
         }
 
-        this.inventory.forEach((itemId, index) => {
+        this.inventory.forEach((invItem, index) => {
+            // 文字列の場合とオブジェクトの場合両方に対応
+            const itemId = (typeof invItem === 'string') ? invItem : invItem.id;
+            const count = (typeof invItem === 'string') ? 1 : (invItem.count || 1);
+
             const item = ITEMS[itemId];
             if (!item) return;
 
@@ -137,7 +142,17 @@ export default class InventoryUI extends BaseWindowUI {
                 fontSize: '9px', fontFamily: '"Press Start 2P"', color: '#ffffff'
             }).setOrigin(0.5);
 
+            // 個数表示 (スタック可能な場合)
+            let countText = null;
+            if (count > 1) {
+                countText = this.scene.add.text(35, 35, `x${count}`, {
+                    fontSize: '10px', fontFamily: '"Press Start 2P"', color: '#ffffff', stroke: '#000', strokeThickness: 2
+                }).setOrigin(1, 1);
+            }
+
             slot.add([slotBg, itemIcon, nameText]);
+            if (countText) slot.add(countText);
+
             this.listContainer.add(slot);
 
             // インタラクティブ化 (タップ対応)
@@ -147,10 +162,10 @@ export default class InventoryUI extends BaseWindowUI {
                 if (event) event.stopPropagation();
                 this.selectedIndex = index;
                 this.updateSelection();
-                this.handleItemClick(itemId);
+                this.handleItemClick(index); // indexを渡す
             });
 
-            this.slots.push({ bg: slotBg, item: item, container: slot });
+            this.slots.push({ bg: slotBg, item: item, container: slot, id: itemId }); // idも保持
         });
         this.updateSelection();
     }
@@ -174,6 +189,7 @@ export default class InventoryUI extends BaseWindowUI {
         if (this.slots.length === 0) return;
 
         this.slots.forEach((slot, index) => {
+            // 文字列ID比較 (オブジェクト化されたインベントリでも item.id は文字列)
             const isEquipped = this.scene.player.stats.equipment.weapon === slot.item.id ||
                 this.scene.player.stats.equipment.armor === slot.item.id;
 
@@ -200,21 +216,34 @@ export default class InventoryUI extends BaseWindowUI {
         });
     }
 
-    handleItemClick(itemId) {
+    handleItemClick(index) {
+        // indexを受け取るように変更
+        if (typeof index !== 'number') return; // 安全策
+
+        const invItem = this.inventory[index];
+        if (!invItem) return;
+
+        const itemId = (typeof invItem === 'string') ? invItem : invItem.id;
         const item = ITEMS[itemId];
+
         if (!item || !this.scene.player) return;
 
         if (item.type === 'weapon' || item.type === 'armor') {
             this.scene.player.equipItem(itemId);
         } else {
-            this.useItem(itemId);
+            this.useItem(index);
         }
         this.refreshList();
     }
 
-    useItem(itemId) {
+    useItem(index) {
+        const invItem = this.inventory[index];
+        if (!invItem) return;
+
+        const itemId = (typeof invItem === 'string') ? invItem : invItem.id;
         const item = ITEMS[itemId];
         const player = this.scene.player;
+
         if (!item || !player) return;
 
         const heal = item.heal || item.stats?.heal || 0;
@@ -229,14 +258,27 @@ export default class InventoryUI extends BaseWindowUI {
             if (this.scene.notificationUI) this.scene.notificationUI.show(`MPが ${healMp} 回復した！`, "success");
         }
 
-        const idx = player.stats.inventory.indexOf(itemId);
-        if (idx > -1) player.stats.inventory.splice(idx, 1);
+        // 消費処理 (個数減算 or 削除)
+        if (typeof invItem === 'object' && invItem.count > 1) {
+            invItem.count--;
+        } else {
+            player.stats.inventory.splice(index, 1);
+            // インデックス調整
+            if (this.selectedIndex >= player.stats.inventory.length) {
+                this.selectedIndex = Math.max(0, player.stats.inventory.length - 1);
+            }
+        }
+
         player.saveStats();
         if (this.scene.playerStatsUI) this.scene.playerStatsUI.update();
     }
 
     handleItemDiscard() {
-        const itemId = this.inventory[this.selectedIndex];
+        if (this.selectedIndex < 0 || this.selectedIndex >= this.inventory.length) return;
+
+        const invItem = this.inventory[this.selectedIndex];
+        const itemId = (typeof invItem === 'string') ? invItem : invItem.id;
+
         if (!itemId || !this.scene.player) return;
 
         const item = ITEMS[itemId];
@@ -248,19 +290,22 @@ export default class InventoryUI extends BaseWindowUI {
 
         const confirmDiscard = confirm(`${item.name} を捨てますか？`);
         if (confirmDiscard) {
-            const idx = this.scene.player.stats.inventory.indexOf(itemId);
-            if (idx > -1) {
-                this.scene.player.stats.inventory.splice(idx, 1);
-                this.scene.player.saveStats();
-                if (this.scene.notificationUI) this.scene.notificationUI.show(`${item.name} を捨てました`, 'info');
-                this.refreshList();
+            // 消費処理 (個数減算 or 削除) - 捨てる場合は1個ずつ
+            if (typeof invItem === 'object' && invItem.count > 1) {
+                invItem.count--;
+            } else {
+                this.scene.player.stats.inventory.splice(this.selectedIndex, 1);
 
                 // 選択インデックス調整
                 if (this.selectedIndex >= this.scene.player.stats.inventory.length) {
                     this.selectedIndex = Math.max(0, this.scene.player.stats.inventory.length - 1);
                 }
-                this.updateSelection();
             }
+
+            this.scene.player.saveStats();
+            if (this.scene.notificationUI) this.scene.notificationUI.show(`${item.name} を捨てました`, 'info');
+            this.refreshList();
+            this.updateSelection();
         }
     }
 }

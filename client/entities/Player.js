@@ -34,6 +34,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         // スキルクールダウン管理用
         this.skillCooldowns = {};
 
+        // バフ管理用
+        this.activeBuffs = {}; // { buffType: { value, endTime } }
+
         // ステータス初期化
         this.initializeStats();
     }
@@ -73,7 +76,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         };
 
         this.applyEquipmentStats(); // 装備中のステータスを反映
-        // this.updateSkillsByJob(); // 手動解放になったため廃止
+
+        // インベントリのマイグレーション (文字列配列 -> オブジェクト配列)
+        if (this.stats.inventory.length > 0 && typeof this.stats.inventory[0] === 'string') {
+            this.stats.inventory = this.stats.inventory.map(id => ({ id, count: 1 }));
+        }
+
         this.saveStats();
     }
 
@@ -184,13 +192,34 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
-    addItem(itemId) {
+    addItem(itemId, amount = 1) {
         if (!this.isLocal || !ITEMS[itemId]) return;
-        this.stats.inventory.push(itemId);
-        this.saveStats();
-        if (this.scene.notificationUI) {
-            this.scene.notificationUI.show(`アイテム入手: ${ITEMS[itemId].name}`, 'success');
+        const itemDef = ITEMS[itemId];
+
+        // 武器と防具以外はスタック可能
+        const isStackable = itemDef.type !== 'weapon' && itemDef.type !== 'armor';
+
+        if (isStackable) {
+            const existingItem = this.stats.inventory.find(i => i.id === itemId);
+            if (existingItem) {
+                existingItem.count = (existingItem.count || 1) + amount;
+                // 最大99個まで? (必要なら制限を追加)
+            } else {
+                this.stats.inventory.push({ id: itemId, count: amount });
+            }
+            if (this.scene.notificationUI) {
+                this.scene.notificationUI.show(`アイテム入手: ${itemDef.name} x${amount}`, 'success');
+            }
+        } else {
+            // スタック不可アイテムは個別に追記
+            for (let i = 0; i < amount; i++) {
+                this.stats.inventory.push({ id: itemId, count: 1 });
+            }
+            if (this.scene.notificationUI) {
+                this.scene.notificationUI.show(`アイテム入手: ${itemDef.name}`, 'success');
+            }
         }
+        this.saveStats();
     }
 
     unlockSkill(skillId) {
@@ -369,6 +398,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
      */
     getDamage(multiplier = 1, target = null) {
         let atk = this.stats.atk;
+
+        // バフ効果を適用
+        if (this.activeBuffs['attack_buff']) {
+            atk += this.activeBuffs['attack_buff'].value;
+        }
+
         const weapon = ITEMS[this.stats.equipment.weapon];
 
         // 武器独自の威力計算ロジックがあれば上書き/追加
@@ -385,6 +420,55 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         return { amount, isCrit };
+    }
+
+    /**
+     * バフを適用
+     */
+    applyBuff(buffType, value, duration) {
+        const now = Date.now();
+        this.activeBuffs[buffType] = {
+            value: value,
+            endTime: now + duration
+        };
+
+        // バフに応じてステータスを更新
+        if (buffType === 'speed_buff') {
+            this.speed = 150 + this.stats.speedBonus + value;
+        } else if (buffType === 'defense_buff') {
+            // 防御力バフは getDamage 相当のメソッドで参照
+        }
+    }
+
+    /**
+     * 期限切れのバフを削除
+     */
+    updateBuffs() {
+        const now = Date.now();
+        let buffExpired = false;
+
+        Object.keys(this.activeBuffs).forEach(buffType => {
+            if (this.activeBuffs[buffType].endTime <= now) {
+                delete this.activeBuffs[buffType];
+                buffExpired = true;
+            }
+        });
+
+        // バフが切れたら速度を再計算
+        if (buffExpired && !this.activeBuffs['speed_buff']) {
+            this.speed = 150 + this.stats.speedBonus;
+        }
+    }
+
+    /**
+     * 現在の防御力を取得（バフ込み）
+     */
+    getDefense() {
+        let def = this.stats.def;
+        if (this.activeBuffs['defense_buff']) {
+            def += this.activeBuffs['defense_buff'].value;
+        }
+        return def;
     }
 
     equipItem(itemId) {
