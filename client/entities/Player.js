@@ -86,23 +86,49 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     setJob(jobId) {
         if (!this.isLocal || !JOBS[jobId]) return;
 
-        const oldJobId = this.stats.job;
-        const oldJob = JOBS[oldJobId];
         const newJob = JOBS[jobId];
-
-        // 以前のジョブボーナスを削除し、新しいボーナスを適用
-        this.stats.atk = (this.stats.atk - (oldJob?.atkBonus || 0)) + newJob.atkBonus;
-        this.stats.def = (this.stats.def - (oldJob?.defBonus || 0)) + newJob.defBonus;
-        this.stats.maxHp = (this.stats.maxHp - (oldJob?.hpBonus || 0)) + newJob.hpBonus;
-        this.stats.hp = Math.min(this.stats.hp, this.stats.maxHp);
-
         this.stats.job = jobId;
-        this.updateSkillsByJob();
+
+        this.applyEquipmentStats(); // ボーナスを含めて再計算
+        this.stats.hp = this.stats.maxHp;
+        this.stats.mp = this.stats.maxMp;
+
         this.saveStats();
 
         if (this.scene.notificationUI) {
             this.scene.notificationUI.show(`ジョブを${newJob.name}に変更しました！`, 'success');
         }
+    }
+
+    promoteJob(newJobId) {
+        if (!this.isLocal || !JOBS[newJobId]) return false;
+        const currentJobData = JOBS[this.stats.job];
+        const newJobData = JOBS[newJobId];
+
+        // 条件チェック
+        if (this.stats.level < (newJobData.reqLevel || 30)) {
+            if (this.scene.notificationUI) this.scene.notificationUI.show(`レベルが ${newJobData.reqLevel || 30} 足りません！`, 'error');
+            return false;
+        }
+
+        if (currentJobData.nextJob !== newJobId) {
+            return false;
+        }
+
+        this.stats.job = newJobId;
+
+        // 転職ボーナス
+        this.stats.statPoints += 20;
+
+        this.applyEquipmentStats();
+        this.stats.hp = this.stats.maxHp;
+        this.stats.mp = this.stats.maxMp;
+        this.saveStats();
+
+        if (this.scene.notificationUI) {
+            this.scene.notificationUI.show(`祝！上位職「${newJobData.name}」に転職しました！`, 'warning');
+        }
+        return true;
     }
 
     saveStats() {
@@ -268,19 +294,42 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // 派生ステータスの基礎値を計算
         const jobDef = JOBS[this.stats.job];
+        const jobAtkBonus = jobDef?.atkBonus || 0;
+        const jobDefBonus = jobDef?.defBonus || 0;
+        const jobHpBonus = jobDef?.hpBonus || 0;
+
+        // 注: ここでジョブ固有のボーナス(jobDefBonus等)が加算されます
         if (jobDef && jobDef.type === 'magical') {
-            this.stats.atk = 5 + (int * 2);  // INT 1 = ATK +2 (魔法職)
+            this.stats.atk = 5 + (int * 2) + jobAtkBonus;  // INT 1 = ATK +2 + Job Bonus
         } else {
-            this.stats.atk = 5 + (str * 2);  // STR 1 = ATK +2 (物理職)
+            this.stats.atk = 5 + (str * 2) + jobAtkBonus;  // STR 1 = ATK +2 + Job Bonus
         }
-        this.stats.def = 3 + Math.floor(vit * 0.5);  // VIT 1 = DEF +0.5
-        this.stats.maxHp = 80 + (vit * 10);  // VIT 1 = HP +10
-        this.stats.maxMp = 30 + (men * 5);  // MEN 1 = MP +5
+        this.stats.def = 3 + Math.floor(vit * 0.5) + jobDefBonus;
+        this.stats.maxHp = 80 + (vit * 10) + jobHpBonus;
+        this.stats.maxMp = 30 + (men * 5);
+
+        // --- パッシブスキルの効果を適用 ---
+        const unlocked = this.stats.unlockedSkills || [];
+
+        // 不屈の闘志: 攻撃力+10%
+        if (unlocked.includes('fighting_spirit')) {
+            this.stats.atk = Math.ceil(this.stats.atk * 1.1);
+        }
+        // 魔力の源泉: 最大MP+50
+        if (unlocked.includes('mana_well')) {
+            this.stats.maxMp += 50;
+        }
+        // 金剛の体: 防御力+15%
+        if (unlocked.includes('immovable_body')) {
+            this.stats.def = Math.ceil(this.stats.def * 1.15);
+        }
+        // 風の如く: 移動速度+30
+        const speedSkillBonus = unlocked.includes('wind_walker') ? 30 : 0;
 
         // 特殊ステータスの基礎値
-        this.stats.critChance = dex * 0.01;  // DEX 1 = クリティカル率 +1%
+        this.stats.critChance = dex * 0.01;
         this.stats.lifesteal = 0;
-        this.stats.speedBonus = dex * 2;  // DEX 1 = 速度 +2
+        this.stats.speedBonus = (dex * 2) + speedSkillBonus;
         this.stats.expMultiplier = 1.0;
 
         const weapon = ITEMS[this.stats.equipment.weapon];

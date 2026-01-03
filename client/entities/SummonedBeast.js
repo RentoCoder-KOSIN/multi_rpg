@@ -1,34 +1,54 @@
 import Enemy from './Enemy.js';
 
 export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
-    constructor(scene, x, y, owner, isMega = false) {
-        // メガサモンの場合は見た目を変える (本来は texture を変えるが、ここでは tint と scale で対応)
-        super(scene, x, y, isMega ? 'dragon_boss' : 'slime');
+    constructor(scene, x, y, owner, type = 'normal') {
+        // type: 'normal', 'mega', 'demon_lord'
+        let texture = 'slime';
+        if (type === 'mega' || type === 'mega_summon') texture = 'dragon_boss';
+        if (type === 'demon_lord' || type === 'demon_lord_summon') texture = 'demon_boss'; // demon_boss がある前提 or ドラゴンを赤くする
+
+        super(scene, x, y, texture);
         this.owner = owner;
         this.isSummon = true;
-        this.isMega = isMega;
+        this.summonType = type;
 
         scene.add.existing(this);
         scene.physics.add.existing(this);
 
-        if (!isMega) {
+        if (type === 'normal') {
             this.setTint(0x9370db);
             this.setScale(0.8);
-        } else {
-            this.setTint(0xff00ff); // より派手な色
-            this.setScale(1.2); // 大きく
+        } else if (type === 'mega' || type === 'mega_summon') {
+            this.setTint(0xff00ff);
+            this.setScale(1.2);
+        } else if (type === 'demon_lord' || type === 'demon_lord_summon') {
+            this.setTint(0xff5555); // 禍々しい赤
+            this.setScale(1.8); // さらに大きく
         }
 
         // ステータス設定
-        const baseHp = isMega ? 150000 : 50000;
-        const atkMultiplier = isMega ? 1.5 : 0.8;
-        const speedBonus = isMega ? 50 : 0;
+        let baseHp = 50000;
+        let atkMultiplier = 0.8;
+        let speedBonus = 0;
+        let atkBaseMult = 2;
+
+        if (type === 'mega' || type === 'mega_summon') {
+            baseHp = 150000;
+            atkMultiplier = 1.5;
+            speedBonus = 50;
+            atkBaseMult = 3;
+        } else if (type === 'demon_lord' || type === 'demon_lord_summon') {
+            baseHp = 500000; // 圧倒的タフネス
+            atkMultiplier = 3.0; // 圧倒的攻撃力
+            speedBonus = 100;
+            atkBaseMult = 5;
+        }
 
         this.maxHp = baseHp;
         this.hp = baseHp;
-        this.atk = Math.ceil(owner.stats.int * (isMega ? 3 : 2) + owner.stats.atk * atkMultiplier);
+        this.atk = Math.ceil(owner.stats.int * atkBaseMult + owner.stats.atk * atkMultiplier);
         this.speed = 120 + (owner.stats.dex * 2) + speedBonus;
-        this.searchRange = (350 + (owner.stats.int * 15)) * (isMega ? 1.5 : 1);
+        this.searchRange = (350 + (owner.stats.int * 15)) * (type !== 'normal' ? 1.5 : 1);
 
         // クールダウン用
         this.lastAttackTime = 0;
@@ -37,16 +57,26 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
 
         // HPバー
         this.hpBarBg = scene.add.rectangle(0, 0, 30, 4, 0x000000).setDepth(10);
-        this.hpBar = scene.add.rectangle(0, 0, 30, 4, isMega ? 0xff00ff : 0x9370db).setDepth(11);
+        let barColor = 0x9370db;
+        if (type === 'mega' || type === 'mega_summon') barColor = 0xff00ff;
+        if (type === 'demon_lord' || type === 'demon_lord_summon') barColor = 0xff0000;
+        this.hpBar = scene.add.rectangle(0, 0, 30, 4, barColor).setDepth(11);
 
         // パーティクルエフェクト
+        let pScale = 0.1;
+        let pTint = 0x9370db;
+        if (type !== 'normal') {
+            pScale = 0.3;
+            pTint = (type === 'demon_lord' || type === 'demon_lord_summon') ? 0xff0000 : 0xff00ff;
+        }
+
         this.emitter = scene.add.particles(0, 0, 'water', {
             speed: { min: -20, max: 20 },
-            scale: { start: isMega ? 0.3 : 0.1, end: 0 },
+            scale: { start: pScale, end: 0 },
             alpha: { start: 0.5, end: 0 },
             lifespan: 500,
             blendMode: 'ADD',
-            tint: isMega ? 0xff00ff : 0x9370db,
+            tint: pTint,
             frequency: 100,
             follow: this
         });
@@ -75,7 +105,14 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
 
         // MP維持コスト (1秒ごとに消費)
         if (!this.lastMpDrainTime || now - this.lastMpDrainTime > 1000) {
-            const upkeepCost = this.isMega ? 5 : 2; // メガサモンは維持費が高い
+            let upkeepCost = 2;
+            if (this.summonType === 'mega' || this.summonType === 'mega_summon') upkeepCost = 5;
+            if (this.summonType === 'demon_lord' || this.summonType === 'demon_lord_summon') upkeepCost = 15; // 魔王はコストが膨大
+
+            // 精霊の共鳴 (パッシブ): 維持コスト-50%
+            if (this.owner.stats.unlockedSkills?.includes('spirit_link')) {
+                upkeepCost = Math.ceil(upkeepCost * 0.5);
+            }
 
             if (this.owner && this.owner.stats) {
                 // MPを減らす
@@ -126,8 +163,10 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
 
                     // クリティカル判定 (プレイヤーのクリティカル率を参照)
                     const critChance = (this.owner && this.owner.stats) ? (this.owner.stats.critChance || 0) : 0;
-                    // メガサモンならさらにクリティカル率アップ
-                    const netCritChance = critChance + (this.isMega ? 0.1 : 0);
+                    // 上位召喚ならさらにクリティカル率アップ
+                    let netCritChance = critChance;
+                    if (this.summonType !== 'normal') netCritChance += 0.1;
+                    if (this.summonType === 'demon_lord' || this.summonType === 'demon_lord_summon') netCritChance += 0.1;
 
                     if (Math.random() < netCritChance) {
                         damage = Math.ceil(damage * 1.5);

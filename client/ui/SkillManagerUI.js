@@ -128,10 +128,24 @@ export default class SkillManagerUI extends BaseWindowUI {
 
         // Gather all skills for current job
         let allSkills = [];
+
+        // 上位職への転職チェック
+        if (jobDef && jobDef.nextJob) {
+            const nextJobDef = JOBS[jobDef.nextJob];
+            if (nextJobDef) {
+                allSkills.push({
+                    isPromotion: true,
+                    nextJobId: jobDef.nextJob,
+                    reqLevel: nextJobDef.reqLevel || 30,
+                    jobDef: nextJobDef
+                });
+            }
+        }
+
         if (jobDef && jobDef.skills) {
             Object.keys(jobDef.skills).sort((a, b) => parseInt(a) - parseInt(b)).forEach(level => {
                 jobDef.skills[level].forEach(skillId => {
-                    allSkills.push({ id: skillId, reqLevel: parseInt(level) });
+                    allSkills.push({ isPromotion: false, id: skillId, reqLevel: parseInt(level) });
                 });
             });
         }
@@ -140,15 +154,7 @@ export default class SkillManagerUI extends BaseWindowUI {
         const itemHeight = 70;
 
         allSkills.forEach((skillInfo, index) => {
-            const skillDef = SKILLS[skillInfo.id];
-            if (!skillDef) return;
-
-            const isUnlocked = unlockedSkills.includes(skillInfo.id);
-            const reqMet = currentLevel >= skillInfo.reqLevel;
-            const canUnlock = !isUnlocked && reqMet;
-            const cost = skillDef.unlockCost || 0;
             const y = startY + (index * itemHeight);
-
             const container = this.scene.add.container(0, y);
 
             // Background
@@ -156,62 +162,107 @@ export default class SkillManagerUI extends BaseWindowUI {
             this.drawListItem(bg, 600, 60, 0x1a1a2e, 0.8, 0x444455, 0.5);
             container.add(bg);
 
-            // Icon
-            const icon = this.scene.add.text(-270, 0, skillDef.icon, { fontSize: '28px' }).setOrigin(0.5);
-            container.add(icon);
+            if (skillInfo.isPromotion) {
+                // 転職アイテムの特別表示
+                const nextJob = skillInfo.jobDef;
+                bg.clear();
+                this.drawListItem(bg, 600, 60, 0x4b0082, 0.4, 0xffd700, 1);
 
-            // Info
-            const nameColor = isUnlocked ? '#ffffff' : (canUnlock ? '#ffffaa' : '#888888');
-            const name = this.scene.add.text(-220, -10, skillDef.name, {
-                fontSize: '16px', fontFamily: '"Press Start 2P"', color: nameColor
-            });
-            const skillLevel = player.stats.skillLevels[skillInfo.id] || 1;
-            const levelText = this.scene.add.text(name.x + name.width + 10, -10, `Lv.${skillLevel}`, {
-                fontSize: '12px', color: '#00ff00', fontFamily: '"Press Start 2P"'
-            });
-            const desc = this.scene.add.text(-220, 15, skillDef.description, {
-                fontSize: '10px', color: '#aaaaaa'
-            });
-            container.add([name, levelText, desc]);
-
-            // Status / Cost
-            let statusTextStr = '';
-            let statusColor = '#ffffff';
-
-            if (isUnlocked) {
-                statusTextStr = '解放済み (Set with 1-3)';
-                statusColor = '#00ff00';
-            } else if (canUnlock) {
-                statusTextStr = `Unlock [Enter]: ${cost} Job Exp`;
-                statusColor = player.stats.jobExp >= cost ? '#ffff00' : '#ff5555';
-            } else {
-                statusTextStr = `Required Lv.${skillInfo.reqLevel}`;
-                statusColor = '#ff5555';
-            }
-
-            const statusText = this.scene.add.text(280, 0, statusTextStr, {
-                fontSize: '10px', fontFamily: '"Press Start 2P"', color: statusColor
-            }).setOrigin(1, 0.5);
-            container.add(statusText);
-
-            // レベルアップボタン (解放済みの場合)
-            if (isUnlocked && skillLevel < 10) {
-                const lvUpBtn = this.scene.add.rectangle(80, 0, 80, 30, 0x00aa00).setInteractive({ useHandCursor: true });
-                const lvUpTxt = this.scene.add.text(80, 0, 'Level UP', { fontSize: '10px', color: '#ffffff', fontFamily: '"Press Start 2P"' }).setOrigin(0.5);
-
-                const upCost = (skillLevel + 1) * 20;
-                lvUpBtn.on('pointerover', () => lvUpBtn.setFillStyle(0x00ff00));
-                lvUpBtn.on('pointerout', () => lvUpBtn.setFillStyle(0x00aa00));
-                lvUpBtn.on('pointerdown', (pointer, x, y, event) => {
-                    if (event) event.stopPropagation();
-                    this.handleLevelUp(skillInfo.id);
+                const icon = this.scene.add.text(-270, 0, '⭐', { fontSize: '28px' }).setOrigin(0.5);
+                const name = this.scene.add.text(-220, -10, `上位職：${nextJob.name}`, {
+                    fontSize: '16px', fontFamily: '"Press Start 2P"', color: '#ffd700'
                 });
-                container.add([lvUpBtn, lvUpTxt]);
+                const desc = this.scene.add.text(-220, 15, nextJob.description, {
+                    fontSize: '10px', color: '#ffffff'
+                });
+                container.add([icon, name, desc]);
+
+                const canPromote = player.stats.level >= skillInfo.reqLevel;
+                const statusStr = canPromote ? 'READY TO UPGRADE!' : `Req. Lv.${skillInfo.reqLevel}`;
+                const statusColor = canPromote ? '#00ff00' : '#ff5555';
+                const statusText = this.scene.add.text(280, 0, statusStr, {
+                    fontSize: '10px', fontFamily: '"Press Start 2P"', color: statusColor
+                }).setOrigin(1, 0.5);
+                container.add(statusText);
+
+                this.listItems.push({ isPromotion: true, nextJobId: skillInfo.nextJobId, canPromote, bg, container });
+            } else {
+                const skillDef = SKILLS[skillInfo.id];
+                if (!skillDef) return;
+
+                const isUnlocked = unlockedSkills.includes(skillInfo.id);
+                const reqMet = currentLevel >= skillInfo.reqLevel;
+                const canUnlock = !isUnlocked && reqMet;
+                const cost = skillDef.unlockCost || 0;
+
+                // Icon
+                const icon = this.scene.add.text(-270, 0, skillDef.icon, { fontSize: '28px' }).setOrigin(0.5);
+                container.add(icon);
+
+                // Info
+                const nameColor = isUnlocked ? '#ffffff' : (canUnlock ? '#ffffaa' : '#888888');
+                const name = this.scene.add.text(-220, -10, skillDef.name, {
+                    fontSize: '16px', fontFamily: '"Press Start 2P"', color: nameColor
+                });
+                const skillLevel = player.stats.skillLevels[skillInfo.id] || 1;
+                const levelText = this.scene.add.text(name.x + name.width + 10, -10, `Lv.${skillLevel}`, {
+                    fontSize: '12px', color: '#00ff00', fontFamily: '"Press Start 2P"'
+                });
+                const desc = this.scene.add.text(-220, 15, skillDef.description, {
+                    fontSize: '10px', color: '#aaaaaa'
+                });
+                container.add([name, levelText, desc]);
+
+                // Status / Cost
+                let statusTextStr = '';
+                let statusColor = '#ffffff';
+
+                if (isUnlocked) {
+                    statusTextStr = '解放済み (Set with 1-3)';
+                    statusColor = '#00ff00';
+                } else if (canUnlock) {
+                    statusTextStr = `Unlock [Enter]: ${cost} Job Exp`;
+                    statusColor = player.stats.jobExp >= cost ? '#ffff00' : '#ff5555';
+                } else {
+                    statusTextStr = `Required Lv.${skillInfo.reqLevel}`;
+                    statusColor = '#ff5555';
+                }
+
+                const statusText = this.scene.add.text(280, 0, statusTextStr, {
+                    fontSize: '10px', fontFamily: '"Press Start 2P"', color: statusColor
+                }).setOrigin(1, 0.5);
+                container.add(statusText);
+
+                // レベルアップボタン (解放済みの場合)
+                if (isUnlocked && skillLevel < 10) {
+                    const lvUpBtn = this.scene.add.rectangle(80, 0, 80, 30, 0x00aa00).setInteractive({ useHandCursor: true });
+                    const lvUpTxt = this.scene.add.text(80, 0, 'Level UP', { fontSize: '10px', color: '#ffffff', fontFamily: '"Press Start 2P"' }).setOrigin(0.5);
+
+                    const upCost = (skillLevel + 1) * 20;
+                    lvUpBtn.on('pointerover', () => lvUpBtn.setFillStyle(0x00ff00));
+                    lvUpBtn.on('pointerout', () => lvUpBtn.setFillStyle(0x00aa00));
+                    lvUpBtn.on('pointerdown', (pointer, x, y, event) => {
+                        if (event) event.stopPropagation();
+                        this.handleLevelUp(skillInfo.id);
+                    });
+                    container.add([lvUpBtn, lvUpTxt]);
+                }
+
+                this.listItems.push({
+                    isPromotion: false,
+                    skillId: skillInfo.id,
+                    bg,
+                    container,
+                    isUnlocked,
+                    canUnlock,
+                    cost,
+                    skillDef
+                });
             }
 
             this.listContainer.add(container);
 
-            // インタラクティブ化 (背景をクリック判定にする)
+            // インタラクティブ化 (全アイテム共通)
             const itemHitArea = this.scene.add.rectangle(0, 0, 600, 60, 0x000000, 0)
                 .setInteractive({ useHandCursor: true });
             container.add(itemHitArea);
@@ -223,16 +274,6 @@ export default class SkillManagerUI extends BaseWindowUI {
                 this.selectedIndex = index;
                 this.updateSelection();
                 this.handleAction();
-            });
-
-            this.listItems.push({
-                skillId: skillInfo.id,
-                bg,
-                container,
-                isUnlocked,
-                canUnlock,
-                cost,
-                skillDef
             });
         });
 
@@ -268,6 +309,18 @@ export default class SkillManagerUI extends BaseWindowUI {
     handleAction() {
         const item = this.listItems[this.selectedIndex];
         if (!item) return;
+
+        if (item.isPromotion) {
+            if (item.canPromote) {
+                this.scene.player.promoteJob(item.nextJobId);
+                this.refreshList();
+            } else {
+                if (this.scene.notificationUI) {
+                    this.scene.notificationUI.show('転職条件を満たしていません', 'error');
+                }
+            }
+            return;
+        }
 
         if (item.canUnlock) {
             this.scene.player.unlockSkill(item.skillId);

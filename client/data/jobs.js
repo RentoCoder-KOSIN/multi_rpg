@@ -12,8 +12,10 @@ export const JOBS = {
             3: ['whirlwind'],
             5: ['heavy_slash'],
             7: ['sonic_wave'],
-            10: ['ground_smash']
-        }
+            10: ['ground_smash'],
+            15: ['fighting_spirit']
+        },
+        nextJob: 'knight'
     },
     mage: {
         id: 'mage',
@@ -29,8 +31,10 @@ export const JOBS = {
             5: ['big_fireball'],
             8: ['dark_nova'],
             10: ['meteor_swarm'],
-            12: ['thunder_storm']
-        }
+            12: ['thunder_storm'],
+            15: ['mana_well']
+        },
+        nextJob: 'archmage'
     },
     tank: {
         id: 'tank',
@@ -44,8 +48,10 @@ export const JOBS = {
             1: ['guard'],
             3: ['whirlwind'],
             5: ['iron_defense'],
-            10: ['shield_bash']
-        }
+            10: ['shield_bash'],
+            15: ['immovable_body']
+        },
+        nextJob: 'paladin'
     },
     ranger: {
         id: 'ranger',
@@ -60,8 +66,10 @@ export const JOBS = {
             3: ['sonic_wave'],
             5: ['rapid_fire'],
             7: ['ice_needle'],
-            10: ['arrow_rain']
-        }
+            10: ['arrow_rain'],
+            15: ['wind_walker']
+        },
+        nextJob: 'sniper'
     },
     summoner: {
         id: 'summoner',
@@ -75,7 +83,85 @@ export const JOBS = {
             1: ['summon'],
             3: ['dark_nova'],
             5: ['mega_summon'],
-            10: ['command_attack']
+            10: ['command_attack'],
+            15: ['spirit_link']
+        },
+        nextJob: 'high_summoner'
+    },
+    // --- 上位職 (Level 30+) ---
+    knight: {
+        id: 'knight',
+        type: 'physical',
+        name: 'ナイト',
+        description: '高潔なる騎士。攻守ともに極限まで高められている。',
+        atkBonus: 15,
+        defBonus: 10,
+        hpBonus: 100,
+        reqLevel: 30,
+        skills: {
+            30: ['judgment_cut'],
+            35: ['ground_smash'],
+            40: ['heavy_slash']
+        }
+    },
+    archmage: {
+        id: 'archmage',
+        type: 'magical',
+        name: 'アークメイジ',
+        description: '深遠なる真理を極めた魔導師。広範囲を殲滅する力を持ち。',
+        atkBonus: 25,
+        defBonus: 5,
+        hpBonus: 20,
+        reqLevel: 30,
+        skills: {
+            30: ['abyss_storm'],
+            35: ['meteor_swarm'],
+            40: ['thunder_storm']
+        }
+    },
+    paladin: {
+        id: 'paladin',
+        type: 'physical',
+        name: 'パラディン',
+        description: '聖なる盾。神聖な魔法と鉄壁の守りで仲間を守る。',
+        atkBonus: 10,
+        defBonus: 25,
+        hpBonus: 200,
+        reqLevel: 30,
+        skills: {
+            30: ['holy_sanctuary'],
+            35: ['shield_bash'],
+            40: ['iron_defense']
+        }
+    },
+    sniper: {
+        id: 'sniper',
+        type: 'physical',
+        name: 'スナイパー',
+        description: '静かなる狙撃手。遠方から敵を一撃で射抜く。',
+        atkBonus: 20,
+        defBonus: 8,
+        hpBonus: 50,
+        reqLevel: 30,
+        skills: {
+            30: ['death_rain'],
+            35: ['arrow_rain'],
+            40: ['rapid_fire']
+        }
+    },
+    high_summoner: {
+        id: 'high_summoner',
+        type: 'magical',
+        name: 'ハイサモナー',
+        description: '古の力を使役する召喚士。より強力な存在を呼び出す。',
+        atkBonus: 15,
+        defBonus: 12,
+        hpBonus: 80,
+        reqLevel: 30,
+        skills: {
+            30: ['demon_lord_summon'],
+            35: ['mega_summon'],
+            40: ['command_attack']
         }
     }
 };

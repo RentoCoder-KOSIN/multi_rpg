@@ -247,5 +247,114 @@ export const SKILLS = {
         color: 0x4b0082,
         icon: '🌑',
         description: '闇の爆発を周囲に引き起こす。'
+    },
+    // --- 上位職用スキル (Lv.30+) ---
+    judgment_cut: {
+        id: 'judgment_cut',
+        name: '絶・次元斬',
+        type: 'active',
+        cd: 4000,
+        damageMult: 35,
+        mpCost: 40,
+        unlockCost: 500,
+        range: 250,
+        rangeType: 'line',
+        color: 0x00ffff,
+        icon: '💠',
+        description: '空間を切り裂く超高速の一閃。'
+    },
+    abyss_storm: {
+        id: 'abyss_storm',
+        name: 'アビスストーム',
+        type: 'active',
+        cd: 12000,
+        damageMult: 45,
+        mpCost: 100,
+        unlockCost: 500,
+        range: 350,
+        rangeType: 'circle',
+        color: 0x4b0082,
+        icon: '🌀',
+        description: '深淵の嵐を呼び寄せ、全てを飲み込む。'
+    },
+    holy_sanctuary: {
+        id: 'holy_sanctuary',
+        name: 'ホーリーサンクチュアリ',
+        type: 'active',
+        cd: 20000,
+        damageMult: 15,
+        mpCost: 80,
+        unlockCost: 500,
+        range: 300,
+        rangeType: 'circle',
+        color: 0xffff00,
+        icon: '✝️',
+        description: '神聖な領域を展開し、敵には裁きを、味方には加護を。'
+    },
+    death_rain: {
+        id: 'death_rain',
+        name: 'デスレイン',
+        type: 'active',
+        cd: 6000,
+        damageMult: 22,
+        mpCost: 45,
+        unlockCost: 500,
+        range: 400,
+        rangeType: 'circle',
+        color: 0x00ff00,
+        icon: '🏹',
+        description: '空から無数の死の矢を降らせる。'
+    },
+    demon_lord_summon: {
+        id: 'demon_lord_summon',
+        name: '魔王召喚',
+        type: 'active',
+        cd: 60000,
+        mpCost: 200,
+        unlockCost: 1000,
+        color: 0xff0000,
+        icon: '👑',
+        description: '伝説の魔王を一時的に現世に呼び出す。'
+    },
+    // --- パッシブスキル ---
+    fighting_spirit: {
+        id: 'fighting_spirit',
+        name: '不屈の闘志',
+        type: 'passive',
+        unlockCost: 50,
+        icon: '💪',
+        description: '常時：攻撃力+10%'
+    },
+    mana_well: {
+        id: 'mana_well',
+        name: '魔力の源泉',
+        type: 'passive',
+        unlockCost: 50,
+        icon: '💎',
+        description: '常時：最大MP+50'
+    },
+    immovable_body: {
+        id: 'immovable_body',
+        name: '金剛の体',
+        type: 'passive',
+        unlockCost: 50,
+        icon: '🗿',
+        description: '常時：防御力+15%'
+    },
+    wind_walker: {
+        id: 'wind_walker',
+        name: '風の如く',
+        type: 'passive',
+        unlockCost: 50,
+        icon: '🍃',
+        description: '常時：移動速度+30'
+    },
+    spirit_link: {
+        id: 'spirit_link',
+        name: '精霊の共鳴',
+        type: 'passive',
+        unlockCost: 50,
+        icon: '🔗',
+        description: '常時：召喚維持コスト-50%'
     }
 };

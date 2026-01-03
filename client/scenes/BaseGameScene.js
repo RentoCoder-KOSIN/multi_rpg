@@ -556,12 +556,8 @@ export default class BaseGameScene extends Phaser.Scene {
             return;
         }
 
-        if (skillId === 'summon' || skillId === 'mega_summon') {
+        if (skillId === 'summon' || skillId === 'mega_summon' || skillId === 'demon_lord_summon') {
             if (this.activeSummon && this.activeSummon.active) {
-                // すでに召喚されている場合、同じ種類の召喚ならエラー、違うなら入れ替え（という仕様にするならここを変更）
-                // ここでは「召喚獣は1体まで」とする
-                // ただし、メガサモンで上書きしたい場合は許可するなどのロジックも考えられるが、
-                // 今回はシンプルに「召喚中は召喚できない」とする
                 if (this.notificationUI) this.notificationUI.show('召喚獣は既に存在します', 'error');
                 return;
             }
@@ -571,7 +567,7 @@ export default class BaseGameScene extends Phaser.Scene {
 
         // 召喚スキル以外は即座にクールダウン開始
         // 召喚スキルは消滅時にクールダウン開始
-        if (skillId !== 'summon' && skillId !== 'mega_summon') {
+        if (skillId !== 'summon' && skillId !== 'mega_summon' && skillId !== 'demon_lord_summon') {
             player.skillCooldowns[skillId] = now;
         }
 
@@ -581,9 +577,8 @@ export default class BaseGameScene extends Phaser.Scene {
         this.applySkillEffect(skillId, player);
 
         // サモンスキルの特殊処理
-        if (skillId === 'summon' || skillId === 'mega_summon') {
-            const isMega = (skillId === 'mega_summon');
-            this.spawnSummon(player, isMega);
+        if (skillId === 'summon' || skillId === 'mega_summon' || skillId === 'demon_lord_summon') {
+            this.spawnSummon(player, skillId);
             return;
         }
 
@@ -608,6 +603,22 @@ export default class BaseGameScene extends Phaser.Scene {
 
         const rangeType = skill.rangeType || 'circle';
         const enemies = this.children.list.filter(child => child instanceof Enemy && child.active);
+
+        // --- 近くの敵に自動で向きを合わせる (扇形・直線スキルの場合) ---
+        if (rangeType === 'fan' || rangeType === 'line') {
+            let nearest = null;
+            let minDist = range * 1.5; // 射程の1.5倍まで探索
+            enemies.forEach(e => {
+                const d = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
+                if (d < minDist) {
+                    minDist = d;
+                    nearest = e;
+                }
+            });
+            if (nearest) {
+                player.flipX = (nearest.x < player.x);
+            }
+        }
 
         // プレイヤーの方向 (右向きがデフォルト、左向きは flipX=true)
         const direction = player.flipX ? -1 : 1;
@@ -819,7 +830,7 @@ export default class BaseGameScene extends Phaser.Scene {
         });
     }
 
-    spawnSummon(player, isMega = false) {
+    spawnSummon(player, summonType = 'summon') {
         // 既存の召喚獣を削除
         if (this.activeSummon && this.activeSummon.active) {
             this.destroySummon(this.activeSummon);
@@ -829,7 +840,7 @@ export default class BaseGameScene extends Phaser.Scene {
         const summonX = player.x + (player.flipX ? -50 : 50);
         const summonY = player.y;
 
-        const summon = new SummonedBeast(this, summonX, summonY, player, isMega);
+        const summon = new SummonedBeast(this, summonX, summonY, player, summonType);
         this.activeSummon = summon;
 
         // 敵との接触判定を一括で設定（既存の敵＋将来スポーンする敵はOverlapで対応）
