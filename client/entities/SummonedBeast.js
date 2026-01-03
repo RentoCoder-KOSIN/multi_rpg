@@ -11,6 +11,7 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
         this.owner = owner;
         this.isSummon = true;
         this.summonType = type;
+        this.isMega = (type === 'mega' || type === 'mega_summon' || type === 'demon_lord' || type === 'demon_lord_summon');
 
         scene.add.existing(this);
         scene.physics.add.existing(this);

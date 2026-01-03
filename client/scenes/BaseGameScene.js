@@ -475,10 +475,7 @@ export default class BaseGameScene extends Phaser.Scene {
         if (this.networkManager) {
             this.networkManager.checkPendingPlayers();
         }
-        // キー入力
-        if (this.inventoryUI && Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I))) {
-            this.inventoryUI.toggle();
-        }
+
         this.networkManager.updateRemotePlayers();
         this.networkManager.updateEnemies();
 
@@ -515,8 +512,10 @@ export default class BaseGameScene extends Phaser.Scene {
                 this.activeSummon.updateSummon();
             }
 
+            // 更新処理(updateSummon)内で消滅(null)する可能性があるため、再度チェック
+            if (!this.activeSummon || !this.activeSummon.active) return;
+
             // 位置同期 (頻度を制限すべきだが、一旦毎フレームチェック)
-            // 実際には NetworkManager や Player 側で頻度制御しているのと同様にすべき
             const now = this.time.now;
             if (!this.activeSummon.lastPosSent || now - this.activeSummon.lastPosSent > 100) {
                 if (this.activeSummon.x !== this.activeSummon.lastX || this.activeSummon.y !== this.activeSummon.lastY) {
@@ -869,7 +868,7 @@ export default class BaseGameScene extends Phaser.Scene {
         if (this.networkManager) {
             this.networkManager.sendSummonUpdate({
                 type: 'spawn',
-                isMega: isMega,
+                isMega: summon.isMega,
                 x: summon.x,
                 y: summon.y
             });
