@@ -65,7 +65,10 @@ export default class SettingsUI {
             color: '#ff0000',
             fontFamily: '"Press Start 2P"'
         }).setOrigin(0.5).setInteractive();
-        closeBtn.on('pointerdown', () => this.toggle());
+        closeBtn.on('pointerdown', (pointer, localX, localY, event) => {
+            if (event) event.stopPropagation();
+            this.toggle();
+        });
         this.container.add(closeBtn);
 
         // --- 設定項目 ---
@@ -93,9 +96,12 @@ export default class SettingsUI {
             color: '#ffffff'
         }).setOrigin(0, 0.5);
 
-        const hitArea = this.scene.add.rectangle(0, 0, 200, 30).setInteractive();
+        // Use explicit hit area to ensure proper click detection
+        const hitArea = this.scene.add.rectangle(0, 0, 200, 30, 0x000000, 0)
+            .setInteractive(new Phaser.Geom.Rectangle(-100, -15, 200, 30), Phaser.Geom.Rectangle.Contains);
 
-        hitArea.on('pointerdown', () => {
+        hitArea.on('pointerdown', (pointer, localX, localY, event) => {
+            if (event) event.stopPropagation();
             checked = !checked;
             checkMark.setVisible(checked);
             onChange(checked);

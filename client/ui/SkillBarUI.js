@@ -129,7 +129,13 @@ export default class SkillBarUI {
                 slot.skillNameText.setAlpha(1);
 
                 const lastUse = this.player.skillCooldowns[skillId] || 0;
-                const cdTime = skillDef ? (skillDef.cd || 2000) : 2000;
+                let cdTime = skillDef ? (skillDef.cd || 2000) : 2000;
+
+                // 聖なる武器装備時はクールダウン半減
+                if (this.player.stats.equipment && this.player.stats.equipment.weapon === 'holy_weapon') {
+                    cdTime = Math.floor(cdTime * 0.5);
+                }
+
                 const elapsed = now - lastUse;
                 const progress = Phaser.Math.Clamp(elapsed / cdTime, 0, 1);
 

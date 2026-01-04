@@ -956,6 +956,15 @@ export default class BaseGameScene extends Phaser.Scene {
         const skill = SKILLS[skillId];
         if (!skill) return;
 
+        // スキルレベルと範囲ボーナスを計算
+        const skillLevel = sourceUser.stats?.skillLevels?.[skillId] || 1;
+        const rangeBonus = 1 + (skillLevel - 1) * 0.1;
+        const baseRange = skill.range || 80;
+        const actualRange = baseRange * rangeBonus;
+
+        // エフェクトのスケールを範囲に応じて調整（基準範囲80を1.0とする）
+        const effectScale = actualRange / 80;
+
         // 共通エフェクト (スキル名表示)
         // 他プレイヤーの場合は少し小さめに表示
         const fontSize = isRemote ? '10px' : '12px';
@@ -975,16 +984,16 @@ export default class BaseGameScene extends Phaser.Scene {
         const startX = sourceUser.x;
         const startY = sourceUser.y;
 
-        // パーティクルエフェクトの汎用生成関数
+        // パーティクルエフェクトの汎用生成関数（範囲に応じてスケール）
         const createBurst = (color, count = 10, speed = 100) => {
             const emitter = this.add.particles(startX, startY, 'water', {
-                speed: { min: -speed, max: speed },
-                scale: { start: 0.4, end: 0 },
+                speed: { min: -speed * effectScale, max: speed * effectScale },
+                scale: { start: 0.4 * effectScale, end: 0 },
                 alpha: { start: 1, end: 0 },
                 lifespan: 600,
                 blendMode: 'ADD',
                 tint: color,
-                quantity: count
+                quantity: Math.ceil(count * effectScale)
             });
             this.time.delayedCall(600, () => emitter.destroy());
         };
@@ -992,23 +1001,22 @@ export default class BaseGameScene extends Phaser.Scene {
         if (skillId === 'slash' || skillId === 'heavy_slash' || skillId === 'whirlwind' || skillId === 'judgment_cut') {
             // 近接斬撃エフェクト
             const slashColor = (skillId === 'heavy_slash') ? 0xff0000 : (skillId === 'judgment_cut' ? 0x00ffff : 0xffffff);
-            const range = skill.range || 100;
 
             // 回転斬系
             if (skill.rangeType === 'circle') {
-                const circle = this.add.circle(startX, startY, 5, slashColor, 0.6);
-                // 衝撃波が広がる
-                this.tweens.add({ targets: circle, radius: range, alpha: 0, duration: 300, onComplete: () => circle.destroy() });
+                const circle = this.add.circle(startX, startY, 5 * effectScale, slashColor, 0.6);
+                // 衝撃波が広がる（範囲に応じたサイズ）
+                this.tweens.add({ targets: circle, radius: actualRange, alpha: 0, duration: 300, onComplete: () => circle.destroy() });
                 // リング状のエフェクト
-                const ring = this.add.circle(startX, startY, range, slashColor, 0);
-                ring.setStrokeStyle(4, slashColor, 0.8);
+                const ring = this.add.circle(startX, startY, actualRange, slashColor, 0);
+                ring.setStrokeStyle(4 * effectScale, slashColor, 0.8);
                 this.tweens.add({ targets: ring, scale: 1.2, alpha: 0, duration: 300, onComplete: () => ring.destroy() });
 
                 createBurst(slashColor, 20, 150);
             } else {
                 // 直線/前方斬撃
-                const hitX = startX + (direction * range / 2);
-                const slashLine = this.add.rectangle(hitX, startY, range, 10, slashColor).setOrigin(0.5);
+                const hitX = startX + (direction * actualRange / 2);
+                const slashLine = this.add.rectangle(hitX, startY, actualRange, 10 * effectScale, slashColor).setOrigin(0.5);
                 // 斬撃の軌跡
                 this.tweens.add({
                     targets: slashLine,
@@ -1023,44 +1031,44 @@ export default class BaseGameScene extends Phaser.Scene {
         } else if (skillId === 'fireball' || skillId === 'big_fireball' || skillId === 'meteor_swarm' || skillId === 'abyss_storm' || skillId === 'dark_nova') {
             // 魔法弾/爆発系
             const color = skill.color || 0xff4500;
-            const range = skill.range || 200;
 
-            // ターゲット位置に爆発を起こす（簡易的に前方一定距離、または円中心）
-            const targetX = (skill.rangeType === 'circle') ? startX : startX + (direction * 150);
+            // ターゲット位置に爆発を起こす（簡易的に前方一定距離、または円中心、範囲に応じて調整）
+            const targetX = (skill.rangeType === 'circle') ? startX : startX + (direction * 150 * effectScale);
 
-            // 巨大な魔法陣っぽい円
-            const circle = this.add.circle(targetX, startY, 10, color, 0.8);
+            // 巨大な魔法陣っぽい円（範囲に応じてサイズ変更）
+            const circle = this.add.circle(targetX, startY, 10 * effectScale, color, 0.8);
             this.tweens.add({
                 targets: circle,
-                scale: range / 10, // 範囲に合わせて拡大
+                scale: actualRange / 10, // 実際の範囲に合わせて拡大
                 alpha: 0,
                 duration: 500,
                 onComplete: () => circle.destroy()
             });
 
-            // 魔力収束エフェクト
+            // 魔力収束エフェクト（範囲に応じてパーティクル数とスピード調整）
+            const baseQuantity = (skillId === 'meteor_swarm' || skillId === 'abyss_storm') ? 50 : 20;
             const emitter = this.add.particles(targetX, startY, 'water', {
-                speed: { min: 50, max: 200 },
-                scale: { start: 0.6, end: 0 },
+                speed: { min: 50 * effectScale, max: 200 * effectScale },
+                scale: { start: 0.6 * effectScale, end: 0 },
                 alpha: { start: 1, end: 0 },
                 lifespan: 800,
                 blendMode: 'ADD',
                 tint: color,
-                quantity: (skillId === 'meteor_swarm' || skillId === 'abyss_storm') ? 50 : 20
+                quantity: Math.ceil(baseQuantity * effectScale)
             });
             this.time.delayedCall(800, () => emitter.destroy());
 
-            // 画面シェイク (自分が使った場合か、近くの場合のみ)
+            // 画面シェイク (自分が使った場合か、近くの場合のみ、範囲に応じて強度調整)
             if (!isRemote || Phaser.Math.Distance.Between(this.player.x, this.player.y, startX, startY) < 400) {
                 if (skillId === 'meteor_swarm' || skillId === 'abyss_storm' || skillId === 'big_fireball') {
-                    this.cameras.main.shake(200, 0.005);
+                    this.cameras.main.shake(200, 0.005 * effectScale);
                 }
             }
         } else if (skill.targetType === 'party') {
-            // バフ・回復系
+            // バフ・回復系（範囲に応じてエフェクトサイズ調整）
             const color = skill.color || 0x00ff00;
-            const ring = this.add.circle(startX, startY, skill.range || 150, color, 0.1);
-            ring.setStrokeStyle(2, color, 0.5);
+            const ring = this.add.circle(startX, startY, actualRange, color, 0.1);
+            ring.setStrokeStyle(2 * effectScale, color, 0.5);
             this.tweens.add({
                 targets: ring,
                 scale: 1.1,
@@ -1069,45 +1077,44 @@ export default class BaseGameScene extends Phaser.Scene {
                 onComplete: () => ring.destroy()
             });
 
-            // 上昇するパーティクル（聖なる光）
+            // 上昇するパーティクル（聖なる光、範囲に応じて調整）
             const emitter = this.add.particles(startX, startY + 20, 'water', {
-                speedY: { min: -150, max: -50 },
-                speedX: { min: -20, max: 20 },
-                scale: { start: 0.4, end: 0 },
+                speedY: { min: -150 * effectScale, max: -50 * effectScale },
+                speedX: { min: -20 * effectScale, max: 20 * effectScale },
+                scale: { start: 0.4 * effectScale, end: 0 },
                 alpha: { start: 0.8, end: 0 },
                 lifespan: 1200,
                 blendMode: 'ADD',
                 tint: color,
-                quantity: 15
+                quantity: Math.ceil(15 * effectScale)
             });
             this.time.delayedCall(1200, () => emitter.destroy());
         } else if (skillId === 'sonic_wave' || skillId === 'ice_needle' || skillId === 'holy_arrow') {
-            // 射出系
+            // 射出系（範囲に応じてサイズ調整）
             const color = skill.color || 0x00ffff;
-            const range = skill.range || 200;
             const emitter = this.add.particles(startX, startY, 'water', {
-                speedX: (direction * 300),
-                scale: { start: 0.5, end: 0 },
+                speedX: (direction * 300 * effectScale),
+                scale: { start: 0.5 * effectScale, end: 0 },
                 lifespan: 600,
                 blendMode: 'ADD',
                 tint: color,
-                quantity: 10,
+                quantity: Math.ceil(10 * effectScale),
                 emitting: false
             });
-            emitter.explode(10, startX, startY);
+            emitter.explode(Math.ceil(10 * effectScale), startX, startY);
 
-            // 衝撃波本体
+            // 衝撃波本体（範囲に応じてサイズ調整）
             let projectile;
             if (skillId === 'holy_arrow') {
-                projectile = this.add.rectangle(startX, startY, 40, 4, color, 1);
+                projectile = this.add.rectangle(startX, startY, 40 * effectScale, 4 * effectScale, color, 1);
             } else {
-                projectile = this.add.arc(startX, startY, 30, -30, 30, false, color, 0.8);
+                projectile = this.add.arc(startX, startY, 30 * effectScale, -30, 30, false, color, 0.8);
             }
 
             projectile.setAngle(direction === 1 ? 0 : 180);
             this.tweens.add({
                 targets: projectile,
-                x: startX + (direction * range),
+                x: startX + (direction * actualRange),
                 scale: 1.5,
                 alpha: 0,
                 duration: 500,

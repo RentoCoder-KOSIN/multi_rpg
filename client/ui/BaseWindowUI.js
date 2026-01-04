@@ -129,8 +129,18 @@ export default class BaseWindowUI {
             scale: 1,
             alpha: 1,
             duration: 200,
-            ease: 'Back.easeOut'
+            ease: 'Back.easeOut',
+            onComplete: () => {
+                // Ensure scale is exactly 1.0 to prevent hit area offset
+                this.container.setScale(1.0);
+                this.updateInteractiveAreas();
+            }
         });
+    }
+
+    updateInteractiveAreas() {
+        // Override this in child classes if needed to refresh interactive areas
+        // This ensures hit areas are correctly positioned after container transformations
     }
 
     close() {
