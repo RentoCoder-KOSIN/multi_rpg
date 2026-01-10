@@ -16,7 +16,6 @@ export default class NetworkManager {
             onPlayerAdded: null,
             onPlayerRemoved: null,
             onEnemySpawned: null,
-            onEnemySpawned: null,
             onEnemyRemoved: null,
             onEnemyKilled: null,
             onSummonUpdate: null,
@@ -436,7 +435,7 @@ export default class NetworkManager {
     setCallback(name, callback) { if (this.callbacks.hasOwnProperty(name)) this.callbacks[name] = callback; }
 
     updateRemotePlayers() { Object.values(this.otherPlayers).forEach(op => { if (op && op.active && op.updateRemotePosition) op.updateRemotePosition(); }); }
-    updateEnemies() { Object.values(this.enemies).forEach(e => { if (e && e.active) e.update(); }); }
+    updateEnemies(time, delta) { Object.values(this.enemies).forEach(e => { if (e && e.active) e.update(time, delta); }); }
 
     disconnect() {
         if (this.socket) { this.socket.removeAllListeners(); this.socket.disconnect(); this.socket = null; }

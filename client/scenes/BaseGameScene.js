@@ -28,6 +28,8 @@ import PartyUI from '../ui/PartyUI.js';
 import PartyHUDUI from '../ui/PartyHUDUI.js';
 import SideMenuUI from '../ui/SideMenuUI.js';
 import VirtualPadUI from '../ui/VirtualPadUI.js';
+import AIStatsUI from '../ui/AIStatsUI.js';
+import MinimapUI from '../ui/MinimapUI.js';
 import { SKILLS } from '../data/skills.js';
 import SummonedBeast from '../entities/SummonedBeast.js';
 
@@ -364,6 +366,9 @@ export default class BaseGameScene extends Phaser.Scene {
         this.settingsUI.createUI();
         this.sideMenuUI = new SideMenuUI(this);
         this.virtualPadUI = new VirtualPadUI(this);
+        this.aiTrainingEnabled = true; // 強化学習のグローバル設定
+        this.aiStatsUI = new AIStatsUI(this);
+        this.minimapUI = new MinimapUI(this);
 
         this.isMobile = !this.sys.game.device.os.desktop;
         if (!this.isMobile) {
@@ -410,6 +415,26 @@ export default class BaseGameScene extends Phaser.Scene {
                 // It does NOT have 'isOpen' property explicitly defined in constructor in previous view, let's verify.
                 console.log('Closing SettingsUI');
                 this.settingsUI.toggle();
+            }
+        });
+
+        // AI Training mode toggle (T / Shift+T)
+        this.input.keyboard.on('keydown', (event) => {
+            if (event.key.toLowerCase() === 't' && event.shiftKey) {
+                this.aiTrainingEnabled = !this.aiTrainingEnabled;
+                const mode = this.aiTrainingEnabled ? 'ON' : 'OFF';
+
+                const enemies = this.networkManager?.getEnemies() || {};
+                Object.values(enemies).forEach(enemy => {
+                    if (enemy.ai && enemy.active) {
+                        enemy.ai.setTrainingMode(this.aiTrainingEnabled);
+                    }
+                });
+
+                if (this.notificationUI) {
+                    this.notificationUI.show(`AI Training: ${mode}`, 'info');
+                }
+                console.log(`[BaseGameScene] AI Training mode: ${mode}`);
             }
         });
 
@@ -631,11 +656,34 @@ export default class BaseGameScene extends Phaser.Scene {
         }
 
         this.networkManager.updateRemotePlayers();
-        this.networkManager.updateEnemies();
+        this.networkManager.updateEnemies(time, delta);
 
         updateNPCInteraction(this, { player: this.player, npcs: this.npcs, dialogue: this.dialogue, interactKey: this.interactKey, interactText: this.interactText, interactBg: this.interactBg });
         if (this.playerNameUI) this.playerNameUI.updatePosition();
         if (this.playerStatsUI) this.playerStatsUI.update();
+        if (this.minimapUI) this.minimapUI.update();
+
+        // 敵からプレイヤーへの接触ダメージ判定
+        const enemies = this.networkManager?.getEnemies() || {};
+        const now = this.time.now;
+
+        Object.values(enemies).forEach(enemy => {
+            if (!enemy.active) return;
+
+            // 対プレイヤー
+            if (this.player && this.player.active) {
+                const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.x, enemy.y);
+                if (distance < 35) {
+                    if (!enemy.lastAttackTime || now - enemy.lastAttackTime > 1000) {
+                        enemy.lastAttackTime = now;
+                        const finalDamage = Math.max(1, (enemy.atk || 10) - (this.player.getDefense ? this.player.getDefense() : 0));
+                        this.player.takeDamage(finalDamage);
+                        if (enemy.ai) enemy.ai.notifyDamageDealt(finalDamage);
+                    }
+                }
+            }
+
+        });
 
         // バフの期限チェック
         if (this.player) {
@@ -1380,5 +1428,21 @@ export default class BaseGameScene extends Phaser.Scene {
         // マップ変更時は他のプレイヤーをクリアしない
         // NetworkManagerはレジストリで管理されているため、シーン間で共有される
         // if (this.networkManager) this.networkManager.clearAllOtherPlayers();
+    }
+
+    minimapCameraIgnore(elements) {
+        if (!this.minimapUI || !this.minimapUI.minimapCamera) return;
+
+        const camera = this.minimapUI.minimapCamera;
+        const processElement = (el) => {
+            if (!el) return;
+            camera.ignore(el);
+        };
+
+        if (Array.isArray(elements)) {
+            elements.forEach(processElement);
+        } else {
+            processElement(elements);
+        }
     }
 }

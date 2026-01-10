@@ -21,9 +21,6 @@ export default class SettingsUI {
     applySettings() {
         this.scene.registry.set('settings', this.settings);
         localStorage.setItem('gameSettings', JSON.stringify(this.settings));
-
-        // 即時反映が必要なものがあればここで処理
-        // (例: 音量など)
     }
 
     toggle() {
@@ -37,7 +34,7 @@ export default class SettingsUI {
 
     createUI() {
         const width = 300;
-        const height = 250;
+        const height = 300;
         const x = this.scene.scale.width / 2;
         const y = this.scene.scale.height / 2;
 
@@ -74,13 +71,55 @@ export default class SettingsUI {
         // --- 設定項目 ---
 
         // 1. Log UI Toggle
-        this.logCheckbox = this.createCheckbox(0, -30, 'Show Log UI', this.settings.showLog, (val) => {
+        this.logCheckbox = this.createCheckbox(0, -60, 'Show Log UI', this.settings.showLog, (val) => {
             this.settings.showLog = val;
             this.applySettings();
         });
         this.container.add(this.logCheckbox.container);
 
-        // (将来的に音量スライダーなどもここに追加)
+        // 2. AI Training Toggle
+        this.aiCheckbox = this.createCheckbox(0, -20, 'AI Training', this.scene.aiTrainingEnabled, (val) => {
+            this.scene.aiTrainingEnabled = val;
+            const mode = val ? 'ON' : 'OFF';
+            const enemies = this.scene.networkManager?.getEnemies() || {};
+            Object.values(enemies).forEach(enemy => {
+                if (enemy.ai) enemy.ai.setTrainingMode(val);
+            });
+            if (this.scene.notificationUI) {
+                this.scene.notificationUI.show(`AI Training: ${mode}`, 'info');
+            }
+        });
+        this.container.add(this.aiCheckbox.container);
+
+        // 3. Reset AI Button
+        const resetBtn = this.createButton(0, 60, 'RESET AI DATA', 0xcc0000, () => {
+            const confirmReset = confirm('全モンスターの学習記録をリセットしますか？\nAIが初期状態に戻ります。');
+            if (confirmReset) {
+                // localStorageの削除
+                const keys = Object.keys(localStorage);
+                keys.forEach(key => {
+                    if (key.startsWith('enemyAI_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+
+                // 現在の敵AIをリセット
+                const enemies = this.scene.networkManager?.getEnemies() || {};
+                Object.values(enemies).forEach(enemy => {
+                    if (enemy.ai && enemy.ai.agent) {
+                        enemy.ai.agent.qTable = new Map();
+                        enemy.ai.agent.episodeCount = 0;
+                        enemy.ai.agent.totalReward = 0;
+                        enemy.ai.agent.epsilon = 0.5;
+                    }
+                });
+
+                if (this.scene.notificationUI) {
+                    this.scene.notificationUI.show('AI Data Reset Complete', 'warning');
+                }
+            }
+        });
+        this.container.add(resetBtn);
     }
 
     createCheckbox(x, y, label, initialValue, onChange) {
@@ -96,9 +135,8 @@ export default class SettingsUI {
             color: '#ffffff'
         }).setOrigin(0, 0.5);
 
-        // Use explicit hit area to ensure proper click detection
-        const hitArea = this.scene.add.rectangle(0, 0, 200, 30, 0x000000, 0)
-            .setInteractive(new Phaser.Geom.Rectangle(-100, -15, 200, 30), Phaser.Geom.Rectangle.Contains);
+        const hitArea = this.scene.add.rectangle(0, 0, 240, 35, 0x000000, 0)
+            .setInteractive({ useHandCursor: true });
 
         hitArea.on('pointerdown', (pointer, localX, localY, event) => {
             if (event) event.stopPropagation();
@@ -108,14 +146,38 @@ export default class SettingsUI {
         });
 
         container.add([hitArea, box, checkMark, text]);
-
         return { container, setChecked: (v) => { checked = v; checkMark.setVisible(v); } };
+    }
+
+    createButton(x, y, label, color, onClick) {
+        const container = this.scene.add.container(x, y);
+        const width = 220;
+        const height = 35;
+
+        const bg = this.scene.add.rectangle(0, 0, width, height, color, 1)
+            .setInteractive({ useHandCursor: true });
+
+        const text = this.scene.add.text(0, 0, label, {
+            fontSize: '12px',
+            fontFamily: '"Press Start 2P"',
+            color: '#ffffff'
+        }).setOrigin(0.5);
+
+        bg.on('pointerdown', (pointer, localX, localY, event) => {
+            if (event) event.stopPropagation();
+            bg.setFillStyle(0x555555);
+            onClick();
+        });
+        bg.on('pointerup', () => bg.setFillStyle(color));
+
+        container.add([bg, text]);
+        return container;
     }
 
     show() {
         this.container.setVisible(true);
-        // 設定値に合わせてUI更新
         this.logCheckbox.setChecked(this.settings.showLog);
+        if (this.aiCheckbox) this.aiCheckbox.setChecked(this.scene.aiTrainingEnabled);
     }
 
     hide() {
