@@ -20,7 +20,7 @@ export const SERVER_CONFIG = {
 // デバッグ設定
 export const DEBUG = {
     enabled: (typeof window !== 'undefined' && window.DEBUG_MODE === true) || false,
-    showPhysics: false
+    showPhysics: true
 };
 
 const config = {

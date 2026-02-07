@@ -32,7 +32,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
             });
         }
 
-        // 戦闘用ステータス (サーバーデータがあれば優先)
+        //server.jsにENEMY_STATSがあるから
         const statsMap = {
             'slime': { hp: 30, atk: 5, exp: 20, gold: 5 },
             'forest_slime': { hp: 100, atk: 15, exp: 120, gold: 25 },
@@ -147,10 +147,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
         this.body.setSize(bodyWidth, bodyHeight);
 
-        // オフセットで中央に寄せる（テクスチャ基準）
         this.body.setOffset(
             (baseWidth - bodyWidth) / 2,
-            (baseHeight - bodyHeight) / 2
+            (baseHeight - bodyHeight) / 2 + bodyHeight * 0.3
         );
     }
 
@@ -276,20 +275,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     die(socket = null) {
         if (!this.active) return; // 二重破壊防止
 
-        const socketToUse = socket || this.socket;
-
-
-        // サーバー管理の敵の場合は、撃破報告はenemyHitで行われるため、ここでの明示的な報告は不要
-        // if (this.isServerManaged && socketToUse && this.id) {
-        //    socketToUse.emit('enemyDefeat', { id: this.id });
-        // }
 
         if (this.moveEvent) this.moveEvent.remove();
-        // クエスト進行はサーバーからの enemyDefeated イベントで行うため削除
-        // if (this.scene.questManager) this.scene.questManager.onEnemyKilled(this.type);
 
-        // サーバー管理の敵の場合は、removeEnemyByIdで削除されるため
-        // ここでは配列操作を行わない
         if (!this.isServerManaged) {
             // 配列から削除（旧コードとの互換性のため）
             if (Array.isArray(this.scene.enemies)) {

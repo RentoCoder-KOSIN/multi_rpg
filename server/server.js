@@ -41,12 +41,14 @@ function loadEnemySpawnPointsFromMap(mapKey) {
     }));
 }
 
+//IDの生成
 function generateId(type) {
     return `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
 /* =====================
    敵ステータス
+   type: hp: atk: exp: gold: drops:
 ===================== */
 const ENEMY_STATS = {
     slime: { hp: 150, atk: 5, exp: 22, gold: 50, drops: [{ id: 'potion', chance: 0.05 }, { id: 'mp_potion', chance: 0.05 }, { id: 'holy_weapon', chance: 0.002 }] },
@@ -69,20 +71,20 @@ function getEnemyStats(type) {
 /* =====================
    敵管理
 ===================== */
-function spawnEnemy(mapKey, sp) {
+function spawnEnemy(mapKey, spawn) {
     if (!enemies[mapKey]) enemies[mapKey] = {};
-    const id = generateId(sp.type);
-    const stats = getEnemyStats(sp.type);
+    const id = generateId(spawn.type);
+    const stats = getEnemyStats(spawn.type);
 
     const enemy = {
         id,
-        type: sp.type,
-        x: sp.x,
-        y: sp.y,
-        spawnX: sp.x,
-        spawnY: sp.y,
-        spawnId: sp.id,
-        respawnDelay: sp.respawnDelay,
+        type: spawn.type,
+        x: spawn.x,
+        y: spawn.y,
+        spawnX: spawn.x,
+        spawnY: spawn.y,
+        spawnId: spawn.id,
+        respawnDelay: spawn.respawnDelay,
         hp: stats.hp,
         maxHp: stats.hp,
         atk: stats.atk,
@@ -95,6 +97,7 @@ function spawnEnemy(mapKey, sp) {
     io.to(`map:${mapKey}`).emit("enemySpawned", enemy);
 }
 
+//敵ステータスの配列を返してる
 function getEnemiesOnMap(mapKey) {
     return Object.values(enemies[mapKey] || {});
 }
@@ -109,7 +112,7 @@ const playerToParty = {}; // socketId -> partyId
 knownMaps.forEach(mapKey => {
     const spawns = loadEnemySpawnPointsFromMap(mapKey);
     enemySpawnPoints[mapKey] = spawns;
-    spawns.forEach(sp => spawnEnemy(mapKey, sp));
+    spawns.forEach(spawn => spawnEnemy(mapKey, spawn));
 });
 
 /* =====================
@@ -126,15 +129,15 @@ setInterval(() => {
 
             // スポーン地点から離れすぎないように制限
             const dist = Math.sqrt(Math.pow(enemy.x - enemy.spawnX, 2) + Math.pow(enemy.y - enemy.spawnY, 2));
-            if (dist > 150) {
+            if (dist > 250) {
                 // スポーン地点の方へ戻る
                 const angle = Math.atan2(enemy.spawnY - enemy.y, enemy.spawnX - enemy.x);
                 enemy.x += Math.cos(angle) * 15;
                 enemy.y += Math.sin(angle) * 15;
             } else {
                 // ランダムに少し移動
-                enemy.x += (Math.random() - 0.5) * 10;
-                enemy.y += (Math.random() - 0.5) * 10;
+                enemy.x += (Math.random() - 0.5) * 4;
+                enemy.y += (Math.random() - 0.5) * 4;
             }
 
             // 全プレイヤーに位置を同期
@@ -145,7 +148,7 @@ setInterval(() => {
             });
         });
     });
-}, 2000); // 2秒おきに移動方向などを更新（あるいは小刻みに移動）
+}, 150); // 2秒おきに移動方向などを更新（あるいは小刻みに移動）
 
 /* =====================
    Socket.IO
@@ -177,8 +180,6 @@ io.on("connection", socket => {
         playerToParty[playerId] = DEFAULT_PARTY_ID;
         console.log(`[AutoJoin] ${playerId} joined ${DEFAULT_PARTY_ID}`);
     } else {
-        // 既にパーティーにいる場合も、再接続時などのために整合性をチェックしたいが、
-        // ここでは単純に現在のパーティー情報を送るだけにする
         const currentPId = playerToParty[playerId];
         setTimeout(() => broadcastPartyUpdate(currentPId), 500);
     }
@@ -197,7 +198,8 @@ io.on("connection", socket => {
         players[socket.data.playerId] = { x: 0, y: 0, map: "lobby", hp: 100, maxHp: 100, level: 1, summon: null };
 
         lobbyPlayers[socket.data.playerId] = {
-            name: `Player ${(socket.data.playerId).slice(0, 5)}`,
+            //name: `Player ${(socket.data.playerId).slice(0, 5)}`,
+            name: `${(socket.data.playerId).slice(0, 5)}`,
             ready: false
         };
         playerNames[socket.data.playerId] = lobbyPlayers[socket.data.playerId].name;
@@ -284,10 +286,10 @@ io.on("connection", socket => {
 
     socket.on("playerStatsUpdate", ({ hp, maxHp, level, mp, maxMp }) => {
         if (!players[socket.data.playerId]) return;
-        if (hp !== undefined) players[socket.data.playerId].hp = hp;
+        if (hp !== undefined) players[socket.data.playerId].hp = maxHp;
         if (maxHp !== undefined) players[socket.data.playerId].maxHp = maxHp;
         if (level !== undefined) players[socket.data.playerId].level = level;
-        if (mp !== undefined) players[socket.data.playerId].mp = mp;
+        if (mp !== undefined) players[socket.data.playerId].mp = maxMp;
         if (maxMp !== undefined) players[socket.data.playerId].maxMp = maxMp;
 
         socket.to(`map:${socket.data.map}`).emit("playerStatUpdate", {
@@ -341,7 +343,7 @@ io.on("connection", socket => {
             x, y, map: mapKey,
             hp: hp || 100, maxHp: maxHp || 100,
             level: level || 1,
-            summon: null // 新規参加時は召喚獣なし（あるいはクライアントから送ってもらうべきだが、一旦なしで）
+            summon: null
         };
 
         // 最新の動的情報を送信
@@ -395,7 +397,7 @@ io.on("connection", socket => {
     /* ===== 敵関連 ===== */
     socket.on("enemyHit", ({ id, damage }) => {
         const mapKey = socket.data.map;
-        const enemy = enemies[mapKey]?.[id];
+        const enemy = enemies[mapKey]?.[id];    //なければundefinedにする
         if (!enemy) return;
 
         enemy.hp -= damage;
