@@ -12,7 +12,7 @@ import WetLandScene from "./scenes/WetlandScene.js";
 // サーバー設定
 export const SERVER_CONFIG = {
     // url: (typeof window !== 'undefined' && window.SERVER_URL) || "https://samara-reticent-jeanice.ngrok-free.dev/",
-    url: "https://samara-reticent-jeanice.ngrok-free.dev/",
+    url: "https://expert-space-rotary-phone-q7jg7g9jvx6jf4g65-3000.app.github.dev/",
     reconnectAttempts: 5,
     reconnectDelay: 1000
 };
