@@ -113,10 +113,10 @@ const ENEMY_STATS = {
     },
     boss: {
         displayName: '森の守護者',
-        hp: 3000000,
-        atk: 18000,
-        exp: 800000,
-        gold: 2500000,
+        hp: 3000,
+        atk: 70,
+        exp: 800,
+        gold: 2500,
         drops: [
             { id: 'hero_sword', chance: 0.1 },
             { id: 'high_potion', chance: 1.0 },
