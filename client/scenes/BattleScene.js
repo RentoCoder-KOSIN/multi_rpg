@@ -1,5 +1,6 @@
 import BaseGameScene from './BaseGameScene.js';
 import Enemy from '../entities/Enemy.js';
+import AIStatsUI from '../ui/AIStatsUI.js';
 
 export default class BattleScene extends BaseGameScene {
     constructor() {
@@ -95,6 +96,21 @@ export default class BattleScene extends BaseGameScene {
             name: npc.name,
             bossNPC: npc.bossNPC
         })));
+
+        // AI Stats UI
+        this.aiStatsUI = new AIStatsUI(this);
+
+        // 学習モード切り替え (Shift+T)
+        this.input.keyboard.on('keydown-T', (event) => {
+            if (event.shiftKey && this.boss && this.boss.ai) {
+                this.boss.ai.setTrainingMode(!this.boss.ai.isTraining);
+                const mode = this.boss.ai.isTraining ? 'ON' : 'OFF';
+                if (this.notificationUI) {
+                    this.notificationUI.show(`AI Training: ${mode}`, 'info');
+                }
+                console.log(`[BattleScene] AI Training mode: ${mode}`);
+            }
+        });
     }
 
     getBossSpawnPosition() {
@@ -269,7 +285,7 @@ export default class BattleScene extends BaseGameScene {
 
         // ボスの更新（ローカル管理の場合）
         if (this.boss && this.boss.active) {
-            this.boss.update();
+            this.boss.update(time, delta);
 
             // スキル攻撃などでHPが0になった場合もチェック
             if (this.boss.hp <= 0) {
