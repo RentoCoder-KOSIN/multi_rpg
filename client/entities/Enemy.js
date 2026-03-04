@@ -1,3 +1,5 @@
+import { getEnemyStats, getEnemyDisplayName, getEnemySizeConfig } from '../data/enemyStats.js';
+
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, texture, type, id = null, spawnId = null, socket = null, serverData = {}) {
         super(scene, x, y, texture);
@@ -32,20 +34,13 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
             });
         }
 
-        //server.jsにENEMY_STATSがあるから
-        const statsMap = {
-            'slime': { hp: 30, atk: 5, exp: 20, gold: 5 },
-            'forest_slime': { hp: 100, atk: 15, exp: 120, gold: 25 },
-            'dire_wolf': { hp: 250, atk: 30, exp: 400, gold: 80 },
-            'boss': { hp: 2000, atk: 100, exp: 5000, gold: 500 }
-        };
-
-        const defaultStats = statsMap[type] || statsMap.slime;
-        this.maxHp = serverData.maxHp || serverData.hp || defaultStats.hp;
+        // 敵のステータスデータを取得
+        const stats = getEnemyStats(type);
+        this.maxHp = serverData.maxHp || serverData.hp || stats.hp;
         this.hp = serverData.hp || this.maxHp;
-        this.atk = serverData.atk || defaultStats.atk;
-        this.expValue = serverData.exp || defaultStats.exp;
-        this.goldValue = serverData.gold || defaultStats.gold;
+        this.atk = serverData.atk || stats.atk;
+        this.expValue = serverData.exp || stats.exp;
+        this.goldValue = serverData.gold || stats.gold;
 
         // 体力ゲージの作成
         this.createHealthBar();
@@ -64,20 +59,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
 
     createNameLabel() {
-        const statsMap = {
-            'slime': 'スライム',
-            'forest_slime': '森のスライム',
-            'dire_wolf': 'ダイアウルフ',
-            'boss': '森の守護者',
-            'red_slime': 'レッドスライム',
-            'bat': 'コウモリ',
-            'skeleton': 'スケルトン',
-            'goblin': 'ゴブリン',
-            'ghost': 'ゴースト',
-            'orc': 'オーク',
-            'dragon_boss': 'エンシェントドラゴン'
-        };
-        const displayName = statsMap[this.type] || this.type;
+        const displayName = getEnemyDisplayName(this.type);
 
         this.nameText = this.scene.add.text(0, 0, displayName, {
             fontSize: '10px',
@@ -95,45 +77,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         const baseWidth = source ? source.width : 32;
         const baseHeight = source ? source.height : 32;
 
-        // ワールド座標系（画面上のピクセル数）での目標サイズ
-        let targetWidth = 32;
-        let targetHeight = 32;
-        let hitWidth = 28;
-        let hitHeight = 28;
-
-        switch (this.type) {
-            case 'slime':
-            case 'forest_slime':
-            case 'red_slime':
-            case 'bat':
-                targetWidth = 40;
-                targetHeight = 40;
-                hitWidth = 32;
-                hitHeight = 26;
-                break;
-            case 'skeleton':
-            case 'goblin':
-            case 'ghost':
-                targetWidth = 48;
-                targetHeight = 48;
-                hitWidth = 34;
-                hitHeight = 44;
-                break;
-            case 'orc':
-            case 'dire_wolf':
-                targetWidth = 60;
-                targetHeight = 60;
-                hitWidth = 50;
-                hitHeight = 52;
-                break;
-            case 'boss':
-            case 'dragon_boss':
-                targetWidth = 80; // 威厳がありつつ、画面を覆わないサイズ
-                targetHeight = 80;
-                hitWidth = 64;
-                hitHeight = 64;
-                break;
-        }
+        // 敵タイプのサイズ設定を取得
+        const sizeConfig = getEnemySizeConfig(this.type);
+        const { targetWidth, targetHeight, hitWidth, hitHeight } = sizeConfig;
 
         // スケールを設定
         const scaleX = targetWidth / baseWidth;

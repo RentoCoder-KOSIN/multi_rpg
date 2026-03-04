@@ -414,6 +414,7 @@ export default class NetworkManager {
         }
     }
     notifyEnemyDefeat(enemyId) { if (this.socket && this.socket.connected) this.socket.emit('enemyDefeat', { id: enemyId }); }
+    sendEnemyHit(enemyId, damage) { if (this.socket && this.socket.connected) this.socket.emit('enemyHit', { id: enemyId, damage }); }
 
     // パーティー系
     inviteToParty(targetId) {

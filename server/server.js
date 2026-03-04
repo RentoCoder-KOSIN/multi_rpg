@@ -3,6 +3,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
 const fs = require("fs");
+const { ENEMY_STATS, getEnemyStats } = require("./data/enemyStats");
 
 const app = express();
 const server = http.createServer(app);
@@ -44,28 +45,6 @@ function loadEnemySpawnPointsFromMap(mapKey) {
 //IDの生成
 function generateId(type) {
     return `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-}
-
-/* =====================
-   敵ステータス
-   type: hp: atk: exp: gold: drops:
-===================== */
-const ENEMY_STATS = {
-    slime: { hp: 150, atk: 5, exp: 22, gold: 50, drops: [{ id: 'potion', chance: 0.05 }, { id: 'mp_potion', chance: 0.05 }, { id: 'holy_weapon', chance: 0.002 }] },
-    bat: { hp: 330, atk: 30, exp: 45, gold: 70, drops: [{ id: 'potion', chance: 0.15 }, { id: 'mp_potion', chance: 0.1 }, { id: 'holy_weapon', chance: 0.002 }] },
-    forest_slime: { hp: 400, atk: 75, exp: 120, gold: 250, drops: [{ id: 'potion', chance: 0.2 }, { id: 'mp_potion', chance: 0.15 }, { id: 'holy_weapon', chance: 0.002 }] },
-    skeleton: { hp: 1300, atk: 120, exp: 450, gold: 400, drops: [{ id: 'high_potion', chance: 0.05 }, { id: 'mp_potion', chance: 0.1 }, { id: 'holy_weapon', chance: 0.002 }] },
-    red_slime: { hp: 2000, atk: 350, exp: 650, gold: 600, drops: [{ id: 'high_potion', chance: 0.1 }, { id: 'high_mp_potion', chance: 0.05 }, { id: 'holy_weapon', chance: 0.002 }] },
-    goblin: { hp: 2800, atk: 450, exp: 950, gold: 1200, drops: [{ id: 'high_potion', chance: 0.15 }, { id: 'high_mp_potion', chance: 0.1 }, { id: 'holy_weapon', chance: 0.02 }] },
-    ghost: { hp: 35000, atk: 505, exp: 1250, gold: 3200, drops: [{ id: 'high_potion', chance: 0.1 }, { id: 'high_mp_potion', chance: 0.1 }, { id: 'holy_weapon', chance: 0.002 }] },
-    orc: { hp: 50000, atk: 750, exp: 1500, gold: 10000, drops: [{ id: 'high_potion', chance: 0.2 }, { id: 'high_mp_potion', chance: 0.2 }, { id: 'holy_weapon', chance: 0.002 }] },
-    dire_wolf: { hp: 75000, atk: 1900, exp: 80000, gold: 14000, drops: [{ id: 'high_potion', chance: 0.3 }, { id: 'high_mp_potion', chance: 0.3 }, { id: 'holy_weapon', chance: 0.002 }] },
-    boss: { hp: 3000000, atk: 18000, exp: 800000, gold: 2500000, drops: [{ id: 'hero_sword', chance: 0.1 }, { id: 'high_potion', chance: 1.0 }, { id: 'high_mp_potion', chance: 1.0 }] },
-    dragon_boss: { hp: 8000000, atk: 35000, exp: 25000000, gold: 10000000, drops: [{ id: 'dragon_scale_armor', chance: 0.2 }, { id: 'high_potion', chance: 1.0 }, { id: 'high_mp_potion', chance: 1.0 }] }
-};
-
-function getEnemyStats(type) {
-    return ENEMY_STATS[type] || ENEMY_STATS.slime;
 }
 
 /* =====================

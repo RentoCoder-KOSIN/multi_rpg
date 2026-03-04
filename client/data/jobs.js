@@ -1,3 +1,5 @@
+import { SKILLS_BY_JOB } from './skills/skillRegistry.js';
+
 export const JOBS = {
     fighter: {
         id: 'fighter',

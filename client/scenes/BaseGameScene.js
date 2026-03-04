@@ -370,6 +370,9 @@ export default class BaseGameScene extends Phaser.Scene {
             if (this.virtualPadUI && this.virtualPadUI.container) this.virtualPadUI.container.setVisible(false);
         }
 
+        // Attack key (SPACE)
+        this.attackKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
         // Settings key (O)
         this.input.keyboard.on('keydown-O', () => {
             if (this.settingsUI) {
@@ -514,28 +517,10 @@ export default class BaseGameScene extends Phaser.Scene {
 
         if (this.collidableLayers) this.collidableLayers.forEach(layer => this.physics.add.collider(enemy, layer));
 
-        // プレイヤーとの戦闘
+        // 敵がプレイヤーに攻撃する（接触判定）
         if (this.player) {
             this.physics.add.overlap(this.player, enemy, () => {
                 const now = this.time.now;
-
-                // プレイヤーが敵を攻撃
-                if (this.player.active && enemy.active && (!enemy.lastHitTime || now - enemy.lastHitTime > 500)) {
-                    const damageData = this.player.getDamage(1, enemy);
-                    enemy.takeDamage(damageData.amount, this.player);
-                    if (enemy) enemy.lastHitTime = now;
-
-                    // 攻撃エフェクト
-                    this.cameras.main.shake(100, 0.005);
-
-                    if (damageData.isCrit) {
-                        this.showHitEffect(enemy.x, enemy.y - 20, 0xffff00);
-                        const critText = this.add.text(enemy.x, enemy.y - 40, 'CRITICAL!', {
-                            fontSize: '16px', color: '#ffff00', fontFamily: '"Press Start 2P"', stroke: '#000', strokeThickness: 4
-                        }).setOrigin(0.5);
-                        this.tweens.add({ targets: critText, y: enemy.y - 80, alpha: 0, duration: 800, onComplete: () => critText.destroy() });
-                    }
-                }
 
                 // 敵がプレイヤーを攻撃
                 // ボスなどの強力な敵の場合、接触直後に即死しないように少し長めの無敵時間または猶予を設ける
@@ -571,6 +556,81 @@ export default class BaseGameScene extends Phaser.Scene {
         if (skillId) {
             this.usePlayerSkill(skillId);
         }
+    }
+
+    performBasicAttack() {
+        if (!this.player || !this.player.active) return;
+
+        const player = this.player;
+        const now = this.time.now;
+        const attackRange = 80; // 通常攻撃の範囲
+
+        // 攻撃クールダウンチェック (500ms)
+        if (player.lastAttackTime && now - player.lastAttackTime < 500) {
+            return;
+        }
+
+        // 攻撃範囲内の敵を検出
+        const enemies = [];
+        const allEnemies = this.networkManager?.getEnemies() || {};
+
+        Object.values(allEnemies).forEach(enemy => {
+            if (!enemy || !enemy.active) return;
+
+            const dx = enemy.x - player.x;
+            const dy = enemy.y - player.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < attackRange) {
+                enemies.push(enemy);
+            }
+        });
+
+        // 攻撃範囲内の敵がいなければ何もしない
+        if (enemies.length === 0) {
+            if (this.notificationUI) this.notificationUI.show('攻撃範囲内に敵がいません', 'error');
+            return;
+        }
+
+        // プレイヤーを攻撃方向に向かせる
+        if (enemies.length > 0) {
+            const nearest = enemies.reduce((prev, curr) => {
+                const prevDist = Math.hypot(prev.x - player.x, prev.y - player.y);
+                const currDist = Math.hypot(curr.x - player.x, curr.y - player.y);
+                return prevDist < currDist ? prev : curr;
+            });
+            player.flipX = (nearest.x < player.x);
+        }
+
+        // 全ての敵に攻撃を当てる
+        enemies.forEach(enemy => {
+            if (!enemy || !enemy.active) return;
+
+            const damageData = player.getDamage(1, enemy);
+            const damage = damageData.amount;
+
+            enemy.takeDamage(damage, player);
+            enemy.lastHitTime = now;
+
+            // 攻撃エフェクト
+            if (damageData.isCrit) {
+                this.showHitEffect(enemy.x, enemy.y - 20, 0xffff00);
+                const critText = this.add.text(enemy.x, enemy.y - 40, 'CRITICAL!', {
+                    fontSize: '16px', color: '#ffff00', fontFamily: '"Press Start 2P"', stroke: '#000', strokeThickness: 4
+                }).setOrigin(0.5);
+                this.tweens.add({ targets: critText, y: enemy.y - 80, alpha: 0, duration: 800, onComplete: () => critText.destroy() });
+            }
+
+            // カメラシェイク
+            this.cameras.main.shake(100, 0.005);
+
+            // サーバーに敵への攻撃を通知
+            if (enemy.id && this.networkManager) {
+                this.networkManager.sendEnemyHit(enemy.id, damage);
+            }
+        });
+
+        player.lastAttackTime = now;
     }
 
     handleInteraction() {
@@ -610,6 +670,11 @@ export default class BaseGameScene extends Phaser.Scene {
 
         // インベントリ等が開いている時はスキル使用禁止
         const isAnyWindowOpen = this.inventoryUI?.isOpen || this.shopUI?.isOpen || this.skillManagerUI?.isOpen || this.statAllocationUI?.isOpen || (this.settingsUI && this.settingsUI.visible);
+
+        // 通常攻撃 (SPACE)
+        if (!isAnyWindowOpen && this.attackKey && Phaser.Input.Keyboard.JustDown(this.attackKey)) {
+            this.performBasicAttack();
+        }
 
         // スキル使用 (1-3キー)
         if (!isAnyWindowOpen && this.skillKeys) {
