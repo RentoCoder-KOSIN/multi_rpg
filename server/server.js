@@ -4,6 +4,7 @@ const { Server } = require("socket.io");
 const path = require("path");
 const fs = require("fs");
 const { ENEMY_STATS, getEnemyStats } = require("./data/enemyStats");
+const { ServerEnemyAIManager } = require("./ai/ServerEnemyAI");
 
 const app = express();
 const server = http.createServer(app);
@@ -48,6 +49,34 @@ function generateId(type) {
 }
 
 /* =====================
+   サーバー側 AI マネージャー（敵管理の前に定義）
+===================== */
+const aiManager = new ServerEnemyAIManager();
+const aiDataPath = path.join(__dirname, 'data', 'sharedAI.json');
+
+// 起動時に保存済み学習データをロード
+try {
+    if (fs.existsSync(aiDataPath)) {
+        const raw    = fs.readFileSync(aiDataPath, 'utf8');
+        const parsed = JSON.parse(raw);
+        aiManager.loadFromData(parsed);
+        console.log('[ServerAI] Loaded AI models from disk:', Object.keys(parsed));
+    }
+} catch (e) {
+    console.error('[ServerAI] Failed to load AI data:', e);
+}
+
+// 定期的に学習データを保存する関数
+function saveAIData(data) {
+    try {
+        fs.writeFileSync(aiDataPath, JSON.stringify(data, null, 2), 'utf8');
+        console.log('[ServerAI] AI models saved. Types:', Object.keys(data).join(', '));
+    } catch (e) {
+        console.error('[ServerAI] Failed to save AI data:', e);
+    }
+}
+
+/* =====================
    敵管理
 ===================== */
 function spawnEnemy(mapKey, spawn) {
@@ -73,6 +102,10 @@ function spawnEnemy(mapKey, spawn) {
     };
 
     enemies[mapKey][id] = enemy;
+
+    // AIマネージャーに登録（学習を開始）
+    aiManager.registerEnemy(enemy);
+
     io.to(`map:${mapKey}`).emit("enemySpawned", enemy);
 }
 
@@ -95,64 +128,122 @@ knownMaps.forEach(mapKey => {
 });
 
 /* =====================
-   サーバー側 更新ループ (敵の移動など)
+   サーバー側 AI 初期化
 ===================== */
 
-// 共有AIデータ（enemyType -> { qTableData, timestamp })
-const sharedAI = {};
-const aiDataPath = path.join(__dirname, 'data', 'sharedAI.json');
+// 起動時にスポーン済みの救数をAIマネージャーに一括登録
+// (各 spawnEnemy 内で registerEnemy されるので、起動後にダブりないようログのみ)
+console.log('[ServerAI] aiManager initialized. Initial enemies will be registered via spawnEnemy().');
 
-// 起動時に保存済み学習データを読み込む
-try {
-    if (fs.existsSync(aiDataPath)) {
-        const raw = fs.readFileSync(aiDataPath, 'utf8');
-        const parsed = JSON.parse(raw);
-        Object.assign(sharedAI, parsed);
-        console.log('[Server] Loaded shared AI models:', Object.keys(sharedAI));
-    }
-} catch (e) {
-    console.error('[Server] Failed to load shared AI data:', e);
-}
-
-function saveSharedAI() {
-    try {
-        fs.writeFileSync(aiDataPath, JSON.stringify(sharedAI), 'utf8');
-    } catch (e) {
-        console.error('[Server] Failed to save shared AI data:', e);
-    }
-}
+/* =====================
+   サーバー側 更新ループ（AI 駆動の救移動）
+   ※ サーバーが稼働している限り学習し続ける
+===================== */
+const AI_UPDATE_INTERVAL = 150; // ms
 
 setInterval(() => {
     knownMaps.forEach(mapKey => {
         const mapEnemies = enemies[mapKey];
         if (!mapEnemies) return;
 
+        // このマップにいるプレイヤーを収集
+        const mapPlayers = {};
+        Object.entries(players).forEach(([pid, p]) => {
+            if (p.map === mapKey && p.hp > 0) {
+                mapPlayers[pid] = { ...p, id: pid };
+            }
+        });
+
         Object.values(mapEnemies).forEach(enemy => {
-            // ボスは移動させないか、別のロジックにする（今回は通常敵のみ移動）
             if (enemy.type === 'boss') return;
 
-            // スポーン地点から離れすぎないように制限
-            const dist = Math.sqrt(Math.pow(enemy.x - enemy.spawnX, 2) + Math.pow(enemy.y - enemy.spawnY, 2));
-            if (dist > 250) {
-                // スポーン地点の方へ戻る
-                const angle = Math.atan2(enemy.spawnY - enemy.y, enemy.spawnX - enemy.x);
-                enemy.x += Math.cos(angle) * 15;
-                enemy.y += Math.sin(angle) * 15;
+            // AI による行動決定と移動
+            const result = aiManager.updateEnemy(enemy.id, mapPlayers, mapEnemies);
+
+            if (result) {
+                // スポーン地点から 250px 以上離れたら戻す
+                const distFromSpawn = Math.sqrt(
+                    Math.pow(enemy.x - enemy.spawnX, 2) +
+                    Math.pow(enemy.y - enemy.spawnY, 2)
+                );
+
+                if (distFromSpawn > 250) {
+                    // スポーン地点へ強制帰還
+                    const homeAngle = Math.atan2(enemy.spawnY - enemy.y, enemy.spawnX - enemy.x);
+                    enemy.x += Math.cos(homeAngle) * 10;
+                    enemy.y += Math.sin(homeAngle) * 10;
+                } else {
+                    // AI の行動に従って移動（スケール: px per update）
+                    const MOVE_SCALE = AI_UPDATE_INTERVAL * 0.6; // フレームレート補正
+                    enemy.x += result.dx * MOVE_SCALE;
+                    enemy.y += result.dy * MOVE_SCALE;
+                }
+
+                // サーバー側での攻撃判定
+                if (result.shouldAttack && result.targetPlayerId) {
+                    const target = mapPlayers[result.targetPlayerId];
+                    if (target && target.hp > 0) {
+                        const d = Math.sqrt(
+                            Math.pow(enemy.x - target.x, 2) +
+                            Math.pow(enemy.y - target.y, 2)
+                        );
+                        if (d < 80) { // 攻撃範囲チェック（サーバー側）
+                            // AIに攻撃成功を通知（学習報酬）
+                            aiManager.notifyAttackHit(enemy.id, enemy.atk);
+
+                            // プレイヤーにダメージを通知
+                            const targetSocket = [...io.sockets.sockets.values()]
+                                .find(s => s.data.playerId === result.targetPlayerId);
+                            if (targetSocket) {
+                                targetSocket.emit('enemyAttack', {
+                                    enemyId: enemy.id,
+                                    enemyType: enemy.type,
+                                    damage: enemy.atk
+                                });
+                            }
+                        }
+                    }
+                }
             } else {
-                // ランダムに少し移動
-                enemy.x += (Math.random() - 0.5) * 4;
-                enemy.y += (Math.random() - 0.5) * 4;
+                // AI インスタンスがない（未登録など）はランダム移動にフォールバック
+                const distFromSpawn = Math.sqrt(
+                    Math.pow(enemy.x - enemy.spawnX, 2) +
+                    Math.pow(enemy.y - enemy.spawnY, 2)
+                );
+                if (distFromSpawn > 250) {
+                    const homeAngle = Math.atan2(enemy.spawnY - enemy.y, enemy.spawnX - enemy.x);
+                    enemy.x += Math.cos(homeAngle) * 10;
+                    enemy.y += Math.sin(homeAngle) * 10;
+                } else {
+                    enemy.x += (Math.random() - 0.5) * 4;
+                    enemy.y += (Math.random() - 0.5) * 4;
+                }
             }
 
             // 全プレイヤーに位置を同期
-            io.to(`map:${mapKey}`).emit("enemyMoved", {
+            io.to(`map:${mapKey}`).emit('enemyMoved', {
                 id: enemy.id,
                 x: enemy.x,
-                y: enemy.y
+                y: enemy.y,
+                action: result?.action || 'idle'
             });
         });
     });
-}, 150); // 2秒おきに移動方向などを更新（あるいは小刻みに移動）
+
+    // 定期的にAIデータを自動保存
+    aiManager.checkAutoSave(saveAIData);
+}, AI_UPDATE_INTERVAL);
+
+// 30秒ごとにAI統計をログ出力
+setInterval(() => {
+    const stats = aiManager.getAllStats();
+    if (Object.keys(stats).length > 0) {
+        console.log('[ServerAI] Learning Stats:');
+        Object.entries(stats).forEach(([type, s]) => {
+            console.log(`  [${type}] ε=${s.epsilon} updates=${s.updateCount} episodes=${s.episodeCount} qSize=${s.qTableSize} avgReward=${s.avgReward}`);
+        });
+    }
+}, 30000);
 
 /* =====================
    Socket.IO
@@ -334,17 +425,35 @@ io.on("connection", socket => {
     });
 
     // === AI学習データ送受信 ===
+    // クライアントからの学習データをサーバーのAIにマージ（集合知）
     socket.on('aiLearnSync', ({ enemyType, qTableData }) => {
         if (!enemyType || !qTableData) return;
-        sharedAI[enemyType] = { qTableData, timestamp: Date.now() };
-        io.emit('aiSharedUpdate', { enemyType, qTableData });
-        saveSharedAI();
+
+        // サーバー側AIにマージ
+        aiManager.mergeClientData(enemyType, qTableData);
+
+        // サーバーの最新データを全クライアントに配信
+        const serverData = aiManager.getAgent(enemyType).toJSON();
+        io.emit('aiSharedUpdate', { enemyType, qTableData: serverData });
+
+        // 非同期で保存（即時ではなくバッチ処理）
+        // checkAutoSave が定期的に保存するため不要だが、確実にするなら以下：
+        // saveAIData(aiManager.toSaveData());
     });
 
     socket.on('getSharedAI', ({ enemyType }) => {
-        if (enemyType && sharedAI[enemyType]) {
-            socket.emit('aiSharedUpdate', { enemyType, qTableData: sharedAI[enemyType].qTableData });
-        }
+        if (!enemyType) return;
+        // サーバー側AIのデータをクライアントに送信
+        const agent = aiManager.getAgent(enemyType);
+        socket.emit('aiSharedUpdate', {
+            enemyType,
+            qTableData: agent.toJSON()
+        });
+    });
+
+    // AI統計情報をリクエスト
+    socket.on('getAIStats', () => {
+        socket.emit('aiStats', aiManager.getAllStats());
     });
 
     socket.on("newPlayer", ({ x, y, mapKey, hp, maxHp, level }) => {
@@ -422,7 +531,8 @@ io.on("connection", socket => {
 
         if (enemy.hp <= 0) {
             // 撃破処理
-            // 撃破処理
+            // AI に死亡を通知（学習反映）
+            aiManager.unregisterEnemy(id);
             delete enemies[mapKey][id];
 
             const drops = [];

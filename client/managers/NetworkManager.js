@@ -180,6 +180,30 @@ export default class NetworkManager {
             }
         });
 
+        // ===== サーバー側AI による攻撃 =====
+        // サーバーのQ-Learning AIが攻撃範囲内に入ったと判断した場合に受信
+        this.socket.on('enemyAttack', (data) => {
+            const player = this.scene?.player;
+            if (!player || !player.active) return;
+
+            // プレイヤーにダメージを与える
+            if (player.takeDamage) {
+                // 攻撃エフェクト（カメラシェイク）
+                if (this.scene?.cameras?.main) {
+                    this.scene.cameras.main.shake(50, 0.002);
+                }
+                player.takeDamage(data.damage || 0);
+                console.log(`[NetworkManager] enemyAttack from ${data.enemyType} (${data.enemyId}): ${data.damage} dmg`);
+            }
+        });
+
+        // ===== AI 統計情報 =====
+        this.socket.on('aiStats', (stats) => {
+            if (this.callbacks.onAIStats) {
+                this.callbacks.onAIStats(stats);
+            }
+        });
+
 
         // ===== 召喚獣関連 =====
         this.socket.on("summonUpdate", (data) => {
@@ -414,6 +438,7 @@ export default class NetworkManager {
     }
     notifyEnemyDefeat(enemyId) { if (this.socket && this.socket.connected) this.socket.emit('enemyDefeat', { id: enemyId }); }
     sendEnemyHit(enemyId, damage) { if (this.socket && this.socket.connected) this.socket.emit('enemyHit', { id: enemyId, damage }); }
+    requestAIStats() { if (this.socket && this.socket.connected) this.socket.emit('getAIStats'); }
 
     // パーティー系
     inviteToParty(targetId) {
