@@ -57,7 +57,7 @@ const aiDataPath = path.join(__dirname, 'data', 'sharedAI.json');
 // 起動時に保存済み学習データをロード
 try {
     if (fs.existsSync(aiDataPath)) {
-        const raw    = fs.readFileSync(aiDataPath, 'utf8');
+        const raw = fs.readFileSync(aiDataPath, 'utf8');
         const parsed = JSON.parse(raw);
         aiManager.loadFromData(parsed);
         console.log('[ServerAI] Loaded AI models from disk:', Object.keys(parsed));
@@ -173,8 +173,10 @@ setInterval(() => {
                     enemy.x += Math.cos(homeAngle) * 10;
                     enemy.y += Math.sin(homeAngle) * 10;
                 } else {
-                    // AI の行動に従って移動（スケール: px per update）
-                    const MOVE_SCALE = AI_UPDATE_INTERVAL * 0.6; // フレームレート補正
+                    // AI の行動に従って移動
+                    // dx/dy は px/秒 なので、経過時間(秒)を掛けて実移動量に変換
+                    // 例: approach 50px/s * 0.15s = 7.5px/tick
+                    const MOVE_SCALE = AI_UPDATE_INTERVAL / 1000;
                     enemy.x += result.dx * MOVE_SCALE;
                     enemy.y += result.dy * MOVE_SCALE;
                 }

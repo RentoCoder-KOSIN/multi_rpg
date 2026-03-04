@@ -98,53 +98,56 @@ class EnemyAgentInstance {
     }
 
     /**
-     * 行動を実行して dx, dy の移動量とattackフラグを返す
+     * 行動を実行して dx, dy（px/秒）と attackフラグを返す
+     * ※ 実際の移動量は呼び出し側で (actionInterval / 1000) を掛けること
      */
     executeAction(action, state) {
-        const speed = SPEED;
+        const speed = SPEED; // px/秒
         let dx = 0, dy = 0;
         let shouldAttack = false;
 
         switch (action) {
             case 'approach':
-                dx = Math.cos(state.angle) * speed * (1 / 30); // 約1フレーム分
-                dy = Math.sin(state.angle) * speed * (1 / 30);
+                // 通常接近 (50 px/s)
+                dx = Math.cos(state.angle) * speed;
+                dy = Math.sin(state.angle) * speed;
                 if (state.distance < ATTACK_RANGE) shouldAttack = true;
                 break;
 
             case 'aggressive':
-                dx = Math.cos(state.angle) * speed * 1.5 * (1 / 30);
-                dy = Math.sin(state.angle) * speed * 1.5 * (1 / 30);
+                // 積極的攻撃 (75 px/s)
+                dx = Math.cos(state.angle) * speed * 1.5;
+                dy = Math.sin(state.angle) * speed * 1.5;
                 if (state.distance < ATTACK_RANGE) shouldAttack = true;
                 break;
 
             case 'fast_approach':
-                dx = Math.cos(state.angle) * speed * 2.0 * (1 / 30);
-                dy = Math.sin(state.angle) * speed * 2.0 * (1 / 30);
+                // 超高速接近 (100 px/s)
+                dx = Math.cos(state.angle) * speed * 2.0;
+                dy = Math.sin(state.angle) * speed * 2.0;
                 if (state.distance < ATTACK_RANGE) shouldAttack = true;
                 break;
 
             case 'attack_ready':
                 if (state.distance > ATTACK_RANGE * 0.7) {
-                    dx = Math.cos(state.angle) * speed * 0.8 * (1 / 30);
-                    dy = Math.sin(state.angle) * speed * 0.8 * (1 / 30);
+                    dx = Math.cos(state.angle) * speed * 0.8;
+                    dy = Math.sin(state.angle) * speed * 0.8;
                 } else {
                     shouldAttack = true;
                 }
                 break;
 
             case 'circle_left':
-                dx = Math.cos(state.angle + Math.PI / 2) * speed * (1 / 30);
-                dy = Math.sin(state.angle + Math.PI / 2) * speed * (1 / 30);
+                dx = Math.cos(state.angle + Math.PI / 2) * speed;
+                dy = Math.sin(state.angle + Math.PI / 2) * speed;
                 break;
 
             case 'circle_right':
-                dx = Math.cos(state.angle - Math.PI / 2) * speed * (1 / 30);
-                dy = Math.sin(state.angle - Math.PI / 2) * speed * (1 / 30);
+                dx = Math.cos(state.angle - Math.PI / 2) * speed;
+                dy = Math.sin(state.angle - Math.PI / 2) * speed;
                 break;
 
             case 'skill_attack':
-                // スキル攻撃：通常より広い範囲
                 if (state.distance < ATTACK_RANGE * 2) shouldAttack = true;
                 break;
 
@@ -163,20 +166,20 @@ class EnemyAgentInstance {
      * @param {object} allies  - 同マップの他の敵
      * @returns {{ dx, dy, shouldAttack, targetPlayerId } | null}
      */
-    update(players, allies) {
+    update(players, allies, isLearning = true) {
         const now = Date.now();
         if (now - this.lastActionTime < this.actionInterval) return null;
         this.lastActionTime = now;
 
         const state = this.buildState(players, allies);
         if (!state) {
-            // プレイヤーがいない → スポーン地点に戻る
+            // プレイヤーがいない → スポーン地点に戻る (15 px/s)
             const homeAngle = angle(this.enemy.x, this.enemy.y, this.enemy.spawnX, this.enemy.spawnY);
             const d = dist(this.enemy.x, this.enemy.y, this.enemy.spawnX, this.enemy.spawnY);
             if (d > 10) {
                 return {
-                    dx: Math.cos(homeAngle) * SPEED * 0.3 * (1 / 30),
-                    dy: Math.sin(homeAngle) * SPEED * 0.3 * (1 / 30),
+                    dx: Math.cos(homeAngle) * SPEED * 0.3, // px/秒
+                    dy: Math.sin(homeAngle) * SPEED * 0.3,
                     shouldAttack: false,
                     targetPlayerId: null
                 };
@@ -184,8 +187,8 @@ class EnemyAgentInstance {
             return null;
         }
 
-        // ----- 学習フェーズ -----
-        if (this.lastState && this.lastAction) {
+        // ----- 学習フェーズ（isLearning=false のときスキップ） -----
+        if (isLearning && this.lastState && this.lastAction) {
             // HP変化を追跡
             this.hpLoss = Math.max(0, this.lastHp - this.enemy.hp);
             this.lastHp = this.enemy.hp;
@@ -198,17 +201,23 @@ class EnemyAgentInstance {
             );
             this.agent.update(this.lastState, this.lastAction, reward, state);
             this.damageDealt = 0;
+        } else if (!isLearning) {
+            // 学習OFF時もダメージカウンタはリセット（蓄積しない）
+            this.damageDealt = 0;
+            this.hpLoss = 0;
+            this.lastHp = this.enemy.hp;
         }
 
         // ----- 行動選択 -----
-        const action = this.agent.selectAction(state);
+        // 学習OFF時は ε=minEpsilon 固定（純粋な活用モード）
+        const action = this.agent.selectAction(state, isLearning);
 
-        // 検出範囲外ならゆっくりプレイヤーに接近
+        // 検出範囲外ならゆっくりプレイヤーに接近 (15 px/s)
         let result;
         if (!state.inDetectRange) {
             result = {
-                dx: Math.cos(state.angle) * SPEED * 0.3 * (1 / 30),
-                dy: Math.sin(state.angle) * SPEED * 0.3 * (1 / 30),
+                dx: Math.cos(state.angle) * SPEED * 0.3, // px/秒
+                dy: Math.sin(state.angle) * SPEED * 0.3,
                 shouldAttack: false,
                 targetPlayerId: state.targetPlayerId,
                 action: 'patrol'
@@ -223,8 +232,10 @@ class EnemyAgentInstance {
         this.lastAction = action;
         this.lastDistance = state.distance;
 
-        // ε減衰（行動ごとに少し）
-        this.agent.epsilon = Math.max(this.agent.minEpsilon, this.agent.epsilon * 0.99999);
+        // ε減衰（学習ON時のみ適用）
+        if (isLearning) {
+            this.agent.epsilon = Math.max(this.agent.minEpsilon, this.agent.epsilon * 0.99999);
+        }
 
         return result;
     }
@@ -255,11 +266,14 @@ class EnemyAgentInstance {
 class ServerEnemyAIManager {
     constructor() {
         // 敵タイプ別の共有エージェント
-        // 同じタイプの敵は同じQ-tableを参照して「集団知」を形成
-        this.agents = {}; // enemyType -> ServerQLearning
+        this.agents = {};    // enemyType -> ServerQLearning
 
         // 敵インスタンス別のエージェントラッパー
         this.instances = {}; // enemyId -> EnemyAgentInstance
+
+        // ===== 学習ON/OFFフラグ =====
+        // true: 学習し続ける / false: 学習停止（既存Q-tableで行動のみ）
+        this.isLearningEnabled = true;
 
         // 定期保存用
         this.lastSaveTime = Date.now();
