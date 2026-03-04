@@ -6,8 +6,15 @@ export function spawnEnemiesFromMap(scene, map) {
     scene.enemies = [];
 
     spawnObjects.forEach(obj => {
-        const enemy = new Enemy(scene, obj.x, obj.y, 'slime', 'slime');
-        scene.physics.add.overlap(scene.player, enemy, () => enemy.die());
+        const type = (obj.properties && obj.properties.find(p => p.name === 'type')?.value) || 'slime';
+        const respawnDelay = (obj.properties && obj.properties.find(p => p.name === 'respawnDelay')?.value) || 3000;
+        const enemy = new Enemy(scene, obj.x, obj.y, type, type, null, obj.id, null, {});
+        enemy.respawnDelay = respawnDelay;
+        // 当たり判定で即死させないよう、プレイヤーの攻撃力でダメージを与える
+        scene.physics.add.overlap(scene.player, enemy, () => {
+            const atk = scene.player?.stats?.atk || 10;
+            enemy.takeDamage(atk, scene.player);
+        });
         scene.enemies.push(enemy);
     });
 }
@@ -16,7 +23,13 @@ export function spawnEnemiesFromMap(scene, map) {
 export function spawnEnemyRandomFromMap(scene, map) {
     const spawnObjects = map.getObjectLayer('enemy_spawn').objects;
     const obj = Phaser.Utils.Array.GetRandom(spawnObjects);
-    const enemy = new Enemy(scene, obj.x, obj.y, 'slime', 'slime');
-    scene.physics.add.overlap(scene.player, enemy, () => enemy.die());
+    const type = (obj.properties && obj.properties.find(p => p.name === 'type')?.value) || 'slime';
+    const respawnDelay = (obj.properties && obj.properties.find(p => p.name === 'respawnDelay')?.value) || 3000;
+    const enemy = new Enemy(scene, obj.x, obj.y, type, type, null, obj.id, null, {});
+    enemy.respawnDelay = respawnDelay;
+    scene.physics.add.overlap(scene.player, enemy, () => {
+        const atk = scene.player?.stats?.atk || 10;
+        enemy.takeDamage(atk, scene.player);
+    });
     scene.enemies.push(enemy);
 }

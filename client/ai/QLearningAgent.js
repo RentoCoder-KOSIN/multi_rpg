@@ -266,12 +266,13 @@ export default class QLearningAgent {
      */
     getStats() {
         return {
-            epsilon: this.epsilon.toFixed(3),
+            // Return raw numeric values; formatting (toFixed) should be done by the caller/UI
+            epsilon: this.epsilon,
             episodeCount: this.episodeCount,
-            updateCount: this.updateCount,  // 【新】学習フレーム数を表示
-            avgReward: this.updateCount > 0 ? (this.totalReward / this.updateCount).toFixed(2) : 0,
+            updateCount: this.updateCount,
+            avgReward: this.updateCount > 0 ? (this.totalReward / this.updateCount) : 0,
             qTableSize: this.qTable.size,
-            totalReward: this.totalReward.toFixed(2)  // 【新】累計報酬を表示
+            totalReward: this.totalReward
         };
     }
 }

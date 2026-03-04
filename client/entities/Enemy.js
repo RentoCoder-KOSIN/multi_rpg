@@ -19,6 +19,15 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.speed = 50;
         this.direction = new Phaser.Math.Vector2(0, 0);
 
+        // 初期スポーン位置を記録（リスポーン用）
+        this.spawnX = x;
+        this.spawnY = y;
+        this.respawnDelay = 3000; // ms（ローカルスポーン用のデフォルト）
+
+        // スキル用のクールダウン・バフ管理
+        this.skillCooldowns = {}; // { skillName: timestamp }
+        this.activeBuffs = {}; // { buffName: { value, endTime } }
+
         // サーバー管理の敵用の位置補間
         if (this.isServerManaged) {
             this.targetX = x;
@@ -280,7 +289,10 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
             // プレイヤーにダメージを与える
             if (player.takeDamage) {
-                player.takeDamage(this.atk, this);
+                const buff = this.activeBuffs['attack_buff'];
+                const bonus = buff ? (buff.value || 0) : 0;
+                const damage = Math.ceil(this.atk + bonus);
+                player.takeDamage(damage, this);
             }
 
             // AI の報酬計算（敵AIが有効な場合）
@@ -323,7 +335,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
 
     die(socket = null) {
-        if (!this.active) return; // 二重破壊防止
+        if (!this.active) return; // 二重処理防止
 
         // 敵AIの学習を確定させる（死ぬときに学習）
         if (this.ai && this.ai.onDeath) {
@@ -331,28 +343,143 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
             console.log(`[Enemy] ${this.type} died - AI learning finalized`);
         }
 
-        if (this.moveEvent) this.moveEvent.remove();
-
-        if (!this.isServerManaged) {
-            // 配列から削除（旧コードとの互換性のため）
-            if (Array.isArray(this.scene.enemies)) {
-                const index = this.scene.enemies.indexOf(this);
-                if (index > -1) {
-                    this.scene.enemies.splice(index, 1);
+        // サーバー管理されている敵は既存の破壊フローに任せる
+        if (this.isServerManaged) {
+            if (this.moveEvent) this.moveEvent.remove();
+            if (this.active && this.scene) {
+                try {
+                    if (this.hpBar) this.hpBar.destroy();
+                    if (this.hpBarBg) this.hpBarBg.destroy();
+                    if (this.nameText) this.nameText.destroy();
+                    this.destroy();
+                } catch (e) {
+                    console.warn('Enemy: Failed to destroy', e);
                 }
             }
+            return;
         }
 
-        // 安全に破壊
-        if (this.active && this.scene) {
-            try {
-                if (this.hpBar) this.hpBar.destroy();
-                if (this.hpBarBg) this.hpBarBg.destroy();
-                if (this.nameText) this.nameText.destroy();
-                this.destroy();
-            } catch (e) {
-                console.warn('Enemy: Failed to destroy', e);
+        // ローカル管理の敵は一旦無効化して、一定時間後に元のスポーン地点へリスポーンさせる
+        // ビジュアル的には消えるが、オブジェクトは残して再利用する
+        try {
+            // 表示と当たり判定を無効化
+            this.setActive(false);
+            this.setVisible(false);
+            if (this.body) this.body.enable = false;
+
+            if (this.hpBar) this.hpBar.setVisible(false);
+            if (this.hpBarBg) this.hpBarBg.setVisible(false);
+            if (this.nameText) this.nameText.setVisible(false);
+
+            // moveEvent は削除しておく（再生成は respawn() が行う）
+            if (this.moveEvent) { this.moveEvent.remove(); this.moveEvent = null; }
+
+            // リスポーンタイマー
+            const delay = this.respawnDelay || 3000;
+            this.scene.time.delayedCall(delay, () => this.respawn(), [], this);
+        } catch (e) {
+            console.warn('Enemy: Failed to process death for respawn', e);
+            // 失敗したら従来通り破壊
+            if (this.hpBar) this.hpBar.destroy();
+            if (this.hpBarBg) this.hpBarBg.destroy();
+            if (this.nameText) this.nameText.destroy();
+            this.destroy();
+        }
+    }
+
+    /**
+     * ローカル敵のリスポーン処理
+     */
+    respawn() {
+        try {
+            // HPを回復して位置を元に戻す
+            this.hp = this.maxHp;
+            // setPosition はオーバーライドされているため、直接superで位置設定
+            super.setPosition(this.spawnX, this.spawnY);
+
+            // 再度アクティブにして当たり判定を有効化
+            this.setActive(true);
+            this.setVisible(true);
+            if (this.body) {
+                this.body.enable = true;
+                this.body.reset(this.spawnX, this.spawnY);
             }
+
+            if (this.hpBar) this.hpBar.setVisible(true);
+            if (this.hpBarBg) this.hpBarBg.setVisible(true);
+            if (this.nameText) this.nameText.setVisible(true);
+
+            // ランダム移動イベントを再生成（非サーバー管理時）
+            if (!this.isServerManaged) {
+                this.moveEvent = this.scene.time.addEvent({
+                    delay: 2000,
+                    callback: () => this.changeDirection(),
+                    loop: true
+                });
+            }
+
+            // AI が有効なら学習を続けるための初期化（必要に応じて）
+            if (this.ai && this.ai.setTrainingMode) {
+                // 特に何もしないが、将来的にリセット処理を入れる余地を残す
+            }
+
+            console.log(`[Enemy] ${this.type} respawned at (${this.spawnX}, ${this.spawnY})`);
+        } catch (e) {
+            console.warn('Enemy: Failed to respawn properly', e);
+        }
+    }
+
+    /**
+     * 簡易スキル実行インターフェース（EnemyAI から呼ばれる）
+     * skillName: 'attack' | 'heal' | 'buff'
+     */
+    useSkill(skillName, state = null) {
+        const now = this.scene.time.now || Date.now();
+        const cd = this.skillCooldowns[skillName] || 0;
+        if (now < cd) return; // クール中
+
+        switch (skillName) {
+            case 'attack': {
+                // 強攻撃: 範囲内なら大ダメージ
+                const player = this.scene.player;
+                if (player && player.active) {
+                    const dist = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
+                    if (dist <= (this.attackRange || 80) + 20) {
+                        const dmg = Math.ceil(this.atk * 1.5);
+                        if (player.takeDamage) player.takeDamage(dmg, this);
+                        if (this.ai && this.ai.notifyDamageDealt) this.ai.notifyDamageDealt(dmg);
+                        if (this.scene.cameras && this.scene.cameras.main) this.scene.cameras.main.shake(60, 0.003);
+                    }
+                }
+                this.skillCooldowns[skillName] = now + 2000; // 2秒CD
+                break;
+            }
+            case 'heal': {
+                // 回復: 自身を回復
+                const healAmount = Math.ceil((this.maxHp || 100) * 0.2);
+                this.hp = Math.min(this.maxHp, this.hp + healAmount);
+                if (this.ai && this.ai.notifyHeal) this.ai.notifyHeal(healAmount);
+                this.skillCooldowns[skillName] = now + 5000; // 5秒CD
+                // 簡易なエフェクト
+                const txt = this.scene.add.text(this.x, this.y - 20, `+${healAmount}`, { fontSize: '12px', color: '#00ff00' });
+                this.scene.tweens.add({ targets: txt, y: this.y - 60, alpha: 0, duration: 800, onComplete: () => txt.destroy() });
+                break;
+            }
+            case 'buff': {
+                // 攻撃力バフを自分に付与（数秒）
+                const buffValue = Math.ceil(this.atk * 0.5);
+                const duration = 6000; // ms
+                this.activeBuffs['attack_buff'] = { value: buffValue, endTime: now + duration };
+                // バフ終了は update 側で処理する簡易実装（ここではタイマーで解除）
+                this.scene.time.delayedCall(duration, () => { delete this.activeBuffs['attack_buff']; }, [], this);
+                this.skillCooldowns[skillName] = now + 8000; // 8秒CD
+                // 簡易なビジュアル
+                const fx = this.scene.add.circle(this.x, this.y - 10, 10, 0x00ffff, 0.6);
+                this.scene.tweens.add({ targets: fx, alpha: 0, duration: 800, onComplete: () => fx.destroy() });
+                break;
+            }
+            default:
+                break;
         }
     }
 }

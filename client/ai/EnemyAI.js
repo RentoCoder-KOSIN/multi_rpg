@@ -509,10 +509,11 @@ export default class EnemyAI {
             this.agent.update(this.lastState, this.lastAction, reward, currentState);
             
             // 【デバッグ】学習が実際に行われているか確認
-            if (this.frameCount % 50 === 0) { // 約50フレームごとにログ出力
-                const stats = this.agent.getStats();
-                console.log(`[EnemyAI Learning] ${this.enemy.type}: frames=${this.frameCount}, learning=${this.agent.updateCount}, reward=${reward.toFixed(2)}, action=${this.lastAction}, ε=${stats.epsilon.toFixed(3)}, qTableSize=${stats.qTableSize}`);
-            }
+                if (this.frameCount % 50 === 0) { // 約50フレームごとにログ出力
+                    const stats = this.agent.getStats();
+                    // `getStats()` already formats `epsilon` as a string, avoid calling toFixed on it
+                    console.log(`[EnemyAI Learning] ${this.enemy.type}: frames=${this.frameCount}, learning=${this.agent.updateCount}, reward=${reward.toFixed(2)}, action=${this.lastAction}, ε=${stats.epsilon}, qTableSize=${stats.qTableSize}`);
+                }
         }
 
         // 次の行動を選択
