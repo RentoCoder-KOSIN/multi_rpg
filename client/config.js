@@ -23,6 +23,26 @@ export const DEBUG = {
     showPhysics: true
 };
 
+// 敵AI設定
+export const ENEMY_AI_CONFIG = {
+    enabled: true, // 敵AIの有効/無効
+    trainingEnabled: true, // 強化学習の有効/無効
+    peerLearning: true, // 【新】敵同士の相互学習 (ON/OFF)
+    serverSync: true // 学習データをサーバーに送信・保存する
+};
+
+// 敵AIピア学習設定【新】
+export const PEER_LEARNING_CONFIG = {
+    enabled: true, // ピア学習の有効/無効
+    detectionRange: 150, // 敵同士の検出範囲（px）
+    dataShareInterval: 2000, // データ共有の間隔（ms）
+    rewardBonus: 1.0 // 連携時のボーナス報酬
+};
+
+// 敵AI設定ログ出力
+console.log('[Config] Enemy AI Settings:', ENEMY_AI_CONFIG);
+console.log('[Config] Peer Learning Settings:', PEER_LEARNING_CONFIG);
+
 const config = {
     type: Phaser.AUTO,
     width: 800,

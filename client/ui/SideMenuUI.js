@@ -84,10 +84,13 @@ export default class SideMenuUI {
             btn.on('pointerover', () => {
                 bg.setStrokeStyle(3, 0xffffff);
                 btn.setScale(1.1);
+                // ヒットエリアをスケールに合わせて再設定
+                btn.setSize(64 * 1.1, 64 * 1.1);
             });
             btn.on('pointerout', () => {
                 bg.setStrokeStyle(2, item.color);
                 btn.setScale(1);
+                btn.setSize(64, 64);
             });
 
             this.menuItems.add(btn);

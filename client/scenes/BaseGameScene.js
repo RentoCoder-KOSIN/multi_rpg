@@ -12,6 +12,7 @@ import { setupCameraAndWorld } from '../utils/cameraHelper.js';
 import { setupTeleportsFromMap, updateTeleports } from '../utils/teleportHelper.js';
 import { updateNPCInteraction } from '../utils/interactionHelper.js';
 import { createPlayerAnimations } from '../animations/playerAnimations.js';
+import { createEnemyDebugUI, updateEnemyDebugUI, drawEnemyDetectionRanges } from '../utils/enemyDebug.js';
 import MapNameUI from '../ui/MapNameUI.js';
 import NotificationUI from '../ui/NotificationUI.js';
 import PlayerNameUI from '../ui/PlayerNameUI.js';
@@ -477,6 +478,17 @@ export default class BaseGameScene extends Phaser.Scene {
         const myPlayerName = (socket && playerNames[socket.id]) || 'You';
         this.playerNameUI = new PlayerNameUI(this, this.player, myPlayerName);
 
+        // 敵デバッグUI初期化（D キーで敵情報を表示）
+        createEnemyDebugUI(this);
+        this.showEnemyDebug = false;
+        this.input.keyboard.on('keydown-D', () => {
+            this.showEnemyDebug = !this.showEnemyDebug;
+            if (this.enemyDebugText) {
+                this.enemyDebugText.setVisible(this.showEnemyDebug);
+            }
+            console.log(`[BaseGameScene] Enemy debug: ${this.showEnemyDebug ? 'ON' : 'OFF'}`);
+        });
+
         // シーンが完全に初期化された後にキューイングされたプレイヤーを処理
         // 次のフレームで実行することで、シーンが確実にアクティブになった後に処理される
         this.time.delayedCall(0, () => {
@@ -722,6 +734,11 @@ export default class BaseGameScene extends Phaser.Scene {
 
         this.networkManager.updateRemotePlayers();
         this.networkManager.updateEnemies(time, delta);
+
+        // 敵デバッグUI更新
+        if (this.showEnemyDebug && this.enemyDebugText && this.enemyDebugText.visible) {
+            updateEnemyDebugUI(this);
+        }
 
         updateNPCInteraction(this, { player: this.player, npcs: this.npcs, dialogue: this.dialogue, interactKey: this.interactKey, interactText: this.interactText, interactBg: this.interactBg });
         if (this.playerNameUI) this.playerNameUI.updatePosition();

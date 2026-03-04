@@ -169,8 +169,14 @@ export default class LobbyUI {
 
     setupInteractions() {
         this.readyButton.on('pointerdown', () => this.toggleReady());
-        this.readyButton.on('pointerover', () => this.readyButton.setStrokeStyle(3, 0xffffff, 1).setScale(1.02));
-        this.readyButton.on('pointerout', () => this.readyButton.setStrokeStyle(2, 0xffffff, 0.5).setScale(1));
+        this.readyButton.on('pointerover', () => {
+            this.readyButton.setStrokeStyle(3, 0xffffff, 1).setScale(1.02);
+            this.readyButton.setSize(240 * 1.02, 55 * 1.02);
+        });
+        this.readyButton.on('pointerout', () => {
+            this.readyButton.setStrokeStyle(2, 0xffffff, 0.5).setScale(1);
+            this.readyButton.setSize(240, 55);
+        });
 
         const bg = this.saveToggleButton.list[0];
         bg.on('pointerdown', () => {

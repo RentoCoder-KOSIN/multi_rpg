@@ -16,9 +16,9 @@ export default class MinimapUI {
 
     createUI() {
         const gameWidth = this.scene.scale.gameSize ? this.scene.scale.gameSize.width : this.scene.scale.width;
-
+        const gameHeight = this.scene.scale.gameSize ? this.scene.scale.gameSize.height : this.scene.scale.height;
         // コンテナ作成
-        this.container = this.scene.add.container(gameWidth - this.size - this.padding, this.padding);
+        this.container = this.scene.add.container(gameWidth - this.size - this.padding, gameHeight - this.size - this.padding);
         this.container.setScrollFactor(0);
         this.container.setDepth(5000); // 確実に最前面へ
 

@@ -173,9 +173,11 @@ export default class ShopUI extends BaseWindowUI {
                     y: targetY, duration: 150, ease: 'Power2'
                 });
                 box.container.setScale(1.02);
+                box.container.setSize(540 * 1.02, 60 * 1.02);
             } else {
                 this.drawItemBox(box.bgGfx, 540, 60, 0x0f3460, 0.5, 0x4a90e2, 0.3);
                 box.container.setScale(1);
+                box.container.setSize(540, 60);
             }
         });
     }

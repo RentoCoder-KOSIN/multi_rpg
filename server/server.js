@@ -97,6 +97,31 @@ knownMaps.forEach(mapKey => {
 /* =====================
    サーバー側 更新ループ (敵の移動など)
 ===================== */
+
+// 共有AIデータ（enemyType -> { qTableData, timestamp })
+const sharedAI = {};
+const aiDataPath = path.join(__dirname, 'data', 'sharedAI.json');
+
+// 起動時に保存済み学習データを読み込む
+try {
+    if (fs.existsSync(aiDataPath)) {
+        const raw = fs.readFileSync(aiDataPath, 'utf8');
+        const parsed = JSON.parse(raw);
+        Object.assign(sharedAI, parsed);
+        console.log('[Server] Loaded shared AI models:', Object.keys(sharedAI));
+    }
+} catch (e) {
+    console.error('[Server] Failed to load shared AI data:', e);
+}
+
+function saveSharedAI() {
+    try {
+        fs.writeFileSync(aiDataPath, JSON.stringify(sharedAI), 'utf8');
+    } catch (e) {
+        console.error('[Server] Failed to save shared AI data:', e);
+    }
+}
+
 setInterval(() => {
     knownMaps.forEach(mapKey => {
         const mapEnemies = enemies[mapKey];
@@ -306,6 +331,20 @@ io.on("connection", socket => {
             id: socket.data.playerId,
             ...data
         });
+    });
+
+    // === AI学習データ送受信 ===
+    socket.on('aiLearnSync', ({ enemyType, qTableData }) => {
+        if (!enemyType || !qTableData) return;
+        sharedAI[enemyType] = { qTableData, timestamp: Date.now() };
+        io.emit('aiSharedUpdate', { enemyType, qTableData });
+        saveSharedAI();
+    });
+
+    socket.on('getSharedAI', ({ enemyType }) => {
+        if (enemyType && sharedAI[enemyType]) {
+            socket.emit('aiSharedUpdate', { enemyType, qTableData: sharedAI[enemyType].qTableData });
+        }
     });
 
     socket.on("newPlayer", ({ x, y, mapKey, hp, maxHp, level }) => {
