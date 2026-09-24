@@ -700,8 +700,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             if (isMovingByKey) {
                 this.moveTarget = null; // キー入力があったら自動移動解除
                 body.setVelocity(0, 0);
-                if (cursors.left.isDown) { body.setVelocityX(-this.speed); this.anims.play('walk-left', true); }
-                else if (cursors.right.isDown) { body.setVelocityX(this.speed); this.anims.play('walk-right', true); }
+                if (cursors.left.isDown) { body.setVelocityX(-this.speed); this.flipX = false; this.anims.play('walk-left', true); }
+                else if (cursors.right.isDown) { body.setVelocityX(this.speed); this.flipX = false; this.anims.play('walk-right', true); }
 
                 if (cursors.up.isDown) body.setVelocityY(-this.speed);
                 else if (cursors.down.isDown) body.setVelocityY(this.speed);
@@ -722,13 +722,17 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
                     // アニメーション向き
                     if (Math.abs(vx) > Math.abs(vy)) {
+                        this.flipX = false;
                         this.anims.play(vx > 0 ? 'walk-right' : 'walk-left', true);
                     } else if (vy < 0) {
                         this.anims.play('walk-up', true); // walk-up があれば
                     } else {
                         this.anims.play('walk-down', true); // walk-down があれば
                     }
-                    if (!this.anims.exists('walk-up')) this.anims.play(vx > 0 ? 'walk-right' : 'walk-left', true);
+                    if (!this.anims.exists('walk-up')) {
+                        this.flipX = false;
+                        this.anims.play(vx > 0 ? 'walk-right' : 'walk-left', true);
+                    }
                 }
             } else {
                 body.setVelocity(0, 0);
@@ -771,8 +775,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             else { this.x += dx * this.lerpSpeed; this.y += dy * this.lerpSpeed; }
 
             if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
-                if (Math.abs(dx) > Math.abs(dy)) this.anims.play(dx > 0 ? 'walk-right' : 'walk-left', true);
-                else this.anims.play('idle', true);
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    this.flipX = false;
+                    this.anims.play(dx > 0 ? 'walk-right' : 'walk-left', true);
+                } else this.anims.play('idle', true);
             } else this.anims.play('idle', true);
         }
     }
