@@ -344,8 +344,12 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
             console.log(`[Enemy] ${this.type} died - AI learning finalized`);
         }
 
-        // サーバー管理されている敵は既存の破壊フローに任せる
-        if (this.isServerManaged) {
+        // ボス（BattleSceneが一回限りで生成するローカル敵）はリスポーンさせず、
+        // 完全に破壊してdestroyイベントを発火させる（BattleScene側がこれで撃破を検知する）
+        const isOneOffLocalBoss = !this.isServerManaged && this.type === 'boss';
+
+        // サーバー管理されている敵、またはボスは既存の破壊フローに任せる
+        if (this.isServerManaged || isOneOffLocalBoss) {
             if (this.moveEvent) this.moveEvent.remove();
             if (this.active && this.scene) {
                 try {

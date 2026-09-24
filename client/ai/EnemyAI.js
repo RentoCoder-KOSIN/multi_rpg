@@ -311,6 +311,10 @@ export default class EnemyAI {
         let vx = 0;
         let vy = 0;
         const player = this.scene.player;
+        // getState() が選んだターゲット（プレイヤー or 召喚獣）に実際に攻撃を当てる。
+        // ここが常に player 固定だと、召喚獣を追って攻撃しても
+        // ダメージはプレイヤーに入ってしまう。
+        const target = state.isTargetPlayer ? player : this.scene.activeSummon;
 
         switch (action) {
             case 'approach':
@@ -319,8 +323,8 @@ export default class EnemyAI {
                 vy = Math.sin(state.angle) * speed;
                 
                 // 攻撃範囲内なら攻撃
-                if (state.distance < this.enemy.attackRange && player && player.active) {
-                    this.enemy.attemptAttack(this.scene.time.now, player);
+                if (state.distance < this.enemy.attackRange && target && target.active) {
+                    this.enemy.attemptAttack(this.scene.time.now, target);
                 }
                 break;
 
@@ -330,8 +334,8 @@ export default class EnemyAI {
                 vy = Math.sin(state.angle) * speed * 1.5;
                 
                 // 攻撃範囲内なら攻撃
-                if (state.distance < this.enemy.attackRange && player && player.active) {
-                    this.enemy.attemptAttack(this.scene.time.now, player);
+                if (state.distance < this.enemy.attackRange && target && target.active) {
+                    this.enemy.attemptAttack(this.scene.time.now, target);
                 }
                 break;
 
@@ -341,19 +345,19 @@ export default class EnemyAI {
                 vy = Math.sin(state.angle) * speed * 2.0;
                 
                 // 攻撃範囲内なら即座に攻撃
-                if (state.distance < this.enemy.attackRange && player && player.active) {
-                    this.enemy.attemptAttack(this.scene.time.now, player);
+                if (state.distance < this.enemy.attackRange && target && target.active) {
+                    this.enemy.attemptAttack(this.scene.time.now, target);
                 }
                 break;
 
             case 'attack_ready':
-                // 【新】攻撃準備（プレイヤーを狙うように位置調整）
+                // 【新】攻撃準備（ターゲットを狙うように位置調整）
                 if (state.distance > this.enemy.attackRange * 0.8) {
                     // 攻撃範囲の手前で止まる
                     const adjustAngle = state.angle;
                     const targetDist = this.enemy.attackRange * 0.7;
-                    const targetX = player.x - Math.cos(adjustAngle) * targetDist;
-                    const targetY = player.y - Math.sin(adjustAngle) * targetDist;
+                    const targetX = state.playerX - Math.cos(adjustAngle) * targetDist;
+                    const targetY = state.playerY - Math.sin(adjustAngle) * targetDist;
                     
                     const dx = targetX - this.enemy.x;
                     const dy = targetY - this.enemy.y;
@@ -367,8 +371,8 @@ export default class EnemyAI {
                     // 既に攻撃範囲内なら停止して攻撃
                     vx = 0;
                     vy = 0;
-                    if (player && player.active) {
-                        this.enemy.attemptAttack(this.scene.time.now, player);
+                    if (target && target.active) {
+                        this.enemy.attemptAttack(this.scene.time.now, target);
                     }
                 }
                 break;

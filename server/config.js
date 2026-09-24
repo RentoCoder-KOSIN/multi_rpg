@@ -5,6 +5,8 @@ const CLIENT_DIR = path.join(__dirname, "..", "client");
 module.exports = {
     // --- サーバー ---
     PORT: process.env.PORT || 3000,
+    // 0.0.0.0 = accept connections from other PCs on the LAN (use HOST=127.0.0.1 for local-only)
+    HOST: process.env.HOST || "0.0.0.0",
 
     // --- パス ---
     CLIENT_DIR,

@@ -6,7 +6,11 @@ JavaScript (Phaser 3 + Socket.IO) online RPG.
 ```bash
 cd server
 npm install
+<<<<<<< HEAD
 node server.js   # http://localhost:3000
+=======
+npm start        # http://localhost:3000, also reachable on the LAN (see printed LAN: URLs)
+>>>>>>> feature/new-function
 ```
 
 ## Layout
@@ -26,3 +30,11 @@ node server.js   # http://localhost:3000
 | `art-source/` | Unused sprite sheets kept out of the served directory |
 
 `server/data/sharedAI.json` (learned Q-tables) is generated at runtime and git-ignored.
+<<<<<<< HEAD
+=======
+
+## Play over the LAN
+1. Start the server on the host PC (`npm start`). It listens on all interfaces (`HOST=0.0.0.0`).
+2. Allow TCP port 3000 through the host's firewall.
+3. On other PCs in the same network, open `http://<host-ip>:3000`.
+>>>>>>> feature/new-function

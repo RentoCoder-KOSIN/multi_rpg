@@ -2,7 +2,8 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 
-const { PORT, CLIENT_DIR } = require("./config");
+const os = require("os");
+const { PORT, HOST, CLIENT_DIR } = require("./config");
 const { aiManager, loadAIData, saveAIData } = require("./services/aiStorage");
 const { createEnemyService } = require("./services/enemyService");
 const { createPartyService } = require("./services/partyService");
@@ -33,6 +34,17 @@ startEnemyLoop({ io, aiManager, saveAIData });
 
 registerConnectionHandler({ io, aiManager, enemyService, partyService });
 
-server.listen(PORT, () => {
+// IPv4 addresses of this machine that other PCs on the LAN can use
+function getLanAddresses() {
+    return Object.values(os.networkInterfaces())
+        .flat()
+        .filter(i => i.family === "IPv4" && !i.internal)
+        .map(i => i.address);
+}
+
+server.listen(PORT, HOST, () => {
     console.log(`Server running http://localhost:${PORT}`);
+    if (HOST === "0.0.0.0") {
+        getLanAddresses().forEach(ip => console.log(`  LAN: http://${ip}:${PORT}`));
+    }
 });
