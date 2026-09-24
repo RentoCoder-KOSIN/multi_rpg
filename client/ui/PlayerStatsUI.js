@@ -1,5 +1,6 @@
 import { ITEMS } from "../data/items.js";
 import { SKILLS } from "../data/skills.js";
+import { pinToScreen } from '../utils/screenFixed.js';
 
 export default class PlayerStatsUI {
     constructor(scene, player) {
@@ -11,6 +12,7 @@ export default class PlayerStatsUI {
     createUI() {
         // メインコンテナ
         this.container = this.scene.add.container(15, 15).setScrollFactor(0).setDepth(2000);
+        pinToScreen(this.container);
 
         // 背景 (少し透明度を上げる)
         this.bg = this.scene.add.graphics();

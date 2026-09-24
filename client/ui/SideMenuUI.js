@@ -1,3 +1,4 @@
+import { pinToScreen } from '../utils/screenFixed.js';
 export default class SideMenuUI {
     constructor(scene) {
         this.scene = scene;
@@ -12,6 +13,7 @@ export default class SideMenuUI {
 
         // メインコンテナ（少し右に寄せて安全圏へ）
         this.container = this.scene.add.container(50, height / 2).setScrollFactor(0).setDepth(300000);
+        pinToScreen(this.container);
 
         // トグルボタン（ハンバーガーメニュー風）
         this.toggleBtn = this.scene.add.container(0, 0);

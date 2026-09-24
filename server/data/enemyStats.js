@@ -146,4 +146,16 @@ function getEnemyStats(type) {
     return ENEMY_STATS[type] || ENEMY_STATS.slime;
 }
 
-module.exports = { ENEMY_STATS, getEnemyStats };
+/**
+ * Stats that are safe to expose to clients (no drop tables).
+ * @returns {Object} type -> { displayName, hp, atk, exp, gold }
+ */
+function getPublicEnemyStats() {
+    const result = {};
+    for (const [type, s] of Object.entries(ENEMY_STATS)) {
+        result[type] = { displayName: s.displayName, hp: s.hp, atk: s.atk, exp: s.exp, gold: s.gold };
+    }
+    return result;
+}
+
+module.exports = { ENEMY_STATS, getEnemyStats, getPublicEnemyStats };

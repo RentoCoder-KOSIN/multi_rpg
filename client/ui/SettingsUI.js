@@ -1,3 +1,4 @@
+import { pinToScreen } from '../utils/screenFixed.js';
 export default class SettingsUI {
     constructor(scene) {
         this.scene = scene;
@@ -39,6 +40,7 @@ export default class SettingsUI {
         const y = this.scene.scale.height / 2;
 
         this.container = this.scene.add.container(x, y).setScrollFactor(0).setDepth(3000).setVisible(false);
+        pinToScreen(this.container);
 
         // 背景
         const bg = this.scene.add.graphics();

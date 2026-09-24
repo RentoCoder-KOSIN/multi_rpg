@@ -46,6 +46,7 @@ function createEnemyService({ io, aiManager }) {
             spawnY: spawn.y,
             spawnId: spawn.id,
             respawnDelay: spawn.respawnDelay,
+            displayName: stats.displayName,
             hp: stats.hp,
             maxHp: stats.hp,
             atk: stats.atk,

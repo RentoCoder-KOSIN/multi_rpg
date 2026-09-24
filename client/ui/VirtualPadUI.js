@@ -1,3 +1,4 @@
+import { pinToScreen } from '../utils/screenFixed.js';
 export default class VirtualPadUI {
     constructor(scene) {
         this.scene = scene;
@@ -10,6 +11,7 @@ export default class VirtualPadUI {
 
         // 右下に配置
         this.container = this.scene.add.container(width - 80, height - 80).setScrollFactor(0).setDepth(150000);
+        pinToScreen(this.container);
 
         // 会話ボタン (Cキー相当)
         this.createActionButton(-100, 0, '💬', '#ffff00', () => {
