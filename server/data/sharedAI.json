@@ -5,135 +5,135 @@
         [
           "5_4_4_0_0",
           {
-            "approach": -19.493102673066176,
-            "aggressive": -18.060757630420323,
-            "fast_approach": -8.10237404074013,
-            "attack_ready": -14.889647115686218,
+            "approach": -17.586273228859845,
+            "aggressive": -16.274577051013285,
+            "fast_approach": -16.540060387749666,
+            "attack_ready": -15.783897308838013,
             "circle_left": -22.16839552185542,
             "circle_right": -19.977573981416764,
-            "skill_attack": -15.611550916435956,
-            "skill_heal": -24.01382398169283,
+            "skill_attack": -16.12003663119284,
+            "skill_heal": -22.46010432645571,
             "skill_buff": -23.333572681727777
           }
         ],
         [
           "5_4_4_1_0",
           {
-            "approach": -9.439605696065481,
+            "approach": -9.107310183596441,
             "aggressive": -7.965165507508074,
             "fast_approach": -8.598252344206628,
             "attack_ready": -5.568054563379387,
             "circle_left": -8.943241578896236,
             "circle_right": -15.640411850394813,
             "skill_attack": -7.225153809642278,
-            "skill_heal": -5.545646410256502,
+            "skill_heal": -7.281420166666726,
             "skill_buff": -5.590199999999999
           }
         ],
         [
           "5_4_4_0_1",
           {
-            "approach": -15.086650960767368,
-            "aggressive": -14.395096681359293,
-            "fast_approach": -15.10062664835916,
-            "attack_ready": -15.80420006306085,
-            "circle_left": -15.7883004679854,
-            "circle_right": -17.767175254919124,
-            "skill_attack": -15.059727446087566,
-            "skill_heal": -16.747657655678044,
-            "skill_buff": -14.436183609519999
+            "approach": -4.609718293575215,
+            "aggressive": -10.705056643926905,
+            "fast_approach": -13.23240868415063,
+            "attack_ready": -9.461594486442946,
+            "circle_left": -21.6443709448154,
+            "circle_right": -19.39955841817749,
+            "skill_attack": -19.576167778598418,
+            "skill_heal": -24.95131814931341,
+            "skill_buff": -11.419900324786319
           }
         ],
         [
           "5_4_4_5_1",
           {
-            "approach": -17.76712650446027,
-            "aggressive": -16.145027614066862,
-            "fast_approach": -17.654993801324082,
-            "attack_ready": -15.908458417030763,
-            "circle_left": -38.664044818135,
-            "circle_right": -3.0550029618790937,
-            "skill_attack": -73.09614662188818,
-            "skill_heal": -89.34017112589609,
-            "skill_buff": -68.41786669734446
+            "approach": 11.440447591801195,
+            "aggressive": -8.606656919039882,
+            "fast_approach": -7.429654409362669,
+            "attack_ready": -0.7705426581335244,
+            "circle_left": -26.51695462586934,
+            "circle_right": -20.404199057195505,
+            "skill_attack": -28.170716686378157,
+            "skill_heal": -67.94429897740032,
+            "skill_buff": -53.04246214473331
           }
         ],
         [
           "5_4_4_6_0",
           {
-            "approach": -17.86899154734794,
-            "aggressive": -16.824664324421338,
-            "fast_approach": -18.719254934745518,
-            "attack_ready": -9.724880711659036,
-            "circle_left": -100.73218056306351,
-            "circle_right": -60.1435099503811,
-            "skill_attack": -32.42415365158955,
-            "skill_heal": -42.275401742531145,
-            "skill_buff": -38.757588953356354
+            "approach": -10.161776907404908,
+            "aggressive": -9.820761464361079,
+            "fast_approach": -14.754450918340162,
+            "attack_ready": 7.927850332842981,
+            "circle_left": -62.060504890248296,
+            "circle_right": -26.55768855417742,
+            "skill_attack": -28.94820337043338,
+            "skill_heal": -4.609121191722934,
+            "skill_buff": -20.56239264369744
           }
         ],
         [
           "5_4_4_5_0",
           {
-            "approach": -30.444194917632277,
-            "aggressive": -42.93759941090168,
+            "approach": 6.371163896337984,
+            "aggressive": -37.30729796476303,
             "fast_approach": -30.5413382640671,
-            "attack_ready": -11.957154618366385,
+            "attack_ready": -15.236565102911817,
             "circle_left": -31.664436639036204,
             "circle_right": -31.251885933187722,
-            "skill_attack": -30.381133999443094,
+            "skill_attack": -16.46926997945385,
             "skill_heal": -43.44075236933816,
-            "skill_buff": -32.37577935938705
+            "skill_buff": -26.388261095439827
           }
         ],
         [
           "5_4_4_6_1",
           {
-            "approach": -22.349552873514746,
-            "aggressive": 25.1204669311435,
-            "fast_approach": 45.268656296700684,
-            "attack_ready": -17.17000715354862,
-            "circle_left": -30.561635533563322,
-            "circle_right": -100.18189125257547,
-            "skill_attack": -36.839948511129464,
-            "skill_heal": -44.409481835241095,
-            "skill_buff": -35.110984719204964
+            "approach": 35.436438528515694,
+            "aggressive": -7.5298422730059205,
+            "fast_approach": -8.515482281275151,
+            "attack_ready": -8.48900952207686,
+            "circle_left": -9.62893097212953,
+            "circle_right": -11.18675911170659,
+            "skill_attack": -4.000032179500414,
+            "skill_heal": -15.602605457405648,
+            "skill_buff": -8.338409152976691
           }
         ],
         [
           "5_4_4_7_0",
           {
-            "approach": -17.501286696105776,
-            "aggressive": -17.65845257774224,
-            "fast_approach": -16.971176567300333,
-            "attack_ready": -16.675839291644095,
-            "circle_left": -18.50917321659321,
-            "circle_right": -17.490537397849494,
-            "skill_attack": -18.012671155739586,
-            "skill_heal": -18.319022274458632,
-            "skill_buff": -18.04987768956404
+            "approach": -0.9607897911206487,
+            "aggressive": -18.209518752543264,
+            "fast_approach": -19.74073794765842,
+            "attack_ready": -11.232341210470242,
+            "circle_left": -22.93236723758761,
+            "circle_right": -22.0708380264758,
+            "skill_attack": -19.65404004378536,
+            "skill_heal": -24.827986914696563,
+            "skill_buff": -19.729848368441377
           }
         ],
         [
           "4_4_4_6_1",
           {
-            "approach": 51.84653308672899,
-            "aggressive": 78.01456340232396,
-            "fast_approach": 90.21617034537228,
-            "attack_ready": 63.901889999756534,
+            "approach": 79.09620914942727,
+            "aggressive": 89.7756193567109,
+            "fast_approach": 59.682630906340165,
+            "attack_ready": 56.25619113118205,
             "circle_left": 27.192322195597843,
-            "circle_right": 3.8221829622189847,
+            "circle_right": 37.43696094444426,
             "skill_attack": 0,
             "skill_heal": -0.903033204775784,
-            "skill_buff": 24.90104307184057
+            "skill_buff": 83.64966277182937
           }
         ],
         [
           "4_4_4_5_0",
           {
-            "approach": 19.412581922676125,
-            "aggressive": 22.355953529560754,
-            "fast_approach": 0.5,
+            "approach": 40.03991107166318,
+            "aggressive": 24.02770769220729,
+            "fast_approach": 13.37137484076129,
             "attack_ready": 6.886944114174797,
             "circle_left": 0.2,
             "circle_right": 0.2,
@@ -145,7 +145,7 @@
         [
           "3_4_4_7_1",
           {
-            "approach": 25.16765190696227,
+            "approach": 51.60102961395685,
             "aggressive": 0.5,
             "fast_approach": 0.5,
             "attack_ready": 0.5,
@@ -159,13 +159,13 @@
         [
           "5_4_4_7_1",
           {
-            "approach": -12.379330902663957,
-            "aggressive": -11.075026556799003,
-            "fast_approach": 3.4173215071391594,
-            "attack_ready": -15.464489722042654,
-            "circle_left": -19.588803769917277,
-            "circle_right": -23.155687087771483,
-            "skill_attack": -23.383244723587907,
+            "approach": 0.20798154078232933,
+            "aggressive": -7.79258700694194,
+            "fast_approach": -17.832961085995763,
+            "attack_ready": -17.52575176032205,
+            "circle_left": -19.34131643958064,
+            "circle_right": -24.03221751048002,
+            "skill_attack": -22.09125081236773,
             "skill_heal": -22.946850307394513,
             "skill_buff": -25.777020316095513
           }
@@ -174,7 +174,7 @@
           "3_4_4_7_0",
           {
             "approach": 2.5982499999999997,
-            "aggressive": 15.077092958593342,
+            "aggressive": 15.543545342693397,
             "fast_approach": 0.5,
             "attack_ready": 0.5,
             "circle_left": 0.2,
@@ -187,7 +187,7 @@
         [
           "3_4_4_5_0",
           {
-            "approach": 30.655119074746523,
+            "approach": 23.53249602358524,
             "aggressive": 0.5,
             "fast_approach": 0.5,
             "attack_ready": 0.5,
@@ -202,8 +202,8 @@
           "4_4_4_7_0",
           {
             "approach": 5.104454450123015,
-            "aggressive": 29.732149920315088,
-            "fast_approach": 13.402998589366916,
+            "aggressive": 31.378087395593987,
+            "fast_approach": 34.21525300653031,
             "attack_ready": 11.436964882699183,
             "circle_left": 0.2,
             "circle_right": -0.5703599278162047,
@@ -217,7 +217,7 @@
           {
             "approach": 0.5,
             "aggressive": 0.5,
-            "fast_approach": 158.98587331702868,
+            "fast_approach": 114.77547023751886,
             "attack_ready": 34.094116765637935,
             "circle_left": -0.046749999999999986,
             "circle_right": 0.2,
@@ -243,13 +243,13 @@
         [
           "4_4_4_7_1",
           {
-            "approach": 26.95694920003828,
-            "aggressive": 27.661203637602082,
-            "fast_approach": 42.3127145919959,
-            "attack_ready": 23.721675773120715,
+            "approach": 73.41179030703918,
+            "aggressive": 39.56378472288917,
+            "fast_approach": 65.85965154675716,
+            "attack_ready": 40.3973169729919,
             "circle_left": 4.342756898324575,
             "circle_right": 0.2,
-            "skill_attack": -0.2210421139576388,
+            "skill_attack": 24.641617903529063,
             "skill_heal": 0,
             "skill_buff": 12.57589416341781
           }
@@ -258,8 +258,8 @@
           "3_4_4_0_2",
           {
             "approach": 27.34146701545187,
-            "aggressive": 8.706143093189972,
-            "fast_approach": 42.11102282965966,
+            "aggressive": 23.48242249228391,
+            "fast_approach": 56.751014128742845,
             "attack_ready": 14.673220106908083,
             "circle_left": 13.222832867164186,
             "circle_right": 0.2,
@@ -287,10 +287,10 @@
           {
             "approach": 0.5,
             "aggressive": 6.298670788399748,
-            "fast_approach": 8.318668008341529,
-            "attack_ready": 13.915335833368617,
+            "fast_approach": 48.18797783708759,
+            "attack_ready": 29.411939887519793,
             "circle_left": 0.6026364397988184,
-            "circle_right": 0.2,
+            "circle_right": 17.231626525381586,
             "skill_attack": 0,
             "skill_heal": 0,
             "skill_buff": 0
@@ -301,11 +301,11 @@
           {
             "approach": 3.9621125,
             "aggressive": 0.5,
-            "fast_approach": 24.593218331337027,
+            "fast_approach": 27.307142067177345,
             "attack_ready": 0.5,
             "circle_left": -1.419706375,
             "circle_right": 0.2,
-            "skill_attack": 2.2028167618830548,
+            "skill_attack": 23.88999628392088,
             "skill_heal": 0,
             "skill_buff": 0
           }
@@ -313,7 +313,7 @@
         [
           "2_4_4_2_1",
           {
-            "approach": 0.5,
+            "approach": 13.179316305544207,
             "aggressive": 0.5,
             "fast_approach": 0.5,
             "attack_ready": 21.89318632349351,
@@ -327,8 +327,8 @@
         [
           "4_4_4_1_2",
           {
-            "approach": 66.8345321463114,
-            "aggressive": 21.38418949887631,
+            "approach": 50.29080953198204,
+            "aggressive": 39.85669278027163,
             "fast_approach": 30.269717947997727,
             "attack_ready": 33.129483035752536,
             "circle_left": 0.2,
@@ -356,12 +356,12 @@
           "4_4_4_5_1",
           {
             "approach": 35.757346032619765,
-            "aggressive": 24.384039011861603,
-            "fast_approach": 57.85650283250769,
-            "attack_ready": 0.5,
+            "aggressive": 81.76701547631518,
+            "fast_approach": 40.484303411406636,
+            "attack_ready": 31.969904864242395,
             "circle_left": 17.882651809844376,
             "circle_right": 11.013763499501646,
-            "skill_attack": 28.386100128776235,
+            "skill_attack": 35.43297833808216,
             "skill_heal": 11.622671759498994,
             "skill_buff": 19.908614927363494
           }
@@ -369,14 +369,14 @@
         [
           "3_4_4_6_1",
           {
-            "approach": 77.24872459585356,
-            "aggressive": 102.6004093729555,
-            "fast_approach": 140.98836729998084,
-            "attack_ready": 132.1864288615889,
+            "approach": 104.24694420520012,
+            "aggressive": 78.21669630181353,
+            "fast_approach": 110.67326783908688,
+            "attack_ready": 123.82429042280853,
             "circle_left": 66.16498322410045,
             "circle_right": 65.29837999744133,
             "skill_attack": 100.44883767862936,
-            "skill_heal": 66.10030866325937,
+            "skill_heal": 88.64219691851883,
             "skill_buff": 102.96516360239772
           }
         ],
@@ -399,7 +399,7 @@
           {
             "approach": 4.348249999999999,
             "aggressive": 0.5,
-            "fast_approach": 25.184502768809374,
+            "fast_approach": 44.12323615034089,
             "attack_ready": 0.5,
             "circle_left": 0.2,
             "circle_right": 0.2,
@@ -411,10 +411,10 @@
         [
           "5_4_4_0_2",
           {
-            "approach": -1.1290191296029715,
-            "aggressive": -6.534210428095546,
-            "fast_approach": 11.795543893367828,
-            "attack_ready": 0.6979959045675885,
+            "approach": -0.265624800381818,
+            "aggressive": -4.53906426769405,
+            "fast_approach": 17.023208385948845,
+            "attack_ready": -1.0854270065379423,
             "circle_left": -2.6006999999999993,
             "circle_right": -3.5467499999999994,
             "skill_attack": -3.476225534904347,
@@ -425,10 +425,10 @@
         [
           "5_4_4_1_2",
           {
-            "approach": 9.035814828811343,
-            "aggressive": -35.13749393165669,
+            "approach": -0.9382904542877297,
+            "aggressive": -23.643238757255737,
             "fast_approach": -16.775500130717624,
-            "attack_ready": -10.419544389084763,
+            "attack_ready": -7.576571554583984,
             "circle_left": -16.735340374281485,
             "circle_right": -17.455482596508123,
             "skill_attack": -10.84557523525331,
@@ -441,10 +441,10 @@
           {
             "approach": 20.933113955229853,
             "aggressive": 24.140413155611604,
-            "fast_approach": 46.84221960779027,
+            "fast_approach": 43.566338218274595,
             "attack_ready": 9.002932251883816,
             "circle_left": 0.2,
-            "circle_right": 4.596863373505874,
+            "circle_right": 17.823994452846343,
             "skill_attack": 0.2002936249999999,
             "skill_heal": -3.32675,
             "skill_buff": 0
@@ -496,9 +496,9 @@
           "5_4_4_1_1",
           {
             "approach": -6.199694575027604,
-            "aggressive": 4.257184246007839,
+            "aggressive": -1.850214017290149,
             "fast_approach": -7.92899557297172,
-            "attack_ready": -13.424746580484282,
+            "attack_ready": -8.421542218608685,
             "circle_left": -12.773582665534056,
             "circle_right": -10.425806465174665,
             "skill_attack": -19.308784870666187,
@@ -551,7 +551,7 @@
         [
           "2_4_4_7_1",
           {
-            "approach": 0.5,
+            "approach": 20.103221528464196,
             "aggressive": 0.5,
             "fast_approach": 0.5,
             "attack_ready": 6.3456094812499995,
@@ -566,7 +566,7 @@
           "3_4_4_0_1",
           {
             "approach": 27.826042714045958,
-            "aggressive": 0.5,
+            "aggressive": 18.973703225700092,
             "fast_approach": 45.73940324877372,
             "attack_ready": 0.5,
             "circle_left": 0.2,
@@ -582,7 +582,7 @@
             "approach": 8.150208549699453,
             "aggressive": 7.251002365106829,
             "fast_approach": 9.140735276758214,
-            "attack_ready": 14.686224244430711,
+            "attack_ready": 12.815322910404674,
             "circle_left": 0.2,
             "circle_right": 0.2,
             "skill_attack": 0,
@@ -593,24 +593,24 @@
         [
           "4_4_4_0_2",
           {
-            "approach": 29.220254185603203,
-            "aggressive": 21.821971864519114,
-            "fast_approach": 24.432750525357516,
-            "attack_ready": 65.26549962838402,
+            "approach": 55.44937741366213,
+            "aggressive": 34.22485956150547,
+            "fast_approach": 12.05906908608323,
+            "attack_ready": 39.303067062224606,
             "circle_left": 11.93471538768658,
             "circle_right": 6.243866198955489,
             "skill_attack": 0,
             "skill_heal": 0,
-            "skill_buff": 9.250805226927532
+            "skill_buff": 29.327519018737956
           }
         ],
         [
           "3_4_4_7_2",
           {
-            "approach": 46.342123580678745,
-            "aggressive": 7.17074522362486,
+            "approach": 67.19116049652804,
+            "aggressive": 39.537629890075465,
             "fast_approach": 0.5,
-            "attack_ready": 0.5,
+            "attack_ready": 17.01646941047707,
             "circle_left": 0.2,
             "circle_right": -2.1467499999999995,
             "skill_attack": 0,
@@ -621,7 +621,7 @@
         [
           "3_4_4_6_2",
           {
-            "approach": 46.87853600752834,
+            "approach": 33.28525707992129,
             "aggressive": 82.77170197402641,
             "fast_approach": 93.17191754033192,
             "attack_ready": 95.3871428454853,
@@ -635,24 +635,24 @@
         [
           "5_4_4_6_2",
           {
-            "approach": -32.793420069501764,
-            "aggressive": -124.50008766139183,
-            "fast_approach": -85.07461608520842,
-            "attack_ready": -84.53579083740496,
-            "circle_left": -140.23798601333766,
-            "circle_right": -141.7055949122311,
+            "approach": 37.510811066748765,
+            "aggressive": -40.204949529010264,
+            "fast_approach": -8.855020219108056,
+            "attack_ready": -27.20459628060125,
+            "circle_left": -55.37091080780982,
+            "circle_right": -94.57872243353033,
             "skill_attack": -138.6689357718749,
             "skill_heal": -104.5062295926609,
-            "skill_buff": -108.73811332120843
+            "skill_buff": -61.79292779372236
           }
         ],
         [
           "4_4_4_6_2",
           {
             "approach": -3.28929701397292,
-            "aggressive": 58.262571794052235,
-            "fast_approach": 35.13153429517921,
-            "attack_ready": 17.526695213156927,
+            "aggressive": 46.32207603698234,
+            "fast_approach": 106.81187240157566,
+            "attack_ready": 56.76871135117489,
             "circle_left": 13.292596413189948,
             "circle_right": 18.682548853784162,
             "skill_attack": 9.597864937765305,
@@ -663,8 +663,8 @@
         [
           "4_4_4_6_0",
           {
-            "approach": 14.100276935572937,
-            "aggressive": 0.5,
+            "approach": 44.835231183537,
+            "aggressive": 16.353134608215562,
             "fast_approach": 0.5,
             "attack_ready": 11.66902031075243,
             "circle_left": 0.2,
@@ -677,27 +677,27 @@
         [
           "5_4_4_7_2",
           {
-            "approach": -26.63362733928631,
-            "aggressive": 33.0868476678952,
-            "fast_approach": -23.165706057476534,
-            "attack_ready": -23.472481433374586,
-            "circle_left": -23.16724329447745,
-            "circle_right": -23.053637690696164,
-            "skill_attack": -23.319934391252996,
+            "approach": 29.176652876590143,
+            "aggressive": -17.723585277512196,
+            "fast_approach": -15.599224147317972,
+            "attack_ready": -14.565393112464267,
+            "circle_left": -19.806881851919243,
+            "circle_right": -19.954723990996428,
+            "skill_attack": -18.125031602374495,
             "skill_heal": -28.838950829881803,
-            "skill_buff": -24.778116330964533
+            "skill_buff": -15.979365107888093
           }
         ],
         [
           "3_4_4_6_0",
           {
-            "approach": 0.5,
-            "aggressive": 0.5,
-            "fast_approach": 6.086706124999999,
-            "attack_ready": 4.144205048378124,
+            "approach": 6.48728622605703,
+            "aggressive": 55.06295029274,
+            "fast_approach": 19.66523561860116,
+            "attack_ready": 9.705052192008367,
             "circle_left": 0.2,
             "circle_right": 0.2,
-            "skill_attack": 0,
+            "skill_attack": 4.211318910562585,
             "skill_heal": 0,
             "skill_buff": 0
           }
@@ -705,10 +705,10 @@
         [
           "5_4_4_6_3",
           {
-            "approach": 39.99386559410493,
+            "approach": 35.26530078295102,
             "aggressive": 13.42675548959688,
-            "fast_approach": 25.271915002206924,
-            "attack_ready": 17.68137784375528,
+            "fast_approach": 14.686306726753433,
+            "attack_ready": 13.195739036397374,
             "circle_left": 15.851742158873463,
             "circle_right": -1.8598603844121395,
             "skill_attack": 13.618022530450276,
@@ -719,24 +719,24 @@
         [
           "5_4_4_7_3",
           {
-            "approach": 15.264328330532297,
-            "aggressive": 25.755626808296036,
+            "approach": 23.837523976315907,
+            "aggressive": 16.22902810437014,
             "fast_approach": 20.174503179038375,
-            "attack_ready": 41.42315393464971,
+            "attack_ready": 23.706393393726493,
             "circle_left": 0.2,
-            "circle_right": 0.2,
+            "circle_right": 11.875436908421877,
             "skill_attack": 0,
-            "skill_heal": 10.145727315344345,
+            "skill_heal": 13.343563336811009,
             "skill_buff": 0
           }
         ],
         [
           "4_4_4_6_3",
           {
-            "approach": 55.271700144190206,
+            "approach": 79.19632493087849,
             "aggressive": 35.00748427910719,
-            "fast_approach": 51.77481675799592,
-            "attack_ready": 53.2978076015857,
+            "fast_approach": 60.2929304111397,
+            "attack_ready": 50.746697779386835,
             "circle_left": -6.206101828418592,
             "circle_right": 5.528478457756347,
             "skill_attack": 22.064751619540303,
@@ -747,10 +747,10 @@
         [
           "5_4_4_5_2",
           {
-            "approach": -16.454354868303994,
-            "aggressive": -16.79490220091346,
+            "approach": -7.832457183371028,
+            "aggressive": -17.56942296288891,
             "fast_approach": -18.718796462321166,
-            "attack_ready": 12.385914860819708,
+            "attack_ready": 9.70502924630158,
             "circle_left": -18.387056189252135,
             "circle_right": -19.83072623803378,
             "skill_attack": -16.366121749727395,
@@ -769,7 +769,7 @@
             "circle_right": 0.2,
             "skill_attack": 0,
             "skill_heal": 0,
-            "skill_buff": 1.57325
+            "skill_buff": 17.512081124999998
           }
         ],
         [
@@ -777,19 +777,19 @@
           {
             "approach": 0.5,
             "aggressive": 0.5,
-            "fast_approach": 107.2028692813121,
+            "fast_approach": 112.90511503285288,
             "attack_ready": 0.5,
             "circle_left": 0.2,
             "circle_right": 0.2,
             "skill_attack": 0,
             "skill_heal": 0,
-            "skill_buff": 0
+            "skill_buff": 40.64579420597464
           }
         ],
         [
           "2_4_4_5_1",
           {
-            "approach": 31.39177404316557,
+            "approach": 34.808210637575584,
             "aggressive": 0.5,
             "fast_approach": 19.964468625,
             "attack_ready": 0.5,
@@ -803,7 +803,7 @@
         [
           "4_4_4_7_3",
           {
-            "approach": 68.95801165393205,
+            "approach": 85.4296913282256,
             "aggressive": 56.123565964826355,
             "fast_approach": 31.973271195576828,
             "attack_ready": 56.3128751742706,
@@ -820,20 +820,20 @@
             "approach": 7.0913352312499995,
             "aggressive": 0.5,
             "fast_approach": 0.5,
-            "attack_ready": 54.56009068296383,
+            "attack_ready": 95.10678803585256,
             "circle_left": -0.046749999999999986,
             "circle_right": 0.2,
             "skill_attack": 0,
             "skill_heal": 0,
-            "skill_buff": 0
+            "skill_buff": 21.0878286716712
           }
         ],
         [
           "4_4_4_7_2",
           {
-            "approach": 37.951078925339445,
-            "aggressive": 45.6092385656678,
-            "fast_approach": 67.58920979233386,
+            "approach": 51.17315507830107,
+            "aggressive": 51.30392496061646,
+            "fast_approach": 49.494530614126106,
             "attack_ready": 27.697675148533275,
             "circle_left": 22.890151938748343,
             "circle_right": 0.2,
@@ -848,7 +848,7 @@
             "approach": 23.967386957005807,
             "aggressive": 0.5,
             "fast_approach": 19.96208765802561,
-            "attack_ready": 43.165714703765644,
+            "attack_ready": 38.05803078238084,
             "circle_left": 0.2,
             "circle_right": 6.3824640841497535,
             "skill_attack": 0,
@@ -859,7 +859,7 @@
         [
           "4_4_4_4_1",
           {
-            "approach": 13.184500811349327,
+            "approach": 28.191644808455898,
             "aggressive": 0.5,
             "fast_approach": 2.2482499999999996,
             "attack_ready": 0.5,
@@ -876,7 +876,7 @@
             "approach": 75.74895744506284,
             "aggressive": 104.42416030857436,
             "fast_approach": 99.9710484515015,
-            "attack_ready": 84.89094830341678,
+            "attack_ready": 76.43076049718282,
             "circle_left": 22.611937529433188,
             "circle_right": 17.68287687190684,
             "skill_attack": 38.524226839818915,
@@ -889,7 +889,7 @@
           {
             "approach": 17.408143980728983,
             "aggressive": 0.5,
-            "fast_approach": 26.324032331207675,
+            "fast_approach": 25.444533268092723,
             "attack_ready": 5.662079310128124,
             "circle_left": 0.2,
             "circle_right": 0.2,
@@ -902,7 +902,7 @@
           "3_4_4_6_3",
           {
             "approach": 37.02178992518329,
-            "aggressive": 73.3864309864828,
+            "aggressive": 79.0945397505841,
             "fast_approach": 39.695748210442034,
             "attack_ready": 23.0259202083527,
             "circle_left": 8.903464359662188,
@@ -917,7 +917,7 @@
           {
             "approach": 14.413354700498664,
             "aggressive": 0.5,
-            "fast_approach": 15.970886732489854,
+            "fast_approach": 26.0919536114287,
             "attack_ready": 0.5,
             "circle_left": 0.2,
             "circle_right": 0.2,
@@ -971,9 +971,9 @@
         [
           "4_4_4_5_2",
           {
-            "approach": 12.781423890459095,
-            "aggressive": 11.62049181275597,
-            "fast_approach": 22.80033542549255,
+            "approach": 30.841709236532758,
+            "aggressive": 13.21619315931795,
+            "fast_approach": 67.87700981853712,
             "attack_ready": 0.5,
             "circle_left": 0.2,
             "circle_right": 0.2,
@@ -986,8 +986,8 @@
           "4_4_4_5_3",
           {
             "approach": 118.40887916489889,
-            "aggressive": 110.06092570367338,
-            "fast_approach": 111.98257864898342,
+            "aggressive": 96.283087810873,
+            "fast_approach": 110.72164766876024,
             "attack_ready": 117.24504261596132,
             "circle_left": 86.51012259595448,
             "circle_right": 24.799779096850774,
@@ -1013,9 +1013,9 @@
         [
           "5_4_4_4_1",
           {
-            "approach": 5.389524143424698,
+            "approach": 5.34300902492364,
             "aggressive": 0.5,
-            "fast_approach": 0.5,
+            "fast_approach": 0.7721089702917192,
             "attack_ready": 0.5,
             "circle_left": 0.2,
             "circle_right": 0.2,
@@ -1027,15 +1027,15 @@
         [
           "5_4_4_4_0",
           {
-            "approach": 0.5,
-            "aggressive": 0.5,
-            "fast_approach": 10.345106779578293,
-            "attack_ready": 0.53690710625,
-            "circle_left": 0.2,
-            "circle_right": 0.2,
-            "skill_attack": 0,
-            "skill_heal": 0,
-            "skill_buff": -2.384806375
+            "approach": -2.587148867122669,
+            "aggressive": -1.5290397372487654,
+            "fast_approach": -2.441378092396625,
+            "attack_ready": -2.3601091136649077,
+            "circle_left": -2.6006999999999993,
+            "circle_right": -2.6006999999999993,
+            "skill_attack": -2.096325,
+            "skill_heal": -3.8499999999999996,
+            "skill_buff": -8.413893689484308
           }
         ],
         [
@@ -1043,7 +1043,7 @@
           {
             "approach": 67.00568407032108,
             "aggressive": 47.04117505340362,
-            "fast_approach": 183.35176187760226,
+            "fast_approach": 148.193428068326,
             "attack_ready": 24.254743972127482,
             "circle_left": -0.046749999999999986,
             "circle_right": 0.2,
@@ -1086,7 +1086,7 @@
             "approach": 30.33339044695856,
             "aggressive": 40.17444876555493,
             "fast_approach": 56.12182177755966,
-            "attack_ready": 97.77995290325278,
+            "attack_ready": 89.43282366916856,
             "circle_left": 0.2,
             "circle_right": 7.885063910789564,
             "skill_attack": 16.121173226203183,
@@ -1126,10 +1126,10 @@
           "5_4_4_0_3",
           {
             "approach": -4.130963325477593,
-            "aggressive": 24.478853286358916,
+            "aggressive": 16.011738234229572,
             "fast_approach": 2.489038858503573,
             "attack_ready": -3.9533487317479468,
-            "circle_left": -9.030020880192987,
+            "circle_left": -8.370064166294611,
             "circle_right": -7.101589728547878,
             "skill_attack": 0.08976787811443288,
             "skill_heal": -8.494447850454051,
@@ -1169,7 +1169,7 @@
           {
             "approach": 9.34222023125,
             "aggressive": 0.5,
-            "fast_approach": 5.0482499999999995,
+            "fast_approach": 32.53448710446783,
             "attack_ready": 0.5,
             "circle_left": 0.2,
             "circle_right": 0.2,
@@ -1237,7 +1237,7 @@
         [
           "1_4_4_5_2",
           {
-            "approach": 43.548249999999996,
+            "approach": 107.01600120907543,
             "aggressive": 0.5,
             "fast_approach": 0.5,
             "attack_ready": 0.5,
@@ -1281,13 +1281,13 @@
           {
             "approach": 0.5,
             "aggressive": 8.593962100340429,
-            "fast_approach": 27.847091252019318,
+            "fast_approach": 25.989386014507797,
             "attack_ready": 0.5,
             "circle_left": 0.2,
             "circle_right": 0.2,
             "skill_attack": 0,
             "skill_heal": 0,
-            "skill_buff": 0
+            "skill_buff": 10.699017118824692
           }
         ],
         [
@@ -1307,7 +1307,7 @@
         [
           "2_4_4_4_1",
           {
-            "approach": 4.348249999999999,
+            "approach": 20.018300313469155,
             "aggressive": 0.5,
             "fast_approach": 0.5,
             "attack_ready": 0.5,
@@ -1393,7 +1393,7 @@
           {
             "approach": 36.69841633217936,
             "aggressive": 49.89633080241679,
-            "fast_approach": 70.60543390442861,
+            "fast_approach": 94.91816283908422,
             "attack_ready": 40.32754787740797,
             "circle_left": 6.607761949926586,
             "circle_right": 0.2,
@@ -1560,7 +1560,7 @@
           "2_4_4_0_2",
           {
             "approach": 16.999445134377172,
-            "aggressive": 75.61955546494616,
+            "aggressive": 49.628887786158984,
             "fast_approach": 27.351645170957937,
             "attack_ready": 0.5,
             "circle_left": 0.2,
@@ -1728,8 +1728,8 @@
           "2_4_4_1_1",
           {
             "approach": 5.667487499999999,
-            "aggressive": 9.239400510800149,
-            "fast_approach": 19.869127219192535,
+            "aggressive": 19.504627450844787,
+            "fast_approach": 25.986482844283426,
             "attack_ready": 0.5,
             "circle_left": 0.2,
             "circle_right": 0.2,
@@ -2023,7 +2023,7 @@
           {
             "approach": 0.5,
             "aggressive": 0.5,
-            "fast_approach": 69.6396125,
+            "fast_approach": 87.75399812500001,
             "attack_ready": 42.11325,
             "circle_left": 0.2,
             "circle_right": 0.2,
@@ -2273,7 +2273,7 @@
         [
           "0_3_4_6_2",
           {
-            "approach": 43.548249999999996,
+            "approach": 122.63491596249999,
             "aggressive": 0.5,
             "fast_approach": 0.5,
             "attack_ready": 0.5,
@@ -3561,7 +3561,7 @@
         [
           "2_4_4_3_1",
           {
-            "approach": 25.75198523599007,
+            "approach": 30.61869369807217,
             "aggressive": 0.5,
             "fast_approach": 0.5,
             "attack_ready": 0.5,
@@ -3927,7 +3927,7 @@
           {
             "approach": 42.39325,
             "aggressive": 0.5,
-            "fast_approach": 0.5,
+            "fast_approach": 42.813250000000004,
             "attack_ready": 0.5,
             "circle_left": 0.2,
             "circle_right": 2.05325,
@@ -3983,7 +3983,7 @@
           {
             "approach": 43.548249999999996,
             "aggressive": 0.5,
-            "fast_approach": 0.5,
+            "fast_approach": 80.49015460625,
             "attack_ready": 0.5,
             "circle_left": 0.2,
             "circle_right": 0.2,
@@ -4094,7 +4094,7 @@
           "1_0_4_2_3",
           {
             "approach": -1.25175,
-            "aggressive": 0.5,
+            "aggressive": 41.645831124999994,
             "fast_approach": 0.5,
             "attack_ready": 0.5,
             "circle_left": 0.2,
@@ -4667,14 +4667,14 @@
         [
           "3_4_4_4_1",
           {
-            "approach": 0.5,
-            "aggressive": 13.188665493368141,
+            "approach": 16.990647232822123,
+            "aggressive": 23.849164529784243,
             "fast_approach": 0.5,
             "attack_ready": 0.5,
             "circle_left": 0.2,
             "circle_right": 0.2,
             "skill_attack": 0,
-            "skill_heal": 0,
+            "skill_heal": 5.534853184555535,
             "skill_buff": 0
           }
         ],
@@ -4731,7 +4731,7 @@
             "circle_right": 0.2,
             "skill_attack": 0,
             "skill_heal": 0,
-            "skill_buff": 0
+            "skill_buff": 56.488605104350434
           }
         ],
         [
@@ -4747,14 +4747,224 @@
             "skill_heal": 0,
             "skill_buff": 0
           }
+        ],
+        [
+          "5_4_3_6_1",
+          {
+            "approach": 24.359972521231196,
+            "aggressive": 0.5,
+            "fast_approach": 0.5,
+            "attack_ready": 0.5,
+            "circle_left": 13.015589406806784,
+            "circle_right": 0.2,
+            "skill_attack": 0,
+            "skill_heal": 0,
+            "skill_buff": 0
+          }
+        ],
+        [
+          "5_4_3_6_0",
+          {
+            "approach": -4.094671166589856,
+            "aggressive": 0.5,
+            "fast_approach": 0.5,
+            "attack_ready": -4.094671166589856,
+            "circle_left": 0.2,
+            "circle_right": 0.2,
+            "skill_attack": -7.2924574248732625,
+            "skill_heal": -7.219671166589856,
+            "skill_buff": 0
+          }
+        ],
+        [
+          "5_4_3_5_0",
+          {
+            "approach": -4.868154075263952,
+            "aggressive": 0.5,
+            "fast_approach": 0.5,
+            "attack_ready": 0.5,
+            "circle_left": 0.2,
+            "circle_right": 0.2,
+            "skill_attack": 0,
+            "skill_heal": 0,
+            "skill_buff": 0
+          }
+        ],
+        [
+          "5_4_3_5_1",
+          {
+            "approach": 0.5,
+            "aggressive": -1.783558526291106,
+            "fast_approach": 0.5,
+            "attack_ready": 0.5,
+            "circle_left": 0.2,
+            "circle_right": 0.2,
+            "skill_attack": 0,
+            "skill_heal": 0,
+            "skill_buff": 0
+          }
+        ],
+        [
+          "2_4_4_6_0",
+          {
+            "approach": 8.183031125,
+            "aggressive": 0.5,
+            "fast_approach": 0.5,
+            "attack_ready": 13.792721659219145,
+            "circle_left": 0.2,
+            "circle_right": 0.2,
+            "skill_attack": 0,
+            "skill_heal": 0,
+            "skill_buff": 0
+          }
+        ],
+        [
+          "0_4_4_6_2",
+          {
+            "approach": 0.5,
+            "aggressive": 95.40637323125,
+            "fast_approach": 43.548249999999996,
+            "attack_ready": 0.5,
+            "circle_left": 0.2,
+            "circle_right": 0.2,
+            "skill_attack": 0,
+            "skill_heal": 0,
+            "skill_buff": 0
+          }
+        ],
+        [
+          "2_3_4_5_1",
+          {
+            "approach": 6.1146125,
+            "aggressive": 0.5,
+            "fast_approach": 0.5,
+            "attack_ready": 0.5,
+            "circle_left": 0.2,
+            "circle_right": 0.2,
+            "skill_attack": 0,
+            "skill_heal": 0,
+            "skill_buff": 0
+          }
+        ],
+        [
+          "0_0_4_6_2",
+          {
+            "approach": 41.645831124999994,
+            "aggressive": 0.5,
+            "fast_approach": 0.5,
+            "attack_ready": 0.5,
+            "circle_left": 0.2,
+            "circle_right": 0.2,
+            "skill_attack": 0,
+            "skill_heal": 0,
+            "skill_buff": 0
+          }
+        ],
+        [
+          "2_2_4_5_2",
+          {
+            "approach": 4.348249999999999,
+            "aggressive": 0.5,
+            "fast_approach": 0.5,
+            "attack_ready": 2.2132500000000004,
+            "circle_left": 0.2,
+            "circle_right": 0.2,
+            "skill_attack": 0,
+            "skill_heal": 0,
+            "skill_buff": 0
+          }
+        ],
+        [
+          "2_0_4_5_1",
+          {
+            "approach": 0.5,
+            "aggressive": -1.25175,
+            "fast_approach": 0.5,
+            "attack_ready": 0.5,
+            "circle_left": 0.2,
+            "circle_right": 0.2,
+            "skill_attack": 0,
+            "skill_heal": 0,
+            "skill_buff": 0
+          }
+        ],
+        [
+          "2_3_4_1_2",
+          {
+            "approach": 4.348249999999999,
+            "aggressive": 0.5,
+            "fast_approach": 0.5,
+            "attack_ready": 0.5,
+            "circle_left": 0.2,
+            "circle_right": 0.2,
+            "skill_attack": 0,
+            "skill_heal": 0,
+            "skill_buff": 0
+          }
+        ],
+        [
+          "1_3_4_6_3",
+          {
+            "approach": 85.710831125,
+            "aggressive": 0.5,
+            "fast_approach": 0.5,
+            "attack_ready": 0.5,
+            "circle_left": 0.2,
+            "circle_right": 0.2,
+            "skill_attack": 0,
+            "skill_heal": 0,
+            "skill_buff": 0
+          }
+        ],
+        [
+          "1_3_4_1_1",
+          {
+            "approach": 42.813250000000004,
+            "aggressive": 0.5,
+            "fast_approach": 0.5,
+            "attack_ready": 0.5,
+            "circle_left": 0.2,
+            "circle_right": 0.2,
+            "skill_attack": 0,
+            "skill_heal": 0,
+            "skill_buff": 0
+          }
+        ],
+        [
+          "1_2_4_2_2",
+          {
+            "approach": 58.064261124999994,
+            "aggressive": 0.5,
+            "fast_approach": 0.5,
+            "attack_ready": 0.5,
+            "circle_left": 0.2,
+            "circle_right": 0.2,
+            "skill_attack": 0,
+            "skill_heal": 0,
+            "skill_buff": 0
+          }
+        ],
+        [
+          "0_0_4_6_3",
+          {
+            "approach": 41.645831124999994,
+            "aggressive": 0.5,
+            "fast_approach": 0.5,
+            "attack_ready": 0.5,
+            "circle_left": 0.2,
+            "circle_right": 0.2,
+            "skill_attack": 0,
+            "skill_heal": 0,
+            "skill_buff": 0
+          }
         ]
       ],
-      "epsilon": 0.2929209119461166,
-      "totalReward": -7188.549999999985,
-      "episodeCount": 166,
-      "updateCount": 22814
+      "epsilon": 0.2858027919421093,
+      "totalReward": -8761.749999999989,
+      "episodeCount": 170,
+      "updateCount": 25068
     },
-    "timestamp": 1772611246356
+    "timestamp": 1790229681666
   },
   "forest_slime": {
     "qTableData": {
@@ -6529,7 +6739,7 @@
       "episodeCount": 226,
       "updateCount": 11053
     },
-    "timestamp": 1772611246356
+    "timestamp": 1790229681666
   },
   "skeleton": {
     "qTableData": {
@@ -8640,7 +8850,7 @@
       "episodeCount": 144,
       "updateCount": 20500
     },
-    "timestamp": 1772611246356
+    "timestamp": 1790229681666
   },
   "dragon_boss": {
     "qTableData": {
@@ -9211,7 +9421,7 @@
       "episodeCount": 0,
       "updateCount": 1072
     },
-    "timestamp": 1772611246356
+    "timestamp": 1790229681666
   },
   "bat": {
     "qTableData": {
@@ -10496,7 +10706,7 @@
       "episodeCount": 42,
       "updateCount": 7764
     },
-    "timestamp": 1772611246356
+    "timestamp": 1790229681666
   },
   "goblin": {
     "qTableData": {
@@ -11081,7 +11291,7 @@
       "episodeCount": 8,
       "updateCount": 6201
     },
-    "timestamp": 1772611246356
+    "timestamp": 1790229681666
   },
   "red_slime": {
     "qTableData": {
@@ -12184,7 +12394,7 @@
       "episodeCount": 32,
       "updateCount": 6872
     },
-    "timestamp": 1772611246356
+    "timestamp": 1790229681666
   },
   "boss": {
     "qTableData": {
@@ -12629,6 +12839,6 @@
       "episodeCount": 0,
       "updateCount": 0
     },
-    "timestamp": 1772611246356
+    "timestamp": 1790229681666
   }
 }
