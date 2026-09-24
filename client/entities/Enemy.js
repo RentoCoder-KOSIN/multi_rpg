@@ -1,4 +1,5 @@
-import { getEnemyStats, getEnemyDisplayName, getEnemySizeConfig } from '../data/enemyStats.js';
+import { getEnemyStats, getEnemyDisplayName } from '../data/enemyStats.js';
+import { getEnemySizeConfig } from '../data/enemySize.js';
 import EnemyAI from '../ai/EnemyAI.js';
 import { ENEMY_AI_CONFIG } from '../config.js';
 

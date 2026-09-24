@@ -1,3 +1,4 @@
+import { pinToScreen } from '../utils/screenFixed.js';
 export default class BaseWindowUI {
     constructor(scene, config = {}) {
         this.scene = scene;
@@ -33,6 +34,7 @@ export default class BaseWindowUI {
         // 2. Main Container
         this.container = this.scene.add.container(sceneWidth / 2, sceneHeight / 2);
         this.container.setScrollFactor(0).setDepth(depth).setVisible(false);
+        pinToScreen(this.container); // keep child hit areas fixed to the screen
 
         // 3. Background
         this.bgGfx = this.scene.add.graphics();
