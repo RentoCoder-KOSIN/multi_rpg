@@ -61,7 +61,8 @@ export const SKILLS_BY_JOB = {
     archmage: ['abyss_storm'],
     paladin: ['holy_sanctuary'],
     sniper: ['death_rain'],
-    high_summoner: ['demon_lord_summon']
+    high_summoner: ['demon_lord_summon'],
+    exorcist: ['exorcism']
 };
 
 /**

@@ -6,8 +6,13 @@
 const ServerQLearning = require('./ServerQLearning');
 
 // 敵の行動定数
+const { ENEMY_ATTACK_RANGE } = require('../config');
+
 const DETECT_RANGE = 300;
-const ATTACK_RANGE = 60;
+// enemyLoop.js の実際の命中判定 (ENEMY_ATTACK_RANGE) と一致させる。
+// 以前はここが 60 固定でハードコードされており、config の ENEMY_ATTACK_RANGE (80) と
+// ズレていたため、AIが「攻撃準備完了」と判断しても実際には範囲外で攻撃が不発になることがあった。
+const ATTACK_RANGE = ENEMY_ATTACK_RANGE;
 const SPEED = 50; // サーバー側の移動量（px/update）
 
 /**
@@ -47,6 +52,12 @@ class EnemyAgentInstance {
         // 行動更新間隔（ms）
         this.actionInterval = 300;
         this.lastActionTime = Date.now();
+
+        // 直近に決定した行動結果（ホールド中の再利用用。バグ修正: 以前はホールド中に
+        // null を返して呼び出し側が wander() してしまい、移動がガクガクになっていた）
+        this.lastResult = null;
+        // 1回の行動ホールド中に既に攻撃を消費したか（ホールドを跨いで多重攻撃しないため）
+        this.attackConsumedForCurrentAction = false;
     }
 
     /**
@@ -168,8 +179,22 @@ class EnemyAgentInstance {
      */
     update(players, allies, isLearning = true) {
         const now = Date.now();
-        if (now - this.lastActionTime < this.actionInterval) return null;
+
+        // 行動ホールド中（次の意思決定まで）は、直近に決定した移動を継続する。
+        // 以前はここで null を返しており、呼び出し側 (enemyLoop.js) が
+        // 「結果なし」を wander() （ランダムなその場ジグザグ移動）として扱っていたため、
+        // 敵が 150ms ごとに「接近→ランダム→接近→ランダム…」とガクガク動き、
+        // AIがまともに学習・行動できていないように見える原因になっていた。
+        // 攻撃は1回の行動ホールドにつき最大1回になるよう、既に消費済みなら shouldAttack を落とす。
+        if (now - this.lastActionTime < this.actionInterval) {
+            if (!this.lastResult) return null;
+            return {
+                ...this.lastResult,
+                shouldAttack: this.lastResult.shouldAttack && !this.attackConsumedForCurrentAction
+            };
+        }
         this.lastActionTime = now;
+        this.attackConsumedForCurrentAction = false;
 
         const state = this.buildState(players, allies);
         if (!state) {
@@ -177,13 +202,15 @@ class EnemyAgentInstance {
             const homeAngle = angle(this.enemy.x, this.enemy.y, this.enemy.spawnX, this.enemy.spawnY);
             const d = dist(this.enemy.x, this.enemy.y, this.enemy.spawnX, this.enemy.spawnY);
             if (d > 10) {
-                return {
+                this.lastResult = {
                     dx: Math.cos(homeAngle) * SPEED * 0.3, // px/秒
                     dy: Math.sin(homeAngle) * SPEED * 0.3,
                     shouldAttack: false,
                     targetPlayerId: null
                 };
+                return this.lastResult;
             }
+            this.lastResult = null;
             return null;
         }
 
@@ -231,6 +258,7 @@ class EnemyAgentInstance {
         this.lastState = state;
         this.lastAction = action;
         this.lastDistance = state.distance;
+        this.lastResult = result;
 
         // ε減衰（学習ON時のみ適用）
         if (isLearning) {
@@ -246,6 +274,8 @@ class EnemyAgentInstance {
     notifyAttackHit(damage) {
         this.damageDealt += damage;
         this.agent.successCount++;
+        // このホールド中はもう攻撃済み（次の意思決定まで再攻撃しない）
+        this.attackConsumedForCurrentAction = true;
     }
 
     /**
@@ -334,7 +364,7 @@ class ServerEnemyAIManager {
     updateEnemy(enemyId, players, allies) {
         const inst = this.instances[enemyId];
         if (!inst) return null;
-        return inst.update(players, allies);
+        return inst.update(players, allies, this.isLearningEnabled);
     }
 
     /**

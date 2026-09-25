@@ -1,6 +1,7 @@
 import { JOBS } from "../data/jobs.js";
 import { ITEMS } from "../data/items.js";
 import { SKILLS } from "../data/skills.js";
+import { getEnemyStats } from "../data/enemyStats.js";
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, isLocal = false, socket = null) {
@@ -64,6 +65,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             speedBonus: saved.speedBonus || 0,
             expMultiplier: saved.expMultiplier || 1.0,
             statPoints: saved.statPoints || 0,
+            // アイテム（種）による永続ステータス加算
+            bonusAtk: saved.bonusAtk || 0,
+            bonusDef: saved.bonusDef || 0,
+            // 復活の秘巻物などのチャージ数
+            reviveCharges: saved.reviveCharges || 0,
             // 基本ステータス (Base Stats)
             str: saved.str || 5,  // Strength - 攻撃力に影響
             int: saved.int || 5,  // Intelligence - 魔法攻撃力に影響
@@ -335,12 +341,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // 派生ステータスの基礎値を計算
         const jobDef = JOBS[this.stats.job];
+        const isMagical = jobDef && jobDef.type === 'magical';
         const jobAtkBonus = jobDef?.atkBonus || 0;
         const jobDefBonus = jobDef?.defBonus || 0;
         const jobHpBonus = jobDef?.hpBonus || 0;
 
         // 注: ここでジョブ固有のボーナス(jobDefBonus等)が加算されます
-        if (jobDef && jobDef.type === 'magical') {
+        if (isMagical) {
             this.stats.atk = 5 + (int * 2) + jobAtkBonus;  // INT 1 = ATK +2 + Job Bonus
         } else {
             this.stats.atk = 5 + (str * 2) + jobAtkBonus;  // STR 1 = ATK +2 + Job Bonus
@@ -373,6 +380,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.stats.speedBonus = (dex * 2) + speedSkillBonus;
         this.stats.expMultiplier = 1.0;
 
+        // 装備由来の特殊効果（毎回リセットしてから再計算する）
+        this.stats.atkMultiplier = 1.0;
+        this.stats.fireResist = 0;   // %
+        this.stats.iceResist = 0;    // %
+        this.stats.fireDamage = 0;   // 固定加算ダメージ
+        this.stats.iceDamage = 0;    // 固定加算ダメージ
+        this.stats.freezeChance = 0; // 0〜1
+        this.stats.deathChance = 0;  // 0〜1（即死効果）
+        this.stats.poisonEquipped = false;
+
         const weapon = ITEMS[this.stats.equipment.weapon];
         const armor = ITEMS[this.stats.equipment.armor];
 
@@ -384,7 +401,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             // 攻撃力・防御力 (関数なら実行、そうでなければ加算)
             const getVal = (val) => (typeof val === 'function' ? val(this) : (val || 0));
 
-            this.stats.atk += getVal(item.atk || s.attack);
+            // 魔法職は matk (魔法攻撃力) を優先して攻撃力に反映する
+            const atkSource = isMagical ? (item.matk ?? item.atk ?? s.attack) : (item.atk ?? s.attack);
+            this.stats.atk += getVal(atkSource);
             this.stats.def += getVal(item.def || s.defense);
 
             // 特殊ステータス
@@ -392,10 +411,24 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.stats.lifesteal += getVal(item.lifesteal || s.lifesteal);
             this.stats.speedBonus += getVal(item.speedBonus || s.speedBonus);
 
+            // 属性・特殊効果
+            this.stats.fireResist += getVal(s.fireResist);
+            this.stats.iceResist += getVal(s.iceResist);
+            this.stats.fireDamage += getVal(s.fireDamage);
+            this.stats.iceDamage += getVal(s.iceDamage);
+            this.stats.freezeChance += getVal(s.freezeChance);
+            this.stats.deathChance += getVal(s.deathChance);
+            if (s.attackMultiplier) this.stats.atkMultiplier *= s.attackMultiplier;
+            if (s.poison) this.stats.poisonEquipped = true;
+
             // 経験値倍率は加算方式
             if (item.expMultiplier) this.stats.expMultiplier += (item.expMultiplier - 1.0);
             if (s.expMultiplier) this.stats.expMultiplier += (getVal(s.expMultiplier) - 1.0);
         });
+
+        // アイテム（種）による永続ステータス加算
+        this.stats.atk += (this.stats.bonusAtk || 0);
+        this.stats.def += (this.stats.bonusDef || 0);
 
         this.speed = 150 + this.stats.speedBonus;
 
@@ -423,7 +456,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             atk = weapon.calculateAtk(atk, this, target);
         }
 
+        // 装備の攻撃力倍率（例: 呪いの指輪で2倍）
+        atk *= (this.stats.atkMultiplier || 1);
+
         let amount = Math.ceil(atk * multiplier);
+
+        // 属性ダメージ（固定加算。会心の後に上乗せ）
+        const elementalBonus = (this.stats.fireDamage || 0) + (this.stats.iceDamage || 0);
 
         // クリティカル判定
         const isCrit = Math.random() < (this.stats.critChance || 0);
@@ -431,7 +470,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             amount = Math.ceil(amount * 1.5);
         }
 
-        return { amount, isCrit };
+        amount += elementalBonus;
+
+        // 即死効果（ボス系には効かない。type に "boss" を含むものは全てボス扱い）
+        const isBossTarget = target && typeof target.type === 'string' && target.type.includes('boss');
+        const isExecute = target && !isBossTarget &&
+            this.stats.deathChance > 0 && Math.random() < this.stats.deathChance;
+        if (isExecute && target) {
+            amount = Math.max(amount, target.hp || amount);
+        }
+
+        // 凍結効果（付与するかどうかの判定のみ。実際の付与は呼び出し側で行う）
+        const isFreeze = this.stats.freezeChance > 0 && Math.random() < this.stats.freezeChance;
+
+        return { amount, isCrit, isExecute, isFreeze };
     }
 
     /**
@@ -632,12 +684,32 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         return true;
     }
 
-    takeDamage(amount) {
-        this.stats.hp = Math.max(0, this.stats.hp - amount);
+    takeDamage(amount, attacker) {
+        let finalAmount = amount;
+
+        // 防御力によるダメージ軽減（逓減方式: DEFが高いほど軽減率が上がるが0にはならない）
+        const def = this.getDefense();
+        if (def > 0) {
+            finalAmount *= 100 / (100 + def);
+        }
+
+        // 属性耐性（装備の fireResist / iceResist）。attacker の種類から属性を判定する
+        if (attacker && attacker.type) {
+            const enemyDef = getEnemyStats(attacker.type);
+            if (enemyDef?.element === 'fire' && this.stats.fireResist) {
+                finalAmount *= Math.max(0, 1 - this.stats.fireResist / 100);
+            } else if (enemyDef?.element === 'ice' && this.stats.iceResist) {
+                finalAmount *= Math.max(0, 1 - this.stats.iceResist / 100);
+            }
+        }
+
+        finalAmount = Math.max(1, Math.round(finalAmount));
+
+        this.stats.hp = Math.max(0, this.stats.hp - finalAmount);
         this.saveStats();
 
         // ダメージ数値の表示
-        const text = this.scene.add.text(this.x, this.y - 20, `-${amount}`, {
+        const text = this.scene.add.text(this.x, this.y - 20, `-${finalAmount}`, {
             fontSize: '16px',
             color: '#ff0000',
             fontFamily: 'Press Start 2P',
@@ -658,9 +730,31 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     die() {
+        // 復活の秘巻物などのチャージがあれば、ペナルティなしでその場復活する
+        if (this.stats.reviveCharges > 0) {
+            this.stats.reviveCharges -= 1;
+            this.stats.hp = this.stats.maxHp;
+            this.stats.mp = this.stats.maxMp;
+            this.saveStats();
+            if (this.scene.notificationUI) {
+                this.scene.notificationUI.show('復活の秘巻物の力で蘇った！', 'warning');
+            }
+            return;
+        }
+
         if (this.scene.notificationUI) {
             this.scene.notificationUI.show('力尽きました...', 'error');
         }
+
+        // 死亡ペナルティ: 所持金の10%を失う
+        if (this.stats.gold > 0) {
+            const lostGold = Math.ceil(this.stats.gold * 0.1);
+            this.stats.gold -= lostGold;
+            if (this.scene.notificationUI) {
+                this.scene.notificationUI.show(`所持金を ${lostGold}G 失った...`, 'error');
+            }
+        }
+
         // とりあえず初期位置にリセット
         this.stats.hp = this.stats.maxHp;
         this.saveStats();
@@ -756,8 +850,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             // 自然回復 (2秒ごとにHP 1%, MP 2回復)
             if (this.isLocal && this.active && !this.stats.dead) {
                 if (!this.lastRegenTime || now - this.lastRegenTime > 2000) {
-                    // HP回復
-                    if (this.stats.hp < this.stats.maxHp) {
+                    if (this.stats.poisonEquipped) {
+                        // 呪いの装備による継続ダメージ（最大HPの2%、HP1以下にはならない）
+                        this.stats.hp = Math.max(1, this.stats.hp - Math.ceil(this.stats.maxHp * 0.02));
+                    } else if (this.stats.hp < this.stats.maxHp) {
+                        // HP回復
                         this.stats.hp = Math.min(this.stats.hp + Math.ceil(this.stats.maxHp * 0.01), this.stats.maxHp);
                     }
                     // MP回復 (召喚獣がいない場合のみ)

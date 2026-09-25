@@ -70,9 +70,13 @@ function updateMapEnemies(io, aiManager, mapKey) {
         if (enemy.type === "boss") continue;
 
         // AI による行動決定（未登録などで結果が無い場合は null）
+        // ※ 学習自体は凍結中も止めない（isLearning計算やQ値更新は継続する）
         const result = aiManager.updateEnemy(enemy.id, mapPlayers, mapEnemies);
+        const isFrozen = enemy.frozenUntil && Date.now() < enemy.frozenUntil;
 
-        if (isTooFarFromSpawn(enemy)) {
+        if (isFrozen) {
+            // 凍結中は移動も攻撃も行わない
+        } else if (isTooFarFromSpawn(enemy)) {
             returnToSpawn(enemy);
         } else if (result) {
             enemy.x += result.dx * MOVE_SCALE;
@@ -81,7 +85,7 @@ function updateMapEnemies(io, aiManager, mapKey) {
             wander(enemy);
         }
 
-        if (result?.shouldAttack && result.targetPlayerId) {
+        if (!isFrozen && result?.shouldAttack && result.targetPlayerId) {
             tryAttack(io, aiManager, enemy, result, mapPlayers);
         }
 

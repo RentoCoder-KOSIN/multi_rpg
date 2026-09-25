@@ -129,6 +129,7 @@ const ENEMY_STATS = {
         atk: 35000,
         exp: 25000000,
         gold: 10000000,
+        element: "fire", // 火属性: fireResist装備で被ダメージを軽減できる
         drops: [
             { id: "dragon_scale_armor", chance: 0.2 },
             { id: "high_potion", chance: 1.0 },
@@ -159,6 +160,7 @@ function getPublicEnemyStats() {
             atk: s.atk,
             exp: s.exp,
             gold: s.gold,
+            element: s.element || null,
         };
     }
     return result;

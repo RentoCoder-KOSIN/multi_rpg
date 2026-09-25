@@ -98,8 +98,10 @@ class ServerQLearning {
     /**
      * ε-greedy 行動選択
      */
-    selectAction(state) {
-        if (Math.random() < this.epsilon) {
+    selectAction(state, isLearning = true) {
+        // 学習OFF時は探索(epsilon)せず、常に学習済みQ値による活用のみで行動する
+        const explorationRate = isLearning ? this.epsilon : 0;
+        if (Math.random() < explorationRate) {
             // 探索フェーズ：接近行動を重点的に探索
             const rand = Math.random();
             if (rand < 0.6) {
