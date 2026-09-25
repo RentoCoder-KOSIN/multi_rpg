@@ -11,7 +11,12 @@ const allShopItems = [
     "heal_izumi", "power_seed", "shield_seed", "magic_seed", "negi_sword",
     "wood_stick", "ice_wings", "fire_sword", "cheat_sword", "brass_knuckles",
     "ganble_stick", "dragon_bow", "leather_armor", "fire_armor", "ice_armor",
-    "cheat_armor", "dragon_scale_armor"
+    "cheat_armor", "dragon_scale_armor",
+    // 新規追加分（武器・防具）
+    "silver_dagger", "battle_axe", "arcane_rod", "thunder_spear",
+    "moonlight_rapier", "abyssal_blade", "phoenix_bow",
+    "chain_mail", "knight_armor", "guardian_plate", "mystic_robe",
+    "titan_armor", "celestial_mail", "void_aegis"
 ];
 
 // -----------------------------

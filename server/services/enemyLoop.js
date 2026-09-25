@@ -5,7 +5,8 @@ const {
     ENEMY_LEASH_RADIUS,
     ENEMY_HOME_SPEED,
     ENEMY_ATTACK_RANGE,
-    ENEMY_WANDER_JITTER
+    ENEMY_WANDER_JITTER,
+    ENEMY_ATTACK_COOLDOWN_MS
 } = require("../config");
 const { players, enemies } = require("../state");
 const { findSocketByPlayerId } = require("../utils/socketUtils");
@@ -41,12 +42,21 @@ function collectAlivePlayersOnMap(mapKey) {
 }
 
 // AIが攻撃を選択した場合、射程内なら学習報酬を与えてプレイヤーにダメージを通知する
+//
+// 以前はここにクールダウンが無く、AIの行動ホールド(300ms)が空くたびに
+// 攻撃可能になっていたため、敵が1秒に3回以上も攻撃してくる
+// 「攻撃速度が速すぎる」状態になっていた。ENEMY_ATTACK_COOLDOWN_MS で
+// 実際の攻撃間隔をAIの意思決定間隔から独立させる。
 function tryAttack(io, aiManager, enemy, result, mapPlayers) {
     const target = mapPlayers[result.targetPlayerId];
     if (!target) return;
 
+    const now = Date.now();
+    if (enemy.lastAttackTime && now - enemy.lastAttackTime < ENEMY_ATTACK_COOLDOWN_MS) return;
+
     const distance = Math.hypot(enemy.x - target.x, enemy.y - target.y);
     if (distance < ENEMY_ATTACK_RANGE) {
+        enemy.lastAttackTime = now;
         aiManager.notifyAttackHit(enemy.id, enemy.atk);
 
         const targetSocket = findSocketByPlayerId(io, result.targetPlayerId);

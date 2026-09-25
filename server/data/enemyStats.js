@@ -1,10 +1,12 @@
 /**
  * 敵のステータスデータ（サーバー側 - Node.js CommonJS）
  */
+const { ENEMY_ATK_SCALE } = require("../config");
 
 const ENEMY_STATS = {
     slime: {
         displayName: "スライム",
+        level: 1,
         hp: 150,
         atk: 5,
         exp: 22,
@@ -17,6 +19,7 @@ const ENEMY_STATS = {
     },
     bat: {
         displayName: "コウモリ",
+        level: 6,
         hp: 330,
         atk: 30,
         exp: 45,
@@ -29,6 +32,7 @@ const ENEMY_STATS = {
     },
     forest_slime: {
         displayName: "森のスライム",
+        level: 14,
         hp: 400,
         atk: 75,
         exp: 120,
@@ -41,6 +45,7 @@ const ENEMY_STATS = {
     },
     skeleton: {
         displayName: "スケルトン",
+        level: 24,
         hp: 1300,
         atk: 120,
         exp: 450,
@@ -53,6 +58,7 @@ const ENEMY_STATS = {
     },
     red_slime: {
         displayName: "レッドスライム",
+        level: 34,
         hp: 2000,
         atk: 350,
         exp: 650,
@@ -65,6 +71,7 @@ const ENEMY_STATS = {
     },
     goblin: {
         displayName: "ゴブリン",
+        level: 42,
         hp: 2800,
         atk: 450,
         exp: 950,
@@ -77,6 +84,7 @@ const ENEMY_STATS = {
     },
     ghost: {
         displayName: "ゴースト",
+        level: 58,
         hp: 35000,
         atk: 505,
         exp: 4250,
@@ -89,6 +97,7 @@ const ENEMY_STATS = {
     },
     orc: {
         displayName: "オーク",
+        level: 70,
         hp: 50000,
         atk: 750,
         exp: 10500,
@@ -101,6 +110,7 @@ const ENEMY_STATS = {
     },
     dire_wolf: {
         displayName: "ダイアウルフ",
+        level: 88,
         hp: 75000,
         atk: 1900,
         exp: 80000,
@@ -113,6 +123,7 @@ const ENEMY_STATS = {
     },
     boss: {
         displayName: "森の守護者",
+        level: 20,
         hp: 3000,
         atk: 70,
         exp: 1200,
@@ -125,6 +136,7 @@ const ENEMY_STATS = {
     },
     dragon_boss: {
         displayName: "エンシェントドラゴン",
+        level: 100,
         hp: 8000000,
         atk: 35000,
         exp: 25000000,
@@ -138,26 +150,33 @@ const ENEMY_STATS = {
     },
 };
 
+// ATK に ENEMY_ATK_SCALE を掛けて最終的な攻撃力を求める（最低1は保証する）
+function scaledAtk(rawAtk) {
+    return Math.max(1, Math.round(rawAtk * ENEMY_ATK_SCALE));
+}
+
 /**
- * 敵タイプから統計情報を取得
+ * 敵タイプから統計情報を取得（atk は ENEMY_ATK_SCALE 適用後の値）
  * @param {string} type - 敵のタイプ
  * @returns {Object} 敵の統計情報
  */
 function getEnemyStats(type) {
-    return ENEMY_STATS[type] || ENEMY_STATS.slime;
+    const s = ENEMY_STATS[type] || ENEMY_STATS.slime;
+    return { ...s, atk: scaledAtk(s.atk) };
 }
 
 /**
  * Stats that are safe to expose to clients (no drop tables).
- * @returns {Object} type -> { displayName, hp, atk, exp, gold }
+ * @returns {Object} type -> { displayName, level, hp, atk, exp, gold }
  */
 function getPublicEnemyStats() {
     const result = {};
     for (const [type, s] of Object.entries(ENEMY_STATS)) {
         result[type] = {
             displayName: s.displayName,
+            level: s.level || 1,
             hp: s.hp,
-            atk: s.atk,
+            atk: scaledAtk(s.atk),
             exp: s.exp,
             gold: s.gold,
             element: s.element || null,
