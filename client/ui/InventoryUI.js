@@ -259,16 +259,56 @@ export default class InventoryUI extends BaseWindowUI {
 
         if (!item || !player) return;
 
-        const heal = item.heal || item.stats?.heal || 0;
+        const s = item.stats || {};
+
+        const heal = item.heal || s.heal || 0;
         if (heal > 0) {
             player.stats.hp = Math.min(player.stats.maxHp, player.stats.hp + heal);
             if (this.scene.notificationUI) this.scene.notificationUI.show(`HPが ${heal} 回復した！`, "success");
         }
 
-        const healMp = item.healMp || item.stats?.healMp || 0;
+        const healMp = item.healMp || s.healMp || 0;
         if (healMp > 0) {
             player.stats.mp = Math.min(player.stats.maxMp, player.stats.mp + healMp);
             if (this.scene.notificationUI) this.scene.notificationUI.show(`MPが ${healMp} 回復した！`, "success");
+        }
+
+        // パーティ全員のHPを回復（回復の泉など）
+        if (s.healAll > 0) {
+            player.stats.hp = Math.min(player.stats.maxHp, player.stats.hp + s.healAll);
+
+            const netManager = this.scene.networkManager;
+            if (netManager) {
+                const myId = netManager.getPlayerId();
+                const memberIds = netManager.partyData?.members?.map(m => m.id) || [];
+                const otherPlayers = netManager.getOtherPlayers();
+                memberIds.forEach(memberId => {
+                    if (memberId === myId) return;
+                    const remotePlayer = otherPlayers[memberId];
+                    if (!remotePlayer || !remotePlayer.active) return;
+                    netManager.healPlayer(memberId, s.healAll);
+                });
+            }
+            if (this.scene.notificationUI) this.scene.notificationUI.show(`パーティ全員のHPが ${s.healAll} 回復した！`, "success");
+        }
+
+        // 永続ステータス上昇（攻撃力/防御力の種）
+        if (s.attackBoost > 0) {
+            player.stats.bonusAtk = (player.stats.bonusAtk || 0) + s.attackBoost;
+            if (this.scene.notificationUI) this.scene.notificationUI.show(`攻撃力が永久に+${s.attackBoost}された！`, "warning");
+        }
+        if (s.defenseBoost > 0) {
+            player.stats.bonusDef = (player.stats.bonusDef || 0) + s.defenseBoost;
+            if (this.scene.notificationUI) this.scene.notificationUI.show(`防御力が永久に+${s.defenseBoost}された！`, "warning");
+        }
+        if (s.attackBoost > 0 || s.defenseBoost > 0) {
+            player.applyEquipmentStats();
+        }
+
+        // 蘇生アイテム: 死亡時に自動発動するチャージとして保持
+        if (s.revive) {
+            player.stats.reviveCharges = (player.stats.reviveCharges || 0) + 1;
+            if (this.scene.notificationUI) this.scene.notificationUI.show('死亡時に自動で復活するお守りを手に入れた！', "warning");
         }
 
         // 消費処理 (個数減算 or 削除)

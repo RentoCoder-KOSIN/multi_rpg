@@ -68,6 +68,23 @@ export const ADVANCED_SKILLS = {
         description: '空から無数の死の矢を降らせる。'
     },
 
+    // エクソシスト (プリースト上位職)
+    exorcism: {
+        id: 'exorcism',
+        name: 'エクソシズム',
+        type: 'active',
+        cd: 8000,
+        damageMult: 30,
+        mpCost: 60,
+        unlockCost: 500,
+        range: 300,
+        rangeType: 'line',
+        color: 0xfff2cc,
+        icon: '⛧',
+        description: '邪悪なる存在を祓い清める神聖なる裁き。アンデッド系に2倍のダメージ。',
+        bonusVsUndead: 2.0
+    },
+
     // ハイサモナー (サモナー上位職)
     demon_lord_summon: {
         id: 'demon_lord_summon',

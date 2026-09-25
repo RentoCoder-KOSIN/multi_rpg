@@ -43,12 +43,17 @@ module.exports = function registerEnemyHandlers(socket, { io, aiManager, enemySe
         });
     }
 
-    socket.on("enemyHit", ({ id, damage }) => {
+    socket.on("enemyHit", ({ id, damage, freezeMs }) => {
         const mapKey = socket.data.map;
         const enemy = enemies[mapKey]?.[id];
         if (!enemy) return;
 
         enemy.hp -= damage;
+
+        // 凍結効果（氷属性武器など）: 一定時間、移動と攻撃を止める
+        if (freezeMs > 0) {
+            enemy.frozenUntil = Date.now() + freezeMs;
+        }
 
         if (enemy.hp <= 0) {
             // AI に死亡を通知（学習反映）

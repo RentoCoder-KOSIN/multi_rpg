@@ -182,6 +182,21 @@ export const JOBS = {
             10: ['speed_buff'],
             15: ['summon_boost']
         },
-        nextJob: 'high_priest' // 将来的な拡張用
+        nextJob: 'exorcist'
+    },
+    exorcist: {
+        id: 'exorcist',
+        type: 'magical',
+        name: 'エクソシスト',
+        description: '悪しき者を祓う祓魔師。アンデッド系に絶大な効果を発揮する上位聖職者。',
+        atkBonus: 20,
+        defBonus: 15,
+        hpBonus: 60,
+        reqLevel: 30,
+        skills: {
+            30: ['exorcism'],
+            35: ['holy_arrow'],
+            40: ['defense_buff']
+        }
     }
 };

@@ -8,6 +8,29 @@ import { spawnSummon, destroySummon, isSummonSkill } from './summons.js';
 
 const BASIC_ATTACK_RANGE = 80;
 const BASIC_ATTACK_COOLDOWN_MS = 500;
+const FREEZE_DURATION_MS = 3000;
+
+// アンデブ系（エクソシズムなどの特効対象）。Enemy.type の文字列で判定する
+const UNDEAD_ENEMY_TYPES = ['skeleton', 'ghost'];
+
+function showExecuteEffect(scene, enemy, player) {
+    if (scene.notificationUI) scene.notificationUI.show('即死効果発動！', 'warning');
+    const text = scene.add.text(enemy.x, enemy.y - 40, '即死！', {
+        fontSize: '14px', color: '#ff00ff', fontFamily: '"Press Start 2P"', stroke: '#000', strokeThickness: 3
+    }).setOrigin(0.5);
+    scene.tweens.add({ targets: text, y: enemy.y - 80, alpha: 0, duration: 900, onComplete: () => text.destroy() });
+}
+
+function showFreezeEffect(scene, enemy) {
+    const text = scene.add.text(enemy.x, enemy.y - 20, '❄️凍結', {
+        fontSize: '12px', color: '#66ccff', fontFamily: '"Press Start 2P"', stroke: '#000', strokeThickness: 2
+    }).setOrigin(0.5);
+    scene.tweens.add({ targets: text, y: enemy.y - 60, alpha: 0, duration: 800, onComplete: () => text.destroy() });
+    if (enemy.setTint) {
+        enemy.setTint(0x99ddff);
+        scene.time.delayedCall(FREEZE_DURATION_MS, () => { if (enemy.active) enemy.clearTint(); });
+    }
+}
 
 /**
  * SPACE attack: hits every server-managed enemy within range.
@@ -53,17 +76,15 @@ export function performBasicAttack(scene) {
         const damageData = player.getDamage(1, enemy);
         const damage = damageData.amount;
 
-        enemy.takeDamage(damage, player);
+        const effects = damageData.isFreeze ? { freezeMs: FREEZE_DURATION_MS } : null;
+        enemy.takeDamage(damage, player, effects);
         enemy.lastHitTime = now;
 
         if (damageData.isCrit) showCriticalEffect(scene, enemy);
+        if (damageData.isExecute) showExecuteEffect(scene, enemy, player);
+        if (damageData.isFreeze) showFreezeEffect(scene, enemy);
 
         scene.cameras.main.shake(100, 0.005);
-
-        // Tell the server about the hit
-        if (enemy.id && scene.networkManager) {
-            scene.networkManager.sendEnemyHit(enemy.id, damage);
-        }
     });
 
     player.lastAttackTime = now;
@@ -259,11 +280,19 @@ function applyDamageSkill(scene, skill, { enemies, range, rangeType, direction, 
         if (!isHit) return;
 
         const damageData = player.getDamage(damageMultiplier, enemy);
-        const damage = damageData.amount;
+        let damage = damageData.amount;
+
+        // アンデッド特効（エクソシズムなど bonusVsUndead を持つスキル）
+        if (skill.bonusVsUndead && UNDEAD_ENEMY_TYPES.includes(enemy.type)) {
+            damage = Math.ceil(damage * skill.bonusVsUndead);
+        }
 
         if (damageData.isCrit) showCriticalEffect(scene, enemy);
+        if (damageData.isExecute) showExecuteEffect(scene, enemy, player);
+        if (damageData.isFreeze) showFreezeEffect(scene, enemy);
 
-        enemy.takeDamage(damage, player);
+        const effects = damageData.isFreeze ? { freezeMs: FREEZE_DURATION_MS } : null;
+        enemy.takeDamage(damage, player, effects);
 
         // Lifesteal
         if (player.stats.lifesteal > 0) {

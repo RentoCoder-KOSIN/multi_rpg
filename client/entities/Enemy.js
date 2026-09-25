@@ -166,15 +166,15 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.hpBar.setVisible(this.active);
     }
 
-    takeDamage(amount, attacker) {
+    takeDamage(amount, attacker, effects = null) {
         if (!this.active) return;
 
         // ローカルでのHP変動（予測）
         this.hp -= amount;
 
-        // サーバー管理の敵の場合は、サーバーに通知
+        // サーバー管理の敵の場合は、サーバーに通知（凍結などの追加効果も一緒に送る）
         if (this.isServerManaged && this.socket && this.id) {
-            this.socket.emit('enemyHit', { id: this.id, damage: amount });
+            this.socket.emit('enemyHit', { id: this.id, damage: amount, ...(effects || {}) });
         }
 
         // ダメージ数値の表示

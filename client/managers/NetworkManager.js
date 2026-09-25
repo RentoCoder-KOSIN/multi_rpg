@@ -189,7 +189,7 @@ export default class NetworkManager {
                 if (this.scene?.cameras?.main) {
                     this.scene.cameras.main.shake(50, 0.002);
                 }
-                player.takeDamage(data.damage || 0);
+                player.takeDamage(data.damage || 0, { type: data.enemyType });
                 console.log(`[NetworkManager] enemyAttack from ${data.enemyType} (${data.enemyId}): ${data.damage} dmg`);
             }
         });
@@ -462,7 +462,9 @@ export default class NetworkManager {
         }
     }
     notifyEnemyDefeat(enemyId) { if (this.socket && this.socket.connected) this.socket.emit('enemyDefeat', { id: enemyId }); }
-    sendEnemyHit(enemyId, damage) { if (this.socket && this.socket.connected) this.socket.emit('enemyHit', { id: enemyId, damage }); }
+    sendEnemyHit(enemyId, damage, effects = null) {
+        if (this.socket && this.socket.connected) this.socket.emit('enemyHit', { id: enemyId, damage, ...(effects || {}) });
+    }
     requestAIStats() { if (this.socket && this.socket.connected) this.socket.emit('getAIStats'); }
 
     // パーティー系
