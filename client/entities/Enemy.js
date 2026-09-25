@@ -48,6 +48,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
         // 敵のステータスデータを取得
         const stats = getEnemyStats(type);
+        this.level = serverData.level || stats.level || 1;
         this.maxHp = serverData.maxHp || serverData.hp || stats.hp;
         this.hp = serverData.hp || this.maxHp;
         this.atk = serverData.atk || stats.atk;
@@ -93,8 +94,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     createNameLabel() {
         const displayName = getEnemyDisplayName(this.type);
+        const label = `Lv.${this.level} ${displayName}`;
 
-        this.nameText = this.scene.add.text(0, 0, displayName, {
+        this.nameText = this.scene.add.text(0, 0, label, {
             fontSize: '10px',
             color: '#ffffff',
             fontFamily: '"Press Start 2P"',

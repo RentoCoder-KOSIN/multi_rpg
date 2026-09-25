@@ -59,12 +59,30 @@ export function spawnEnemyFromServer(scene, data) {
     const textureKey = data.type || 'slime';
     const enemy = new Enemy(scene, data.x, data.y, textureKey, data.type, data.id, data.spawnId, scene.networkManager.getSocket(), data);
 
-    if (scene.collidableLayers) scene.collidableLayers.forEach(layer => scene.physics.add.collider(enemy, layer));
+    // このEnemyインスタンスのために作った Collider をここに集めておき、
+    // 敵が破壊されるときに必ず破棄する（下の 'destroy' リスナー参照）。
+    // 修正前はここで作った Collider を一切破棄していなかったため、
+    // 敵が倒されて復活する度に古いColliderが物理ワールドに残り続け、
+    // 毎フレームの当たり判定コストが増え続けていた（respawnするたびに重くなるバグの原因）。
+    const colliders = [];
+
+    if (scene.collidableLayers) {
+        scene.collidableLayers.forEach(layer => {
+            colliders.push(scene.physics.add.collider(enemy, layer));
+        });
+    }
 
     // Contact damage to the local player, with a global hit cooldown
     // (gives strong enemies a grace period so a boss cannot one-shot on touch)
-    if (scene.player) {
-        scene.physics.add.overlap(scene.player, enemy, () => {
+    //
+    // 注意: サーバー管理の敵（isServerManaged）は、サーバー側AIが別途
+    // "enemyAttack" イベントで攻撃ダメージを送ってくる。以前はここでも
+    // 接触ダメージを与えていたため、近づいて棒立ちになっている間、
+    // 同じ敵から「サーバーAIの攻撃」と「接触ダメージ」の二重にダメージを
+    // 受けてしまい、実質攻撃力が倍になっていた。
+    // サーバー管理の敵についてはここでの接触ダメージを無効化する。
+    if (scene.player && !enemy.isServerManaged) {
+        colliders.push(scene.physics.add.overlap(scene.player, enemy, () => {
             const now = scene.time.now;
 
             if (scene.player.active && enemy.active) {
@@ -73,23 +91,31 @@ export function spawnEnemyFromServer(scene, data) {
                     if (scene.player) scene.player.lastHitTime = now;
                 }
             }
-        });
+        }));
     }
 
     Object.values(scene.networkManager.getOtherPlayers()).forEach(op => {
-        if (op && op.active) scene.physics.add.overlap(op, enemy);
+        if (op && op.active) colliders.push(scene.physics.add.overlap(op, enemy));
     });
 
-    // Contact damage to our summon
+    // Contact damage to our summon (summonはサーバーAIの対象外なので、これは二重ダメージにならない)
     if (scene.activeSummon && scene.activeSummon.active) {
-        scene.physics.add.overlap(scene.activeSummon, enemy, () => {
+        colliders.push(scene.physics.add.overlap(scene.activeSummon, enemy, () => {
             const now = scene.time.now;
             if (!scene.activeSummon.lastHitTime || now - scene.activeSummon.lastHitTime > SUMMON_CONTACT_COOLDOWN_MS) {
                 scene.activeSummon.takeDamage(enemy.atk);
                 scene.activeSummon.lastHitTime = now;
             }
-        });
+        }));
     }
+
+    // 敵が破壊される瞬間（撃破・シーン遷移など）に、上で登録した全Colliderを破棄する。
+    enemy.once('destroy', () => {
+        colliders.forEach(c => {
+            if (c && c.world) c.destroy();
+        });
+        colliders.length = 0;
+    });
 
     return enemy;
 }

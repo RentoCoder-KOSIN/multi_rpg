@@ -3,6 +3,15 @@ import { ITEMS } from "../data/items.js";
 import { SKILLS } from "../data/skills.js";
 import { getEnemyStats } from "../data/enemyStats.js";
 
+// レベルアップに必要な経験値を計算する。
+// 以前は maxExp *= 1.5 という「複利」計算だったため、
+// レベル100までに 1.5^99 倍(=天文学的な数値)の経験値が必要になり、
+// 実質どれだけ敵を倒しても経験値が全く貯まらないように見えるバグになっていた。
+// 多項式カーブ(level^1.8)に変更し、終盤でも現実的な必要量に収める。
+function calcMaxExp(level) {
+    return Math.max(100, Math.floor(100 * Math.pow(level, 1.8)));
+}
+
 export default class Player extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, isLocal = false, socket = null) {
         super(scene, x, y, 'dude');
@@ -56,7 +65,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             mp: saved.mp !== undefined ? saved.mp : 50,
             maxMp: saved.maxMp || 50,
             exp: saved.exp || 0,
-            maxExp: saved.maxExp || 100,
+            maxExp: saved.maxExp || calcMaxExp(saved.level || 1),
             gold: saved.gold || 0,
             atk: saved.atk || 10,
             def: saved.def || 5,
@@ -618,7 +627,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         this.stats.hp = this.stats.maxHp; // HP全回復
         this.stats.mp = this.stats.maxMp; // MP全回復
-        this.stats.maxExp = Math.floor(this.stats.maxExp * 1.5);
+        this.stats.maxExp = calcMaxExp(this.stats.level);
         this.saveStats();
 
         if (this.scene.notificationUI) {

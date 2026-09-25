@@ -285,6 +285,70 @@ export const ITEMS = {
             return Math.floor(Math.random() * 150) + 1;
         }
     },
+    "silver_dagger": {
+        id: "silver_dagger",
+        name: "銀の短剣",
+        description: "軽く鋭い短剣。会心率が上がる。",
+        price: 400,
+        type: "weapon",
+        lvlReq: 8,
+        stats: { attack: 12, critChance: 0.05 }
+    },
+    "battle_axe": {
+        id: "battle_axe",
+        name: "戦斧",
+        description: "重く力強い一撃を放つ両手斧。",
+        price: 1200,
+        type: "weapon",
+        lvlReq: 30,
+        stats: { attack: 130 }
+    },
+    "arcane_rod": {
+        id: "arcane_rod",
+        name: "秘術の杖",
+        description: "魔力を増幅する杖。魔法職向け。",
+        price: 3200,
+        type: "weapon",
+        lvlReq: 35,
+        atk: 20,
+        matk: 160
+    },
+    "thunder_spear": {
+        id: "thunder_spear",
+        name: "雷鳴の槍",
+        description: "雷を纏う槍。突きの速さが増す。",
+        price: 8000,
+        type: "weapon",
+        lvlReq: 55,
+        stats: { attack: 200, speedBonus: 10 }
+    },
+    "moonlight_rapier": {
+        id: "moonlight_rapier",
+        name: "月光のレイピア",
+        description: "月明かりを刃に映す細剣。会心の一撃を誘う。",
+        price: 10000,
+        type: "weapon",
+        lvlReq: 60,
+        stats: { attack: 240, critChance: 0.12 }
+    },
+    "abyssal_blade": {
+        id: "abyssal_blade",
+        name: "深淵の大剣",
+        description: "闇に呑まれた大剣。傷から力を吸い取る。",
+        price: 35000,
+        type: "weapon",
+        lvlReq: 80,
+        stats: { attack: 550, lifesteal: 0.05 }
+    },
+    "phoenix_bow": {
+        id: "phoenix_bow",
+        name: "不死鳥の弓",
+        description: "不死鳥の炎を纏う弓。",
+        price: 70000,
+        type: "weapon",
+        lvlReq: 95,
+        stats: { attack: 850, fireDamage: 40 }
+    },
     "dragon_bow": {
         id: "dragon_bow",
         name: "ドラゴンスレイヤーの弓",
@@ -329,6 +393,69 @@ export const ITEMS = {
         type: "armor",
         lvlReq: 100,
         stats: { defense: 99999 },
+    },
+    "chain_mail": {
+        id: "chain_mail",
+        name: "鎖帷子",
+        description: "軽量で動きやすい鎖の鎧。",
+        price: 350,
+        type: "armor",
+        lvlReq: 10,
+        stats: { defense: 15 }
+    },
+    "knight_armor": {
+        id: "knight_armor",
+        name: "騎士の鎧",
+        description: "騎士団に伝わる頑丈な鎧。",
+        price: 900,
+        type: "armor",
+        lvlReq: 20,
+        stats: { defense: 28 }
+    },
+    "guardian_plate": {
+        id: "guardian_plate",
+        name: "守護者のプレート",
+        description: "守りを重視した重厚なプレートアーマー。",
+        price: 1800,
+        type: "armor",
+        lvlReq: 30,
+        stats: { defense: 40 }
+    },
+    "mystic_robe": {
+        id: "mystic_robe",
+        name: "神秘のローブ",
+        description: "魔力を守るローブ。属性耐性も僅かに得る。",
+        price: 12000,
+        type: "armor",
+        lvlReq: 60,
+        stats: { defense: 35, fireResist: 10, iceResist: 10 }
+    },
+    "titan_armor": {
+        id: "titan_armor",
+        name: "タイタンアーマー",
+        description: "巨人の名を冠する超重量の鎧。",
+        price: 20000,
+        type: "armor",
+        lvlReq: 70,
+        stats: { defense: 70 }
+    },
+    "celestial_mail": {
+        id: "celestial_mail",
+        name: "天蓋の鎧",
+        description: "天上の力を宿す鎧。炎と氷への耐性を持つ。",
+        price: 40000,
+        type: "armor",
+        lvlReq: 80,
+        stats: { defense: 90, fireResist: 15, iceResist: 15 }
+    },
+    "void_aegis": {
+        id: "void_aegis",
+        name: "虚無の護盾",
+        description: "あらゆる攻撃を吸収せんとする究極の護り。",
+        price: 80000,
+        type: "armor",
+        lvlReq: 95,
+        stats: { defense: 120 }
     },
     "dragon_scale_armor": {
         id: "dragon_scale_armor",
