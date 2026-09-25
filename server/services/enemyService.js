@@ -63,6 +63,17 @@ function createEnemyService({ io, aiManager }) {
         io.to(`map:${mapKey}`).emit("enemySpawned", enemy);
     }
 
+    // 倒された敵を、死んだ場所ではなく元のスポーン地点で復活させる
+    function respawnEnemy(mapKey, deadEnemy) {
+        spawnEnemy(mapKey, {
+            x: deadEnemy.spawnX,
+            y: deadEnemy.spawnY,
+            type: deadEnemy.type,
+            respawnDelay: deadEnemy.respawnDelay,
+            id: deadEnemy.spawnId
+        });
+    }
+
     // 全マップの初期敵をスポーンさせる
     function spawnInitialEnemies() {
         KNOWN_MAPS.forEach(mapKey => {
@@ -74,7 +85,7 @@ function createEnemyService({ io, aiManager }) {
         return Object.values(enemies[mapKey] || {});
     }
 
-    return { spawnEnemy, spawnInitialEnemies, getEnemiesOnMap };
+    return { spawnEnemy, respawnEnemy, spawnInitialEnemies, getEnemiesOnMap };
 }
 
 module.exports = { createEnemyService };

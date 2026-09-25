@@ -28,6 +28,7 @@ import { createGameUI, setupEnemyDebug } from './base/ui.js';
 import {
     updateEnemyContactDamage,
     regenerateMp,
+    syncPlayerStats,
     updateRemotePlayerNameTags,
     updateActiveSummon
 } from './base/frameUpdate.js';
@@ -206,6 +207,7 @@ export default class BaseGameScene extends Phaser.Scene {
 
         this.player.updateBuffs();
         regenerateMp(this, time);
+        syncPlayerStats(this, time);
         if (this.skillBarUI) this.skillBarUI.update();
 
         updateRemotePlayerNameTags(this);

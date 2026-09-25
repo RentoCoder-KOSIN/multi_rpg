@@ -1025,6 +1025,7 @@
                          "height":154,
                          "id":90,
                          "name":"",
+                         "opacity":1,
                          "properties":[
                                 {
                                  "name":"category",
@@ -1052,6 +1053,7 @@
                          "height":150,
                          "id":92,
                          "name":"",
+                         "opacity":1,
                          "properties":[
                                 {
                                  "name":"category",
@@ -1074,6 +1076,7 @@
                          "height":161,
                          "id":94,
                          "name":"",
+                         "opacity":1,
                          "properties":[
                                 {
                                  "name":"category",
@@ -1575,6 +1578,7 @@
                  "height":28,
                  "id":88,
                  "name":"",
+                 "opacity":1,
                  "properties":[
                         {
                          "name":"destX",
@@ -1607,6 +1611,7 @@
                  "height":30,
                  "id":96,
                  "name":"",
+                 "opacity":1,
                  "properties":[
                         {
                          "name":"destX",
@@ -1639,6 +1644,7 @@
                  "height":29.3333333333335,
                  "id":98,
                  "name":"",
+                 "opacity":1,
                  "properties":[
                         {
                          "name":"destX",
@@ -1666,6 +1672,18 @@
                  "width":30,
                  "x":2976.66666666667,
                  "y":2272.66666666667
+                }, 
+                {
+                 "height":26,
+                 "id":110,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":26,
+                 "x":136,
+                 "y":2246
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1682,6 +1700,7 @@
                  "height":0,
                  "id":102,
                  "name":"default",
+                 "opacity":1,
                  "rotation":0,
                  "type":"",
                  "visible":true,
@@ -1693,6 +1712,7 @@
                  "height":0,
                  "id":103,
                  "name":"forest",
+                 "opacity":1,
                  "rotation":0,
                  "type":"",
                  "visible":true,
@@ -1704,6 +1724,7 @@
                  "height":0,
                  "id":109,
                  "name":"guild1f",
+                 "opacity":1,
                  "rotation":0,
                  "type":"",
                  "visible":true,
@@ -1726,6 +1747,7 @@
                  "height":0,
                  "id":104,
                  "name":"",
+                 "opacity":1,
                  "properties":[
                         {
                          "name":"dialogue",
@@ -1758,6 +1780,7 @@
                  "height":0,
                  "id":105,
                  "name":"",
+                 "opacity":1,
                  "properties":[
                         {
                          "name":"dialogue",
@@ -1790,6 +1813,7 @@
                  "height":0,
                  "id":106,
                  "name":"",
+                 "opacity":1,
                  "properties":[
                         {
                          "name":"dialogue",
@@ -1822,6 +1846,7 @@
                  "height":0,
                  "id":107,
                  "name":"",
+                 "opacity":1,
                  "properties":[
                         {
                          "name":"dialogue",
@@ -1854,6 +1879,7 @@
                  "height":0,
                  "id":108,
                  "name":"",
+                 "opacity":1,
                  "properties":[
                         {
                          "name":"dialogue",
@@ -1889,10 +1915,10 @@
          "y":0
         }],
  "nextlayerid":42,
- "nextobjectid":110,
+ "nextobjectid":111,
  "orientation":"orthogonal",
  "renderorder":"right-down",
- "tiledversion":"1.11.2",
+ "tiledversion":"1.12.1",
  "tileheight":32,
  "tilesets":[
         {

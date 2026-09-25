@@ -15,7 +15,7 @@ export function spawnSummon(scene, player, summonType = 'summon') {
         destroySummon(scene, scene.activeSummon);
     }
 
-    const summonX = player.x + (player.flipX ? -50 : 50);
+    const summonX = player.x + (player.facingDirection === -1 ? -50 : 50);
     const summonY = player.y;
 
     const skillLevel = player.stats.skillLevels?.[summonType] || 1;

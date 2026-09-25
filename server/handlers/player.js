@@ -21,11 +21,10 @@ module.exports = function registerPlayerHandlers(socket, { io, partyService }) {
         const player = players[playerId];
         if (!player) return;
 
-        // NOTE: hp / mp に maxHp / maxMp を代入している（元のコードの挙動をそのまま維持）
-        if (hp !== undefined) player.hp = maxHp;
+        if (hp !== undefined) player.hp = hp;
         if (maxHp !== undefined) player.maxHp = maxHp;
         if (level !== undefined) player.level = level;
-        if (mp !== undefined) player.mp = maxMp;
+        if (mp !== undefined) player.mp = mp;
         if (maxMp !== undefined) player.maxMp = maxMp;
 
         toOthersOnMap().emit("playerStatUpdate", {

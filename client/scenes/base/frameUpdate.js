@@ -5,6 +5,7 @@ const ENEMY_TOUCH_DISTANCE = 35;
 const ENEMY_TOUCH_COOLDOWN_MS = 1000;
 const MP_REGEN_INTERVAL_MS = 1000;
 const SUMMON_POSITION_SYNC_MS = 100;
+const STATS_SYNC_INTERVAL_MS = 500;
 
 /**
  * Melee-range damage from server-managed enemies to the local player.
@@ -51,6 +52,16 @@ export function regenerateMp(scene, time) {
         }
         scene._lastMpRegen = time;
     }
+}
+
+/**
+ * Push HP/MP changes to the server (and so to party members), at most twice a second.
+ * @param {number} time - scene time in ms
+ */
+export function syncPlayerStats(scene, time) {
+    if (scene._lastStatsSync && time - scene._lastStatsSync < STATS_SYNC_INTERVAL_MS) return;
+    scene._lastStatsSync = time;
+    scene.networkManager?.syncLocalPlayerStats();
 }
 
 /**

@@ -57,7 +57,7 @@ module.exports = function registerEnemyHandlers(socket, { io, aiManager, enemySe
 
             notifyDefeat(mapKey, enemy, rollDrops(enemy));
 
-            setTimeout(() => enemyService.spawnEnemy(mapKey, enemy), enemy.respawnDelay);
+            setTimeout(() => enemyService.respawnEnemy(mapKey, enemy), enemy.respawnDelay);
         } else {
             io.to(`map:${mapKey}`).emit("enemyStatUpdate", {
                 id,

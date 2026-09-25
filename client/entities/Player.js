@@ -12,6 +12,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.isLocal = isLocal;
         this.socket = socket;
         this.speed = 150;
+        // 向いている方向 (1: 右, -1: 左)。スキルの発射方向などに使用。
+        // 注意: このゲームは walk-left / walk-right の専用アニメーションを使うため
+        // flipX は常に false のまま。方向判定には必ず facingDirection を使うこと。
+        this.facingDirection = 1;
         this.setCollideWorldBounds(true);
         this.setOrigin(0.5, 1);
 
@@ -97,6 +101,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const newJob = JOBS[jobId];
         this.stats.job = jobId;
 
+        // 前の職業のスキル構成が持ち越されないようにリセット
+        this.stats.activeSkills = [null, null, null];
+        this.skillCooldowns = {};
+
         this.applyEquipmentStats(); // ボーナスを含めて再計算
         this.stats.hp = this.stats.maxHp;
         this.stats.mp = this.stats.maxMp;
@@ -124,6 +132,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         this.stats.job = newJobId;
+
+        // 前の職業のスキル構成が持ち越されないようにリセット
+        this.stats.activeSkills = [null, null, null];
+        this.skillCooldowns = {};
 
         // 転職ボーナス
         this.stats.statPoints += 20;
@@ -700,8 +712,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             if (isMovingByKey) {
                 this.moveTarget = null; // キー入力があったら自動移動解除
                 body.setVelocity(0, 0);
-                if (cursors.left.isDown) { body.setVelocityX(-this.speed); this.flipX = false; this.anims.play('walk-left', true); }
-                else if (cursors.right.isDown) { body.setVelocityX(this.speed); this.flipX = false; this.anims.play('walk-right', true); }
+                if (cursors.left.isDown) { body.setVelocityX(-this.speed); this.flipX = false; this.facingDirection = -1; this.anims.play('walk-left', true); }
+                else if (cursors.right.isDown) { body.setVelocityX(this.speed); this.flipX = false; this.facingDirection = 1; this.anims.play('walk-right', true); }
 
                 if (cursors.up.isDown) body.setVelocityY(-this.speed);
                 else if (cursors.down.isDown) body.setVelocityY(this.speed);
@@ -723,6 +735,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
                     // アニメーション向き
                     if (Math.abs(vx) > Math.abs(vy)) {
                         this.flipX = false;
+                        this.facingDirection = vx > 0 ? 1 : -1;
                         this.anims.play(vx > 0 ? 'walk-right' : 'walk-left', true);
                     } else if (vy < 0) {
                         this.anims.play('walk-up', true); // walk-up があれば
@@ -731,6 +744,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
                     }
                     if (!this.anims.exists('walk-up')) {
                         this.flipX = false;
+                        this.facingDirection = vx > 0 ? 1 : -1;
                         this.anims.play(vx > 0 ? 'walk-right' : 'walk-left', true);
                     }
                 }
@@ -777,6 +791,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
                 if (Math.abs(dx) > Math.abs(dy)) {
                     this.flipX = false;
+                    this.facingDirection = dx > 0 ? 1 : -1;
                     this.anims.play(dx > 0 ? 'walk-right' : 'walk-left', true);
                 } else this.anims.play('idle', true);
             } else this.anims.play('idle', true);

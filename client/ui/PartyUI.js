@@ -92,7 +92,7 @@ export default class PartyUI extends BaseWindowUI {
                 fontSize: '14px', color: '#ffffff', fontFamily: '"Press Start 2P"'
             });
 
-            const statusText = this.scene.add.text(-200, 10, `HP: ${member.hp}/${member.maxHp} | Map: ${member.map}`, {
+            const statusText = this.scene.add.text(-200, 10, `HP:${member.hp}/${member.maxHp} MP:${member.mp ?? 0}/${member.maxMp ?? 0} ${member.map}`, {
                 fontSize: '10px', color: '#00ff00', fontFamily: '"Press Start 2P"'
             });
 
