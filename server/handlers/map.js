@@ -1,16 +1,20 @@
 const { DEFAULT_HP, DEFAULT_LEVEL } = require("../config");
-const { players } = require("../state");
+const { players, playerToParty } = require("../state");
 const { getPlayersOnMap } = require("../utils/socketUtils");
 
-module.exports = function registerMapHandlers(socket, { enemyService }) {
+module.exports = function registerMapHandlers(socket, { enemyService, partyService }) {
     const playerId = socket.data.playerId;
 
     // プレイヤーを指定マップに参加させ、現在の状況を本人に、参加を他の人に通知する
-    function enterMap({ mapKey, x, y, hp, maxHp, level }) {
+    function enterMap({ mapKey, x, y, hp, maxHp, level, mp, maxMp }) {
+        // Values the client did not send fall back to what we already know, then to defaults
+        const prev = players[playerId];
         const stats = {
-            hp: hp || DEFAULT_HP,
-            maxHp: maxHp || DEFAULT_HP,
-            level: level || DEFAULT_LEVEL
+            hp: hp ?? prev?.hp ?? DEFAULT_HP,
+            maxHp: maxHp || prev?.maxHp || DEFAULT_HP,
+            level: level || prev?.level || DEFAULT_LEVEL,
+            mp: mp ?? prev?.mp ?? 0,
+            maxMp: maxMp ?? prev?.maxMp ?? 0
         };
 
         socket.data.map = mapKey;
@@ -23,6 +27,10 @@ module.exports = function registerMapHandlers(socket, { enemyService }) {
 
         // 同じマップの他のプレイヤーに新しいプレイヤーを通知
         socket.to(`map:${mapKey}`).emit("newPlayer", { id: playerId, x, y, ...stats, summon: null });
+
+        // Party members see the new map name and stats right away
+        const partyId = playerToParty[playerId];
+        if (partyId) partyService.broadcastPartyUpdate(partyId);
     }
 
     // 初回のマップ参加（シーン開始時）

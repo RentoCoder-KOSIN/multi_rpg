@@ -1,6 +1,9 @@
 // Visual effects for skills and hits. Pure presentation: no damage or state changes here.
 import { SKILLS } from '../data/skills.js';
 
+// 他プレイヤーが使ったスキルはパーティクル数を減らして負荷を下げる
+const REMOTE_EFFECT_SCALE = 0.5;
+
 /**
  * Small star flash at a hit position.
  */
@@ -58,23 +61,24 @@ export function applySkillEffect(scene, skillId, sourceUser, isRemote = false) {
 
     const startX = sourceUser.x;
     const startY = sourceUser.y;
+    const remoteScale = isRemote ? REMOTE_EFFECT_SCALE : 1;
     const ctx = {
-        scene, skill, skillId, isRemote, actualRange, effectScale, startX, startY,
-        direction: sourceUser.flipX ? -1 : 1
+        scene, skill, skillId, isRemote, actualRange, effectScale, startX, startY, remoteScale,
+        direction: sourceUser.facingDirection || 1
     };
 
-    // Generic particle burst, scaled by range
+    // Generic particle burst, scaled by range and (for other players) reduced further
     ctx.createBurst = (color, count = 10, speed = 100) => {
         const emitter = scene.add.particles(startX, startY, 'water', {
             speed: { min: -speed * effectScale, max: speed * effectScale },
             scale: { start: 0.4 * effectScale, end: 0 },
             alpha: { start: 1, end: 0 },
-            lifespan: 600,
+            lifespan: 500,
             blendMode: 'ADD',
             tint: color,
-            quantity: Math.ceil(count * effectScale)
+            quantity: Math.max(1, Math.ceil(count * effectScale * remoteScale))
         });
-        scene.time.delayedCall(600, () => emitter.destroy());
+        scene.time.delayedCall(500, () => emitter.destroy());
     };
 
     if (['slash', 'heavy_slash', 'whirlwind', 'judgment_cut'].includes(skillId)) {
@@ -118,7 +122,7 @@ function playSlashEffect({ scene, skill, skillId, direction, startX, startY, act
 }
 
 // Magic explosion: expanding circle + particles, camera shake for big spells
-function playMagicBlastEffect({ scene, skill, skillId, isRemote, direction, startX, startY, actualRange, effectScale }) {
+function playMagicBlastEffect({ scene, skill, skillId, isRemote, remoteScale, direction, startX, startY, actualRange, effectScale }) {
     const color = skill.color || 0xff4500;
 
     // Circle skills explode on the caster, others a fixed distance in front
@@ -133,17 +137,17 @@ function playMagicBlastEffect({ scene, skill, skillId, isRemote, direction, star
         onComplete: () => circle.destroy()
     });
 
-    const baseQuantity = (skillId === 'meteor_swarm' || skillId === 'abyss_storm') ? 50 : 20;
+    const baseQuantity = (skillId === 'meteor_swarm' || skillId === 'abyss_storm') ? 30 : 15;
     const emitter = scene.add.particles(targetX, startY, 'water', {
         speed: { min: 50 * effectScale, max: 200 * effectScale },
         scale: { start: 0.6 * effectScale, end: 0 },
         alpha: { start: 1, end: 0 },
-        lifespan: 800,
+        lifespan: 600,
         blendMode: 'ADD',
         tint: color,
-        quantity: Math.ceil(baseQuantity * effectScale)
+        quantity: Math.max(1, Math.ceil(baseQuantity * effectScale * remoteScale))
     });
-    scene.time.delayedCall(800, () => emitter.destroy());
+    scene.time.delayedCall(600, () => emitter.destroy());
 
     // Shake only for own casts or casts near the local player
     if (!isRemote || Phaser.Math.Distance.Between(scene.player.x, scene.player.y, startX, startY) < 400) {
@@ -154,7 +158,7 @@ function playMagicBlastEffect({ scene, skill, skillId, isRemote, direction, star
 }
 
 // Buff / heal: ring on the ground + rising light particles
-function playSupportEffect({ scene, skill, startX, startY, actualRange, effectScale }) {
+function playSupportEffect({ scene, skill, startX, startY, actualRange, effectScale, remoteScale }) {
     const color = skill.color || 0x00ff00;
     const ring = scene.add.circle(startX, startY, actualRange, color, 0.1);
     ring.setStrokeStyle(2 * effectScale, color, 0.5);
@@ -171,27 +175,27 @@ function playSupportEffect({ scene, skill, startX, startY, actualRange, effectSc
         speedX: { min: -20 * effectScale, max: 20 * effectScale },
         scale: { start: 0.4 * effectScale, end: 0 },
         alpha: { start: 0.8, end: 0 },
-        lifespan: 1200,
+        lifespan: 800,
         blendMode: 'ADD',
         tint: color,
-        quantity: Math.ceil(15 * effectScale)
+        quantity: Math.max(1, Math.ceil(10 * effectScale * remoteScale))
     });
-    scene.time.delayedCall(1200, () => emitter.destroy());
+    scene.time.delayedCall(800, () => emitter.destroy());
 }
 
 // Projectile: particle burst + a shape flying forward
-function playProjectileEffect({ scene, skill, skillId, direction, startX, startY, actualRange, effectScale }) {
+function playProjectileEffect({ scene, skill, skillId, direction, startX, startY, actualRange, effectScale, remoteScale }) {
     const color = skill.color || 0x00ffff;
     const emitter = scene.add.particles(startX, startY, 'water', {
         speedX: (direction * 300 * effectScale),
         scale: { start: 0.5 * effectScale, end: 0 },
-        lifespan: 600,
+        lifespan: 500,
         blendMode: 'ADD',
         tint: color,
-        quantity: Math.ceil(10 * effectScale),
+        quantity: Math.max(1, Math.ceil(8 * effectScale * remoteScale)),
         emitting: false
     });
-    emitter.explode(Math.ceil(10 * effectScale), startX, startY);
+    emitter.explode(Math.max(1, Math.ceil(8 * effectScale * remoteScale)), startX, startY);
 
     let projectile;
     if (skillId === 'holy_arrow') {

@@ -45,7 +45,7 @@ export function performBasicAttack(scene) {
         const currDist = Math.hypot(curr.x - player.x, curr.y - player.y);
         return prevDist < currDist ? prev : curr;
     });
-    player.flipX = (nearest.x < player.x);
+    player.facingDirection = (nearest.x < player.x) ? -1 : 1;
 
     enemies.forEach(enemy => {
         if (!enemy || !enemy.active) return;
@@ -154,12 +154,12 @@ export function usePlayerSkill(scene, skillId) {
             }
         });
         if (nearest) {
-            player.flipX = (nearest.x < player.x);
+            player.facingDirection = (nearest.x < player.x) ? -1 : 1;
         }
     }
 
-    // Facing: right = 1, left (flipX) = -1
-    const direction = player.flipX ? -1 : 1;
+    // Facing: right = 1, left = -1 (walk-left/right アニメーションを使うため flipX ではなく facingDirection を見る)
+    const direction = player.facingDirection || 1;
 
     if (skill.targetType === 'party') {
         applyPartySkill(scene, skillId, skill, range);
@@ -215,13 +215,14 @@ function applyPartySkill(scene, skillId, skill, range) {
                 scene.networkManager.healPlayer(targetId, healAmount);
             }
         } else if (skillId === 'attack_buff') {
-            giveBuff(scene, target, targetId, 'attack_buff', Math.ceil(target.stats.atk * 0.5), 30000); // +50% ATK
+            // 持続時間はクールタイム(30000ms)より短くし、常時バフ状態にならないようにする
+            giveBuff(scene, target, targetId, 'attack_buff', Math.ceil(target.stats.atk * 0.5), 15000); // +50% ATK
         } else if (skillId === 'defense_buff') {
-            giveBuff(scene, target, targetId, 'defense_buff', Math.ceil(target.stats.def * 0.5), 30000); // +50% DEF
+            giveBuff(scene, target, targetId, 'defense_buff', Math.ceil(target.stats.def * 0.5), 15000); // +50% DEF
         } else if (skillId === 'speed_buff') {
-            giveBuff(scene, target, targetId, 'speed_buff', 50, 30000); // +50 speed
+            giveBuff(scene, target, targetId, 'speed_buff', 50, 15000); // +50 speed
         } else if (skillId === 'summon_boost') {
-            giveBuff(scene, target, targetId, 'summon_power_up', Math.ceil(player.stats.int * 2), 45000); // scales with INT
+            giveBuff(scene, target, targetId, 'summon_power_up', Math.ceil(player.stats.int * 2), 20000); // scales with INT
         }
     });
 }

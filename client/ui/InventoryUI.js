@@ -91,6 +91,19 @@ export default class InventoryUI extends BaseWindowUI {
             }
             this.updateSelection();
         });
+
+        // マウスホイールでの選択移動(1行分ずつ)
+        this.scene.input.on('wheel', (pointer, gameObjects, deltaX, deltaY) => {
+            if (!this.isOpen || (this.scene.shopUI && this.scene.shopUI.isOpen)) return;
+            const itemsPerRow = 5;
+            if (deltaY > 0) {
+                if (this.selectedIndex + itemsPerRow < this.inventory.length) this.selectedIndex += itemsPerRow;
+                else if (this.inventory.length > 0) this.selectedIndex = this.inventory.length - 1;
+            } else if (deltaY < 0) {
+                if (this.selectedIndex - itemsPerRow >= 0) this.selectedIndex -= itemsPerRow;
+            }
+            this.updateSelection();
+        });
     }
 
     open() {

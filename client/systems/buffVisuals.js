@@ -49,16 +49,16 @@ export function applyBuffVisual(scene, target, buffType, buffValue, duration) {
         repeat: -1
     });
 
-    // Light particles
+    // Light particles (負荷軽減のため頻度・寿命を抑えめに)
     const particles = scene.add.particles(target.x, target.y - 40, 'water', {
         speed: { min: 20, max: 40 },
         scale: { start: 0.3, end: 0 },
         alpha: { start: 0.8, end: 0 },
-        lifespan: 1000,
+        lifespan: 700,
         blendMode: 'ADD',
         tint: buffInfo.color,
-        frequency: 100,
-        quantity: 2
+        frequency: 250,
+        quantity: 1
     });
     particles.setDepth(999);
 

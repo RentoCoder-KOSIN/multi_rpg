@@ -75,6 +75,17 @@ export default class ShopUI extends BaseWindowUI {
                 if (item) this.buyItem(item.id, item.price);
             }
         });
+
+        // マウスホイールでの選択移動
+        this.scene.input.on('wheel', (pointer, gameObjects, deltaX, deltaY) => {
+            if (!this.isOpen || (this.scene.inventoryUI && this.scene.inventoryUI.isOpen)) return;
+            if (deltaY > 0) {
+                this.selectedIndex = Math.min(this.items.length - 1, this.selectedIndex + 1);
+            } else if (deltaY < 0) {
+                this.selectedIndex = Math.max(0, this.selectedIndex - 1);
+            }
+            this.updateSelection();
+        });
     }
 
     open(shopId, category = null) {

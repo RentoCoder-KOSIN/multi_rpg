@@ -54,9 +54,7 @@ export default class NetworkManager {
                     mapKey,
                     x: this.scene.player?.x || 0,
                     y: this.scene.player?.y || 0,
-                    hp: this.scene.player?.stats?.hp || 100,
-                    maxHp: this.scene.player?.stats?.maxHp || 100,
-                    level: this.scene.player?.stats?.level || 1
+                    ...this.getLocalStatsPayload()
                 });
 
                 if (mapKey === 'lobby') {
@@ -72,8 +70,7 @@ export default class NetworkManager {
                     x: this.scene.player?.x || 0,
                     y: this.scene.player?.y || 0,
                     mapKey,
-                    hp: this.scene.player?.stats?.hp || 100,
-                    maxHp: this.scene.player?.stats?.maxHp || 100
+                    ...this.getLocalStatsPayload()
                 });
                 if (mapKey === 'lobby') {
                     console.log('[NetworkManager] Emitting lobbyJoin (already connected)');
@@ -425,7 +422,35 @@ export default class NetworkManager {
     }
 
     sendPlayerPosition(x, y) { if (this.socket && this.socket.connected) this.socket.emit('playerMove', { x, y }); }
-    sendPlayerStats(hp, maxHp, level, mp, maxMp) { if (this.socket && this.socket.connected) this.socket.emit('playerStatsUpdate', { hp, maxHp, level, mp, maxMp }); }
+    sendPlayerStats(hp, maxHp, level, mp, maxMp) {
+        if (this.socket && this.socket.connected) {
+            this._lastSentStatsKey = [hp, maxHp, level, mp, maxMp].join('|');
+            this.socket.emit('playerStatsUpdate', { hp, maxHp, level, mp, maxMp });
+        }
+    }
+
+    /**
+     * Current HP/MP/level of the local player, in the shape the server expects.
+     * Only fields that exist are included, so the server keeps its previous values for the rest.
+     */
+    getLocalStatsPayload() {
+        const s = this.scene.player?.stats;
+        if (!s) return {};
+        return { hp: s.hp, maxHp: s.maxHp, level: s.level, mp: s.mp, maxMp: s.maxMp };
+    }
+
+    /**
+     * Send the local player's stats only if they changed since the last send.
+     * Catches every HP/MP change (regen, potions, lifesteal, ...) without patching each call site.
+     */
+    syncLocalPlayerStats() {
+        const p = this.getLocalStatsPayload();
+        if (p.hp === undefined) return;
+        const key = [p.hp, p.maxHp, p.level, p.mp, p.maxMp].join('|');
+        if (key !== this._lastSentStatsKey) {
+            this.sendPlayerStats(p.hp, p.maxHp, p.level, p.mp, p.maxMp);
+        }
+    }
     sendSummonUpdate(data) { if (this.socket && this.socket.connected) this.socket.emit('summonUpdate', data); }
     changeMap(mapKey, x, y) {
         if (this.socket && this.socket.connected) {
@@ -433,7 +458,7 @@ export default class NetworkManager {
             this.clearAllOtherPlayers();
             this.currentMapKey = mapKey;
             this._mapChanged = true;
-            this.socket.emit('mapChange', { mapKey, x, y });
+            this.socket.emit('mapChange', { mapKey, x, y, ...this.getLocalStatsPayload() });
         }
     }
     notifyEnemyDefeat(enemyId) { if (this.socket && this.socket.connected) this.socket.emit('enemyDefeat', { id: enemyId }); }
