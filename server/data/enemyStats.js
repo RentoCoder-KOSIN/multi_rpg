@@ -9,7 +9,7 @@ const ENEMY_STATS = {
         level: 1,
         hp: 150,
         atk: 5,
-        exp: 22,
+        exp: 100000000,
         gold: 50,
         drops: [
             { id: "potion", chance: 0.05 },
@@ -20,9 +20,9 @@ const ENEMY_STATS = {
     bat: {
         displayName: "コウモリ",
         level: 6,
-        hp: 330,
+        hp: 600,
         atk: 30,
-        exp: 45,
+        exp: 240,
         gold: 70,
         drops: [
             { id: "potion", chance: 0.15 },
@@ -33,9 +33,9 @@ const ENEMY_STATS = {
     forest_slime: {
         displayName: "森のスライム",
         level: 14,
-        hp: 400,
+        hp: 1200,
         atk: 75,
-        exp: 120,
+        exp: 1500,
         gold: 250,
         drops: [
             { id: "potion", chance: 0.2 },
@@ -46,9 +46,9 @@ const ENEMY_STATS = {
     skeleton: {
         displayName: "スケルトン",
         level: 24,
-        hp: 1300,
+        hp: 2000,
         atk: 120,
-        exp: 450,
+        exp: 3700,
         gold: 400,
         drops: [
             { id: "high_potion", chance: 0.05 },
@@ -59,9 +59,9 @@ const ENEMY_STATS = {
     red_slime: {
         displayName: "レッドスライム",
         level: 34,
-        hp: 2000,
+        hp: 2800,
         atk: 350,
-        exp: 650,
+        exp: 6800,
         gold: 600,
         drops: [
             { id: "high_potion", chance: 0.1 },
@@ -72,9 +72,9 @@ const ENEMY_STATS = {
     goblin: {
         displayName: "ゴブリン",
         level: 42,
-        hp: 2800,
+        hp: 3500,
         atk: 450,
-        exp: 950,
+        exp: 9500,
         gold: 1200,
         drops: [
             { id: "high_potion", chance: 0.15 },
@@ -87,7 +87,7 @@ const ENEMY_STATS = {
         level: 58,
         hp: 35000,
         atk: 505,
-        exp: 4250,
+        exp: 20000,
         gold: 3200,
         drops: [
             { id: "high_potion", chance: 0.1 },
@@ -100,7 +100,7 @@ const ENEMY_STATS = {
         level: 70,
         hp: 50000,
         atk: 750,
-        exp: 10500,
+        exp: 26000,
         gold: 10000,
         drops: [
             { id: "high_potion", chance: 0.2 },
@@ -126,7 +126,7 @@ const ENEMY_STATS = {
         level: 20,
         hp: 3000,
         atk: 70,
-        exp: 1200,
+        exp: 2500,
         gold: 2500,
         drops: [
             { id: "hero_sword", chance: 0.1 },

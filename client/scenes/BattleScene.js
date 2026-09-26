@@ -1,6 +1,7 @@
 import BaseGameScene from './BaseGameScene.js';
 import Enemy from '../entities/Enemy.js';
 import AIStatsUI from '../ui/AIStatsUI.js';
+import { getLevelDiffMultiplier } from '../utils/levelScaling.js';
 
 export default class BattleScene extends BaseGameScene {
     constructor() {
@@ -202,7 +203,8 @@ export default class BattleScene extends BaseGameScene {
 
                 // 敵（ボス）がプレイヤーを攻撃
                 if (!this.player.lastHitTime || now - this.player.lastHitTime > 1000) {
-                    this.player.takeDamage(this.boss.atk);
+                    const levelMult = getLevelDiffMultiplier(this.boss.level, this.player.stats?.level ?? 1);
+                    this.player.takeDamage(Math.max(1, Math.ceil(this.boss.atk * levelMult)));
                     this.player.lastHitTime = now;
                 }
             }

@@ -1,5 +1,6 @@
 // Per-frame logic split out of BaseGameScene.update().
 import PlayerNameUI from '../../ui/PlayerNameUI.js';
+import { getLevelDiffMultiplier } from '../../utils/levelScaling.js';
 
 const ENEMY_TOUCH_DISTANCE = 35;
 const ENEMY_TOUCH_COOLDOWN_MS = 1000;
@@ -8,7 +9,17 @@ const SUMMON_POSITION_SYNC_MS = 100;
 const STATS_SYNC_INTERVAL_MS = 500;
 
 /**
- * Melee-range damage from server-managed enemies to the local player.
+ * Melee-range contact damage — LOCAL (non server-managed) enemies only.
+ *
+ * サーバー管理の敵（isServerManaged）は、サーバー側AIが別途 "enemyAttack" イベントで
+ * 攻撃ダメージを送ってくる（server/services/enemyLoop.js の tryAttack、
+ * ENEMY_ATTACK_COOLDOWN_MS=1200ms）。以前はここでも全ての敵に対して接触ダメージを
+ * 与えていたため、近づいて棒立ちになっている間、同じ敵から
+ * 「サーバーAIの攻撃」と「このクライアント側の接触ダメージ」の二重にダメージを受けてしまい、
+ * 見た目上「敵の攻撃速度が速すぎる」状態になっていた
+ * （entitySetup.js のオーバーラップ判定では既に同様の対応済みだったが、
+ * こちらのフレーム毎ループには反映されていなかった）。
+ * サーバー管理の敵については、ここでの接触ダメージを無効化する。
  */
 export function updateEnemyContactDamage(scene) {
     const enemies = scene.networkManager?.getEnemies() || {};
@@ -18,12 +29,16 @@ export function updateEnemyContactDamage(scene) {
     Object.values(enemies).forEach(enemy => {
         if (!enemy.active) return;
         if (!player || !player.active) return;
+        if (enemy.isServerManaged) return; // サーバー側で"enemyAttack"として別途処理される
 
         const distance = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
         if (distance < ENEMY_TOUCH_DISTANCE) {
             if (!enemy.lastAttackTime || now - enemy.lastAttackTime > ENEMY_TOUCH_COOLDOWN_MS) {
                 enemy.lastAttackTime = now;
-                const finalDamage = Math.max(1, (enemy.atk || 10) - (player.getDefense ? player.getDefense() : 0));
+                // レベル差補正を先にかけてから防御力で軽減する
+                const levelMult = getLevelDiffMultiplier(enemy.level, player.stats?.level ?? 1);
+                const scaledAtk = (enemy.atk || 10) * levelMult;
+                const finalDamage = Math.max(1, scaledAtk - (player.getDefense ? player.getDefense() : 0));
                 player.takeDamage(finalDamage);
                 if (enemy.ai) enemy.ai.notifyDamageDealt(finalDamage);
             }

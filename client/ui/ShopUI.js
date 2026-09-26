@@ -2,6 +2,56 @@ import { ITEMS } from "../data/items.js";
 import { getShopLoadout, resolveShopItems } from "../data/shops.js";
 import BaseWindowUI from "./BaseWindowUI.js";
 
+// 武器・防具・消耗品のステータスを、購入前に一目でわかる短い文字列にまとめる。
+// 「買うときに攻撃力とかステータスがわからない」を解消するための表示用ヘルパー。
+function summarizeItemStats(item) {
+    const s = item.stats || {};
+    const parts = [];
+
+    if (item.type === 'weapon') {
+        if (typeof item.calculateAtk === 'function') {
+            parts.push('ATK 1~150(運次第)');
+        } else {
+            const atk = item.atk ?? s.attack;
+            const matk = item.matk ?? s.matk;
+            if (atk) parts.push(`ATK+${atk}`);
+            if (matk) parts.push(`MATK+${matk}`);
+        }
+        const crit = item.critChance ?? s.critChance;
+        if (crit) parts.push(`会心+${Math.round(crit * 100)}%`);
+        const lifesteal = item.lifesteal ?? s.lifesteal;
+        if (lifesteal) parts.push(`吸収${Math.round(lifesteal * 100)}%`);
+        const speed = item.speedBonus ?? s.speedBonus;
+        if (speed) parts.push(`速度+${speed}`);
+        if (s.fireDamage) parts.push(`火+${s.fireDamage}`);
+        if (s.iceDamage) parts.push(`氷+${s.iceDamage}`);
+        if (s.freezeChance) parts.push(`凍結${Math.round(s.freezeChance * 100)}%`);
+        if (s.deathChance) parts.push(`即死${Math.round(s.deathChance * 100)}%`);
+        if (s.attackMultiplier) parts.push(`ATK×${s.attackMultiplier}`);
+        const expMult = item.expMultiplier ?? s.expMultiplier;
+        if (expMult) parts.push(`EXP×${expMult}`);
+    } else if (item.type === 'armor') {
+        const def = item.def ?? s.defense;
+        if (def) parts.push(`DEF+${def}`);
+        if (s.fireResist) parts.push(`火耐性+${s.fireResist}%`);
+        if (s.iceResist) parts.push(`氷耐性+${s.iceResist}%`);
+        if (s.attackMultiplier) parts.push(`ATK×${s.attackMultiplier}`);
+        if (s.poison) parts.push('⚠HPが徐々に減る');
+    } else {
+        // 消耗品など
+        const heal = item.heal ?? s.heal;
+        if (heal) parts.push(`HP+${heal}`);
+        if (item.healMp) parts.push(`MP+${item.healMp}`);
+        if (s.healMp) parts.push(`MP+${s.healMp}`);
+        if (s.healAll) parts.push(`味方全員HP+${s.healAll}`);
+        if (s.attackBoost) parts.push(`ATK永久+${s.attackBoost}`);
+        if (s.defenseBoost) parts.push(`DEF永久+${s.defenseBoost}`);
+        if (s.revive) parts.push('復活効果');
+    }
+
+    return parts.length > 0 ? parts.join('  ') : '－';
+}
+
 export default class ShopUI extends BaseWindowUI {
     constructor(scene) {
         super(scene, {
@@ -118,35 +168,47 @@ export default class ShopUI extends BaseWindowUI {
         this.items = resolveShopItems(loadout.items, category);
 
         const startY = -120;
-        const spacing = 70;
+        const spacing = 74; // ステータス行を追加したため、以前(70)より少し広げる
+        const playerLevel = this.scene.player?.stats?.level || 1;
 
         this.items.forEach((item, index) => {
             const y = startY + (index * spacing);
             const box = this.scene.add.container(0, y);
 
             const boxBg = this.scene.add.graphics();
-            this.drawItemBox(boxBg, 540, 60, 0x0f3460, 0.5, 0x4a90e2, 0.3);
+            this.drawItemBox(boxBg, 540, 64, 0x0f3460, 0.5, 0x4a90e2, 0.3);
             box.add(boxBg);
 
-            const name = this.scene.add.text(-250, 0, item.name, {
-                fontSize: '14px', fontFamily: '"Press Start 2P"', color: '#ffffff'
+            // 必要レベルを満たしているかで色を変える（満たしていない場合は赤）
+            const meetsLevel = !item.lvlReq || playerLevel >= item.lvlReq;
+            const nameColor = meetsLevel ? '#ffffff' : '#ff6666';
+
+            const namePrefix = item.lvlReq ? `[Lv.${item.lvlReq}] ` : '';
+            const name = this.scene.add.text(-250, -16, `${namePrefix}${item.name}`, {
+                fontSize: '13px', fontFamily: '"Press Start 2P"', color: nameColor
             }).setOrigin(0, 0.5);
             box.add(name);
 
-            const price = this.scene.add.text(180, 0, `${item.price} G`, {
-                fontSize: '14px', fontFamily: '"Press Start 2P"', color: '#ffd700'
+            // ステータス要約（攻撃力・防御力・会心率など）を1行で表示
+            const statsLine = this.scene.add.text(-250, 15, summarizeItemStats(item), {
+                fontSize: '9px', fontFamily: '"Press Start 2P"', color: '#8fd3ff'
+            }).setOrigin(0, 0.5);
+            box.add(statsLine);
+
+            const price = this.scene.add.text(180, -16, `${item.price} G`, {
+                fontSize: '13px', fontFamily: '"Press Start 2P"', color: '#ffd700'
             }).setOrigin(1, 0.5);
             box.add(price);
 
-            const buyHint = this.scene.add.text(230, 0, 'BUY', {
-                fontSize: '10px', fontFamily: '"Press Start 2P"', color: '#ffffff'
+            const buyHint = this.scene.add.text(230, 15, 'BUY', {
+                fontSize: '9px', fontFamily: '"Press Start 2P"', color: '#ffffff'
             }).setOrigin(0.5);
             box.add(buyHint);
 
             this.itemListContainer.add(box);
 
             // インタラクティブ化 (タップ対応)
-            box.setSize(540, 60);
+            box.setSize(540, 64);
             box.setInteractive({ useHandCursor: true });
             box.on('pointerdown', () => {
                 this.selectedIndex = index;
@@ -169,7 +231,7 @@ export default class ShopUI extends BaseWindowUI {
     updateSelection() {
         this.itemBoxes.forEach((box, index) => {
             if (index === this.selectedIndex) {
-                this.drawItemBox(box.bgGfx, 540, 60, 0x4a90e2, 0.4, 0xffffff, 1);
+                this.drawItemBox(box.bgGfx, 540, 64, 0x4a90e2, 0.4, 0xffffff, 1);
                 if (this.descText) {
                     let desc = box.item.description || '説明なし';
                     if (box.item.lvlReq) {
@@ -178,17 +240,17 @@ export default class ShopUI extends BaseWindowUI {
                     }
                     this.descText.setText(desc);
                 }
-                const targetY = -(Math.max(0, index - 1) * 70);
+                const targetY = -(Math.max(0, index - 1) * 74);
                 this.scene.tweens.add({
                     targets: this.itemListContainer,
                     y: targetY, duration: 150, ease: 'Power2'
                 });
                 box.container.setScale(1.02);
-                box.container.setSize(540 * 1.02, 60 * 1.02);
+                box.container.setSize(540 * 1.02, 64 * 1.02);
             } else {
-                this.drawItemBox(box.bgGfx, 540, 60, 0x0f3460, 0.5, 0x4a90e2, 0.3);
+                this.drawItemBox(box.bgGfx, 540, 64, 0x0f3460, 0.5, 0x4a90e2, 0.3);
                 box.container.setScale(1);
-                box.container.setSize(540, 60);
+                box.container.setSize(540, 64);
             }
         });
     }

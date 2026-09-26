@@ -2,6 +2,7 @@ import { getEnemyStats, getEnemyDisplayName } from '../data/enemyStats.js';
 import { getEnemySizeConfig } from '../data/enemySize.js';
 import EnemyAI from '../ai/EnemyAI.js';
 import { ENEMY_AI_CONFIG } from '../config.js';
+import { getLevelDiffMultiplier } from '../utils/levelScaling.js';
 
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, texture, type, id = null, spawnId = null, socket = null, serverData = {}) {
@@ -294,7 +295,12 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
             if (player.takeDamage) {
                 const buff = this.activeBuffs['attack_buff'];
                 const bonus = buff ? (buff.value || 0) : 0;
-                const damage = Math.ceil(this.atk + bonus);
+                let damage = Math.ceil(this.atk + bonus);
+
+                // レベル差補正（ターゲットが召喚獣の場合も適用）
+                const targetLevel = (player.level !== undefined) ? player.level : (player.stats?.level ?? 1);
+                damage = Math.ceil(damage * getLevelDiffMultiplier(this.level, targetLevel));
+
                 player.takeDamage(damage, this);
             }
 
@@ -452,7 +458,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
                 if (player && player.active) {
                     const dist = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
                     if (dist <= (this.attackRange || 80) + 20) {
-                        const dmg = Math.ceil(this.atk * 1.5);
+                        let dmg = Math.ceil(this.atk * 1.5);
+                        dmg = Math.ceil(dmg * getLevelDiffMultiplier(this.level, player.stats?.level ?? 1));
                         if (player.takeDamage) player.takeDamage(dmg, this);
                         if (this.ai && this.ai.notifyDamageDealt) this.ai.notifyDamageDealt(dmg);
                         if (this.scene.cameras && this.scene.cameras.main) this.scene.cameras.main.shake(60, 0.003);

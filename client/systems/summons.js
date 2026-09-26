@@ -2,6 +2,7 @@
 import Enemy from '../entities/Enemy.js';
 import SummonedBeast from '../entities/SummonedBeast.js';
 import { applySkillEffect } from './skillEffects.js';
+import { getLevelDiffMultiplier } from '../utils/levelScaling.js';
 
 export function isSummonSkill(skillId) {
     return skillId === 'summon' || skillId === 'mega_summon' || skillId === 'demon_lord_summon';
@@ -29,7 +30,8 @@ export function spawnSummon(scene, player, summonType = 'summon') {
             scene.physics.add.overlap(summon, enemy, () => {
                 const now = scene.time.now;
                 if (!summon.lastHitTime || now - summon.lastHitTime > 1000) {
-                    summon.takeDamage(enemy.atk);
+                    const levelMult = getLevelDiffMultiplier(enemy.level, summon.level ?? 1);
+                    summon.takeDamage(Math.max(1, Math.ceil(enemy.atk * levelMult)));
                     if (summon) summon.lastHitTime = now;
                 }
             });

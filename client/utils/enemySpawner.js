@@ -1,4 +1,5 @@
 import Enemy from '../entities/Enemy.js';
+import { getLevelDiffMultiplier } from './levelScaling.js';
 
 // enemy_spawn レイヤーのオブジェクトからスポーン
 export function spawnEnemiesFromMap(scene, map) {
@@ -13,7 +14,8 @@ export function spawnEnemiesFromMap(scene, map) {
         // 当たり判定で即死させないよう、プレイヤーの攻撃力でダメージを与える
         scene.physics.add.overlap(scene.player, enemy, () => {
             const atk = scene.player?.stats?.atk || 10;
-            enemy.takeDamage(atk, scene.player);
+            const levelMult = getLevelDiffMultiplier(scene.player?.stats?.level ?? 1, enemy.level);
+            enemy.takeDamage(Math.max(1, Math.ceil(atk * levelMult)), scene.player);
         });
         scene.enemies.push(enemy);
     });
@@ -29,7 +31,8 @@ export function spawnEnemyRandomFromMap(scene, map) {
     enemy.respawnDelay = respawnDelay;
     scene.physics.add.overlap(scene.player, enemy, () => {
         const atk = scene.player?.stats?.atk || 10;
-        enemy.takeDamage(atk, scene.player);
+        const levelMult = getLevelDiffMultiplier(scene.player?.stats?.level ?? 1, enemy.level);
+        enemy.takeDamage(Math.max(1, Math.ceil(atk * levelMult)), scene.player);
     });
     scene.enemies.push(enemy);
 }

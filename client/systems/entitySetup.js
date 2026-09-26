@@ -1,5 +1,6 @@
 // Wiring for entities that are created from network events (other players, server-managed enemies).
 import Enemy from '../entities/Enemy.js';
+import { getLevelDiffMultiplier } from '../utils/levelScaling.js';
 
 const PLAYER_CONTACT_COOLDOWN_MS = 2000;
 const SUMMON_CONTACT_COOLDOWN_MS = 1000;
@@ -87,7 +88,8 @@ export function spawnEnemyFromServer(scene, data) {
 
             if (scene.player.active && enemy.active) {
                 if (!scene.player.lastHitTime || now - scene.player.lastHitTime > PLAYER_CONTACT_COOLDOWN_MS) {
-                    scene.player.takeDamage(enemy.atk);
+                    const levelMult = getLevelDiffMultiplier(enemy.level, scene.player.stats?.level ?? 1);
+                    scene.player.takeDamage(Math.max(1, Math.ceil(enemy.atk * levelMult)));
                     if (scene.player) scene.player.lastHitTime = now;
                 }
             }
@@ -103,7 +105,8 @@ export function spawnEnemyFromServer(scene, data) {
         colliders.push(scene.physics.add.overlap(scene.activeSummon, enemy, () => {
             const now = scene.time.now;
             if (!scene.activeSummon.lastHitTime || now - scene.activeSummon.lastHitTime > SUMMON_CONTACT_COOLDOWN_MS) {
-                scene.activeSummon.takeDamage(enemy.atk);
+                const levelMult = getLevelDiffMultiplier(enemy.level, scene.activeSummon.level ?? 1);
+                scene.activeSummon.takeDamage(Math.max(1, Math.ceil(enemy.atk * levelMult)));
                 scene.activeSummon.lastHitTime = now;
             }
         }));

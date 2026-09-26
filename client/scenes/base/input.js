@@ -1,5 +1,6 @@
 // Keyboard / pointer setup for game scenes.
 import { isAnyWindowOpen } from '../../utils/uiState.js';
+import { TOTAL_SKILL_SLOTS } from '../../gameConstants.js';
 
 /**
  * Create the gameplay keys polled in update().
@@ -7,11 +8,14 @@ import { isAnyWindowOpen } from '../../utils/uiState.js';
 export function createGameKeys(scene, config) {
     const KeyCodes = Phaser.Input.Keyboard.KeyCodes;
     scene.interactKey = scene.input.keyboard.addKey(KeyCodes.C);
-    scene.skillKeys = [
-        scene.input.keyboard.addKey(KeyCodes.ONE),
-        scene.input.keyboard.addKey(KeyCodes.TWO),
-        scene.input.keyboard.addKey(KeyCodes.THREE)
+    // スキルスロット数ぶんキー1〜8を割り当てる（TOTAL_SKILL_SLOTSに連動）
+    const numberKeyCodes = [
+        KeyCodes.ONE, KeyCodes.TWO, KeyCodes.THREE, KeyCodes.FOUR,
+        KeyCodes.FIVE, KeyCodes.SIX, KeyCodes.SEVEN, KeyCodes.EIGHT
     ];
+    scene.skillKeys = numberKeyCodes
+        .slice(0, TOTAL_SKILL_SLOTS)
+        .map(code => scene.input.keyboard.addKey(code));
     scene.partyKey = scene.input.keyboard.addKey(KeyCodes.V);
     if (config.showDebugKey) scene.debugKey = scene.input.keyboard.addKey(KeyCodes.D);
 }
