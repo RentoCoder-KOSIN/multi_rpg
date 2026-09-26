@@ -424,7 +424,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             const getVal = (val) => (typeof val === 'function' ? val(this) : (val || 0));
 
             // 魔法職は matk (魔法攻撃力) を優先して攻撃力に反映する
-            const atkSource = isMagical ? (item.matk ?? item.atk ?? s.attack) : (item.atk ?? s.attack);
+            const atkSource = isMagical ? (item.matk ?? s.matk ?? item.atk ?? s.attack) : (item.atk ?? s.attack);
             this.stats.atk += getVal(atkSource);
             this.stats.def += getVal(item.def || s.defense);
 
@@ -499,6 +499,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         amount += elementalBonus;
+
+        // 敵の防御力による軽減（フラット減算。プレイヤーが受けるダメージの計算式と揃えてある）
+        const targetDef = target ? (target.def ?? target.stats?.def ?? 0) : 0;
+        if (targetDef > 0) {
+            amount = Math.max(1, amount - targetDef);
+        }
 
         // 即死効果（ボス系には効かない。type に "boss" を含むものは全てボス扱い）
         const isBossTarget = target && typeof target.type === 'string' && target.type.includes('boss');

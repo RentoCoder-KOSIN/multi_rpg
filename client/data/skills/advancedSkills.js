@@ -2,10 +2,11 @@
  * 上位職スキル（レベル30以上）
  * ナイト、アークメイジ、パラディン、スナイパー、ハイサモナー用
  */
+import { defineSkill } from '../schema.js';
 
 export const ADVANCED_SKILLS = {
     // ナイト (騎士 - ファイター上位職)
-    judgment_cut: {
+    judgment_cut: defineSkill({
         id: 'judgment_cut',
         name: '絶・次元斬',
         type: 'active',
@@ -18,10 +19,10 @@ export const ADVANCED_SKILLS = {
         color: 0x00ffff,
         icon: '💠',
         description: '空間を切り裂く超高速の一閃。'
-    },
+    }),
 
     // アークメイジ (メイジ上位職)
-    abyss_storm: {
+    abyss_storm: defineSkill({
         id: 'abyss_storm',
         name: 'アビスストーム',
         type: 'active',
@@ -34,10 +35,10 @@ export const ADVANCED_SKILLS = {
         color: 0x4b0082,
         icon: '🌀',
         description: '深淵の嵐を呼び寄せ、全てを飲み込む。'
-    },
+    }),
 
     // パラディン (タンク上位職)
-    holy_sanctuary: {
+    holy_sanctuary: defineSkill({
         id: 'holy_sanctuary',
         name: 'ホーリーサンクチュアリ',
         type: 'active',
@@ -50,10 +51,10 @@ export const ADVANCED_SKILLS = {
         color: 0xffff00,
         icon: '✝️',
         description: '神聖な領域を展開し、敵には裁きを、味方には加護を。'
-    },
+    }),
 
     // スナイパー (レンジャー上位職)
-    death_rain: {
+    death_rain: defineSkill({
         id: 'death_rain',
         name: 'デスレイン',
         type: 'active',
@@ -66,10 +67,10 @@ export const ADVANCED_SKILLS = {
         color: 0x00ff00,
         icon: '🏹',
         description: '空から無数の死の矢を降らせる。'
-    },
+    }),
 
     // エクソシスト (プリースト上位職)
-    exorcism: {
+    exorcism: defineSkill({
         id: 'exorcism',
         name: 'エクソシズム',
         type: 'active',
@@ -82,11 +83,11 @@ export const ADVANCED_SKILLS = {
         color: 0xfff2cc,
         icon: '⛧',
         description: '邪悪なる存在を祓い清める神聖なる裁き。アンデッド系に2倍のダメージ。',
-        bonusVsUndead: 2.0
-    },
+        effect: { vsUndead: 2.0 }
+    }),
 
     // ハイサモナー (サモナー上位職)
-    demon_lord_summon: {
+    demon_lord_summon: defineSkill({
         id: 'demon_lord_summon',
         name: '魔王召喚',
         type: 'active',
@@ -96,5 +97,5 @@ export const ADVANCED_SKILLS = {
         color: 0xff0000,
         icon: '👑',
         description: '伝説の魔王を一時的に現世に呼び出す。'
-    }
+    })
 };

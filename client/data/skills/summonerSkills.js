@@ -2,9 +2,10 @@
  * サモナースキル
  * 召喚獣を操り戦場を支配する召喚術師
  */
+import { defineSkill } from '../schema.js';
 
 export const SUMMONER_SKILLS = {
-    summon: {
+    summon: defineSkill({
         id: 'summon',
         name: 'サモン',
         type: 'active',
@@ -14,8 +15,8 @@ export const SUMMONER_SKILLS = {
         color: 0x9370db,
         icon: '👻',
         description: '召喚獣を呼び出して戦わせる。'
-    },
-    mega_summon: {
+    }),
+    mega_summon: defineSkill({
         id: 'mega_summon',
         name: 'メガサモン',
         type: 'active',
@@ -25,8 +26,8 @@ export const SUMMONER_SKILLS = {
         color: 0x800080,
         icon: '👿',
         description: '強力な召喚獣を呼び出す。'
-    },
-    command_attack: {
+    }),
+    command_attack: defineSkill({
         id: 'command_attack',
         name: '突撃命令',
         type: 'active',
@@ -36,5 +37,5 @@ export const SUMMONER_SKILLS = {
         color: 0xffd700,
         icon: '🚩',
         description: '召喚獣に突撃させる。'
-    }
+    })
 };

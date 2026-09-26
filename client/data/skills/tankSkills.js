@@ -2,9 +2,10 @@
  * タンクスキル
  * 圧倒的な防御力と体力を誇る守りの要
  */
+import { defineSkill } from '../schema.js';
 
 export const TANK_SKILLS = {
-    guard: {
+    guard: defineSkill({
         id: 'guard',
         name: 'ガード',
         type: 'active',
@@ -14,8 +15,8 @@ export const TANK_SKILLS = {
         color: 0x4169e1,
         icon: '🛡️',
         description: '身を守り、次のダメージを軽減する。'
-    },
-    iron_defense: {
+    }),
+    iron_defense: defineSkill({
         id: 'iron_defense',
         name: '鉄壁の守り',
         type: 'active',
@@ -25,8 +26,8 @@ export const TANK_SKILLS = {
         color: 0x708090,
         icon: '🏰',
         description: '防御力を極限まで高める。'
-    },
-    shield_bash: {
+    }),
+    shield_bash: defineSkill({
         id: 'shield_bash',
         name: 'シールドバッシュ',
         type: 'active',
@@ -37,5 +38,5 @@ export const TANK_SKILLS = {
         color: 0xcd853f,
         icon: '🛡️',
         description: '盾で殴りつけ、敵をスタンさせる（未実装）。'
-    }
+    })
 };

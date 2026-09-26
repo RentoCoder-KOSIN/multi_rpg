@@ -6,7 +6,7 @@
 
 let enemyStats = {};
 
-const FALLBACK_STATS = { displayName: '???', hp: 1, atk: 0, exp: 0, gold: 0 };
+const FALLBACK_STATS = { displayName: '???', hp: 1, atk: 0, def: 0, exp: 0, gold: 0 };
 
 /**
  * Fetch enemy stats from the server. Call once before starting Phaser.

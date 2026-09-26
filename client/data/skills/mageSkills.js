@@ -2,9 +2,10 @@
  * メイジスキル
  * 高い攻撃力を誇るが、防御力が低い魔法職
  */
+import { defineSkill } from '../schema.js';
 
 export const MAGE_SKILLS = {
-    fireball: {
+    fireball: defineSkill({
         id: 'fireball',
         name: 'ファイアボール',
         type: 'active',
@@ -17,8 +18,8 @@ export const MAGE_SKILLS = {
         color: 0xff4500,
         icon: '🔥',
         description: '火球を放つ。'
-    },
-    ice_needle: {
+    }),
+    ice_needle: defineSkill({
         id: 'ice_needle',
         name: 'アイスニードル',
         type: 'active',
@@ -31,8 +32,8 @@ export const MAGE_SKILLS = {
         color: 0xadd8e6,
         icon: '❄️',
         description: '氷の針を扇状に放つ。'
-    },
-    big_fireball: {
+    }),
+    big_fireball: defineSkill({
         id: 'big_fireball',
         name: '爆裂魔法',
         type: 'active',
@@ -45,8 +46,8 @@ export const MAGE_SKILLS = {
         color: 0xff8c00,
         icon: '☄️',
         description: '巨大な爆発を引き起こす。'
-    },
-    dark_nova: {
+    }),
+    dark_nova: defineSkill({
         id: 'dark_nova',
         name: 'ダークノヴァ',
         type: 'active',
@@ -59,8 +60,8 @@ export const MAGE_SKILLS = {
         color: 0x4b0082,
         icon: '🌑',
         description: '闇の爆発を周囲に引き起こす。'
-    },
-    meteor_swarm: {
+    }),
+    meteor_swarm: defineSkill({
         id: 'meteor_swarm',
         name: 'メテオスウォーム',
         type: 'active',
@@ -73,8 +74,8 @@ export const MAGE_SKILLS = {
         color: 0xff0000,
         icon: '☄️',
         description: '隕石を降らせて広範囲を焼き払う。'
-    },
-    thunder_storm: {
+    }),
+    thunder_storm: defineSkill({
         id: 'thunder_storm',
         name: 'サンダーストーム',
         type: 'active',
@@ -87,5 +88,5 @@ export const MAGE_SKILLS = {
         color: 0xffff00,
         icon: '⚡',
         description: '自身の周囲に雷を落とし続ける。'
-    }
+    })
 };

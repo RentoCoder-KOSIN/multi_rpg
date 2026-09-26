@@ -2,9 +2,10 @@
  * レンジャースキル
  * 素早い動きで敵を翻弄する遠距離職
  */
+import { defineSkill } from '../schema.js';
 
 export const RANGER_SKILLS = {
-    rapid_fire: {
+    rapid_fire: defineSkill({
         id: 'rapid_fire',
         name: 'ラピッドファイア',
         type: 'active',
@@ -17,8 +18,8 @@ export const RANGER_SKILLS = {
         color: 0x00ff00,
         icon: '🏹',
         description: '目にも止まぬ速射。'
-    },
-    arrow_rain: {
+    }),
+    arrow_rain: defineSkill({
         id: 'arrow_rain',
         name: 'アローレイン',
         type: 'active',
@@ -31,8 +32,8 @@ export const RANGER_SKILLS = {
         color: 0x9acd32,
         icon: '🌧️',
         description: '矢の雨を降らせる。'
-    },
-    holy_arrow: {
+    }),
+    holy_arrow: defineSkill({
         id: 'holy_arrow',
         name: 'ホーリーアロー',
         type: 'active',
@@ -45,5 +46,5 @@ export const RANGER_SKILLS = {
         color: 0xffd700,
         icon: '✨',
         description: '聖なる光の矢を放ち、邪悪を浄化する。'
-    }
+    })
 };
