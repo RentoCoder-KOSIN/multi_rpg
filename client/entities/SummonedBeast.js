@@ -1,4 +1,5 @@
 import Enemy from './Enemy.js';
+import { getLevelDiffMultiplier } from '../utils/levelScaling.js';
 
 export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, owner, type = 'normal', skillLevel = 1) {
@@ -54,6 +55,9 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
         this.speed = 120 + (owner.stats.dex * 2) + speedBonus + (skillLevel * 5);
         this.searchRange = (350 + (owner.stats.int * 15)) * (type !== 'normal' ? 1.5 : 1) * (1 + (skillLevel - 1) * 0.05);
 
+        // レベル差補正用: 召喚主(プレイヤー)のレベルを召喚獣のレベルとして扱う
+        this._owner = owner;
+
         // クールダウン用
         this.lastAttackTime = 0;
         this.lastMpDrainTime = 0;
@@ -84,6 +88,11 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
             frequency: 100,
             follow: this
         });
+    }
+
+    // レベル差補正で参照する「召喚獣のレベル」＝召喚主のレベル
+    get level() {
+        return (this._owner && this._owner.stats) ? (this._owner.stats.level || 1) : 1;
     }
 
     updateSummon() {
@@ -181,6 +190,9 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
                         damage = Math.ceil(damage * 1.5);
                         isCrit = true;
                     }
+
+                    // レベル差補正（召喚主のレベル vs 敵のレベル）
+                    damage = Math.ceil(damage * getLevelDiffMultiplier(this.level, this.target.level ?? 1));
 
                     this.target.takeDamage(damage, this.owner);
 

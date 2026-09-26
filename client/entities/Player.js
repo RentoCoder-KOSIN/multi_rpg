@@ -2,6 +2,8 @@ import { JOBS } from "../data/jobs.js";
 import { ITEMS } from "../data/items.js";
 import { SKILLS } from "../data/skills.js";
 import { getEnemyStats } from "../data/enemyStats.js";
+import { getLevelDiffMultiplier } from "../utils/levelScaling.js";
+import { TOTAL_SKILL_SLOTS } from "../gameConstants.js";
 
 // レベルアップに必要な経験値を計算する。
 // 以前は maxExp *= 1.5 という「複利」計算だったため、
@@ -91,7 +93,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             jobExp: saved.jobExp || 0,
             unlockedSkills: saved.unlockedSkills || [],
             skillLevels: saved.skillLevels || {}, // { skillId: level }
-            activeSkills: saved.activeSkills || [null, null, null]
+            // スロット数を3→8に拡張。古いセーブデータ(3枠)も足りない分をnullで埋めて引き継ぐ
+            activeSkills: this.padActiveSkills(saved.activeSkills)
         };
 
         this.applyEquipmentStats(); // 装備中のステータスを反映
@@ -102,6 +105,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         this.saveStats();
+    }
+
+    // 保存済みのactiveSkills配列をTOTAL_SKILL_SLOTS件になるまでnullで埋める
+    // (3枠だった頃のセーブデータを8枠に安全に移行するため)
+    padActiveSkills(saved) {
+        const arr = Array.isArray(saved) ? [...saved] : [];
+        while (arr.length < TOTAL_SKILL_SLOTS) arr.push(null);
+        return arr.slice(0, TOTAL_SKILL_SLOTS);
     }
 
     // updateSkillsByJob は廃止
@@ -117,7 +128,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.stats.job = jobId;
 
         // 前の職業のスキル構成が持ち越されないようにリセット
-        this.stats.activeSkills = [null, null, null];
+        this.stats.activeSkills = new Array(TOTAL_SKILL_SLOTS).fill(null);
         this.skillCooldowns = {};
 
         this.applyEquipmentStats(); // ボーナスを含めて再計算
@@ -149,7 +160,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.stats.job = newJobId;
 
         // 前の職業のスキル構成が持ち越されないようにリセット
-        this.stats.activeSkills = [null, null, null];
+        this.stats.activeSkills = new Array(TOTAL_SKILL_SLOTS).fill(null);
         this.skillCooldowns = {};
 
         // 転職ボーナス
@@ -179,8 +190,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     gainExp(amount) {
         if (!this.isLocal) return;
 
-        // 経験値倍率を適用
-        const finalAmount = Math.ceil(amount * (this.stats.expMultiplier || 1.0));
+        // 経験値倍率を適用（経験値増加の武器などの効果はLv25以下にのみ有効。
+        // それ以上のレベルでは倍率をかけない）
+        const expMult = (this.stats.level <= 25) ? (this.stats.expMultiplier || 1.0) : 1.0;
+        const finalAmount = Math.ceil(amount * expMult);
 
         if (this.stats.level < 100) { // レベルキャップ
             this.stats.exp += finalAmount;
@@ -310,7 +323,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     setActiveSkill(slotIndex, skillId) {
         if (!this.isLocal) return;
-        if (slotIndex < 0 || slotIndex >= 3) return;
+        if (slotIndex < 0 || slotIndex >= TOTAL_SKILL_SLOTS) return;
 
         // スキル解放済みチェック
         if (skillId && !this.stats.unlockedSkills.includes(skillId)) return;
@@ -325,7 +338,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     useSkill(slotIndex, target = null) {
         if (!this.isLocal) return;
-        if (slotIndex < 0 || slotIndex >= 3) return;
+        if (slotIndex < 0 || slotIndex >= TOTAL_SKILL_SLOTS) return;
 
         const skillId = this.stats.activeSkills[slotIndex];
         if (!skillId) return; // スキル未設定
@@ -451,6 +464,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
      * 武器の特殊効果などを反映可能にする
      */
     getDamage(multiplier = 1, target = null) {
+        // レベル差補正（自分が格上なら伸び、格下ならほぼ通らない）
+        if (target) {
+            const targetLevel = (target.level !== undefined) ? target.level : (target.stats?.level ?? 1);
+            multiplier *= getLevelDiffMultiplier(this.stats.level, targetLevel);
+        }
+
         let atk = this.stats.atk;
 
         // バフ効果を適用

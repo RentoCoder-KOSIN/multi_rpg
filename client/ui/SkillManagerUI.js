@@ -1,6 +1,9 @@
 import { SKILLS } from "../data/skills.js";
 import { JOBS } from "../data/jobs.js";
 import BaseWindowUI from "./BaseWindowUI.js";
+import { TOTAL_SKILL_SLOTS } from "../gameConstants.js";
+
+const DIGIT_CODES = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8'].slice(0, TOTAL_SKILL_SLOTS);
 
 export default class SkillManagerUI extends BaseWindowUI {
     constructor(scene) {
@@ -48,7 +51,7 @@ export default class SkillManagerUI extends BaseWindowUI {
         this.container.add(this.listContainer);
 
         // Guidance Text
-        this.guidanceText = this.scene.add.text(0, panelHeight / 2 - 30, 'Arrows: Move | Enter: Unlock | 1-3: Set | L: Level UP', {
+        this.guidanceText = this.scene.add.text(0, panelHeight / 2 - 30, `Arrows: Move | Enter: Unlock | 1-${TOTAL_SKILL_SLOTS}: Set | L: Level UP`, {
             fontSize: '12px', fontFamily: '"Press Start 2P"', color: '#ffffff', align: 'center', stroke: '#000', strokeThickness: 2
         }).setOrigin(0.5);
         this.container.add(this.guidanceText);
@@ -64,7 +67,7 @@ export default class SkillManagerUI extends BaseWindowUI {
                 this.updateSelection();
             } else if (event.code === 'Enter') {
                 this.handleAction();
-            } else if (['Digit1', 'Digit2', 'Digit3'].includes(event.code)) {
+            } else if (DIGIT_CODES.includes(event.code)) {
                 const slot = parseInt(event.key) - 1;
                 this.handleSetSlot(slot);
             } else if (event.code === 'KeyL') {
@@ -90,25 +93,32 @@ export default class SkillManagerUI extends BaseWindowUI {
         if (!player) return;
 
         const activeSkills = player.stats.activeSkills;
-        const startX = -100;
-        const spacing = 100;
 
-        for (let i = 0; i < 3; i++) {
-            const x = startX + (i * spacing);
+        // 8枠を4列×2行で表示（3枠だった頃の1行表示だと収まらないため）
+        const columns = 4;
+        const spacingX = 120;
+        const spacingY = 90;
+        const startX = -((Math.min(columns, TOTAL_SKILL_SLOTS) - 1) * spacingX) / 2;
+
+        for (let i = 0; i < TOTAL_SKILL_SLOTS; i++) {
+            const col = i % columns;
+            const row = Math.floor(i / columns);
+            const x = startX + (col * spacingX);
+            const y = row * spacingY;
             const skillId = activeSkills[i];
             const skillDef = SKILLS[skillId];
 
-            const bg = this.scene.add.rectangle(x, 0, 80, 80, 0x222233).setStrokeStyle(2, 0x4a90e2);
-            const label = this.scene.add.text(x - 30, -30, `${i + 1}`, { fontSize: '10px', color: '#888888' });
+            const bg = this.scene.add.rectangle(x, y, 70, 70, 0x222233).setStrokeStyle(2, 0x4a90e2);
+            const label = this.scene.add.text(x - 27, y - 27, `${i + 1}`, { fontSize: '10px', color: '#888888' });
 
             this.activeSkillsContainer.add([bg, label]);
 
             if (skillDef) {
-                const icon = this.scene.add.text(x, -10, skillDef.icon, { fontSize: '32px' }).setOrigin(0.5);
-                const name = this.scene.add.text(x, 25, skillDef.name, { fontSize: '10px', color: '#ffffff', align: 'center' }).setOrigin(0.5);
+                const icon = this.scene.add.text(x, y - 8, skillDef.icon, { fontSize: '26px' }).setOrigin(0.5);
+                const name = this.scene.add.text(x, y + 22, skillDef.name, { fontSize: '8px', color: '#ffffff', align: 'center' }).setOrigin(0.5);
                 this.activeSkillsContainer.add([icon, name]);
             } else {
-                const empty = this.scene.add.text(x, 0, 'Empty', { fontSize: '12px', color: '#444455' }).setOrigin(0.5);
+                const empty = this.scene.add.text(x, y, 'Empty', { fontSize: '10px', color: '#444455' }).setOrigin(0.5);
                 this.activeSkillsContainer.add(empty);
             }
         }
@@ -249,7 +259,11 @@ export default class SkillManagerUI extends BaseWindowUI {
                 const levelText = this.scene.add.text(name.x + name.width + 10, -10, `Lv.${skillLevel}`, {
                     fontSize: '12px', color: '#00ff00', fontFamily: '"Press Start 2P"'
                 });
-                const desc = this.scene.add.text(-220, 15, skillDef.description, {
+                // MP消費量がひと目でわかるように説明文の頭に付ける
+                // （「MP消費量がわからない」への対応）
+                const mpCost = skillDef.mpCost || 0;
+                const descStr = `MP:${mpCost}  ${skillDef.description}`;
+                const desc = this.scene.add.text(-220, 15, descStr, {
                     fontSize: '10px', color: '#aaaaaa'
                 });
                 container.add([name, levelText, desc]);
@@ -259,7 +273,7 @@ export default class SkillManagerUI extends BaseWindowUI {
                 let statusColor = '#ffffff';
 
                 if (isUnlocked) {
-                    statusTextStr = '解放済み (Set with 1-3)';
+                    statusTextStr = `解放済み (Set with 1-${TOTAL_SKILL_SLOTS})`;
                     statusColor = '#00ff00';
                 } else if (canUnlock) {
                     statusTextStr = `Unlock [Enter]: ${cost} Job Exp`;
@@ -368,7 +382,7 @@ export default class SkillManagerUI extends BaseWindowUI {
             this.refreshList();
         } else if (item.isUnlocked) {
             if (this.scene.notificationUI) {
-                this.scene.notificationUI.show('数字キー(1-3)でセットしてください', 'info');
+                this.scene.notificationUI.show(`数字キー(1-${TOTAL_SKILL_SLOTS})でセットしてください`, 'info');
             }
         }
     }

@@ -10,6 +10,7 @@ const {
 } = require("../config");
 const { players, enemies } = require("../state");
 const { findSocketByPlayerId } = require("../utils/socketUtils");
+const { getLevelDiffMultiplier } = require("../utils/levelScaling");
 
 // dx/dy は px/秒 なので、経過時間(秒)を掛けて1tickあたりの移動量に変換する
 // 例: approach 50px/s * 0.15s = 7.5px/tick
@@ -57,14 +58,20 @@ function tryAttack(io, aiManager, enemy, result, mapPlayers) {
     const distance = Math.hypot(enemy.x - target.x, enemy.y - target.y);
     if (distance < ENEMY_ATTACK_RANGE) {
         enemy.lastAttackTime = now;
-        aiManager.notifyAttackHit(enemy.id, enemy.atk);
+
+        // レベル差補正: 敵とプレイヤーのレベル差が大きいほど、
+        // レベルが高い側に有利になる（格上の攻撃はほぼ通らない）
+        const levelMult = getLevelDiffMultiplier(enemy.level, target.level);
+        const damage = Math.max(1, Math.ceil(enemy.atk * levelMult));
+
+        aiManager.notifyAttackHit(enemy.id, damage);
 
         const targetSocket = findSocketByPlayerId(io, result.targetPlayerId);
         if (targetSocket) {
             targetSocket.emit("enemyAttack", {
                 enemyId: enemy.id,
                 enemyType: enemy.type,
-                damage: enemy.atk
+                damage
             });
         }
     }

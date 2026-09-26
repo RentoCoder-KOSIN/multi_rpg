@@ -72,7 +72,7 @@ export function getShopLoadout(shopKey) {
 }
 
 // -----------------------------
-// itemId 配列 → アイテム定義に変換 (カテゴリフィルタリング対応)
+// itemId 配列 → アイテム定義に変換 (カテゴリフィルタリング対応 + レベル順ソート)
 // -----------------------------
 export function resolveShopItems(itemIds, filterCategory = null) {
     return (itemIds || [])
@@ -93,7 +93,10 @@ export function resolveShopItems(itemIds, filterCategory = null) {
             const targetCat = cat === "item" ? "consumable" : cat;
 
             return item.type === targetCat || item.type === cat;
-        });
+        })
+        // ユーザーがどの装備から買えばいいか一目でわかるように、必要レベルの低い順に並べる。
+        // レベル制限がない消耗品などは lvlReq=0 扱いで先頭付近に来る。
+        .sort((a, b) => (a.lvlReq || 0) - (b.lvlReq || 0));
 }
 
 // -----------------------------
