@@ -1,6 +1,7 @@
 import { SKILLS } from "../data/skills.js";
 import { JOBS } from "../data/jobs.js";
 import { TOTAL_SKILL_SLOTS } from "../gameConstants.js";
+import { pinToScreen } from "../utils/screenFixed.js";
 
 const SLOT_SIZE = 60;
 // 中央(角度0)から見た円周上の広がり。横方向は大きめ・縦方向は小さめにして、
@@ -27,6 +28,11 @@ export default class SkillBarUI {
 
         // バーのコンテナ（画面下中央）
         this.container = this.scene.add.container(gameWidth / 2, gameHeight - 50).setScrollFactor(0).setDepth(2000);
+        // 注意: コンテナ自体にsetScrollFactor(0)しても、中の子要素は既定でscrollFactor(1)のままになり、
+        // 見た目はカメラ追従せず固定表示されているのに、クリック判定だけがカメラのスクロール分ズレてしまう
+        // （プレイヤーが動いてカメラがスクロールすると矢印ボタンが押せなくなる）。
+        // pinToScreen()で今後追加する子要素も含めてscrollFactor(0)に揃える。
+        pinToScreen(this.container);
 
         // メイン背景（中央付近のスロットだけを収める控えめなパネル）
         const bgWidth = 240;
@@ -115,8 +121,16 @@ export default class SkillBarUI {
         const bg = this.scene.add.circle(0, 0, 18, 0x1a1a2e, 0.7).setStrokeStyle(2, 0x4a90e2, 0.8);
         const txt = this.scene.add.text(0, 0, label, { fontSize: '14px', color: '#ffffff' }).setOrigin(0.5);
         btn.add([bg, txt]);
-        btn.setSize(36, 36);
-        btn.setInteractive({ useHandCursor: true });
+
+        // 注意: Containerは setSize()+setInteractive({...}) だけだとヒットエリアが
+        // ローカル座標(0,0)〜(width,height)、つまり見た目の円(中心が(0,0))の右下1/4しか
+        // 反応しない状態になり、「ボタンが押せない」原因になる。
+        // 見た目の円と同じ中心のRectangleを明示的に指定して確実にクリック判定を合わせる。
+        const hitSize = 44;
+        btn.setSize(hitSize, hitSize);
+        btn.setInteractive(new Phaser.Geom.Rectangle(-hitSize / 2, -hitSize / 2, hitSize, hitSize), Phaser.Geom.Rectangle.Contains);
+        btn.input.cursor = 'pointer';
+
         btn.on('pointerdown', () => {
             bg.setFillStyle(0x4a90e2, 0.6);
             onClick();

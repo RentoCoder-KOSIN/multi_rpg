@@ -1,6 +1,7 @@
 import { ITEMS } from "../data/items.js";
 import { getShopLoadout, resolveShopItems } from "../data/shops.js";
 import BaseWindowUI from "./BaseWindowUI.js";
+import { areEffectsEnabled } from "../utils/effectsSettings.js";
 
 // 武器・防具・消耗品のステータスを、購入前に一目でわかる短い文字列にまとめる。
 // 「買うときに攻撃力とかステータスがわからない」を解消するための表示用ヘルパー。
@@ -266,6 +267,6 @@ export default class ShopUI extends BaseWindowUI {
         p.saveStats();
         this.updateGold();
         if (this.scene.notificationUI) this.scene.notificationUI.show(`[${ITEMS[itemId].name}] を購入しました！`, "success");
-        this.scene.cameras.main.shake(100, 0.002);
+        if (areEffectsEnabled(this.scene)) this.scene.cameras.main.shake(100, 0.002);
     }
 }

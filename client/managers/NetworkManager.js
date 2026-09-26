@@ -1,6 +1,7 @@
 // NetworkManager.js
 import { SERVER_CONFIG } from '../config.js';
 import Player from '../entities/Player.js';
+import { areEffectsEnabled } from '../utils/effectsSettings.js';
 
 export default class NetworkManager {
     constructor(scene) {
@@ -186,7 +187,7 @@ export default class NetworkManager {
             // プレイヤーにダメージを与える
             if (player.takeDamage) {
                 // 攻撃エフェクト（カメラシェイク）
-                if (this.scene?.cameras?.main) {
+                if (areEffectsEnabled(this.scene) && this.scene?.cameras?.main) {
                     this.scene.cameras.main.shake(50, 0.002);
                 }
                 player.takeDamage(data.damage || 0, { type: data.enemyType });
