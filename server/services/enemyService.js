@@ -51,6 +51,7 @@ function createEnemyService({ io, aiManager }) {
             hp: stats.hp,
             maxHp: stats.hp,
             atk: stats.atk,
+            def: stats.def || 0,
             exp: stats.exp,
             gold: stats.gold,
             drops: stats.drops

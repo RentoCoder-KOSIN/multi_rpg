@@ -54,6 +54,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.maxHp = serverData.maxHp || serverData.hp || stats.hp;
         this.hp = serverData.hp || this.maxHp;
         this.atk = serverData.atk || stats.atk;
+        this.def = serverData.def ?? stats.def ?? 0;
         this.expValue = serverData.exp || stats.exp;
         this.goldValue = serverData.gold || stats.gold;
 

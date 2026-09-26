@@ -1,7 +1,8 @@
 import { SKILLS_BY_JOB } from './skills/skillRegistry.js';
+import { defineJob } from './schema.js';
 
 export const JOBS = {
-    fighter: {
+    fighter: defineJob({
         id: 'fighter',
         type: 'physical',
         name: 'ファイター',
@@ -18,8 +19,8 @@ export const JOBS = {
             15: ['fighting_spirit']
         },
         nextJob: 'knight'
-    },
-    mage: {
+    }),
+    mage: defineJob({
         id: 'mage',
         type: 'magical',
         name: 'メイジ',
@@ -37,8 +38,8 @@ export const JOBS = {
             15: ['mana_well']
         },
         nextJob: 'archmage'
-    },
-    tank: {
+    }),
+    tank: defineJob({
         id: 'tank',
         type: 'physical',
         name: 'タンク',
@@ -55,8 +56,8 @@ export const JOBS = {
             15: ['immovable_body']
         },
         nextJob: 'paladin'
-    },
-    ranger: {
+    }),
+    ranger: defineJob({
         id: 'ranger',
         type: 'physical',
         name: 'レンジャー',
@@ -73,8 +74,8 @@ export const JOBS = {
             15: ['wind_walker']
         },
         nextJob: 'sniper'
-    },
-    summoner: {
+    }),
+    summoner: defineJob({
         id: 'summoner',
         type: 'magical',
         name: 'サモナー',
@@ -90,9 +91,9 @@ export const JOBS = {
             15: ['spirit_link']
         },
         nextJob: 'high_summoner'
-    },
+    }),
     // --- 上位職 (Level 30+) ---
-    knight: {
+    knight: defineJob({
         id: 'knight',
         type: 'physical',
         name: 'ナイト',
@@ -106,8 +107,8 @@ export const JOBS = {
             35: ['ground_smash'],
             40: ['heavy_slash']
         }
-    },
-    archmage: {
+    }),
+    archmage: defineJob({
         id: 'archmage',
         type: 'magical',
         name: 'アークメイジ',
@@ -121,8 +122,8 @@ export const JOBS = {
             35: ['meteor_swarm'],
             40: ['thunder_storm']
         }
-    },
-    paladin: {
+    }),
+    paladin: defineJob({
         id: 'paladin',
         type: 'physical',
         name: 'パラディン',
@@ -136,8 +137,8 @@ export const JOBS = {
             35: ['shield_bash'],
             40: ['iron_defense']
         }
-    },
-    sniper: {
+    }),
+    sniper: defineJob({
         id: 'sniper',
         type: 'physical',
         name: 'スナイパー',
@@ -151,8 +152,8 @@ export const JOBS = {
             35: ['arrow_rain'],
             40: ['rapid_fire']
         }
-    },
-    high_summoner: {
+    }),
+    high_summoner: defineJob({
         id: 'high_summoner',
         type: 'magical',
         name: 'ハイサモナー',
@@ -166,8 +167,8 @@ export const JOBS = {
             35: ['mega_summon'],
             40: ['command_attack']
         }
-    },
-    priest: {
+    }),
+    priest: defineJob({
         id: 'priest',
         type: 'magical',
         name: 'プリースト',
@@ -183,8 +184,8 @@ export const JOBS = {
             15: ['summon_boost']
         },
         nextJob: 'exorcist'
-    },
-    exorcist: {
+    }),
+    exorcist: defineJob({
         id: 'exorcist',
         type: 'magical',
         name: 'エクソシスト',
@@ -198,5 +199,5 @@ export const JOBS = {
             35: ['holy_arrow'],
             40: ['defense_buff']
         }
-    }
+    })
 };

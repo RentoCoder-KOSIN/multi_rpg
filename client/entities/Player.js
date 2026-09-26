@@ -2,16 +2,17 @@ import { JOBS } from "../data/jobs.js";
 import { ITEMS } from "../data/items.js";
 import { SKILLS } from "../data/skills.js";
 import { getEnemyStats } from "../data/enemyStats.js";
-import { getLevelDiffMultiplier } from "../utils/levelScaling.js";
+import { getLevelDiffMultiplier, getExpLevelMultiplier } from "../utils/levelScaling.js";
 import { TOTAL_SKILL_SLOTS } from "../gameConstants.js";
 
 // レベルアップに必要な経験値を計算する。
 // 以前は maxExp *= 1.5 という「複利」計算だったため、
 // レベル100までに 1.5^99 倍(=天文学的な数値)の経験値が必要になり、
 // 実質どれだけ敵を倒しても経験値が全く貯まらないように見えるバグになっていた。
-// 多項式カーブ(level^1.8)に変更し、終盤でも現実的な必要量に収める。
+// 多項式カーブ(level^2.0)に変更し、終盤でも現実的な必要量に収める。
+// （少しハードにする調整として、以前の level^1.8 より指数を上げてある）
 function calcMaxExp(level) {
-    return Math.max(100, Math.floor(100 * Math.pow(level, 1.8)));
+    return Math.max(100, Math.floor(100 * Math.pow(level, 2.0)));
 }
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
@@ -187,13 +188,18 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
-    gainExp(amount) {
+    gainExp(amount, enemyLevel = null) {
         if (!this.isLocal) return;
 
         // 経験値倍率を適用（経験値増加の武器などの効果はLv25以下にのみ有効。
         // それ以上のレベルでは倍率をかけない）
         const expMult = (this.stats.level <= 25) ? (this.stats.expMultiplier || 1.0) : 1.0;
-        const finalAmount = Math.ceil(amount * expMult);
+
+        // レベル差補正: 敵レベルが分かる場合、圧倒的な格下（レベル差15以上）を
+        // 狩ったときは経験値を減らす。敵の方が格上の場合は補正しない。
+        const levelPenalty = (enemyLevel != null) ? getExpLevelMultiplier(this.stats.level, enemyLevel) : 1.0;
+
+        const finalAmount = Math.ceil(amount * expMult * levelPenalty);
 
         if (this.stats.level < 100) { // レベルキャップ
             this.stats.exp += finalAmount;
@@ -424,7 +430,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             const getVal = (val) => (typeof val === 'function' ? val(this) : (val || 0));
 
             // 魔法職は matk (魔法攻撃力) を優先して攻撃力に反映する
-            const atkSource = isMagical ? (item.matk ?? item.atk ?? s.attack) : (item.atk ?? s.attack);
+            const atkSource = isMagical ? (item.matk ?? s.matk ?? item.atk ?? s.attack) : (item.atk ?? s.attack);
             this.stats.atk += getVal(atkSource);
             this.stats.def += getVal(item.def || s.defense);
 
@@ -499,6 +505,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         amount += elementalBonus;
+
+        // 敵の防御力による軽減（フラット減算。プレイヤーが受けるダメージの計算式と揃えてある）
+        const targetDef = target ? (target.def ?? target.stats?.def ?? 0) : 0;
+        if (targetDef > 0) {
+            amount = Math.max(1, amount - targetDef);
+        }
 
         // 即死効果（ボス系には効かない。type に "boss" を含むものは全てボス扱い）
         const isBossTarget = target && typeof target.type === 'string' && target.type.includes('boss');

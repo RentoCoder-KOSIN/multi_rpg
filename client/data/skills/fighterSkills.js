@@ -2,9 +2,10 @@
  * ファイタースキル
  * 攻撃力と防御力のバランスが良い近接職
  */
+import { defineSkill } from '../schema.js';
 
 export const FIGHTER_SKILLS = {
-    slash: {
+    slash: defineSkill({
         id: 'slash',
         name: 'スラッシュ',
         type: 'active',
@@ -17,8 +18,8 @@ export const FIGHTER_SKILLS = {
         color: 0xffffff,
         icon: '⚔️',
         description: '力強く斬りつける。'
-    },
-    whirlwind: {
+    }),
+    whirlwind: defineSkill({
         id: 'whirlwind',
         name: 'ホイールウィンド',
         type: 'active',
@@ -31,8 +32,8 @@ export const FIGHTER_SKILLS = {
         color: 0x87ceeb,
         icon: '🌪️',
         description: '回転斬りで周囲をなぎ倒す。'
-    },
-    heavy_slash: {
+    }),
+    heavy_slash: defineSkill({
         id: 'heavy_slash',
         name: 'ヘビースラッシュ',
         type: 'active',
@@ -45,8 +46,8 @@ export const FIGHTER_SKILLS = {
         color: 0xff0000,
         icon: '🗡️',
         description: '渾身の一撃。'
-    },
-    sonic_wave: {
+    }),
+    sonic_wave: defineSkill({
         id: 'sonic_wave',
         name: 'ソニックウェーブ',
         type: 'active',
@@ -59,8 +60,8 @@ export const FIGHTER_SKILLS = {
         color: 0x00ffff,
         icon: '🌊',
         description: '衝撃波を前方に飛ばす。'
-    },
-    ground_smash: {
+    }),
+    ground_smash: defineSkill({
         id: 'ground_smash',
         name: '地裂斬',
         type: 'active',
@@ -73,5 +74,5 @@ export const FIGHTER_SKILLS = {
         color: 0x8b4513,
         icon: '🔨',
         description: '地面を叩き割り、広範囲にダメージを与える。'
-    }
+    })
 };

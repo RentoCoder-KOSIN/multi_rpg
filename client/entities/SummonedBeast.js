@@ -20,14 +20,30 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
 
         if (type === 'normal') {
             this.setTint(0x9370db);
-            this.setScale(0.8);
         } else if (type === 'mega' || type === 'mega_summon') {
             this.setTint(0xff00ff);
-            this.setScale(1.2);
         } else if (type === 'demon_lord' || type === 'demon_lord_summon') {
             this.setTint(0xff5555); // 禍々しい赤
-            this.setScale(1.8); // さらに大きく
         }
+
+        // 表示サイズ: 敵より少し大きい程度に統一する。
+        // 以前は元画像（slime1.pngは480x480など、敵の当たり判定より遥かに解像度が高い）に
+        // 直接setScale(0.8/1.2/1.8)をかけていたため、実際の表示サイズが
+        // 敵(40〜80px程度)よりはるかに巨大（384px超）になってしまっていた。
+        // Enemy.adjustSizeAndHitbox()と同様に、元画像の実寸から
+        // 「狙った表示幅になる倍率」を逆算して設定する。
+        const SUMMON_TARGET_WIDTH = {
+            normal: 55,      // 通常の敵(40〜60px)より少し大きい程度
+            mega: 100,       // ボス(80px)より少し大きい程度
+            demon_lord: 130  // 最上位、さらに一回り大きい程度
+        };
+        const sizeKey = (type === 'mega' || type === 'mega_summon') ? 'mega'
+            : (type === 'demon_lord' || type === 'demon_lord_summon') ? 'demon_lord'
+            : 'normal';
+        const targetWidth = SUMMON_TARGET_WIDTH[sizeKey];
+        const sourceImage = scene.textures.get(texture).getSourceImage();
+        const baseWidth = sourceImage ? sourceImage.width : 32;
+        this.setScale(targetWidth / baseWidth);
 
         // ステータス設定
         let baseHp = 50000;
@@ -59,9 +75,23 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
         // レベル差補正用: 召喚主(プレイヤー)のレベルを召喚獣のレベルとして扱う
         this._owner = owner;
 
+        // 自然減衰: 以前はMPを継続的に消費し続け、MPが尽きると消滅する仕様だったが、
+        // 召喚コスト（mpCost）を大幅に引き上げたうえで、維持コストは廃止した。
+        // 代わりに、召喚獣自身のHPが一定間隔で一定量ずつ減っていき、
+        // 0になったら（他のダメージで倒れたときと同様に）消滅する。
+        this.decayInterval = 3000; // ms: この間隔で自然減衰ダメージが入る
+        let decayRatio = 0.05; // 1回の減衰で失うHPの割合（maxHp基準、召喚時に固定）
+
+        // 精霊の共鳴 (パッシブ): 自然減衰ダメージ-50%（＝召喚獣がより長持ちする）
+        if (owner.stats.unlockedSkills?.includes('spirit_link')) {
+            decayRatio *= 0.5;
+        }
+
+        this.decayDamage = Math.ceil(this.maxHp * decayRatio);
+        this.lastDecayTime = 0;
+
         // クールダウン用
         this.lastAttackTime = 0;
-        this.lastMpDrainTime = 0;
         this.target = null;
 
         // HPバー
@@ -122,46 +152,14 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
         this.hpBarBg.setPosition(this.x, this.y - 25);
         this.hpBar.setPosition(this.x, this.y - 25);
 
-        // MP維持コスト (1秒ごとに消費)
-        if (!this.lastMpDrainTime || now - this.lastMpDrainTime > 1000) {
-            let upkeepCost = 2;
-            if (this.summonType === 'mega' || this.summonType === 'mega_summon') upkeepCost = 5;
-            if (this.summonType === 'demon_lord' || this.summonType === 'demon_lord_summon') upkeepCost = 15; // 魔王はコストが膨大
-
-            // 精霊の共鳴 (パッシブ): 維持コスト-50%
-            if (this.owner.stats.unlockedSkills?.includes('spirit_link')) {
-                upkeepCost = Math.ceil(upkeepCost * 0.5);
-            }
-
-            // 聖なる武器: 維持コスト0
-            if (this.owner.stats.equipment && this.owner.stats.equipment.weapon === 'holy_weapon') {
-                upkeepCost = 0;
-            }
-
-            if (this.owner && this.owner.stats) {
-                // MPを減らす
-                this.owner.stats.mp = Math.max(0, this.owner.stats.mp - upkeepCost);
-                this.owner.saveStats(); // UI更新のため保存
-
-                // 消費エフェクト (プレイヤーの頭上)
-                const drainText = this.scene.add.text(this.owner.x, this.owner.y - 40, `-${upkeepCost} MP`, {
-                    fontSize: '10px', color: '#5e5eff', fontFamily: '"Press Start 2P"'
-                }).setOrigin(0.5);
-                this.scene.tweens.add({
-                    targets: drainText, y: this.owner.y - 70, alpha: 0, duration: 800,
-                    onComplete: () => drainText.destroy()
-                });
-
-                // MPが切れたら消滅
-                if (this.owner.stats.mp <= 0) {
-                    if (this.scene.notificationUI) {
-                        this.scene.notificationUI.show('MPが尽きたため召喚獣が帰還しました', 'warning');
-                    }
-                    this.scene.destroySummon(this);
-                    return;
-                }
-            }
-            this.lastMpDrainTime = now;
+        // 自然減衰 (一定間隔で一定量のダメージ)
+        // 以前はここでMPを継続的に消費していたが、召喚コスト自体を引き上げたことで
+        // 維持費は廃止。代わりに召喚獣自身のHPが一定間隔・一定量ずつ減っていき、
+        // 通常のダメージと同じくHPが尽きたら消滅する（takeDamageを流用）。
+        if (this.decayDamage > 0 && (!this.lastDecayTime || now - this.lastDecayTime > this.decayInterval)) {
+            this.lastDecayTime = now;
+            this.takeDamage(this.decayDamage);
+            if (!this.active) return; // 減衰で消滅した場合はここで終了
         }
 
         // ターゲットが有効かチェック

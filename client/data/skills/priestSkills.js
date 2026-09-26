@@ -2,9 +2,10 @@
  * プリーストスキル
  * 神の祝福を授ける聖職者。仲間の能力を強化する。
  */
+import { defineSkill } from '../schema.js';
 
 export const PRIEST_SKILLS = {
-    holy_arrow: {
+    holy_arrow: defineSkill({
         id: 'holy_arrow',
         name: 'ホーリーアロー',
         type: 'active',
@@ -17,5 +18,5 @@ export const PRIEST_SKILLS = {
         color: 0xffd700,
         icon: '✨',
         description: '聖なる光の矢を放ち、邪悪を浄化する。'
-    }
+    })
 };

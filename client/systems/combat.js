@@ -220,7 +220,7 @@ function applyPartySkill(scene, skillId, skill, range) {
         if (skillId === 'heal') {
             const skillLevel = player.stats.skillLevels?.[skillId] || 1;
             const int = player.stats.int || 5;
-            const baseHeal = skill.heal || 50;
+            const baseHeal = skill.effect?.healPower || 50;
             const healAmount = Math.ceil(baseHeal * (1 + (int * 0.1)) * (1 + (skillLevel - 1) * 0.2));
 
             target.stats.hp = Math.min(target.stats.maxHp, target.stats.hp + healAmount);
@@ -283,9 +283,9 @@ function applyDamageSkill(scene, skill, { enemies, range, rangeType, direction, 
         const damageData = player.getDamage(damageMultiplier, enemy);
         let damage = damageData.amount;
 
-        // アンデッド特効（エクソシズムなど bonusVsUndead を持つスキル）
-        if (skill.bonusVsUndead && UNDEAD_ENEMY_TYPES.includes(enemy.type)) {
-            damage = Math.ceil(damage * skill.bonusVsUndead);
+        // アンデッド特効（エクソシズムなど effect.vsUndead を持つスキル）
+        if (skill.effect?.vsUndead && UNDEAD_ENEMY_TYPES.includes(enemy.type)) {
+            damage = Math.ceil(damage * skill.effect.vsUndead);
         }
 
         if (damageData.isCrit) showCriticalEffect(scene, enemy);
