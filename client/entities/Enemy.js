@@ -3,6 +3,7 @@ import { getEnemySizeConfig } from '../data/enemySize.js';
 import EnemyAI from '../ai/EnemyAI.js';
 import { ENEMY_AI_CONFIG } from '../config.js';
 import { getLevelDiffMultiplier } from '../utils/levelScaling.js';
+import { areEffectsEnabled } from '../utils/effectsSettings.js';
 
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, texture, type, id = null, spawnId = null, socket = null, serverData = {}) {
@@ -310,7 +311,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
             }
 
             // ビジュアル・オーディオフィードバック
-            this.scene.cameras.main.shake(50, 0.002);
+            if (areEffectsEnabled(this.scene)) this.scene.cameras.main.shake(50, 0.002);
 
             console.log(`[Enemy] ${this.type} attacked player for ${this.atk} damage!`);
         }
@@ -462,7 +463,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
                         dmg = Math.ceil(dmg * getLevelDiffMultiplier(this.level, player.stats?.level ?? 1));
                         if (player.takeDamage) player.takeDamage(dmg, this);
                         if (this.ai && this.ai.notifyDamageDealt) this.ai.notifyDamageDealt(dmg);
-                        if (this.scene.cameras && this.scene.cameras.main) this.scene.cameras.main.shake(60, 0.003);
+                        if (areEffectsEnabled(this.scene) && this.scene.cameras && this.scene.cameras.main) this.scene.cameras.main.shake(60, 0.003);
                     }
                 }
                 this.skillCooldowns[skillName] = now + 2000; // 2秒CD

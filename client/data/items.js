@@ -1,121 +1,122 @@
 export const ITEMS = {
     // --- 武器 --
     holy_weapon: {
-        id: 'holy_weapon',
-        name: '聖なる武器',
-        type: 'weapon',
+        id: "holy_weapon",
+        name: "聖なる武器",
+        type: "weapon",
         atk: 105,
         matk: 105,
         def: 150,
         speed: 5,
         critChance: 0.5,
         price: 999999,
-        description: 'これを装備しているものはMPが減らず、クールタイムが短くなる'
+        description:
+            "これを装備しているものはMPが減らず、クールタイムが短くなる",
     },
 
     beginner_sword: {
-        id: 'beginner_sword',
-        name: '初心者の剣',
-        type: 'weapon',
+        id: "beginner_sword",
+        name: "初心者の剣",
+        type: "weapon",
         atk: 5,
         lvlReq: 1,
         price: 150,
-        description: '駆け出しの冒険者が使う剣。'
+        description: "駆け出しの冒険者が使う剣。",
     },
     beginner_staff: {
-        id: 'beginner_staff',
-        name: '初心者の杖',
-        type: 'weapon',
+        id: "beginner_staff",
+        name: "初心者の杖",
+        type: "weapon",
         atk: 3,
         matk: 5,
         lvlReq: 1,
         price: 200,
-        description: '魔法の初歩を学ぶための杖。'
+        description: "魔法の初歩を学ぶための杖。",
     },
     wooden_bow: {
-        id: 'wooden_bow',
-        name: '木の弓',
-        type: 'weapon',
+        id: "wooden_bow",
+        name: "木の弓",
+        type: "weapon",
         atk: 4,
         lvlReq: 1,
         price: 180,
-        description: '狩猟用のシンプルな弓。'
+        description: "狩猟用のシンプルな弓。",
     },
 
     exp_weapon: {
-        id: 'exp_weapon',
-        name: '経験値増加の武器',
-        type: 'weapon',
+        id: "exp_weapon",
+        name: "経験値増加の武器",
+        type: "weapon",
         atk: 3,
         lvlReq: 1,
         price: 750,
         expMultiplier: 2,
-        description: '獲得経験値を2倍にする初心者に優しい武器。'
+        description: "獲得経験値を2倍にする初心者に優しい武器。",
     },
 
     hero_sword: {
-        id: 'hero_sword',
-        name: '勇者の剣',
-        type: 'weapon',
+        id: "hero_sword",
+        name: "勇者の剣",
+        type: "weapon",
         atk: 50,
         lvlReq: 50,
         price: 2500,
-        description: '伝説の輝きを放つ聖剣。会心率+10%',
-        critChance: 0.1
+        description: "伝説の輝きを放つ聖剣。会心率+10%",
+        critChance: 0.1,
     },
 
     // --- 防具 ---
     iron_shield: {
-        id: 'iron_shield',
-        name: '鉄の盾',
-        type: 'armor',
+        id: "iron_shield",
+        name: "鉄の盾",
+        type: "armor",
         def: 5,
         lvlReq: 5,
         price: 300,
-        description: '頑丈な鉄の盾。'
+        description: "頑丈な鉄の盾。",
     },
     plate_armor: {
-        id: 'plate_armor',
-        name: 'プレートメイル',
-        type: 'armor',
+        id: "plate_armor",
+        name: "プレートメイル",
+        type: "armor",
         def: 12,
         lvlReq: 25,
         price: 800,
-        description: '全身を保護する重厚な鎧。'
+        description: "全身を保護する重厚な鎧。",
     },
 
     // --- 消耗品 ---
     potion: {
-        id: 'potion',
-        name: 'ポーション',
-        type: 'item',
+        id: "potion",
+        name: "ポーション",
+        type: "item",
         heal: 50,
         price: 50,
-        description: 'HPを50回復する魔法の薬。'
+        description: "HPを50回復する魔法の薬。",
     },
     high_potion: {
-        id: 'high_potion',
-        name: 'ハイポーション',
-        type: 'item',
+        id: "high_potion",
+        name: "ハイポーション",
+        type: "item",
         heal: 200,
         price: 250,
-        description: 'HPを200回復する強力な薬。'
+        description: "HPを200回復する強力な薬。",
     },
     mp_potion: {
-        id: 'mp_potion',
-        name: 'MPポーション',
-        type: 'consumable',
+        id: "mp_potion",
+        name: "MPポーション",
+        type: "consumable",
         healMp: 50,
         price: 50,
-        description: 'MPを50回復する魔法の薬。'
+        description: "MPを50回復する魔法の薬。",
     },
     high_mp_potion: {
-        id: 'high_mp_potion',
-        name: 'ハイMPポーション',
-        type: 'consumable',
+        id: "high_mp_potion",
+        name: "ハイMPポーション",
+        type: "consumable",
         healMp: 200,
         price: 250,
-        description: 'MPを200回復する強力な魔法の薬。'
+        description: "MPを200回復する強力な魔法の薬。",
     },
 
     wood_sword: {
@@ -125,7 +126,7 @@ export const ITEMS = {
         price: 60,
         type: "weapon",
         lvlReq: 1,
-        stats: { attack: 4 }
+        stats: { attack: 4 },
     },
     iron_sword: {
         id: "iron_sword",
@@ -134,7 +135,7 @@ export const ITEMS = {
         price: 120,
         type: "weapon",
         lvlReq: 10,
-        stats: { attack: 15 }
+        stats: { attack: 15 },
     },
     bronze_spear: {
         id: "bronze_spear",
@@ -143,7 +144,7 @@ export const ITEMS = {
         price: 150,
         type: "weapon",
         lvlReq: 15,
-        stats: { attack: 22 }
+        stats: { attack: 22 },
     },
     travel_cloak: {
         id: "travel_cloak",
@@ -152,7 +153,7 @@ export const ITEMS = {
         price: 90,
         type: "armor",
         lvlReq: 5,
-        stats: { defense: 5 }
+        stats: { defense: 5 },
     },
     menno_kayaku: {
         id: "menno_kayaku",
@@ -160,33 +161,33 @@ export const ITEMS = {
         description: "スタミナ全快の予感。",
         price: 250,
         type: "consumable",
-        stats: { heal: 500 }
+        stats: { heal: 500 },
     },
-    "eatable_negi": {
+    eatable_negi: {
         id: "eatable_negi",
         name: "食べられるねぎ",
         description: "健康に良いねぎ。",
         price: 150,
         type: "consumable",
-        stats: { heal: 250 }
+        stats: { heal: 250 },
     },
-    "heal_potion_small": {
+    heal_potion_small: {
         id: "heal_potion_small",
         name: "回復薬",
         description: "小さな回復薬。",
         price: 50,
         type: "consumable",
-        stats: { heal: 70 }
+        stats: { heal: 70 },
     },
-    "heal_potion_large": {
+    heal_potion_large: {
         id: "heal_potion_large",
         name: "万能薬",
         description: "よく効く傷薬。",
         price: 400,
         type: "consumable",
-        stats: { heal: 700 }
+        stats: { heal: 700 },
     },
-    "heal_izumi": {
+    heal_izumi: {
         id: "heal_izumi",
         name: "回復の泉",
         description: "味方全員HP200回復",
@@ -194,7 +195,7 @@ export const ITEMS = {
         type: "consumable",
         stats: { healAll: 200 },
     },
-    "power_seed": {
+    power_seed: {
         id: "power_seed",
         name: "攻撃力の種",
         description: "攻撃力を永久に+5する魔法の種。",
@@ -202,7 +203,7 @@ export const ITEMS = {
         type: "consumable",
         stats: { attackBoost: 5 },
     },
-    "shield_seed": {
+    shield_seed: {
         id: "shield_seed",
         name: "防御力の種",
         description: "防御力を永久に+3する魔法の種。",
@@ -210,7 +211,7 @@ export const ITEMS = {
         type: "consumable",
         stats: { defenseBoost: 3 },
     },
-    "magic_seed": {
+    magic_seed: {
         id: "magic_seed",
         name: "魔法の種",
         description: "攻撃&防御力大幅アップ",
@@ -218,16 +219,16 @@ export const ITEMS = {
         type: "consumable",
         stats: { attackBoost: 15, defenseBoost: 10 },
     },
-    "negi_sword": {
+    negi_sword: {
         id: "negi_sword",
         name: "真・ネギ丸",
         description: "鋭利な野菜。移動速度+20",
         price: 2000,
         type: "weapon",
         lvlReq: 40,
-        stats: { attack: 85, speedBonus: 20 }
+        stats: { attack: 85, speedBonus: 20 },
     },
-    "wood_stick": {
+    wood_stick: {
         id: "wood_stick",
         name: "木の棒",
         description: "その辺に落ちていた棒。",
@@ -236,16 +237,21 @@ export const ITEMS = {
         lvlReq: 1,
         stats: { attack: 2 },
     },
-    "ice_wings": {
+    ice_wings: {
         id: "ice_wings",
         name: "氷の翼",
         description: "絶対零度の魔力を秘めた翼。移動速度+40",
         price: 15000,
         type: "weapon",
         lvlReq: 65,
-        stats: { attack: 280, iceDamage: 50, freezeChance: 0.1, speedBonus: 40 },
+        stats: {
+            attack: 280,
+            iceDamage: 50,
+            freezeChance: 0.1,
+            speedBonus: 40,
+        },
     },
-    "fire_sword": {
+    fire_sword: {
         id: "fire_sword",
         name: "炎の剣・プロメテウス",
         description: "獄炎の剣。会心率+15%",
@@ -254,16 +260,16 @@ export const ITEMS = {
         lvlReq: 75,
         stats: { attack: 450, fireDamage: 30, critChance: 0.15 },
     },
-    "cheat_sword": {
+    cheat_sword: {
         id: "cheat_sword",
         name: "世界を穿つ審判の剣",
         description: "理（ことわり）を破壊する最強の剣。唯一無二。",
-        price: 9999999999,
+        price: 99999999,
         type: "weapon",
         lvlReq: 100,
         stats: { attack: 99999 },
     },
-    "brass_knuckles": {
+    brass_knuckles: {
         id: "brass_knuckles",
         name: "メリケンサック",
         description: "武闘家のための鉄拳。",
@@ -272,7 +278,7 @@ export const ITEMS = {
         lvlReq: 20,
         stats: { attack: 110 },
     },
-    "ganble_stick": {
+    ganble_stick: {
         id: "ganble_stick",
         name: "運否天賦の杖",
         description: "使い手の運次第で威力が激変する。 (ATK 1~150変動)",
@@ -283,27 +289,27 @@ export const ITEMS = {
         calculateAtk: (baseAtk, player) => {
             // ベース攻撃力に関わらず 1~150 の間で変動
             return Math.floor(Math.random() * 150) + 1;
-        }
+        },
     },
-    "silver_dagger": {
+    silver_dagger: {
         id: "silver_dagger",
         name: "銀の短剣",
         description: "軽く鋭い短剣。会心率が上がる。",
         price: 400,
         type: "weapon",
         lvlReq: 8,
-        stats: { attack: 12, critChance: 0.05 }
+        stats: { attack: 12, critChance: 0.05 },
     },
-    "battle_axe": {
+    battle_axe: {
         id: "battle_axe",
         name: "戦斧",
         description: "重く力強い一撃を放つ両手斧。",
         price: 1200,
         type: "weapon",
         lvlReq: 30,
-        stats: { attack: 130 }
+        stats: { attack: 130 },
     },
-    "arcane_rod": {
+    arcane_rod: {
         id: "arcane_rod",
         name: "秘術の杖",
         description: "魔力を増幅する杖。魔法職向け。",
@@ -311,45 +317,45 @@ export const ITEMS = {
         type: "weapon",
         lvlReq: 35,
         atk: 20,
-        matk: 160
+        matk: 160,
     },
-    "thunder_spear": {
+    thunder_spear: {
         id: "thunder_spear",
         name: "雷鳴の槍",
         description: "雷を纏う槍。突きの速さが増す。",
         price: 8000,
         type: "weapon",
         lvlReq: 55,
-        stats: { attack: 200, speedBonus: 10 }
+        stats: { attack: 200, speedBonus: 10 },
     },
-    "moonlight_rapier": {
+    moonlight_rapier: {
         id: "moonlight_rapier",
         name: "月光のレイピア",
         description: "月明かりを刃に映す細剣。会心の一撃を誘う。",
         price: 10000,
         type: "weapon",
         lvlReq: 60,
-        stats: { attack: 240, critChance: 0.12 }
+        stats: { attack: 240, critChance: 0.12 },
     },
-    "abyssal_blade": {
+    abyssal_blade: {
         id: "abyssal_blade",
         name: "深淵の大剣",
         description: "闇に呑まれた大剣。傷から力を吸い取る。",
         price: 35000,
         type: "weapon",
         lvlReq: 80,
-        stats: { attack: 550, lifesteal: 0.05 }
+        stats: { attack: 550, lifesteal: 0.05 },
     },
-    "phoenix_bow": {
+    phoenix_bow: {
         id: "phoenix_bow",
         name: "不死鳥の弓",
         description: "不死鳥の炎を纏う弓。",
         price: 70000,
         type: "weapon",
         lvlReq: 95,
-        stats: { attack: 850, fireDamage: 40 }
+        stats: { attack: 850, fireDamage: 40 },
     },
-    "dragon_bow": {
+    dragon_bow: {
         id: "dragon_bow",
         name: "ドラゴンスレイヤーの弓",
         description: "竜の骨を削り出した巨大な剛弓。",
@@ -358,7 +364,7 @@ export const ITEMS = {
         lvlReq: 85,
         stats: { attack: 720 },
     },
-    "leather_armor": {
+    leather_armor: {
         id: "leather_armor",
         name: "革の軽鎧",
         description: "動きやすさを重視した防具。",
@@ -367,7 +373,7 @@ export const ITEMS = {
         lvlReq: 5,
         stats: { defense: 10 },
     },
-    "fire_armor": {
+    fire_armor: {
         id: "fire_armor",
         name: "ファイア・プレート",
         description: "火炎耐性を持つ灼熱の金属鎧。",
@@ -376,7 +382,7 @@ export const ITEMS = {
         lvlReq: 45,
         stats: { defense: 45, fireResist: 20 },
     },
-    "ice_armor": {
+    ice_armor: {
         id: "ice_armor",
         name: "フロスト・メイル",
         description: "冷気を纏う美しい防具。",
@@ -385,79 +391,79 @@ export const ITEMS = {
         lvlReq: 40,
         stats: { defense: 40, iceResist: 25 },
     },
-    "cheat_armor": {
+    cheat_armor: {
         id: "cheat_armor",
         name: "悠久の守護神鎧",
         description: "あらゆる攻撃を無効化する神の鎧。",
-        price: 9999999999,
+        price: 99999999,
         type: "armor",
         lvlReq: 100,
         stats: { defense: 99999 },
     },
-    "chain_mail": {
+    chain_mail: {
         id: "chain_mail",
         name: "鎖帷子",
         description: "軽量で動きやすい鎖の鎧。",
         price: 350,
         type: "armor",
         lvlReq: 10,
-        stats: { defense: 15 }
+        stats: { defense: 15 },
     },
-    "knight_armor": {
+    knight_armor: {
         id: "knight_armor",
         name: "騎士の鎧",
         description: "騎士団に伝わる頑丈な鎧。",
         price: 900,
         type: "armor",
         lvlReq: 20,
-        stats: { defense: 28 }
+        stats: { defense: 28 },
     },
-    "guardian_plate": {
+    guardian_plate: {
         id: "guardian_plate",
         name: "守護者のプレート",
         description: "守りを重視した重厚なプレートアーマー。",
         price: 1800,
         type: "armor",
         lvlReq: 30,
-        stats: { defense: 40 }
+        stats: { defense: 40 },
     },
-    "mystic_robe": {
+    mystic_robe: {
         id: "mystic_robe",
         name: "神秘のローブ",
         description: "魔力を守るローブ。属性耐性も僅かに得る。",
         price: 12000,
         type: "armor",
         lvlReq: 60,
-        stats: { defense: 35, fireResist: 10, iceResist: 10 }
+        stats: { defense: 35, fireResist: 10, iceResist: 10 },
     },
-    "titan_armor": {
+    titan_armor: {
         id: "titan_armor",
         name: "タイタンアーマー",
         description: "巨人の名を冠する超重量の鎧。",
         price: 20000,
         type: "armor",
         lvlReq: 70,
-        stats: { defense: 70 }
+        stats: { defense: 70 },
     },
-    "celestial_mail": {
+    celestial_mail: {
         id: "celestial_mail",
         name: "天蓋の鎧",
         description: "天上の力を宿す鎧。炎と氷への耐性を持つ。",
         price: 40000,
         type: "armor",
         lvlReq: 80,
-        stats: { defense: 90, fireResist: 15, iceResist: 15 }
+        stats: { defense: 90, fireResist: 15, iceResist: 15 },
     },
-    "void_aegis": {
+    void_aegis: {
         id: "void_aegis",
         name: "虚無の護盾",
         description: "あらゆる攻撃を吸収せんとする究極の護り。",
         price: 80000,
         type: "armor",
         lvlReq: 95,
-        stats: { defense: 120 }
+        stats: { defense: 120 },
     },
-    "dragon_scale_armor": {
+    dragon_scale_armor: {
         id: "dragon_scale_armor",
         name: "ドラゴンスケールアーマー",
         description: "竜の鱗を用いた最強に近い防具。",
@@ -468,7 +474,7 @@ export const ITEMS = {
     },
 
     // --- 死のショップ用 ---
-    "death_scythe": {
+    death_scythe: {
         id: "death_scythe",
         name: "死神の鎌",
         description: "魂を刈り取る魔具。HPが低い敵ほど威力が上がる。",
@@ -482,24 +488,23 @@ export const ITEMS = {
             const hpRatio = target.hp / target.maxHp;
             const multiplier = 1 + (1 - hpRatio);
             return Math.ceil(baseAtk * multiplier);
-        }
+        },
     },
-    "resurrection_scroll": {
+    resurrection_scroll: {
         id: "resurrection_scroll",
         name: "復活の秘巻物",
         description: "一度きり、死の淵から帰還できる。",
         price: 5000,
         type: "consumable",
-        stats: { revive: true }
+        stats: { revive: true },
     },
-    "cursed_ring": {
+    cursed_ring: {
         id: "cursed_ring",
         name: "破滅と再生の指輪",
         description: "力と引き換えに命を削る呪いの装備。",
         price: 30000,
         type: "armor",
         lvlReq: 50,
-        stats: { attackMultiplier: 2.0, poison: true }
-    }
+        stats: { attackMultiplier: 2.0, poison: true },
+    },
 };
-

@@ -1,4 +1,5 @@
 // Buff icon + particles shown above a buffed player.
+import { areEffectsEnabled } from '../utils/effectsSettings.js';
 
 const BUFF_ICONS = {
     attack_buff: { emoji: '⚔️', color: 0xff4444, name: '攻撃力UP' },
@@ -50,17 +51,22 @@ export function applyBuffVisual(scene, target, buffType, buffValue, duration) {
     });
 
     // Light particles (負荷軽減のため頻度・寿命を抑えめに)
-    const particles = scene.add.particles(target.x, target.y - 40, 'water', {
-        speed: { min: 20, max: 40 },
-        scale: { start: 0.3, end: 0 },
-        alpha: { start: 0.8, end: 0 },
-        lifespan: 700,
-        blendMode: 'ADD',
-        tint: buffInfo.color,
-        frequency: 250,
-        quantity: 1
-    });
-    particles.setDepth(999);
+    // バフ効果時間中ずっと発生し続けるエミッターなので、エフェクトOFF設定時は
+    // 生成自体をスキップする（ラグの主な原因のひとつだったため）。
+    let particles = null;
+    if (areEffectsEnabled(scene)) {
+        particles = scene.add.particles(target.x, target.y - 40, 'water', {
+            speed: { min: 20, max: 40 },
+            scale: { start: 0.3, end: 0 },
+            alpha: { start: 0.8, end: 0 },
+            lifespan: 700,
+            blendMode: 'ADD',
+            tint: buffInfo.color,
+            frequency: 250,
+            quantity: 1
+        });
+        particles.setDepth(999);
+    }
 
     if (scene.notificationUI) {
         scene.notificationUI.show(`${buffInfo.name} +${buffValue}`, 'success');
@@ -101,7 +107,9 @@ export function applyBuffVisual(scene, target, buffType, buffValue, duration) {
             }
         });
 
-        particles.stop();
-        scene.time.delayedCall(2000, () => particles.destroy());
+        if (particles) {
+            particles.stop();
+            scene.time.delayedCall(2000, () => particles.destroy());
+        }
     });
 }

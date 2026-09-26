@@ -5,6 +5,7 @@ import { isAnyWindowOpen } from '../utils/uiState.js';
 import { applySkillEffect, showHitEffect, showCriticalEffect } from './skillEffects.js';
 import { applyBuffVisual } from './buffVisuals.js';
 import { spawnSummon, destroySummon, isSummonSkill } from './summons.js';
+import { areEffectsEnabled } from '../utils/effectsSettings.js';
 
 const BASIC_ATTACK_RANGE = 80;
 const BASIC_ATTACK_COOLDOWN_MS = 500;
@@ -84,7 +85,7 @@ export function performBasicAttack(scene) {
         if (damageData.isExecute) showExecuteEffect(scene, enemy, player);
         if (damageData.isFreeze) showFreezeEffect(scene, enemy);
 
-        scene.cameras.main.shake(100, 0.005);
+        if (areEffectsEnabled(scene)) scene.cameras.main.shake(100, 0.005);
     });
 
     player.lastAttackTime = now;

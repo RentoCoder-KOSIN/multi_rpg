@@ -1,5 +1,6 @@
 import Enemy from './Enemy.js';
 import { getLevelDiffMultiplier } from '../utils/levelScaling.js';
+import { areEffectsEnabled } from '../utils/effectsSettings.js';
 
 export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, owner, type = 'normal', skillLevel = 1) {
@@ -78,16 +79,21 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
             pTint = (type === 'demon_lord' || type === 'demon_lord_summon') ? 0xff0000 : 0xff00ff;
         }
 
-        this.emitter = scene.add.particles(0, 0, 'water', {
-            speed: { min: -20, max: 20 },
-            scale: { start: pScale, end: 0 },
-            alpha: { start: 0.5, end: 0 },
-            lifespan: 500,
-            blendMode: 'ADD',
-            tint: pTint,
-            frequency: 100,
-            follow: this
-        });
+        // 召喚獣が生きている間ずっと発生し続けるエミッターなので、
+        // エフェクトOFF設定時は生成自体をスキップする（継続的なラグの原因だったため）。
+        this.emitter = null;
+        if (areEffectsEnabled(scene)) {
+            this.emitter = scene.add.particles(0, 0, 'water', {
+                speed: { min: -20, max: 20 },
+                scale: { start: pScale, end: 0 },
+                alpha: { start: 0.5, end: 0 },
+                lifespan: 500,
+                blendMode: 'ADD',
+                tint: pTint,
+                frequency: 100,
+                follow: this
+            });
+        }
     }
 
     // レベル差補正で参照する「召喚獣のレベル」＝召喚主のレベル

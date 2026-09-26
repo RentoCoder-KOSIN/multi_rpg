@@ -1,5 +1,6 @@
 // Visual effects for skills and hits. Pure presentation: no damage or state changes here.
 import { SKILLS } from '../data/skills.js';
+import { areEffectsEnabled } from '../utils/effectsSettings.js';
 
 // 他プレイヤーが使ったスキルはパーティクル数を減らして負荷を下げる
 const REMOTE_EFFECT_SCALE = 0.5;
@@ -8,6 +9,7 @@ const REMOTE_EFFECT_SCALE = 0.5;
  * Small star flash at a hit position.
  */
 export function showHitEffect(scene, x, y, color) {
+    if (!areEffectsEnabled(scene)) return;
     const flash = scene.add.star(x, y, 5, 5, 15, color, 1);
     scene.tweens.add({
         targets: flash,
@@ -23,6 +25,7 @@ export function showHitEffect(scene, x, y, color) {
  * Yellow flash plus floating "CRITICAL!" text above an enemy.
  */
 export function showCriticalEffect(scene, enemy) {
+    if (!areEffectsEnabled(scene)) return;
     showHitEffect(scene, enemy.x, enemy.y - 20, 0xffff00);
     const critText = scene.add.text(enemy.x, enemy.y - 40, 'CRITICAL!', {
         fontSize: '16px', color: '#ffff00', fontFamily: '"Press Start 2P"', stroke: '#000', strokeThickness: 4
@@ -40,6 +43,7 @@ export function showCriticalEffect(scene, enemy) {
 export function applySkillEffect(scene, skillId, sourceUser, isRemote = false) {
     const skill = SKILLS[skillId];
     if (!skill) return;
+    if (!areEffectsEnabled(scene)) return; // パーティクル演出をまるごとスキップして負荷を下げる
 
     // Effect size scales with the (level-boosted) skill range; base range 80 = scale 1.0
     const skillLevel = sourceUser.stats?.skillLevels?.[skillId] || 1;

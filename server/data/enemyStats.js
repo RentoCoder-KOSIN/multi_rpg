@@ -9,7 +9,7 @@ const ENEMY_STATS = {
         level: 1,
         hp: 150,
         atk: 5,
-        exp: 100000000,
+        exp: 60,
         gold: 50,
         drops: [
             { id: "potion", chance: 0.05 },
