@@ -102,14 +102,19 @@ export function spawnEnemyFromServer(scene, data) {
 
     // Contact damage to our summon (summonはサーバーAIの対象外なので、これは二重ダメージにならない)
     if (scene.activeSummon && scene.activeSummon.active) {
-        colliders.push(scene.physics.add.overlap(scene.activeSummon, enemy, () => {
+        const summonCollider = scene.physics.add.overlap(scene.activeSummon, enemy, () => {
             const now = scene.time.now;
             if (!scene.activeSummon.lastHitTime || now - scene.activeSummon.lastHitTime > SUMMON_CONTACT_COOLDOWN_MS) {
                 const levelMult = getLevelDiffMultiplier(enemy.level, scene.activeSummon.level ?? 1);
                 scene.activeSummon.takeDamage(Math.max(1, Math.ceil(enemy.atk * levelMult)));
                 scene.activeSummon.lastHitTime = now;
             }
-        }));
+        });
+        colliders.push(summonCollider);
+        // 召喚獣側が先に消滅した場合もこのColliderを破棄できるよう、召喚獣側の
+        // クリーンアップ配列にも登録しておく（summons.js destroySummon参照）。
+        if (!scene.activeSummon._colliders) scene.activeSummon._colliders = [];
+        scene.activeSummon._colliders.push(summonCollider);
     }
 
     // 敵が破壊される瞬間（撃破・シーン遷移など）に、上で登録した全Colliderを破棄する。

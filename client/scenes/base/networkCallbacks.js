@@ -51,7 +51,7 @@ function handleEnemyKilled(scene, enemyData) {
         const gold = enemyData.gold || 0;
         const drops = enemyData.drops || [];
 
-        if (exp > 0) scene.player.gainExp(exp);
+        if (exp > 0) scene.player.gainExp(exp, enemyData.level);
         if (gold > 0) scene.player.gainGold(gold);
 
         drops.forEach(itemId => scene.player.addItem(itemId));

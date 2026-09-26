@@ -16,6 +16,7 @@ module.exports = function registerEnemyHandlers(socket, { io, aiManager, enemySe
         const payload = (exp, gold, dropList) => ({
             id: enemy.id,
             type: enemy.type,
+            level: enemy.level,
             killedBy: playerId,
             exp,
             gold,

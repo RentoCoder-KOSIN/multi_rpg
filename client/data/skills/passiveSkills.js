@@ -43,6 +43,6 @@ export const PASSIVE_SKILLS = {
         type: 'passive',
         unlockCost: 50,
         icon: '🔗',
-        description: '常時：召喚維持コスト-50%'
+        description: '常時：召喚獣の自然減衰ダメージ-50%（長持ちする）'
     })
 };

@@ -23,11 +23,18 @@ export function spawnSummon(scene, player, summonType = 'summon') {
     const summon = new SummonedBeast(scene, summonX, summonY, player, summonType, skillLevel);
     scene.activeSummon = summon;
 
+    // このSummonのために作ったColliderをここに集めておき、召喚獣が消滅するときに
+    // 必ず破棄する（destroySummon参照）。
+    // 修正前はここで敵ごとに登録したoverlapを一切破棄していなかったため、
+    // 「召喚→消滅→再召喚」を繰り返すたびに古いColliderが物理ワールドに残り続け、
+    // 敵を倒しても当たり判定コストが減らず、徐々に重くなるバグの原因になっていた。
+    summon._colliders = [];
+
     // Contact damage from enemies that already exist (new enemies are handled in spawnEnemyFromServer)
     const enemies = scene.children.list.filter(child => child instanceof Enemy && child.active);
     enemies.forEach(enemy => {
         if (enemy.active) {
-            scene.physics.add.overlap(summon, enemy, () => {
+            const collider = scene.physics.add.overlap(summon, enemy, () => {
                 const now = scene.time.now;
                 if (!summon.lastHitTime || now - summon.lastHitTime > 1000) {
                     const levelMult = getLevelDiffMultiplier(enemy.level, summon.level ?? 1);
@@ -35,6 +42,7 @@ export function spawnSummon(scene, player, summonType = 'summon') {
                     if (summon) summon.lastHitTime = now;
                 }
             });
+            summon._colliders.push(collider);
         }
     });
 
@@ -74,6 +82,12 @@ export function destroySummon(scene, summon) {
         duration: 500,
         onComplete: () => fadeCircle.destroy()
     });
+
+    // このSummonに紐づく全Colliderを破棄してから消す（物理ワールドへの残留を防ぐ）
+    if (summon._colliders) {
+        summon._colliders.forEach(c => { if (c && c.world) c.destroy(); });
+        summon._colliders.length = 0;
+    }
 
     if (summon.hpBar) summon.hpBar.destroy();
     if (summon.hpBarBg) summon.hpBarBg.destroy();

@@ -92,7 +92,7 @@ export const ADVANCED_SKILLS = {
         name: '魔王召喚',
         type: 'active',
         cd: 60000,
-        mpCost: 200,
+        mpCost: 500,
         unlockCost: 1000,
         color: 0xff0000,
         icon: '👑',

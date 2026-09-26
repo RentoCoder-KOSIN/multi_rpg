@@ -1,7 +1,7 @@
 /**
  * 敵のステータスデータ（サーバー側 - Node.js CommonJS）
  */
-const { ENEMY_ATK_SCALE } = require("../config");
+const { ENEMY_ATK_SCALE, ENEMY_HP_SCALE } = require("../config");
 const { defineEnemy } = require("./schema");
 
 const ENEMY_STATS = {
@@ -178,14 +178,19 @@ function scaledAtk(rawAtk) {
     return Math.max(1, Math.round(rawAtk * ENEMY_ATK_SCALE));
 }
 
+// HP に ENEMY_HP_SCALE を掛けて最終的な体力を求める（最低1は保証する）
+function scaledHp(rawHp) {
+    return Math.max(1, Math.round(rawHp * ENEMY_HP_SCALE));
+}
+
 /**
- * 敵タイプから統計情報を取得（atk は ENEMY_ATK_SCALE 適用後の値）
+ * 敵タイプから統計情報を取得（atk は ENEMY_ATK_SCALE、hp は ENEMY_HP_SCALE 適用後の値）
  * @param {string} type - 敵のタイプ
  * @returns {Object} 敵の統計情報
  */
 function getEnemyStats(type) {
     const s = ENEMY_STATS[type] || ENEMY_STATS.slime;
-    return { ...s, atk: scaledAtk(s.atk) };
+    return { ...s, hp: scaledHp(s.hp), atk: scaledAtk(s.atk) };
 }
 
 /**
@@ -198,7 +203,7 @@ function getPublicEnemyStats() {
         result[type] = {
             displayName: s.displayName,
             level: s.level || 1,
-            hp: s.hp,
+            hp: scaledHp(s.hp),
             atk: scaledAtk(s.atk),
             def: s.def || 0,
             exp: s.exp,
