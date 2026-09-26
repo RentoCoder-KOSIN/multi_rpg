@@ -1674,16 +1674,37 @@
                  "y":2272.66666666667
                 }, 
                 {
-                 "height":26,
-                 "id":110,
+                 "height":32,
+                 "id":111,
                  "name":"",
                  "opacity":1,
+                 "properties":[
+                        {
+                         "name":"destX",
+                         "type":"int",
+                         "value":225
+                        }, 
+                        {
+                         "name":"destY",
+                         "type":"int",
+                         "value":800
+                        }, 
+                        {
+                         "name":"targetMap",
+                         "type":"string",
+                         "value":"volcano"
+                        }, 
+                        {
+                         "name":"unlocked",
+                         "type":"bool",
+                         "value":true
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":26,
-                 "x":136,
-                 "y":2246
+                 "width":32,
+                 "x":126.666666666667,
+                 "y":2242
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1731,6 +1752,18 @@
                  "width":0,
                  "x":2898,
                  "y":914
+                }, 
+                {
+                 "height":0,
+                 "id":110,
+                 "name":"volcano",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":236,
+                 "y":2258
                 }],
          "opacity":1,
          "type":"objectgroup",
