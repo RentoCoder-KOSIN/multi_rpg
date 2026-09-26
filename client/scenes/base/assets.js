@@ -29,5 +29,6 @@ export function preloadCommonAssets(scene, config) {
     });
 
     scene.load.image('water', 'assets/tiles/water.png');
+    scene.load.image('lava', 'assets/tiles/lava.png');
     scene.load.audio('bgm', 'sounds/bgm.mp3');
 }

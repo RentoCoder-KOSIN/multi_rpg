@@ -67,8 +67,9 @@ export default class BaseGameScene extends Phaser.Scene {
         // --- Map ---
         this.map = this.make.tilemap({ key: config.mapKey });
         const tileset = this.map.addTilesetImage('tiles', 'tiles');
-        this.map.addTilesetImage('water', 'water');
-        const { collidableLayers } = setupTilemap(this, this.map, tileset);
+        const waterTileset = this.map.addTilesetImage('water', 'water');
+        const lavaTileset = this.map.addTilesetImage('lava', 'lava');
+        const { collidableLayers } = setupTilemap(this, this.map, [tileset, waterTileset, lavaTileset]);
         this.collidableLayers = collidableLayers;
 
         // --- Player ---

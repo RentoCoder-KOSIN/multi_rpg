@@ -22,6 +22,7 @@ module.exports = {
         "guild1f",
         "guild2f",
         "wetland",
+        "volcano",
     ],
 
     // --- プレイヤー初期値 ---

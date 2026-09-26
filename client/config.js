@@ -6,6 +6,7 @@ import ForestScene from "./scenes/ForestScene.js";
 import GuildScene from "./scenes/GuildScene.js";
 import Guild2Scene from "./scenes/Guild2Scene.js";
 import WetLandScene from "./scenes/WetlandScene.js";
+import VolcanoScene from "./scenes/VolcanoScene.js";
 
 // サーバー設定
 export const SERVER_CONFIG = {
@@ -65,6 +66,7 @@ const config = {
         GuildScene,
         Guild2Scene,
         WetLandScene,
+        VolcanoScene,
     ],
 
     scale: {
