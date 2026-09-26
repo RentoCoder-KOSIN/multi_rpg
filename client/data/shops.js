@@ -16,7 +16,10 @@ const allShopItems = [
     "silver_dagger", "battle_axe", "arcane_rod", "thunder_spear",
     "moonlight_rapier", "abyssal_blade", "phoenix_bow",
     "chain_mail", "knight_armor", "guardian_plate", "mystic_robe",
-    "titan_armor", "celestial_mail", "void_aegis"
+    "titan_armor", "celestial_mail", "void_aegis",
+    // 宝具（accessory）
+    "ring_of_swiftness", "vampiric_amulet", "guardian_charm",
+    "philosophers_stone", "dragonfang_pendant"
 ];
 
 // -----------------------------
@@ -45,7 +48,7 @@ export const SHOP_LOADOUTS = {
     },
     city_death: {
         title: "闇の取引所",
-        items: ["death_scythe", "resurrection_scroll", "cursed_ring", "cheat_sword"]
+        items: ["death_scythe", "resurrection_scroll", "cursed_ring", "cheat_sword", "dragonfang_pendant"]
     },
     // デフォルト（見つからない場合用）
     default: {
@@ -91,6 +94,12 @@ export function resolveShopItems(itemIds, filterCategory = null) {
             // カテゴリの正規化 (item -> consumable)
             const cat = filterCategory.toLowerCase();
             const targetCat = cat === "item" ? "consumable" : cat;
+
+            // 宝具(accessory)専用のショップトリガーは無いため、街の防具屋(category:"armor")
+            // でも宝具を扱う。そうしないと今回追加した宝具アイテムがどの店でも
+            // 買えなくなってしまう（マップ上のショップトリガーは weapon/armor/item の
+            // 3種類しか無いため）。
+            if (targetCat === "armor" && item.type === "accessory") return true;
 
             return item.type === targetCat || item.type === cat;
         })

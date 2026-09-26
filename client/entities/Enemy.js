@@ -63,7 +63,18 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.attackRange = 60; // 攻撃範囲
         this.attackCooldown = 1000; // 攻撃クールダウン（ms）
         this.lastAttackTime = 0;
-        this.isAIEnabled = ENEMY_AI_CONFIG.enabled; // グローバルAI設定から初期化
+        // サーバー管理の敵（isServerManaged）は、update() 内で位置補間して
+        // return するだけで this.ai.update() を一切呼んでいない（下のupdate()参照）。
+        // つまりクライアント側のQ学習AIを生成しても、移動・攻撃の意思決定には
+        // 何も使われない。それにもかかわらず以前はここで isServerManaged を
+        // 見ずに毎回フルのEnemyAI（Q学習エージェント＋localStorageからのモデル
+        // 読み込み＋'aiSharedUpdate' ソケットリスナー登録）を作っていた。
+        // このリスナーは敵が死んでも解除されないため、敵が復活するたびに
+        // 際限なく積み重なっていき、以後の復活のたびに蓄積した全リスナーが
+        // 学習データ(JSON)のパースを行う羽目になる。プレイするほど、特に
+        // 敵の復活のたびにラグが酷くなっていた原因はこれ。
+        // サーバー管理の敵には最初からAIを作らないようにして解消する。
+        this.isAIEnabled = ENEMY_AI_CONFIG.enabled && !this.isServerManaged; // グローバルAI設定から初期化
 
         // AIが有効な場合は初期化
         if (this.isAIEnabled) {

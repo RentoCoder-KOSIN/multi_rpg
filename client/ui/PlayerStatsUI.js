@@ -1,5 +1,6 @@
 import { ITEMS } from "../data/items.js";
 import { SKILLS } from "../data/skills.js";
+import { GROWTH_CONFIG } from "../gameConstants.js";
 import { pinToScreen } from '../utils/screenFixed.js';
 
 export default class PlayerStatsUI {
@@ -52,7 +53,11 @@ export default class PlayerStatsUI {
         this.expLabel = this.scene.add.text(barX, 32 + spacing * 2, 'XP', { fontSize: '8px', color: '#5eff5e', fontFamily: '"Press Start 2P"' });
         this.expBarBg = this.scene.add.rectangle(barX + 25, 36 + spacing * 2, barWidth - 25, 3, 0x222222).setOrigin(0, 0.5);
         this.expBar = this.scene.add.rectangle(barX + 25, 36 + spacing * 2, barWidth - 25, 3, 0x5eff5e).setOrigin(0, 0.5);
-        this.container.add([this.expLabel, this.expBarBg, this.expBar]);
+        // 経験値倍率装備の効果が「今実際に効いているか」を常時ひと目でわかるように表示
+        this.expMultText = this.scene.add.text(barX + 25, 36 + spacing * 2 + 8, '', {
+            fontSize: '7px', fontFamily: '"Press Start 2P"', color: '#ffff55'
+        });
+        this.container.add([this.expLabel, this.expBarBg, this.expBar, this.expMultText]);
 
         // 下部エリア
         this.infoBg = this.scene.add.graphics();
@@ -111,6 +116,20 @@ export default class PlayerStatsUI {
 
         const expPercent = Math.min(1, Math.max(0, stats.exp / stats.maxExp));
         this.expBar.width = Math.max(0, barAreaWidth * expPercent);
+
+        if (this.expMultText) {
+            const mult = stats.expMultiplier || 1.0;
+            const cap = GROWTH_CONFIG.EXP_MULTIPLIER_LEVEL_CAP;
+            if (mult > 1) {
+                if (stats.level <= cap) {
+                    this.expMultText.setText(`✨EXP x${mult}`).setColor('#ffff55');
+                } else {
+                    this.expMultText.setText(`EXP x${mult} (Lv${cap}まで/現在無効)`).setColor('#888888');
+                }
+            } else {
+                this.expMultText.setText('');
+            }
+        }
 
         if (this.goldText) this.goldText.setText(`🪙 ${stats.gold || 0}`);
 
