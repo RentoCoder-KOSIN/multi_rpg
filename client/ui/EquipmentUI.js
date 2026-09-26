@@ -6,7 +6,7 @@ export default class EquipmentUI extends BaseWindowUI {
         super(scene, {
             title: '🛡️ EQUIPMENT',
             width: 400,
-            height: 350,
+            height: 430, // 宝具(RELIC)スロット追加分だけ高さを拡張
             depth: 115000,
             themeColor: 0x4a90e2
         });
@@ -41,15 +41,34 @@ export default class EquipmentUI extends BaseWindowUI {
         if (!player) return;
 
         const equipment = player.stats.equipment;
-        this.createSlot(0, -60, 'WEAPON', equipment.weapon);
-        this.createSlot(0, 60, 'ARMOR', equipment.armor);
+        this.createSlot(0, -90, 'WEAPON', equipment.weapon);
+        this.createSlot(0, 0, 'ARMOR', equipment.armor);
+        this.createSlot(0, 90, 'RELIC', equipment.relic);
 
         // ステータス表示
         const statsText = `ATK: ${player.stats.atk}  DEF: ${player.stats.def}`;
-        const statsDisplay = this.scene.add.text(0, 130, statsText, {
+        const statsDisplay = this.scene.add.text(0, 155, statsText, {
             fontSize: '12px', fontFamily: '"Press Start 2P"', color: '#ffd700'
         }).setOrigin(0.5);
         this.slotContainer.add(statsDisplay);
+    }
+
+    // 装備スロットの右側に出す短いステータス要約。
+    // 武器/防具は ATK/DEF が中心だが、宝具(accessory)は会心率・速度・吸収など
+    // ATK/DEFを持たないことも多いため、値が入っている項目を優先順に拾って表示する。
+    summarizeStats(item) {
+        const s = item.stats || {};
+        const atk = item.atk ?? s.attack;
+        const def = item.def ?? s.defense;
+        const parts = [];
+        if (atk) parts.push(`ATK+${atk}`);
+        if (def) parts.push(`DEF+${def}`);
+        if (s.critChance) parts.push(`会心+${Math.round(s.critChance * 100)}%`);
+        if (s.speedBonus) parts.push(`速度+${s.speedBonus}`);
+        if (s.lifesteal) parts.push(`吸収${Math.round(s.lifesteal * 100)}%`);
+        if (s.expMultiplier) parts.push(`EXP×${s.expMultiplier}`);
+        // スロットが狭いので最大2項目まで
+        return parts.slice(0, 2).join(' ');
     }
 
     createSlot(x, y, label, itemId) {
@@ -77,9 +96,7 @@ export default class EquipmentUI extends BaseWindowUI {
         slot.add(nameTxt);
 
         if (item) {
-            const stats = item.atk ? `ATK+${item.atk}` : (item.stats?.attack ? `ATK+${item.stats.attack}` : '');
-            const defStats = item.def ? `DEF+${item.def}` : (item.stats?.defense ? `DEF+${item.stats.defense}` : '');
-            const statTxt = this.scene.add.text(145, 5, stats || defStats, {
+            const statTxt = this.scene.add.text(145, 5, this.summarizeStats(item), {
                 fontSize: '10px', fontFamily: '"Press Start 2P"', color: '#00ff00'
             }).setOrigin(1, 0);
             slot.add(statTxt);

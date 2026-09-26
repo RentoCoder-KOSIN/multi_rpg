@@ -158,7 +158,7 @@ export default class SkillManagerUI extends BaseWindowUI {
                 allSkills.push({
                     isPromotion: true,
                     nextJobId: jobDef.nextJob,
-                    reqLevel: nextJobDef.reqLevel || 30,
+                    reqLevel: nextJobDef.reqLevel || 50,
                     jobDef: nextJobDef
                 });
             }

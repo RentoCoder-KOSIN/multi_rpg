@@ -194,6 +194,7 @@ export default class InventoryUI extends BaseWindowUI {
     getItemEmoji(item) {
         if (item.type === 'weapon') return '⚔️';
         if (item.type === 'armor') return '🛡️';
+        if (item.type === 'accessory') return '💍';
         if (item.id.includes('potion')) return '🧪';
         return '📦';
     }
@@ -204,12 +205,13 @@ export default class InventoryUI extends BaseWindowUI {
         this.slots.forEach((slot, index) => {
             // 文字列ID比較 (オブジェクト化されたインベントリでも item.id は文字列)
             const isEquipped = this.scene.player.stats.equipment.weapon === slot.item.id ||
-                this.scene.player.stats.equipment.armor === slot.item.id;
+                this.scene.player.stats.equipment.armor === slot.item.id ||
+                this.scene.player.stats.equipment.relic === slot.item.id;
 
             if (index === this.selectedIndex) {
                 this.drawSlot(slot.bg, 0xe94560, 0.4, 0xffffff, 1);
                 if (this.detailText) {
-                    const typeStr = slot.item.type === 'weapon' ? '[武器]' : (slot.item.type === 'armor' ? '[防具]' : '[消耗品]');
+                    const typeStr = slot.item.type === 'weapon' ? '[武器]' : (slot.item.type === 'armor' ? '[防具]' : (slot.item.type === 'accessory' ? '[宝具]' : '[消耗品]'));
                     let reqText = '';
                     if (slot.item.lvlReq) {
                         const isOk = this.scene.player.stats.level >= slot.item.lvlReq;
@@ -241,7 +243,7 @@ export default class InventoryUI extends BaseWindowUI {
 
         if (!item || !this.scene.player) return;
 
-        if (item.type === 'weapon' || item.type === 'armor') {
+        if (item.type === 'weapon' || item.type === 'armor' || item.type === 'accessory') {
             this.scene.player.equipItem(itemId);
         } else {
             this.useItem(index);
@@ -336,7 +338,8 @@ export default class InventoryUI extends BaseWindowUI {
 
         const item = ITEMS[itemId];
         // 装備中のアイテムは捨てられないようにする
-        if (this.scene.player.stats.equipment.weapon === itemId || this.scene.player.stats.equipment.armor === itemId) {
+        if (this.scene.player.stats.equipment.weapon === itemId || this.scene.player.stats.equipment.armor === itemId ||
+            this.scene.player.stats.equipment.relic === itemId) {
             if (this.scene.notificationUI) this.scene.notificationUI.show('装備中のアイテムは捨てられません', 'error');
             return;
         }

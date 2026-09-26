@@ -38,6 +38,16 @@ import { showHitEffect } from '../systems/skillEffects.js';
 import { destroySummon } from '../systems/summons.js';
 import { addOtherPlayer, spawnEnemyFromServer } from '../systems/entitySetup.js';
 
+// ウィンドウが開いている間、Player.update()に「キー入力なし」を伝えるためのダミー。
+// nullを渡すとPlayer.update内のHP/MP自然回復や位置同期まで丸ごとスキップされてしまうため、
+// 各方向キーがfalseなオブジェクトを渡して移動だけを止める。
+const NEUTRAL_CURSORS = {
+    left: { isDown: false },
+    right: { isDown: false },
+    up: { isDown: false },
+    down: { isDown: false },
+};
+
 export default class BaseGameScene extends Phaser.Scene {
     constructor(sceneKey) {
         super(sceneKey);
@@ -170,11 +180,12 @@ export default class BaseGameScene extends Phaser.Scene {
     update(time, delta) {
         if (!this.player || !this.player.active) return;
 
-        this.player.update(this.cursors);
-
-        // Attack / skills are disabled while a window is open
+        // スキル画面などウィンドウが開いている間は、矢印キーでプレイヤーが
+        // 動いてしまわないようにする（HP/MP自然回復や位置同期は止めたくないので、
+        // cursorsそのものを渡さないのではなく「どのキーも押されていない」状態を渡す）。
         const windowOpen = isAnyWindowOpen(this);
-
+        this.player.update(windowOpen ? NEUTRAL_CURSORS : this.cursors);
+        // Attack / skills are disabled while a window is open
         if (!windowOpen && this.attackKey && Phaser.Input.Keyboard.JustDown(this.attackKey)) {
             this.performBasicAttack();
         }

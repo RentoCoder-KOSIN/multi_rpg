@@ -20,7 +20,7 @@
 
 const VALID_RANGE_TYPES = ['circle', 'line', 'fan'];
 const VALID_TARGET_TYPES = ['enemy', 'party'];
-const VALID_ITEM_TYPES = ['weapon', 'armor', 'consumable'];
+const VALID_ITEM_TYPES = ['weapon', 'armor', 'accessory', 'consumable'];
 const VALID_SKILL_TYPES = ['active', 'passive'];
 const VALID_JOB_TYPES = ['physical', 'magical'];
 
@@ -141,6 +141,11 @@ export function defineJob({
  * `stats` holds every number game logic actually reads (attack, defense,
  * matk, heal, healMp, critChance, speedBonus, lifesteal, ...) — see
  * existing items for the full vocabulary of keys in use.
+ *
+ * `type: 'accessory'` is the 宝具 (relic/treasure) slot: a third equip
+ * slot alongside weapon/armor (see `equipment.relic` in Player.js). It
+ * uses the same `stats` vocabulary as weapon/armor — there is no new
+ * field to add, just give it whatever mix of bonuses fits the item.
  *
  * `effect` is for descriptive/special behaviour that doesn't reduce to a
  * plain stat bonus (e.g. `{ kind: 'lifesteal_on_kill' }`) — most items

@@ -38,6 +38,22 @@ function summarizeItemStats(item) {
         if (s.iceResist) parts.push(`氷耐性+${s.iceResist}%`);
         if (s.attackMultiplier) parts.push(`ATK×${s.attackMultiplier}`);
         if (s.poison) parts.push('⚠HPが徐々に減る');
+    } else if (item.type === 'accessory') {
+        // 宝具は武器・防具どちらの数値も持ちうるので、両方チェックする
+        const atk = item.atk ?? s.attack;
+        const matk = item.matk ?? s.matk;
+        const def = item.def ?? s.defense;
+        if (atk) parts.push(`ATK+${atk}`);
+        if (matk) parts.push(`MATK+${matk}`);
+        if (def) parts.push(`DEF+${def}`);
+        if (s.critChance) parts.push(`会心+${Math.round(s.critChance * 100)}%`);
+        if (s.lifesteal) parts.push(`吸収${Math.round(s.lifesteal * 100)}%`);
+        if (s.speedBonus) parts.push(`速度+${s.speedBonus}`);
+        if (s.fireResist) parts.push(`火耐性+${s.fireResist}%`);
+        if (s.iceResist) parts.push(`氷耐性+${s.iceResist}%`);
+        if (s.attackMultiplier) parts.push(`ATK×${s.attackMultiplier}`);
+        if (s.expMultiplier) parts.push(`EXP×${s.expMultiplier}`);
+        if (s.poison) parts.push('⚠HPが徐々に減る');
     } else {
         // 消耗品など
         const heal = item.heal ?? s.heal;

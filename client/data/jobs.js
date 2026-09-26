@@ -12,11 +12,11 @@ export const JOBS = {
         hpBonus: 20,
         skills: {
             1: ['slash'],
-            3: ['whirlwind'],
-            5: ['heavy_slash'],
-            7: ['sonic_wave'],
-            10: ['ground_smash'],
-            15: ['fighting_spirit']
+            10: ['whirlwind'],
+            20: ['heavy_slash'],
+            30: ['sonic_wave'],
+            40: ['ground_smash'],
+            50: ['fighting_spirit']
         },
         nextJob: 'knight'
     }),
@@ -30,12 +30,12 @@ export const JOBS = {
         hpBonus: -10,
         skills: {
             1: ['fireball'],
-            3: ['ice_needle'],
-            5: ['big_fireball'],
-            8: ['dark_nova'],
-            10: ['meteor_swarm'],
-            12: ['thunder_storm'],
-            15: ['mana_well']
+            8: ['ice_needle'],
+            16: ['big_fireball'],
+            24: ['dark_nova'],
+            32: ['meteor_swarm'],
+            40: ['thunder_storm'],
+            50: ['mana_well']
         },
         nextJob: 'archmage'
     }),
@@ -49,11 +49,10 @@ export const JOBS = {
         hpBonus: 50,
         skills: {
             1: ['guard'],
-            3: ['whirlwind'],
-            5: ['iron_defense'],
-            7: [],
-            10: ['shield_bash'],
-            15: ['immovable_body']
+            12: ['whirlwind'],
+            24: ['iron_defense'],
+            36: ['shield_bash'],
+            50: ['immovable_body']
         },
         nextJob: 'paladin'
     }),
@@ -67,11 +66,11 @@ export const JOBS = {
         hpBonus: 5,
         skills: {
             1: ['slash'],
-            3: ['sonic_wave'],
-            5: ['rapid_fire'],
-            7: ['ice_needle'],
-            10: ['arrow_rain'],
-            15: ['wind_walker']
+            10: ['sonic_wave'],
+            20: ['rapid_fire'],
+            30: ['ice_needle'],
+            40: ['arrow_rain'],
+            50: ['wind_walker']
         },
         nextJob: 'sniper'
     }),
@@ -85,14 +84,14 @@ export const JOBS = {
         hpBonus: 10,
         skills: {
             1: ['summon'],
-            3: ['dark_nova'],
-            5: ['mega_summon'],
-            10: ['command_attack'],
-            15: ['spirit_link']
+            12: ['dark_nova'],
+            24: ['mega_summon'],
+            38: ['command_attack'],
+            50: ['spirit_link']
         },
         nextJob: 'high_summoner'
     }),
-    // --- 上位職 (Level 30+) ---
+    // --- 上位職 (Level 50+) ---
     knight: defineJob({
         id: 'knight',
         type: 'physical',
@@ -101,11 +100,11 @@ export const JOBS = {
         atkBonus: 15,
         defBonus: 10,
         hpBonus: 100,
-        reqLevel: 30,
+        reqLevel: 50,
         skills: {
-            30: ['judgment_cut'],
-            35: ['ground_smash'],
-            40: ['heavy_slash']
+            50: ['judgment_cut'],
+            60: ['ground_smash'],
+            70: ['heavy_slash']
         }
     }),
     archmage: defineJob({
@@ -116,11 +115,11 @@ export const JOBS = {
         atkBonus: 25,
         defBonus: 5,
         hpBonus: 20,
-        reqLevel: 30,
+        reqLevel: 50,
         skills: {
-            30: ['abyss_storm'],
-            35: ['meteor_swarm'],
-            40: ['thunder_storm']
+            50: ['abyss_storm'],
+            60: ['meteor_swarm'],
+            70: ['thunder_storm']
         }
     }),
     paladin: defineJob({
@@ -131,11 +130,11 @@ export const JOBS = {
         atkBonus: 10,
         defBonus: 25,
         hpBonus: 200,
-        reqLevel: 30,
+        reqLevel: 50,
         skills: {
-            30: ['holy_sanctuary'],
-            35: ['shield_bash'],
-            40: ['iron_defense']
+            50: ['holy_sanctuary'],
+            60: ['shield_bash'],
+            70: ['iron_defense']
         }
     }),
     sniper: defineJob({
@@ -146,11 +145,11 @@ export const JOBS = {
         atkBonus: 20,
         defBonus: 8,
         hpBonus: 50,
-        reqLevel: 30,
+        reqLevel: 50,
         skills: {
-            30: ['death_rain'],
-            35: ['arrow_rain'],
-            40: ['rapid_fire']
+            50: ['death_rain'],
+            60: ['arrow_rain'],
+            70: ['rapid_fire']
         }
     }),
     high_summoner: defineJob({
@@ -161,11 +160,11 @@ export const JOBS = {
         atkBonus: 15,
         defBonus: 12,
         hpBonus: 80,
-        reqLevel: 30,
+        reqLevel: 50,
         skills: {
-            30: ['demon_lord_summon'],
-            35: ['mega_summon'],
-            40: ['command_attack']
+            50: ['demon_lord_summon'],
+            60: ['mega_summon'],
+            70: ['command_attack']
         }
     }),
     priest: defineJob({
@@ -178,10 +177,10 @@ export const JOBS = {
         hpBonus: 30,
         skills: {
             1: ['heal', 'attack_buff'],
-            3: ['holy_arrow'],
-            5: ['defense_buff'],
-            10: ['speed_buff'],
-            15: ['summon_boost']
+            12: ['holy_arrow'],
+            24: ['defense_buff'],
+            38: ['speed_buff'],
+            50: ['summon_boost']
         },
         nextJob: 'exorcist'
     }),
@@ -193,11 +192,11 @@ export const JOBS = {
         atkBonus: 20,
         defBonus: 15,
         hpBonus: 60,
-        reqLevel: 30,
+        reqLevel: 50,
         skills: {
-            30: ['exorcism'],
-            35: ['holy_arrow'],
-            40: ['defense_buff']
+            50: ['exorcism'],
+            60: ['holy_arrow'],
+            70: ['defense_buff']
         }
     })
 };

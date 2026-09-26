@@ -3,7 +3,7 @@ import { ITEMS } from "../data/items.js";
 import { SKILLS } from "../data/skills.js";
 import { getEnemyStats } from "../data/enemyStats.js";
 import { getLevelDiffMultiplier, getExpLevelMultiplier } from "../utils/levelScaling.js";
-import { TOTAL_SKILL_SLOTS } from "../gameConstants.js";
+import { TOTAL_SKILL_SLOTS, GROWTH_CONFIG } from "../gameConstants.js";
 
 // レベルアップに必要な経験値を計算する。
 // 以前は maxExp *= 1.5 という「複利」計算だったため、
@@ -90,7 +90,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             dex: saved.dex || 5,  // Dexterity - クリティカル率・回避率に影響
             job: saved.job || 'none',
             inventory: saved.inventory || [],
-            equipment: saved.equipment || { weapon: null, armor: null },
+            // relic (宝具) を新規追加。 ...(saved.equipment || {}) を後に展開することで、
+            // 旧セーブデータ（relicキーが無い）でも weapon/armor はそのまま引き継ぎつつ
+            // relic だけ null で補える。
+            equipment: { weapon: null, armor: null, relic: null, ...(saved.equipment || {}) },
             jobExp: saved.jobExp || 0,
             unlockedSkills: saved.unlockedSkills || [],
             skillLevels: saved.skillLevels || {}, // { skillId: level }
@@ -149,8 +152,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const newJobData = JOBS[newJobId];
 
         // 条件チェック
-        if (this.stats.level < (newJobData.reqLevel || 30)) {
-            if (this.scene.notificationUI) this.scene.notificationUI.show(`レベルが ${newJobData.reqLevel || 30} 足りません！`, 'error');
+        if (this.stats.level < (newJobData.reqLevel || 50)) {
+            if (this.scene.notificationUI) this.scene.notificationUI.show(`レベルが ${newJobData.reqLevel || 50} 足りません！`, 'error');
             return false;
         }
 
@@ -191,9 +194,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     gainExp(amount, enemyLevel = null) {
         if (!this.isLocal) return;
 
-        // 経験値倍率を適用（経験値増加の武器などの効果はLv25以下にのみ有効。
+        // 経験値倍率を適用（経験値増加の武器などの効果はLv{cap}以下にのみ有効。
         // それ以上のレベルでは倍率をかけない）
-        const expMult = (this.stats.level <= 25) ? (this.stats.expMultiplier || 1.0) : 1.0;
+        const expMult = (this.stats.level <= GROWTH_CONFIG.EXP_MULTIPLIER_LEVEL_CAP) ? (this.stats.expMultiplier || 1.0) : 1.0;
 
         // レベル差補正: 敵レベルが分かる場合、圧倒的な格下（レベル差15以上）を
         // 狩ったときは経験値を減らす。敵の方が格上の場合は補正しない。
@@ -204,8 +207,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         if (this.stats.level < 100) { // レベルキャップ
             this.stats.exp += finalAmount;
 
-            // ジョブ経験値も獲得 (現在は経験値と同量)
-            this.stats.jobExp = (this.stats.jobExp || 0) + finalAmount;
+            // ジョブ経験値も獲得（簡単に貯まりすぎないよう、通常経験値の一部だけ加算する）
+            this.stats.jobExp = (this.stats.jobExp || 0) + Math.ceil(finalAmount * GROWTH_CONFIG.JOB_EXP_RATE);
 
             let leveledUp = false;
             // 複数レベルアップに対応 & 経験値を消費するように修正
@@ -243,7 +246,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const itemDef = ITEMS[itemId];
 
         // 武器と防具以外はスタック可能
-        const isStackable = itemDef.type !== 'weapon' && itemDef.type !== 'armor';
+        const isStackable = itemDef.type !== 'weapon' && itemDef.type !== 'armor' && itemDef.type !== 'accessory';
+
+        // 経験値倍率つきの装備は、入手した時点で一目でわかるようにタグを付ける
+        const itemExpMult = itemDef.stats?.expMultiplier || itemDef.expMultiplier;
+        const expTag = (itemExpMult && itemExpMult !== 1) ? ` ✨経験値x${itemExpMult}` : '';
 
         if (isStackable) {
             const existingItem = this.stats.inventory.find(i => i.id === itemId);
@@ -254,7 +261,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
                 this.stats.inventory.push({ id: itemId, count: amount });
             }
             if (this.scene.notificationUI) {
-                this.scene.notificationUI.show(`アイテム入手: ${itemDef.name} x${amount}`, 'success');
+                this.scene.notificationUI.show(`アイテム入手: ${itemDef.name} x${amount}${expTag}`, 'success');
             }
         } else {
             // スタック不可アイテムは個別に追記
@@ -262,7 +269,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
                 this.stats.inventory.push({ id: itemId, count: 1 });
             }
             if (this.scene.notificationUI) {
-                this.scene.notificationUI.show(`アイテム入手: ${itemDef.name}`, 'success');
+                this.scene.notificationUI.show(`アイテム入手: ${itemDef.name}${expTag}`, 'success');
             }
         }
         this.saveStats();
@@ -285,15 +292,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         this.stats.jobExp -= cost;
         this.stats.unlockedSkills.push(skillId);
+
+        // 初期レベルを1に設定
+        this.stats.skillLevels[skillId] = 1;
+
+        // パッシブスキル（攻撃力+10%など）は習得した瞬間から効いてほしいので、
+        // ここでステータスを再計算する。以前は次に装備を変えたりレベルアップ
+        // するまで反映されず、「習得してもパッシブが効いていない」ように見えていた。
+        this.applyEquipmentStats();
         this.saveStats();
 
         if (this.scene.notificationUI) {
             this.scene.notificationUI.show(`スキル「${skillDef.name}」を習得した！`, 'success');
         }
-
-        // 初期レベルを1に設定
-        this.stats.skillLevels[skillId] = 1;
-        this.saveStats();
 
         return true;
     }
@@ -408,6 +419,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.stats.speedBonus = (dex * 2) + speedSkillBonus;
         this.stats.expMultiplier = 1.0;
 
+        // ステータス割り振り画面で「装備によってここまで補正されている」を
+        // 表示できるように、装備を加算する直前（素のステータス）を控えておく。
+        const baseAtk = this.stats.atk;
+        const baseDef = this.stats.def;
+        const baseCritChance = this.stats.critChance;
+        const baseSpeedBonus = this.stats.speedBonus;
+
         // 装備由来の特殊効果（毎回リセットしてから再計算する）
         this.stats.atkMultiplier = 1.0;
         this.stats.fireResist = 0;   // %
@@ -420,9 +438,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         const weapon = ITEMS[this.stats.equipment.weapon];
         const armor = ITEMS[this.stats.equipment.armor];
+        const relic = ITEMS[this.stats.equipment.relic]; // 宝具スロット
 
         // 装備ボーナスを加算
-        [weapon, armor].forEach(item => {
+        [weapon, armor, relic].forEach(item => {
             if (!item) return;
             const s = item.stats || {};
 
@@ -453,6 +472,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             if (item.expMultiplier) this.stats.expMultiplier += (item.expMultiplier - 1.0);
             if (s.expMultiplier) this.stats.expMultiplier += (getVal(s.expMultiplier) - 1.0);
         });
+
+        // ここまでで武器/防具/宝具による補正が乗った後の値なので、装備前との差分を
+        // 「装備補正値」として保持する（UI表示用。種による永続加算はここに含めない）。
+        this.stats.equipBonus = {
+            atk: this.stats.atk - baseAtk,
+            def: this.stats.def - baseDef,
+            critChance: this.stats.critChance - baseCritChance,
+            speedBonus: this.stats.speedBonus - baseSpeedBonus,
+        };
+        this.stats.isMagicalJob = isMagical;
 
         // アイテム（種）による永続ステータス加算
         this.stats.atk += (this.stats.bonusAtk || 0);
@@ -591,12 +620,26 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.stats.equipment.weapon = itemId;
         } else if (item.type === 'armor') {
             this.stats.equipment.armor = itemId;
+        } else if (item.type === 'accessory') {
+            this.stats.equipment.relic = itemId;
         }
 
         this.applyEquipmentStats(); // すべてのステータスを再計算
 
         if (this.scene.notificationUI) {
             this.scene.notificationUI.show(`${item.name} を装備しました！`, 'info');
+
+            // 経験値倍率つきの装備は、実際に効いているかどうかが分かりにくいという声が
+            // あったため、装備した瞬間に「x◯発動中/Lv上限で無効」をはっきり表示する。
+            const itemExpMult = item.stats?.expMultiplier || item.expMultiplier;
+            if (itemExpMult && itemExpMult !== 1) {
+                const cap = GROWTH_CONFIG.EXP_MULTIPLIER_LEVEL_CAP;
+                if (this.stats.level <= cap) {
+                    this.scene.notificationUI.show(`✨経験値 x${itemExpMult} 発動中！（Lv${cap}まで）`, 'success');
+                } else {
+                    this.scene.notificationUI.show(`⚠経験値x${itemExpMult}の効果はLv${cap}までのため、現在は無効です`, 'error');
+                }
+            }
         }
 
         this.saveStats();

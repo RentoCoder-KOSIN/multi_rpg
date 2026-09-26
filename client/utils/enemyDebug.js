@@ -18,57 +18,71 @@ export function createEnemyDebugUI(scene) {
 export function updateEnemyDebugUI(scene) {
     if (!scene.enemyDebugText || !scene.player) return;
 
-    const enemies = scene.networkManager?.getEnemies() || {};
-    const enemyCount = Object.keys(enemies).length;
-    
-    let debugText = `=== 敵AI デバッグ情報 ===\n敵数: ${enemyCount}\n`;
+    // このデバッグ表示はDキーで誰でも開けるが、内部で例外が起きると
+    // シーンのupdate()がそこで止まってしまい、移動やネットワーク同期まで
+    // 巻き込んで「フリーズしたように見える」原因になっていた。
+    // 表示はあくまでおまけ機能なので、失敗しても本編の処理は絶対に止めない。
+    try {
+        const enemies = scene.networkManager?.getEnemies() || {};
+        const enemyList = Object.values(enemies).filter(Boolean);
+        const enemyCount = enemyList.length;
 
-    // プレイヤーの位置
-    debugText += `\nプレイヤー位置: (${scene.player.x.toFixed(0)}, ${scene.player.y.toFixed(0)})\n`;
+        let debugText = `=== 敵AI デバッグ情報 ===\n敵数: ${enemyCount}\n`;
 
-    // 最初の8体の敵について詳細を表示
-    let displayCount = 0;
-    Object.values(enemies).forEach(enemy => {
-        if (displayCount >= 8 || !enemy.active) return;
-        displayCount++;
+        // プレイヤーの位置
+        debugText += `\nプレイヤー位置: (${scene.player.x.toFixed(0)}, ${scene.player.y.toFixed(0)})\n`;
 
-        const distance = Phaser.Math.Distance.Between(
-            scene.player.x, scene.player.y,
-            enemy.x, enemy.y
-        );
+        // 最初の8体の敵について詳細を表示
+        let displayCount = 0;
+        enemyList.forEach(enemy => {
+            if (displayCount >= 8 || !enemy || !enemy.active) return;
+            displayCount++;
 
-        const inDetectRange = distance < enemy.detectRange;
-        const inAttackRange = distance < enemy.attackRange;
+            const distance = Phaser.Math.Distance.Between(
+                scene.player.x, scene.player.y,
+                enemy.x, enemy.y
+            );
 
-        debugText += `\n[敵${displayCount}] ${enemy.type.toUpperCase()}`;
-        debugText += `\n  位置: (${enemy.x.toFixed(0)}, ${enemy.y.toFixed(0)})`;
-        debugText += `\n  距離: ${distance.toFixed(0)} (検:${enemy.detectRange} 攻:${enemy.attackRange})`;
-        debugText += `\n  HP: ${enemy.hp}/${enemy.maxHp}`;
-        
-        if (enemy.ai && enemy.isAIEnabled) {
-            debugText += `\n  [AI有効]`;
-            debugText += `\n  状態: ${inDetectRange ? (inAttackRange ? '🔴攻撃範囲' : '🟡検出範囲') : '⚪未検出'}`;
-            if (enemy.ai.lastAction) {
-                debugText += ` | 行動: ${enemy.ai.lastAction}`;
+            const detectRange = enemy.detectRange ?? 0;
+            const attackRange = enemy.attackRange ?? 0;
+            const inDetectRange = distance < detectRange;
+            const inAttackRange = distance < attackRange;
+            const typeLabel = (enemy.type || '???').toString().toUpperCase();
+
+            debugText += `\n[敵${displayCount}] ${typeLabel}`;
+            debugText += `\n  位置: (${enemy.x.toFixed(0)}, ${enemy.y.toFixed(0)})`;
+            debugText += `\n  距離: ${distance.toFixed(0)} (検:${detectRange} 攻:${attackRange})`;
+            debugText += `\n  HP: ${enemy.hp}/${enemy.maxHp}`;
+
+            if (enemy.ai && enemy.isAIEnabled) {
+                debugText += `\n  [AI有効]`;
+                debugText += `\n  状態: ${inDetectRange ? (inAttackRange ? '🔴攻撃範囲' : '🟡検出範囲') : '⚪未検出'}`;
+                if (enemy.ai.lastAction) {
+                    debugText += ` | 行動: ${enemy.ai.lastAction}`;
+                }
+
+                // AI統計情報（改善版 + ピア学習数表示）
+                const aiStats = enemy.ai.getStats ? enemy.ai.getStats() : null;
+                if (aiStats) {
+                    debugText += `\n  フレーム数: ${aiStats.frameCount}`;
+                    debugText += ` | 生存時間: ${aiStats.survivalTime}`;
+                    debugText += `\n  学習フレーム: ${aiStats.updateCount}`;
+                    debugText += ` | Q-table: ${aiStats.qTableSize}`;
+                    debugText += ` | Peers: ${aiStats.peersCount}`;
+                    debugText += `\n  ε=${aiStats.epsilon}`;
+                    debugText += ` | 平均報酬=${aiStats.avgReward}`;
+                    debugText += ` | 累計報酬=${aiStats.totalReward}`;
+                }
+            } else {
+                debugText += `\n  [デフォルト動作]`;
+                debugText += `\n  状態: ${inDetectRange ? (inAttackRange ? '🔴攻撃範囲' : '🟡検出範囲') : '⚪未検出'}`;
             }
-            
-            // AI統計情報（改善版 + ピア学習数表示）
-            const aiStats = enemy.ai.getStats();
-            debugText += `\n  フレーム数: ${aiStats.frameCount}`;
-            debugText += ` | 生存時間: ${aiStats.survivalTime}`;
-            debugText += `\n  学習フレーム: ${aiStats.updateCount}`;
-            debugText += ` | Q-table: ${aiStats.qTableSize}`;
-            debugText += ` | Peers: ${aiStats.peersCount}`;
-            debugText += `\n  ε=${aiStats.epsilon}`;
-            debugText += ` | 平均報酬=${aiStats.avgReward}`;
-            debugText += ` | 累計報酬=${aiStats.totalReward}`;
-        } else {
-            debugText += `\n  [デフォルト動作]`;
-            debugText += `\n  状態: ${inDetectRange ? (inAttackRange ? '🔴攻撃範囲' : '🟡検出範囲') : '⚪未検出'}`;
-        }
-    });
+        });
 
-    scene.enemyDebugText.setText(debugText);
+        scene.enemyDebugText.setText(debugText);
+    } catch (e) {
+        console.warn('[enemyDebug] デバッグ表示の更新に失敗しました（本編には影響しません）:', e);
+    }
 }
 
 export function drawEnemyDetectionRanges(scene, graphics) {

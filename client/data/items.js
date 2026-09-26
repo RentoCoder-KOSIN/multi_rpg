@@ -56,7 +56,7 @@ export const ITEMS = {
         level: 1,
         price: 750,
         stats: { attack: 3, expMultiplier: 2 },
-        description: "獲得経験値を2倍にする初心者に優しい武器。",
+        description: "獲得経験値がx2になる初心者に優しい武器。効果はLv25まで（それ以降は無効）。",
     }),
 
     hero_sword: defineItem({
@@ -87,6 +87,53 @@ export const ITEMS = {
         price: 800,
         stats: { defense: 12 },
         description: "全身を保護する重厚な鎧。",
+    }),
+
+    // --- 宝具 ---
+    ring_of_swiftness: defineItem({
+        id: "ring_of_swiftness",
+        name: "疾風の指輪",
+        type: "accessory",
+        level: 10,
+        price: 1500,
+        stats: { speedBonus: 15, critChance: 0.03 },
+        description: "身のこなしを軽くする宝具。移動速度と会心率が上がる。",
+    }),
+    vampiric_amulet: defineItem({
+        id: "vampiric_amulet",
+        name: "吸血のアミュレット",
+        type: "accessory",
+        level: 25,
+        price: 4500,
+        stats: { lifesteal: 0.08, attack: 10 },
+        description: "与えたダメージの一部をHPに変える呪具。",
+    }),
+    guardian_charm: defineItem({
+        id: "guardian_charm",
+        name: "守護のお守り",
+        type: "accessory",
+        level: 35,
+        price: 6000,
+        stats: { defense: 20, fireResist: 10, iceResist: 10 },
+        description: "持ち主を炎と氷からも守る御守り。",
+    }),
+    philosophers_stone: defineItem({
+        id: "philosophers_stone",
+        name: "賢者の石",
+        type: "accessory",
+        level: 45,
+        price: 20000,
+        stats: { matk: 40, expMultiplier: 1.5 },
+        description: "魔力を増幅し、経験の吸収を早める伝説の石。獲得経験値x1.5（Lv25まで）。",
+    }),
+    dragonfang_pendant: defineItem({
+        id: "dragonfang_pendant",
+        name: "竜牙のペンダント",
+        type: "accessory",
+        level: 65,
+        price: 45000,
+        stats: { attack: 60, defense: 30, critChance: 0.08 },
+        description: "竜の牙を削り出した宝具。攻防両方を底上げする。",
     }),
 
     // --- 消耗品 ---
@@ -504,9 +551,12 @@ export const ITEMS = {
     cursed_ring: defineItem({
         id: "cursed_ring",
         name: "破滅と再生の指輪",
-        description: "力と引き換えに命を削る呪いの装備。",
+        description: "力と引き換えに命を削る呪いの宝具。",
         price: 30000,
-        type: "armor",
+        // 指輪なので防具ではなく宝具(accessory)スロットに変更。
+        // 以前は "armor" 扱いだったため、防具枠を圧迫して武器/防具/宝具を
+        // 同時に活かせなかった。
+        type: "accessory",
         level: 50,
         stats: { attackMultiplier: 2.0, poison: true },
     }),
