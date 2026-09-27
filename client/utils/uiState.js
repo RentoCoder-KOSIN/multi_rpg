@@ -8,6 +8,7 @@ export function isAnyWindowOpen(scene) {
         scene.shopUI?.isOpen ||
         scene.skillManagerUI?.isOpen ||
         scene.statAllocationUI?.isOpen ||
+        scene.guildQuestBoardUI?.isOpen ||
         (scene.settingsUI && scene.settingsUI.visible)
     );
 }

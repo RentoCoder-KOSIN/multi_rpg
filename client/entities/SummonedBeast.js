@@ -308,6 +308,20 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
     preDestroy() {
         if (this.hpBar) this.hpBar.destroy();
         if (this.hpBarBg) this.hpBarBg.destroy();
-        if (this.emitter) this.emitter.destroy();
+
+        // 召喚獣消滅時の一瞬のラグ対策:
+        // 以前はここで発生中のパーティクルエミッターを即座にdestroy()していた。
+        // followしているエミッターの即時destroyは、生存中のパーティクル群を
+        // まとめて片付ける処理が消滅と同じフレームに乗ってしまい、体感できる
+        // 一瞬のヒッチの原因になっていた（buffVisuals.jsのバフエフェクトは
+        // 既にstop→遅延destroyの形にしてあり、こちらだけ即時destroyのままだった）。
+        // stop()で新規発生だけ止め、実際の破棄は既存パーティクルが消え切る
+        // 頃合い（寿命500ms分を見て600ms後）まで遅らせて、負荷を分散させる。
+        if (this.emitter) {
+            const emitter = this.emitter;
+            emitter.stop();
+            this.scene.time.delayedCall(600, () => emitter.destroy());
+            this.emitter = null;
+        }
     }
 }

@@ -3,6 +3,7 @@ import { SKILLS } from '../../data/skills.js';
 import { addOtherPlayer, spawnEnemyFromServer } from '../../systems/entitySetup.js';
 import { applySkillEffect, showHitEffect } from '../../systems/skillEffects.js';
 import { handleSummonUpdate } from '../../systems/summons.js';
+import { applyBuffVisual } from '../../systems/buffVisuals.js';
 
 /**
  * Register every NetworkManager callback the game scene reacts to.
@@ -98,6 +99,14 @@ function handleBuffApplied(scene, data) {
     const player = scene.player;
     if (!player || !player.active) return;
 
+    // 自分に自分でバフをかけた場合、サーバーが自分自身にもこのイベントを
+    // エコーで送り返してくる（playerBuff → targetSocket=自分）。
+    // giveBuff() 側で既にローカル適用・アイコン表示を済ませているので、
+    // ここで再適用すると効果が二重にかかってしまう。fromId === 自分IDの
+    // ときはこのエコーとみなしてスキップする。
+    const myId = scene.networkManager.getPlayerId();
+    if (fromId === myId) return;
+
     const statBuff = STAT_BUFFS[type];
     if (statBuff) {
         statBuff.apply(player, value);
@@ -106,6 +115,11 @@ function handleBuffApplied(scene, data) {
     } else if (type === 'summon_power_up') {
         applySummonPowerUp(scene, value, duration);
     }
+
+    // バフをかけた側の画面には giveBuff() 経由でアイコンが出ていたが、
+    // かけられた側（自分の画面）にはこれまで一切表示されていなかったバグを修正。
+    // ここで自分のプレイヤーに対して同じ見た目のアイコンを出す。
+    applyBuffVisual(scene, player, type, value, duration);
 }
 
 // Buff relayed through the player: strengthens our active summon for a while

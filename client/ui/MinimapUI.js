@@ -1,15 +1,52 @@
 /**
  * Minimap UI - 安定版レーダー形式ミニマップ（マスク不使用）
  */
+
+// レイヤー名のキーワード → ミニマップ上の色。
+// 「collision/wall/block」だけを見ていた以前の実装だと、マップによっては
+// 該当レイヤーが存在せず地形が一切描画されないことがあったため、
+// 主要なレイヤー名をひと通りカバーする。マッチしない場合は最後のdefaultを使う。
+const TERRAIN_COLORS = [
+    { keywords: ['wall', 'block', 'collision'], color: 0x555555 }, // 壁・障害物
+    { keywords: ['water', 'lake', 'river'], color: 0x2288dd },     // 水場
+    { keywords: ['lava'], color: 0xff3300 },                        // 溶岩
+    { keywords: ['tree', 'forest'], color: 0x1f6b2f },              // 木々
+    { keywords: ['grass'], color: 0x4caf50 },                       // 草地
+    { keywords: ['sand', 'ash'], color: 0xc9a26a },                 // 砂・火山灰
+    { keywords: ['stone', 'cave'], color: 0x6b6b6b },               // 岩・洞窟
+    { keywords: ['floor'], color: 0xaaaaaa },                       // 屋内床
+    { keywords: ['stairs'], color: 0xffffff },                      // 階段
+    { keywords: ['shop'], color: 0x9b59b6 },                        // 店
+    { keywords: ['quest'], color: 0xffd700 },                       // クエストボード等
+    { keywords: ['town', 'city', 'road'], color: 0xbbbbbb },        // 街・道
+    { keywords: ['teleport'], color: 0xffff00 },                    // テレポート床
+    { keywords: ['ground', 'field', 'background'], color: 0x5a8f3c } // 汎用の地面
+];
+const DEFAULT_TERRAIN_COLOR = 0x336633;
+
+function getTerrainColor(layerName) {
+    const lname = (layerName || '').toLowerCase();
+    for (const entry of TERRAIN_COLORS) {
+        if (entry.keywords.some(k => lname.includes(k))) return entry.color;
+    }
+    return DEFAULT_TERRAIN_COLOR;
+}
+
 export default class MinimapUI {
     constructor(scene) {
         this.scene = scene;
         this.container = null;
-        this.graphics = null;
+        this.terrainGraphics = null; // 地形（滅多に変わらないのでキャッシュする）
+        this.entityGraphics = null;  // 敵・仲間など、毎フレーム動くもの
         this.size = 140; // 少しコンパクトに
         this.zoom = 0.15; // バランスの良い拡大率
         this.padding = 15;
         this.radius = this.size / 2;
+
+        // 地形の再描画をプレイヤーがタイルをまたいだ時だけに絞るためのキャッシュ
+        this._lastTerrainTileX = null;
+        this._lastTerrainTileY = null;
+        this._lastTerrainMapKey = null;
 
         this.createUI();
     }
@@ -31,9 +68,12 @@ export default class MinimapUI {
         bg.strokeCircle(this.radius, this.radius, this.radius);
         this.container.add(bg);
 
-        // 描画部
-        this.graphics = this.scene.add.graphics();
-        this.container.add(this.graphics);
+        // 描画部（地形とエンティティでレイヤーを分ける）
+        this.terrainGraphics = this.scene.add.graphics();
+        this.container.add(this.terrainGraphics);
+
+        this.entityGraphics = this.scene.add.graphics();
+        this.container.add(this.entityGraphics);
 
         // 方角テキスト
         const nText = this.scene.add.text(this.radius, 5, 'N', {
@@ -52,6 +92,8 @@ export default class MinimapUI {
         return (dx * dx + dy * dy) < (this.radius * this.radius);
     }
 
+    // 地形は毎フレーム変化しないので、プレイヤーが今いるタイルが変わった時だけ
+    // 再計算する（毎フレーム全レイヤー×範囲内タイルを舐めるとマップによっては重いため）。
     drawTerrain() {
         if (!this.scene.map) return;
         const player = this.scene.player;
@@ -61,27 +103,33 @@ export default class MinimapUI {
         const range = 25;
         const px = Math.floor(player.x / tileSize);
         const py = Math.floor(player.y / tileSize);
+        const mapKey = this.scene.currentMapKey || this.scene.map;
 
-        this.graphics.fillStyle(0x444444, 1);
+        if (px === this._lastTerrainTileX && py === this._lastTerrainTileY && mapKey === this._lastTerrainMapKey) {
+            return; // タイルをまたいでいなければ再描画不要
+        }
+        this._lastTerrainTileX = px;
+        this._lastTerrainTileY = py;
+        this._lastTerrainMapKey = mapKey;
 
-        // 各レイヤーを走査
+        this.terrainGraphics.clear();
+
+        // 各レイヤーを走査（以前はcollision系のレイヤーしか描いておらず、
+        // そのレイヤーが存在しないマップでは地形が何も見えなかった）
         this.scene.map.layers.forEach(layer => {
-            const isCollision = layer.name.toLowerCase().includes('collision') ||
-                layer.name.toLowerCase().includes('wall') ||
-                layer.name.toLowerCase().includes('block');
+            const color = getTerrainColor(layer.name);
+            this.terrainGraphics.fillStyle(color, 1);
 
-            if (isCollision) {
-                for (let ty = py - range; ty < py + range; ty++) {
-                    for (let tx = px - range; tx < px + range; tx++) {
-                        const tile = this.scene.map.getTileAt(tx, ty, true, layer.name);
-                        if (tile && tile.index !== -1 && tile.index !== 0) {
-                            const rx = (tx * tileSize - player.x) * this.zoom + this.radius;
-                            const ry = (ty * tileSize - player.y) * this.zoom + this.radius;
+            for (let ty = py - range; ty < py + range; ty++) {
+                for (let tx = px - range; tx < px + range; tx++) {
+                    const tile = this.scene.map.getTileAt(tx, ty, true, layer.name);
+                    if (tile && tile.index !== -1 && tile.index !== 0) {
+                        const rx = (tx * tileSize - player.x) * this.zoom + this.radius;
+                        const ry = (ty * tileSize - player.y) * this.zoom + this.radius;
 
-                            // 円の内側だけ描画（これがマスクの代わり）
-                            if (this.isInside(rx, ry)) {
-                                this.graphics.fillRect(rx, ry, tileSize * this.zoom, tileSize * this.zoom);
-                            }
+                        // 円の内側だけ描画（これがマスクの代わり）
+                        if (this.isInside(rx, ry)) {
+                            this.terrainGraphics.fillRect(rx, ry, tileSize * this.zoom, tileSize * this.zoom);
                         }
                     }
                 }
@@ -93,8 +141,11 @@ export default class MinimapUI {
         const player = this.scene.player;
         if (!player) return;
 
+        const g = this.entityGraphics;
+        g.clear();
+
         // 1. NPC (Yellow)
-        this.graphics.fillStyle(0xffff00, 1);
+        g.fillStyle(0xffff00, 1);
         if (this.scene.npcs) {
             this.scene.npcs.forEach(npc => {
                 if (npc.active) this.drawDot(npc.x, npc.y, player, 2);
@@ -102,7 +153,7 @@ export default class MinimapUI {
         }
 
         // 2. 他のプレイヤー (Blue)
-        this.graphics.fillStyle(0x00ccff, 1);
+        g.fillStyle(0x00ccff, 1);
         if (this.scene.networkManager) {
             const others = this.scene.networkManager.getOtherPlayers();
             Object.values(others).forEach(p => {
@@ -111,7 +162,7 @@ export default class MinimapUI {
         }
 
         // 3. 敵 (Red)
-        this.graphics.fillStyle(0xff3300, 1);
+        g.fillStyle(0xff3300, 1);
         if (this.scene.networkManager) {
             const enemies = this.scene.networkManager.getEnemies();
             Object.values(enemies).forEach(e => {
@@ -123,19 +174,19 @@ export default class MinimapUI {
         }
 
         // 4. 自分 (Center Green)
-        this.graphics.fillStyle(0x00ff00, 1);
-        this.graphics.fillCircle(this.radius, this.radius, 4);
+        g.fillStyle(0x00ff00, 1);
+        g.fillCircle(this.radius, this.radius, 4);
 
         // 向き
         const angle = player.rotation || 0;
-        this.graphics.lineStyle(2, 0x00ff00, 1);
-        this.graphics.beginPath();
-        this.graphics.moveTo(this.radius, this.radius);
-        this.graphics.lineTo(
+        g.lineStyle(2, 0x00ff00, 1);
+        g.beginPath();
+        g.moveTo(this.radius, this.radius);
+        g.lineTo(
             this.radius + Math.cos(angle) * 10,
             this.radius + Math.sin(angle) * 10
         );
-        this.graphics.strokePath();
+        g.strokePath();
     }
 
     drawDot(worldX, worldY, player, dotSize) {
@@ -143,13 +194,12 @@ export default class MinimapUI {
         const ry = (worldY - player.y) * this.zoom + this.radius;
 
         if (this.isInside(rx, ry)) {
-            this.graphics.fillCircle(rx, ry, dotSize);
+            this.entityGraphics.fillCircle(rx, ry, dotSize);
         }
     }
 
     update() {
-        if (!this.graphics || !this.scene.player) return;
-        this.graphics.clear();
+        if (!this.entityGraphics || !this.scene.player) return;
         this.drawTerrain();
         this.drawEntities();
     }
