@@ -562,4 +562,24 @@ export const ITEMS = {
         level: 50,
         stats: { attackMultiplier: 2.0, poison: true },
     }),
+
+    // --- ギルド限定装備 (ギルドショップでのみ購入可能) ---
+    guild_captain_blade: defineItem({
+        id: "guild_captain_blade",
+        name: "ギルド隊長の剣",
+        description: "ギルドに認められた者だけが手にできる剣。速さと会心を両立する。",
+        price: 40000,
+        type: "weapon",
+        level: 70,
+        stats: { attack: 380, speedBonus: 40, critChance: 0.15 },
+    }),
+    guild_emblem: defineItem({
+        id: "guild_emblem",
+        name: "ギルドの紋章",
+        description: "ギルド員である証の宝具。功績を積むほど輝きを増すという。",
+        price: 30000,
+        type: "accessory",
+        level: 60,
+        stats: { attack: 40, defense: 40, expMultiplier: 1.2 },
+    }),
 };

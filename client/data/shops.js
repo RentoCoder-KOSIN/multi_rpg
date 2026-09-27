@@ -50,6 +50,11 @@ export const SHOP_LOADOUTS = {
         title: "闇の取引所",
         items: ["death_scythe", "resurrection_scroll", "cursed_ring", "cheat_sword", "dragonfang_pendant"]
     },
+    // ギルド限定ショップ: allShopItemsに含めていないため、他のどの店にも並ばない。
+    guild_shop: {
+        title: "ギルドショップ",
+        items: ["guild_captain_blade", "guild_emblem", "mp_potion", "high_mp_potion"]
+    },
     // デフォルト（見つからない場合用）
     default: {
         title: "旅の商人",
