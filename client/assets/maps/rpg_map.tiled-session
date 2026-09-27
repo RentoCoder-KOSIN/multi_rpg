@@ -1,5 +1,5 @@
 {
-    "activeFile": "guild2f.json",
+    "activeFile": "guild1f.json",
     "expandedProjectPaths": [
         "."
     ],
@@ -9,7 +9,7 @@
             "scale": 0.6568359375,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 384.4186738031519,
+                "x": 383.657448706512,
                 "y": 319.71454058876003
             }
         },
@@ -17,11 +17,14 @@
             "scaleInDock": 1
         },
         "city.json": {
-            "scale": 0.15764062499999998,
-            "selectedLayer": 0,
+            "expandedObjectLayers": [
+                41
+            ],
+            "scale": 1,
+            "selectedLayer": 17,
             "viewCenter": {
-                "x": 1601.7444741798,
-                "y": 1598.5727029438003
+                "x": 1754,
+                "y": 437
             }
         },
         "city.json#tiles": {
@@ -32,9 +35,9 @@
         },
         "guild1f.json": {
             "scale": 0.5254687499999999,
-            "selectedLayer": 0,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 480.52334225394,
+                "x": 479.57181088314013,
                 "y": 479.5718108831401
             }
         },
@@ -63,7 +66,7 @@
     "recentFiles": [
         "battle.json",
         "city.json",
-        "guild1f.json",
-        "guild2f.json"
+        "guild2f.json",
+        "guild1f.json"
     ]
 }

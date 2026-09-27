@@ -52,6 +52,50 @@
          "y":0
         }, 
         {
+         "draworder":"topdown",
+         "id":13,
+         "name":"NPCs",
+         "objects":[
+                {
+                 "height":0,
+                 "id":36,
+                 "name":"",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"dialogue",
+                         "type":"string",
+                         "value":"[\"Can you help me with bats?\"]"
+                        }, 
+                        {
+                         "name":"name",
+                         "type":"string",
+                         "value":"Bat Hunter"
+                        }, 
+                        {
+                         "name":"questId",
+                         "type":"string",
+                         "value":"kill_bat"
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"dude"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":656.556645851918,
+                 "y":203.627713351175
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
          "data":[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -328,8 +372,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":13,
- "nextobjectid":36,
+ "nextlayerid":14,
+ "nextobjectid":37,
  "orientation":"orthogonal",
  "properties":[
         {
