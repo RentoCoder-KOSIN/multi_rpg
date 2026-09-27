@@ -1,4 +1,4 @@
-import { defineItem } from './schema.js';
+import { defineItem } from "./schema.js";
 
 export const ITEMS = {
     // --- 武器 --
@@ -56,7 +56,8 @@ export const ITEMS = {
         level: 1,
         price: 750,
         stats: { attack: 3, expMultiplier: 2 },
-        description: "獲得経験値がx2になる初心者に優しい武器。効果はLv25まで（それ以降は無効）。",
+        description:
+            "獲得経験値がx2になる初心者に優しい武器。効果はLv25まで（それ以降は無効）。",
     }),
 
     hero_sword: defineItem({
@@ -105,7 +106,7 @@ export const ITEMS = {
         type: "accessory",
         level: 25,
         price: 4500,
-        stats: { lifesteal: 0.08, attack: 10 },
+        stats: { lifesteal: 0.02, attack: 10 },
         description: "与えたダメージの一部をHPに変える呪具。",
     }),
     guardian_charm: defineItem({
@@ -124,7 +125,8 @@ export const ITEMS = {
         level: 45,
         price: 20000,
         stats: { matk: 40, expMultiplier: 1.5 },
-        description: "魔力を増幅し、経験の吸収を早める伝説の石。獲得経験値x1.5（Lv25まで）。",
+        description:
+            "魔力を増幅し、経験の吸収を早める伝説の石。獲得経験値x1.5（Lv25まで）。",
     }),
     dragonfang_pendant: defineItem({
         id: "dragonfang_pendant",
