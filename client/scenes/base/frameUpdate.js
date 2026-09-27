@@ -106,24 +106,28 @@ export function updateRemotePlayerNameTags(scene) {
 }
 
 /**
- * Update the local summon and send its position to the server (throttled).
+ * Update all of the local player's summons and send their positions to the server (throttled).
  */
-export function updateActiveSummon(scene) {
-    const summon = scene.activeSummon;
-    if (!summon || !summon.active) return;
+export function updateActiveSummons(scene) {
+    if (!scene.activeSummons || scene.activeSummons.length === 0) return;
 
-    if (summon.updateSummon) summon.updateSummon();
+    // HP0などでdestroySummon()を経由せず消えてしまった場合の保険として、非activeなものは取り除く
+    scene.activeSummons = scene.activeSummons.filter(s => s && s.active);
 
-    // updateSummon() may have removed the summon
-    if (!scene.activeSummon || !scene.activeSummon.active) return;
+    scene.activeSummons.forEach(summon => {
+        if (summon.updateSummon) summon.updateSummon();
 
-    const now = scene.time.now;
-    if (!summon.lastPosSent || now - summon.lastPosSent > SUMMON_POSITION_SYNC_MS) {
-        if (summon.x !== summon.lastX || summon.y !== summon.lastY) {
-            scene.networkManager.sendSummonUpdate({ type: 'move', x: summon.x, y: summon.y });
-            summon.lastX = summon.x;
-            summon.lastY = summon.y;
-            summon.lastPosSent = now;
+        // updateSummon() may have removed the summon
+        if (!summon.active) return;
+
+        const now = scene.time.now;
+        if (!summon.lastPosSent || now - summon.lastPosSent > SUMMON_POSITION_SYNC_MS) {
+            if (summon.x !== summon.lastX || summon.y !== summon.lastY) {
+                scene.networkManager.sendSummonUpdate({ type: 'move', summonId: summon._summonId, x: summon.x, y: summon.y });
+                summon.lastX = summon.x;
+                summon.lastY = summon.y;
+                summon.lastPosSent = now;
+            }
         }
-    }
+    });
 }

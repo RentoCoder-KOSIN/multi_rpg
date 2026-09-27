@@ -31,11 +31,21 @@ export default class InventoryUI extends BaseWindowUI {
         detailBg.fillRoundedRect(-panelWidth / 2 + 20, panelHeight / 2 - 85, panelWidth - 40, 70, 10);
         this.container.add(detailBg);
 
-        this.detailText = this.scene.add.text(0, panelHeight / 2 - 50, '十字キーで選択、Enterで装備/使用\nDeleteで捨てる', {
+        this.detailText = this.scene.add.text(0, panelHeight / 2 - 50, '十字キーで選択、Enterで装備/使用（Shift+Enterでまとめて使用）\nDeleteで捨てる、Sキーで売る', {
             fontSize: '11px', fontFamily: '"Press Start 2P"', color: '#e0e0e0',
             wordWrap: { width: panelWidth - 60 }, align: 'center'
         }).setOrigin(0.5);
         this.container.add(this.detailText);
+
+        // 売却ボタン
+        this.sellBtn = this.scene.add.text(panelWidth / 2 - 72, panelHeight / 2 - 25, '💰', { fontSize: '24px' })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true });
+        this.sellBtn.on('pointerdown', (e) => {
+            if (e) e.stopPropagation();
+            this.handleItemSell();
+        });
+        this.container.add(this.sellBtn);
 
         // ゴミ箱ボタン
         this.trashBtn = this.scene.add.text(panelWidth / 2 - 40, panelHeight / 2 - 25, '🗑️', { fontSize: '24px' })
@@ -84,10 +94,13 @@ export default class InventoryUI extends BaseWindowUI {
                 if (this.selectedIndex - itemsPerRow >= 0) this.selectedIndex -= itemsPerRow;
             } else if (event.code === 'Enter') {
                 if (this.inventory[this.selectedIndex]) {
-                    this.handleItemClick(this.selectedIndex);
+                    // Shift+Enterで、その枠にあるアイテムをまとめて（所持数分）一気に使用する
+                    this.handleItemClick(this.selectedIndex, event.shiftKey);
                 }
             } else if (event.code === 'Delete' || event.code === 'Backspace') {
                 this.handleItemDiscard();
+            } else if (event.code === 'KeyS') {
+                this.handleItemSell();
             }
             this.updateSelection();
         });
@@ -175,7 +188,8 @@ export default class InventoryUI extends BaseWindowUI {
                 if (event) event.stopPropagation();
                 this.selectedIndex = index;
                 this.updateSelection();
-                this.handleItemClick(index); // indexを渡す
+                // Shiftを押しながらクリックすると、そのアイテムを所持数分まとめて使用する
+                this.handleItemClick(index, !!(event && event.shiftKey));
             });
 
             this.slots.push({ bg: slotBg, item: item, container: slot, id: itemId }); // idも保持
@@ -231,7 +245,7 @@ export default class InventoryUI extends BaseWindowUI {
         });
     }
 
-    handleItemClick(index) {
+    handleItemClick(index, useAll = false) {
         // indexを受け取るように変更
         if (typeof index !== 'number') return; // 安全策
 
@@ -244,14 +258,15 @@ export default class InventoryUI extends BaseWindowUI {
         if (!item || !this.scene.player) return;
 
         if (item.type === 'weapon' || item.type === 'armor' || item.type === 'accessory') {
+            // 装備品はまとめ使用の対象外（useAllは無視）
             this.scene.player.equipItem(itemId);
         } else {
-            this.useItem(index);
+            this.useItem(index, useAll);
         }
         this.refreshList();
     }
 
-    useItem(index) {
+    useItem(index, useAll = false) {
         const invItem = this.inventory[index];
         if (!invItem) return;
 
@@ -261,23 +276,28 @@ export default class InventoryUI extends BaseWindowUI {
 
         if (!item || !player) return;
 
+        // useAll=trueなら、その枠にスタックされている分をまとめて一気に消費する
+        const stackCount = (typeof invItem === 'object') ? (invItem.count || 1) : 1;
+        const useCount = useAll ? stackCount : 1;
+
         const s = item.stats || {};
 
-        const heal = item.heal || s.heal || 0;
+        const heal = (item.heal || s.heal || 0) * useCount;
         if (heal > 0) {
             player.stats.hp = Math.min(player.stats.maxHp, player.stats.hp + heal);
-            if (this.scene.notificationUI) this.scene.notificationUI.show(`HPが ${heal} 回復した！`, "success");
+            if (this.scene.notificationUI) this.scene.notificationUI.show(`HPが ${heal} 回復した！${useCount > 1 ? ` (x${useCount})` : ''}`, "success");
         }
 
-        const healMp = item.healMp || s.healMp || 0;
+        const healMp = (item.healMp || s.healMp || 0) * useCount;
         if (healMp > 0) {
             player.stats.mp = Math.min(player.stats.maxMp, player.stats.mp + healMp);
-            if (this.scene.notificationUI) this.scene.notificationUI.show(`MPが ${healMp} 回復した！`, "success");
+            if (this.scene.notificationUI) this.scene.notificationUI.show(`MPが ${healMp} 回復した！${useCount > 1 ? ` (x${useCount})` : ''}`, "success");
         }
 
         // パーティ全員のHPを回復（回復の泉など）
         if (s.healAll > 0) {
-            player.stats.hp = Math.min(player.stats.maxHp, player.stats.hp + s.healAll);
+            const healAllAmount = s.healAll * useCount;
+            player.stats.hp = Math.min(player.stats.maxHp, player.stats.hp + healAllAmount);
 
             const netManager = this.scene.networkManager;
             if (netManager) {
@@ -288,20 +308,22 @@ export default class InventoryUI extends BaseWindowUI {
                     if (memberId === myId) return;
                     const remotePlayer = otherPlayers[memberId];
                     if (!remotePlayer || !remotePlayer.active) return;
-                    netManager.healPlayer(memberId, s.healAll);
+                    netManager.healPlayer(memberId, healAllAmount);
                 });
             }
-            if (this.scene.notificationUI) this.scene.notificationUI.show(`パーティ全員のHPが ${s.healAll} 回復した！`, "success");
+            if (this.scene.notificationUI) this.scene.notificationUI.show(`パーティ全員のHPが ${healAllAmount} 回復した！${useCount > 1 ? ` (x${useCount})` : ''}`, "success");
         }
 
         // 永続ステータス上昇（攻撃力/防御力の種）
         if (s.attackBoost > 0) {
-            player.stats.bonusAtk = (player.stats.bonusAtk || 0) + s.attackBoost;
-            if (this.scene.notificationUI) this.scene.notificationUI.show(`攻撃力が永久に+${s.attackBoost}された！`, "warning");
+            const boost = s.attackBoost * useCount;
+            player.stats.bonusAtk = (player.stats.bonusAtk || 0) + boost;
+            if (this.scene.notificationUI) this.scene.notificationUI.show(`攻撃力が永久に+${boost}された！${useCount > 1 ? ` (x${useCount})` : ''}`, "warning");
         }
         if (s.defenseBoost > 0) {
-            player.stats.bonusDef = (player.stats.bonusDef || 0) + s.defenseBoost;
-            if (this.scene.notificationUI) this.scene.notificationUI.show(`防御力が永久に+${s.defenseBoost}された！`, "warning");
+            const boost = s.defenseBoost * useCount;
+            player.stats.bonusDef = (player.stats.bonusDef || 0) + boost;
+            if (this.scene.notificationUI) this.scene.notificationUI.show(`防御力が永久に+${boost}された！${useCount > 1 ? ` (x${useCount})` : ''}`, "warning");
         }
         if (s.attackBoost > 0 || s.defenseBoost > 0) {
             player.applyEquipmentStats();
@@ -309,13 +331,13 @@ export default class InventoryUI extends BaseWindowUI {
 
         // 蘇生アイテム: 死亡時に自動発動するチャージとして保持
         if (s.revive) {
-            player.stats.reviveCharges = (player.stats.reviveCharges || 0) + 1;
-            if (this.scene.notificationUI) this.scene.notificationUI.show('死亡時に自動で復活するお守りを手に入れた！', "warning");
+            player.stats.reviveCharges = (player.stats.reviveCharges || 0) + useCount;
+            if (this.scene.notificationUI) this.scene.notificationUI.show(`死亡時に自動で復活するお守りを手に入れた！${useCount > 1 ? ` (x${useCount})` : ''}`, "warning");
         }
 
         // 消費処理 (個数減算 or 削除)
-        if (typeof invItem === 'object' && invItem.count > 1) {
-            invItem.count--;
+        if (typeof invItem === 'object' && invItem.count > useCount) {
+            invItem.count -= useCount;
         } else {
             player.stats.inventory.splice(index, 1);
             // インデックス調整
@@ -326,6 +348,57 @@ export default class InventoryUI extends BaseWindowUI {
 
         player.saveStats();
         if (this.scene.playerStatsUI) this.scene.playerStatsUI.update();
+    }
+
+    handleItemSell() {
+        if (this.selectedIndex < 0 || this.selectedIndex >= this.inventory.length) return;
+
+        const invItem = this.inventory[this.selectedIndex];
+        const itemId = (typeof invItem === 'string') ? invItem : invItem.id;
+
+        if (!itemId || !this.scene.player) return;
+
+        const item = ITEMS[itemId];
+        if (!item) return;
+
+        // 装備中のアイテムは売れないようにする（捨てる場合と同じ制約）
+        if (this.scene.player.stats.equipment.weapon === itemId || this.scene.player.stats.equipment.armor === itemId ||
+            this.scene.player.stats.equipment.relic === itemId) {
+            if (this.scene.notificationUI) this.scene.notificationUI.show('装備中のアイテムは売れません', 'error');
+            return;
+        }
+
+        // 購入価格(price)の60%が売却額。price未設定のアイテムは売却不可。
+        const sellPrice = Math.floor((item.price || 0) * 0.6);
+        if (sellPrice <= 0) {
+            if (this.scene.notificationUI) this.scene.notificationUI.show('このアイテムは売れません', 'error');
+            return;
+        }
+
+        const confirmSell = confirm(`${item.name} を ${sellPrice}G で売りますか？`);
+        if (confirmSell) {
+            // 消費処理 (個数減算 or 削除) - 売る場合も1個ずつ
+            if (typeof invItem === 'object' && invItem.count > 1) {
+                invItem.count--;
+            } else {
+                this.scene.player.stats.inventory.splice(this.selectedIndex, 1);
+
+                // 選択インデックス調整
+                if (this.selectedIndex >= this.scene.player.stats.inventory.length) {
+                    this.selectedIndex = Math.max(0, this.scene.player.stats.inventory.length - 1);
+                }
+            }
+
+            // gainGold()は「GOLD +N」という別の通知も出すため、ここでは直接加算して
+            // 「何を売って何Gになったか」が分かる一つの通知にまとめる。
+            this.scene.player.stats.gold += sellPrice;
+            this.scene.player.saveStats();
+            if (this.scene.notificationUI) this.scene.notificationUI.show(`${item.name} を ${sellPrice}G で売りました`, 'success');
+            if (this.scene.playerStatsUI) this.scene.playerStatsUI.update();
+            if (this.scene.shopUI && typeof this.scene.shopUI.updateGold === 'function') this.scene.shopUI.updateGold();
+            this.refreshList();
+            this.updateSelection();
+        }
     }
 
     handleItemDiscard() {

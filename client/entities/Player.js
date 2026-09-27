@@ -404,8 +404,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         // 新しいパッシブを追加するとき、ここにif文を増やす必要はない。
         // スキル定義側の effect にキーを書けば、対応する効果が自動で乗る。
         // 対応キー: atkMult, defMult, maxHpMult, maxHpFlat, maxMpFlat, maxMpMult,
-        //           speedFlat, critChanceFlat, lifestealFlat, expMultBonus,
-        //           cooldownMult, mpCostMult, healPowerMult
+        //           speedFlat, critChanceFlat, lifestealFlat, expMultBonus, maxSummonsFlat,
+        //           cooldownMult, mpCostMult, healPowerMult, maxSummonsFlat
         const unlocked = this.stats.unlockedSkills || [];
         let passiveSpeedBonus = 0;
         let passiveCritBonus = 0;
@@ -414,6 +414,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.stats.mpCostMult = 1.0;    // combat.js がMP消費に掛ける（1.0=通常）
         this.stats.healPowerMult = 1.0; // combat.js が回復量に掛ける（1.0=通常）
         this.stats.expMultiplier = 1.0;
+        this.stats.maxSummons = 1;      // summons.js が同時召喚数の上限として参照する（1=通常、パッシブで増加）
 
         unlocked.forEach(skillId => {
             const skillDef = SKILLS[skillId];
@@ -433,6 +434,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             if (e.cooldownMult) this.stats.cooldownMult *= e.cooldownMult;
             if (e.mpCostMult) this.stats.mpCostMult *= e.mpCostMult;
             if (e.healPowerMult) this.stats.healPowerMult *= e.healPowerMult;
+            if (e.maxSummonsFlat) this.stats.maxSummons += e.maxSummonsFlat;
         });
 
         // 特殊ステータスの基礎値
@@ -961,8 +963,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
                         // HP回復
                         this.stats.hp = Math.min(this.stats.hp + Math.ceil(this.stats.maxHp * 0.01), this.stats.maxHp);
                     }
-                    // MP回復 (召喚獣がいない場合のみ)
-                    const hasSummon = this.scene.activeSummon && this.scene.activeSummon.active;
+                    // MP回復 (召喚獣が1体でもいる場合は回復しない)
+                    const hasSummon = (this.scene.activeSummons || []).some(s => s && s.active);
                     if (!hasSummon && this.stats.mp < this.stats.maxMp) {
                         this.stats.mp = Math.min(this.stats.mp + 2, this.stats.maxMp);
                     }

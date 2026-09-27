@@ -8,7 +8,7 @@
  *
  *   atkMult, defMult, maxHpMult, maxHpFlat, maxMpFlat, maxMpMult,
  *   speedFlat, critChanceFlat, lifestealFlat, expMultBonus,
- *   cooldownMult, mpCostMult, healPowerMult
+ *   cooldownMult, mpCostMult, healPowerMult, maxSummonsFlat
  */
 import { defineSkill } from '../schema.js';
 
@@ -157,8 +157,8 @@ export const PASSIVE_SKILLS = {
     overlords_pact: defineSkill({
         id: 'overlords_pact', name: '魔王との盟約', type: 'passive',
         unlockCost: 200, icon: '📜',
-        description: '常時：最大MP+25%',
-        effect: { maxMpMult: 1.25 }
+        description: '常時：最大MP+25%、召喚獣を同時に2体まで呼び出せるようになる',
+        effect: { maxMpMult: 1.25, maxSummonsFlat: 1 }
     }),
     ancient_bond: defineSkill({
         id: 'ancient_bond', name: '古の絆', type: 'passive',

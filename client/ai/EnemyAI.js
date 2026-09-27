@@ -111,7 +111,8 @@ export default class EnemyAI {
      */
     getState() {
         const player = this.scene.player;
-        const activeSummon = this.scene.activeSummon;
+        // 複数体いる場合は、その中で一番近いものだけを候補にする
+        const activeSummons = (this.scene.activeSummons || []).filter(s => s && s.active);
 
         let nearestTarget = null;
         let minDistance = Infinity;
@@ -124,13 +125,13 @@ export default class EnemyAI {
 
         // 2. 召喚獣がいれば、距離に応じてターゲットを切り替える可能性がある（任意）
         // ここでは単純に「一番近いもの」を狙う
-        if (activeSummon && activeSummon.active) {
+        activeSummons.forEach(activeSummon => {
             const distToSummon = Phaser.Math.Distance.Between(this.enemy.x, this.enemy.y, activeSummon.x, activeSummon.y);
             if (distToSummon < minDistance) {
                 minDistance = distToSummon;
                 nearestTarget = activeSummon;
             }
-        }
+        });
 
         // ターゲットが見つからない場合は null を返す（例: プレイヤー非存在）
         if (!nearestTarget) {
@@ -168,6 +169,10 @@ export default class EnemyAI {
             playerX: nearestTarget.x,
             playerY: nearestTarget.y,
             isTargetPlayer: (nearestTarget === player),
+            // player以外がターゲットの場合、executeAction側で同じ召喚獣を再取得できるよう保持しておく
+            // (this.scene.activeSummon という単体参照が無くなったため、複数いる中でどれを狙ったかは
+            //  getState側で選んだこのインスタンスをそのまま使う必要がある)
+            targetSummon: (nearestTarget !== player) ? nearestTarget : null,
             nearbyAllies: Math.min(nearbyAllies, 3),
             canHeal: hpPercent < 50,
             detectRange: this.enemy.detectRange,
@@ -314,7 +319,7 @@ export default class EnemyAI {
         // getState() が選んだターゲット（プレイヤー or 召喚獣）に実際に攻撃を当てる。
         // ここが常に player 固定だと、召喚獣を追って攻撃しても
         // ダメージはプレイヤーに入ってしまう。
-        const target = state.isTargetPlayer ? player : this.scene.activeSummon;
+        const target = state.isTargetPlayer ? player : state.targetSummon;
 
         switch (action) {
             case 'approach':

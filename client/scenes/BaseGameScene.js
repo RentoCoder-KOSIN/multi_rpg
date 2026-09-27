@@ -30,7 +30,7 @@ import {
     regenerateMp,
     syncPlayerStats,
     updateRemotePlayerNameTags,
-    updateActiveSummon
+    updateActiveSummons
 } from './base/frameUpdate.js';
 
 import { performBasicAttack, usePlayerSkill } from '../systems/combat.js';
@@ -105,7 +105,8 @@ export default class BaseGameScene extends Phaser.Scene {
         }
 
         this.currentMapKey = data?.mapKey || config.mapKey;
-        this.otherSummons = {};
+        this.activeSummons = []; // 自分の召喚獣（最大player.stats.maxSummons体、上位職パッシブで2体まで）
+        this.otherSummons = {};  // 他プレイヤーの召喚獣。{ [playerId]: { [summonId]: SummonedBeast } }
 
         this.partyUI = new PartyUI(this);
         this.partyUI.createUI();
@@ -230,7 +231,7 @@ export default class BaseGameScene extends Phaser.Scene {
         this.npcs.forEach(npc => npc.updateQuestIcon(this.questManager));
         updateTeleports(this, this.player, this.npcs, this.teleports);
 
-        updateActiveSummon(this);
+        updateActiveSummons(this);
     }
 
     // --- Entry points used by UI / entities / NetworkManager ---

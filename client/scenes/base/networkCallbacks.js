@@ -122,24 +122,26 @@ function handleBuffApplied(scene, data) {
     applyBuffVisual(scene, player, type, value, duration);
 }
 
-// Buff relayed through the player: strengthens our active summon for a while
+// Buff relayed through the player: strengthens all of our active summons for a while
 function applySummonPowerUp(scene, value, duration) {
-    const summon = scene.activeSummon;
-    if (!summon || !summon.active) return;
+    const summons = (scene.activeSummons || []).filter(s => s && s.active);
+    if (summons.length === 0) return;
 
-    summon.atk += value;
-    summon.speed += 50;
-    const originalScale = summon.scale;
-    summon.setScale(originalScale * 1.5);
+    summons.forEach(summon => {
+        summon.atk += value;
+        summon.speed += 50;
+        const originalScale = summon.scale;
+        summon.setScale(originalScale * 1.5);
 
-    floatText(scene, summon, 'SUMMON POWER UP!', '#9370db');
+        floatText(scene, summon, 'SUMMON POWER UP!', '#9370db');
 
-    scene.time.delayedCall(duration, () => {
-        if (scene.activeSummon && scene.activeSummon.active) {
-            scene.activeSummon.atk -= value;
-            scene.activeSummon.speed -= 50;
-            scene.activeSummon.setScale(originalScale);
-        }
+        scene.time.delayedCall(duration, () => {
+            if (summon.active) {
+                summon.atk -= value;
+                summon.speed -= 50;
+                summon.setScale(originalScale);
+            }
+        });
     });
 }
 

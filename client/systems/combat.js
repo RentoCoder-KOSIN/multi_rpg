@@ -120,11 +120,15 @@ export function usePlayerSkill(scene, skillId) {
         return;
     }
 
-    // Using a summon skill while a summon exists recalls it
-    if (isSummonSkill(skillId) && scene.activeSummon && scene.activeSummon.active) {
-        destroySummon(scene, scene.activeSummon);
-        if (scene.notificationUI) scene.notificationUI.show('召喚獣を帰還させました', 'info');
-        return;
+    // Using a summon skill while that same summon type already exists recalls it（トグル）。
+    // 上限数に達している場合に一番古い召喚獣を入れ替える処理はspawnSummon側が行う。
+    if (isSummonSkill(skillId)) {
+        const existingSameType = (scene.activeSummons || []).find(s => s.active && s.summonSkillId === skillId);
+        if (existingSameType) {
+            destroySummon(scene, existingSameType);
+            if (scene.notificationUI) scene.notificationUI.show('召喚獣を帰還させました', 'info');
+            return;
+        }
     }
 
     player.stats.mp -= mpCost;
@@ -144,8 +148,9 @@ export function usePlayerSkill(scene, skillId) {
     }
 
     if (skillId === 'command_attack') {
-        if (scene.activeSummon && scene.activeSummon.active) {
-            scene.activeSummon.commandAttack();
+        const summons = (scene.activeSummons || []).filter(s => s.active);
+        if (summons.length > 0) {
+            summons.forEach(s => s.commandAttack());
             player.skillCooldowns[skillId] = now;
             if (scene.notificationUI) scene.notificationUI.show('召喚獣に突撃を命じた！', 'success');
         } else {
