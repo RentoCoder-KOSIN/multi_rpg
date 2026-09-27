@@ -36,9 +36,9 @@ module.exports = {
     // --- 敵AI更新ループ ---
     AI_UPDATE_INTERVAL: 150, // ms
     AI_STATS_LOG_INTERVAL: 30000, // ms
-    ENEMY_LEASH_RADIUS: 150, // px: スポーン地点からこれ以上離れたら帰還
+    ENEMY_LEASH_RADIUS: 100, // px: スポーン地点からこれ以上離れたら帰還
     ENEMY_HOME_SPEED: 10, // px/tick: 帰還時の移動量
-    ENEMY_ATTACK_RANGE: 80, // px: サーバー側の攻撃判定距離
+    ENEMY_ATTACK_RANGE: 75, // px: サーバー側の攻撃判定距離
     ENEMY_WANDER_JITTER: 4, // px: AI未登録時のランダム移動幅
 
     // 敵の攻撃間隔（ms）。
@@ -52,19 +52,5 @@ module.exports = {
     // 全ての敵の攻撃力を一括で強め/弱めできる。
     ENEMY_ATK_SCALE: 0.6,
 
-    // 敵のHPに掛ける調整係数。
-    // プレイヤー側の火力（装備・スキル倍率など）が積み重なって想定よりかなり
-    // 大きくなっているため、攻撃力(ENEMY_ATK_SCALE)は据え置いたまま、
-    // 敵の体力だけをここ一箇所で一括に底上げしてバランスを取る。
-    //
-    // 実例で検証した数値: Lv10プレイヤーがINTに全振りし、スキルLv10の
-    // ダークノヴァ（damageMult 15）を、格上のforest_slime（Lv14）に撃つと
-    // atk≈115 × multiplier(15×2.35のスキル補正) × レベル差補正(0.82) ≈ 3300程度。
-    // 旧値2.5だとforest_slimeの実HPは 1200×2.5=3000 しかなく、
-    // このワンパターンの一撃だけで確実に一撃死していた。
-    // 2.5→4.0にすることで同じ一撃は耐える（即死しない）ようになる一方、
-    // 通常攻撃(倍率1倍、上の例だとatk×0.82≈95、防御後で1発80強)は
-    // 変更後のforest_slime実HP(1200×4.0=4800)でも数十発当てれば普通に倒せる
-    // ため、「通常攻撃では倒せなくなる」ほどの底上げにはしていない。
-    ENEMY_HP_SCALE: 4.0,
+    ENEMY_HP_SCALE: 4,
 };
