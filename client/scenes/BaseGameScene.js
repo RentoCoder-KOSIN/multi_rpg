@@ -12,7 +12,7 @@ import { setupMapCollisions } from '../utils/collisionHelper.js';
 import { setupCameraAndWorld } from '../utils/cameraHelper.js';
 import { setupTeleportsFromMap, updateTeleports } from '../utils/teleportHelper.js';
 import { updateNPCInteraction } from '../utils/interactionHelper.js';
-import { updateEnemyDebugUI } from '../utils/enemyDebug.js';
+import { updateEnemyDebugUI, drawEnemyAttackRanges } from '../utils/enemyDebug.js';
 import { isAnyWindowOpen } from '../utils/uiState.js';
 import { createPlayerAnimations } from '../animations/playerAnimations.js';
 import ShopUI from '../ui/ShopUI.js';
@@ -209,6 +209,9 @@ export default class BaseGameScene extends Phaser.Scene {
         if (this.showEnemyDebug && this.enemyDebugText && this.enemyDebugText.visible) {
             updateEnemyDebugUI(this);
         }
+
+        // 敵の攻撃間合いを薄い輪で常時表示（Dキーのデバッグ表示とは別で常時ON）
+        drawEnemyAttackRanges(this);
 
         updateNPCInteraction(this, { player: this.player, npcs: this.npcs, dialogue: this.dialogue, interactKey: this.interactKey, interactText: this.interactText, interactBg: this.interactBg });
         if (this.playerNameUI) this.playerNameUI.updatePosition();

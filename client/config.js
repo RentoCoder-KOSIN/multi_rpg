@@ -40,6 +40,14 @@ export const PEER_LEARNING_CONFIG = {
     rewardBonus: 1.0, // 連携時のボーナス報酬
 };
 
+// 敵の攻撃間合い（可視化用）。
+// 本来の判定は server/config.js の ENEMY_ATTACK_RANGE（サーバー管理の敵）と
+// Enemy.js の attackRange（ローカル限定の敵・ボス）が持っているが、
+// クライアントとサーバーは別プロセスなので定数を1つに共有できず、
+// 表示用にサーバー側の値をここに複製している。
+// サーバー側の ENEMY_ATTACK_RANGE を変えたら、ここも同じ値に揃えること。
+export const ENEMY_ATTACK_RANGE = 75;
+
 // 敵AI設定ログ出力
 console.log("[Config] Enemy AI Settings:", ENEMY_AI_CONFIG);
 console.log("[Config] Peer Learning Settings:", PEER_LEARNING_CONFIG);

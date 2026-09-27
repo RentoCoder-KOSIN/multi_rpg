@@ -1,203 +1,219 @@
-import { SKILLS_BY_JOB } from "./skills/skillRegistry.js";
-import { defineJob } from "./schema.js";
+import { defineJob } from './schema.js';
 
 export const JOBS = {
     fighter: defineJob({
-        id: "fighter",
-        type: "physical",
-        name: "ファイター",
-        description: "攻撃力と防御力のバランスが良い近接職",
+        id: 'fighter',
+        type: 'physical',
+        name: 'ファイター',
+        description: '攻撃力と防御力のバランスが良い近接職',
         atkBonus: 5,
         defBonus: 2,
         hpBonus: 20,
         skills: {
-            1: ["slash"],
-            10: ["whirlwind"],
-            20: ["heavy_slash"],
-            30: ["sonic_wave"],
-            40: ["ground_smash"],
-            50: ["fighting_spirit"],
+            1: ['slash'],
+            3: ['whirlwind'],
+            5: ['heavy_slash'],
+            7: ['sonic_wave'],
+            10: ['ground_smash'],
+            15: ['fighting_spirit'],
+            20: ['counter_stance']
         },
-        nextJob: "knight",
+        nextJob: 'knight'
     }),
     mage: defineJob({
-        id: "mage",
-        type: "magical",
-        name: "メイジ",
-        description: "高い攻撃力を誇るが、防御力が低い魔法職",
+        id: 'mage',
+        type: 'magical',
+        name: 'メイジ',
+        description: '高い攻撃力を誇るが、防御力が低い魔法職',
         atkBonus: 10,
         defBonus: 0,
         hpBonus: -10,
         skills: {
-            1: ["fireball"],
-            8: ["ice_needle"],
-            16: ["big_fireball"],
-            24: ["dark_nova"],
-            32: ["meteor_swarm"],
-            40: ["thunder_storm"],
-            50: ["mana_well"],
+            1: ['fireball'],
+            3: ['ice_needle'],
+            5: ['big_fireball'],
+            8: ['dark_nova'],
+            10: ['meteor_swarm'],
+            12: ['thunder_storm'],
+            15: ['mana_well']
         },
-        nextJob: "archmage",
+        nextJob: 'archmage'
     }),
     tank: defineJob({
-        id: "tank",
-        type: "physical",
-        name: "タンク",
-        description: "圧倒的な防御力と体力を誇る守りの要",
+        id: 'tank',
+        type: 'physical',
+        name: 'タンク',
+        description: '圧倒的な防御力と体力を誇る守りの要',
         atkBonus: 2,
         defBonus: 10,
         hpBonus: 50,
         skills: {
-            1: ["guard"],
-            12: ["whirlwind"],
-            24: ["iron_defense"],
-            36: ["shield_bash"],
-            50: ["immovable_body"],
+            1: ['guard'],
+            5: ['iron_defense'],
+            10: ['shield_bash'],
+            15: ['immovable_body'],
+            18: ['spike_guard'],
+            20: ['stalwart_heart'],
+            25: ['retaliate']
         },
-        nextJob: "paladin",
+        nextJob: 'paladin'
     }),
     ranger: defineJob({
-        id: "ranger",
-        type: "physical",
-        name: "レンジャー",
-        description: "素早い動きで敵を翻弄する遠距離職",
+        id: 'ranger',
+        type: 'physical',
+        name: 'レンジャー',
+        description: '素早い動きで敵を翻弄する遠距離職',
         atkBonus: 7,
         defBonus: 3,
         hpBonus: 5,
         skills: {
-            1: ["slash"],
-            10: ["sonic_wave"],
-            20: ["rapid_fire"],
-            30: ["ice_needle"],
-            40: ["arrow_rain"],
-            50: ["wind_walker"],
+            1: ['rapid_fire'],
+            5: ['arrow_rain'],
+            10: ['piercing_shot'],
+            13: ['multi_shot'],
+            15: ['wind_walker'],
+            18: ['explosive_arrow'],
+            20: ['hunters_focus']
         },
-        nextJob: "sniper",
+        nextJob: 'sniper'
     }),
     summoner: defineJob({
-        id: "summoner",
-        type: "magical",
-        name: "サモナー",
-        description: "召喚獣を操り戦場を支配する召喚術師",
+        id: 'summoner',
+        type: 'magical',
+        name: 'サモナー',
+        description: '召喚獣を操り戦場を支配する召喚術師',
         atkBonus: 3,
         defBonus: 2,
         hpBonus: 10,
         skills: {
-            1: ["summon"],
-            12: ["dark_nova"],
-            24: ["mega_summon"],
-            38: ["command_attack"],
-            50: ["spirit_link"],
+            1: ['summon'],
+            5: ['mega_summon'],
+            8: ['spirit_bolt'],
+            10: ['command_attack'],
+            13: ['familiar_speed'],
+            15: ['spirit_link'],
+            20: ['beast_bond']
         },
-        nextJob: "high_summoner",
-    }),
-    // --- 上位職 (Level 50+) ---
-    knight: defineJob({
-        id: "knight",
-        type: "physical",
-        name: "ナイト",
-        description: "高潔なる騎士。攻守ともに極限まで高められている。",
-        atkBonus: 15,
-        defBonus: 10,
-        hpBonus: 100,
-        reqLevel: 50,
-        skills: {
-            50: ["judgment_cut"],
-            60: ["ground_smash"],
-            70: ["heavy_slash"],
-        },
-    }),
-    archmage: defineJob({
-        id: "archmage",
-        type: "magical",
-        name: "アークメイジ",
-        description: "深遠なる真理を極めた魔導師。広範囲を殲滅する力を持ち。",
-        atkBonus: 25,
-        defBonus: 5,
-        hpBonus: 20,
-        reqLevel: 50,
-        skills: {
-            50: ["abyss_storm"],
-            60: ["meteor_swarm"],
-            70: ["thunder_storm"],
-        },
-    }),
-    paladin: defineJob({
-        id: "paladin",
-        type: "physical",
-        name: "パラディン",
-        description: "聖なる盾。神聖な魔法と鉄壁の守りで仲間を守る。",
-        atkBonus: 10,
-        defBonus: 25,
-        hpBonus: 200,
-        reqLevel: 50,
-        skills: {
-            50: ["holy_sanctuary"],
-            60: ["shield_bash"],
-            70: ["iron_defense"],
-        },
-    }),
-    sniper: defineJob({
-        id: "sniper",
-        type: "physical",
-        name: "スナイパー",
-        description: "静かなる狙撃手。遠方から敵を一撃で射抜く。",
-        atkBonus: 20,
-        defBonus: 8,
-        hpBonus: 50,
-        reqLevel: 50,
-        skills: {
-            50: ["death_rain"],
-            60: ["arrow_rain"],
-            70: ["rapid_fire"],
-        },
-    }),
-    high_summoner: defineJob({
-        id: "high_summoner",
-        type: "magical",
-        name: "ハイサモナー",
-        description: "古の力を使役する召喚士。より強力な存在を呼び出す。",
-        atkBonus: 15,
-        defBonus: 12,
-        hpBonus: 80,
-        reqLevel: 50,
-        skills: {
-            50: ["demon_lord_summon"],
-            60: ["mega_summon"],
-            70: ["command_attack"],
-        },
+        nextJob: 'high_summoner'
     }),
     priest: defineJob({
-        id: "priest",
-        type: "magical",
-        name: "プリースト",
-        description: "神の祝福を授ける聖職者。仲間の能力を強化する。",
+        id: 'priest',
+        type: 'magical',
+        name: 'プリースト',
+        description: '神の祝福を授ける聖職者。仲間の能力を強化する。',
         atkBonus: 5,
         defBonus: 5,
         hpBonus: 30,
         skills: {
-            1: ["heal", "attack_buff"],
-            6: ["holy_arrow"],
-            24: ["defense_buff"],
-            38: ["speed_buff"],
-            50: ["summon_boost"],
+            1: ['heal', 'attack_buff'],
+            3: ['holy_arrow'],
+            5: ['defense_buff'],
+            10: ['speed_buff'],
+            15: ['summon_boost'],
+            20: ['blessed_vitality']
         },
-        nextJob: "exorcist",
+        nextJob: 'exorcist'
+    }),
+
+    // --- 上位職 (Level 30+) ---
+    // 上位職の skills には「新しく増える4つ」だけを書く。
+    // 元の職業（例: fighter）のスキルは、SkillManagerUI 側が
+    // 職業の系譜(nextJobの逆引き)を辿って自動的に引き継ぐため、
+    // ここで heavy_slash 等を再度書く必要はない。
+    knight: defineJob({
+        id: 'knight',
+        type: 'physical',
+        name: 'ナイト',
+        description: '高潔なる騎士。攻守ともに極限まで高められている。',
+        atkBonus: 15,
+        defBonus: 10,
+        hpBonus: 100,
+        reqLevel: 30,
+        skills: {
+            30: ['judgment_cut'],
+            35: ['guardian_slash'],
+            40: ['veteran_instinct'],
+            45: ['last_stand']
+        }
+    }),
+    archmage: defineJob({
+        id: 'archmage',
+        type: 'magical',
+        name: 'アークメイジ',
+        description: '深遠なる真理を極めた魔導師。広範囲を殲滅する力を持つ。',
+        atkBonus: 25,
+        defBonus: 5,
+        hpBonus: 20,
+        reqLevel: 30,
+        skills: {
+            30: ['abyss_storm'],
+            35: ['chain_lightning'],
+            40: ['arcane_efficiency'],
+            45: ['mind_over_matter']
+        }
+    }),
+    paladin: defineJob({
+        id: 'paladin',
+        type: 'physical',
+        name: 'パラディン',
+        description: '聖なる盾。神聖な魔法と鉄壁の守りで仲間を守る。',
+        atkBonus: 10,
+        defBonus: 25,
+        hpBonus: 200,
+        reqLevel: 30,
+        skills: {
+            30: ['holy_sanctuary'],
+            35: ['smite'],
+            40: ['aegis_of_faith'],
+            45: ['retribution_aura']
+        }
+    }),
+    sniper: defineJob({
+        id: 'sniper',
+        type: 'physical',
+        name: 'スナイパー',
+        description: '静かなる狙撃手。遠方から敵を一撃で射抜く。',
+        atkBonus: 20,
+        defBonus: 8,
+        hpBonus: 50,
+        reqLevel: 30,
+        skills: {
+            30: ['death_rain'],
+            35: ['headshot'],
+            40: ['eagle_eye'],
+            45: ['swift_reload']
+        }
+    }),
+    high_summoner: defineJob({
+        id: 'high_summoner',
+        type: 'magical',
+        name: 'ハイサモナー',
+        description: '古の力を使役する召喚士。より強力な存在を呼び出す。',
+        atkBonus: 15,
+        defBonus: 12,
+        hpBonus: 80,
+        reqLevel: 30,
+        skills: {
+            30: ['demon_lord_summon'],
+            35: ['arcane_barrage'],
+            40: ['overlords_pact'],
+            45: ['ancient_bond']
+        }
     }),
     exorcist: defineJob({
-        id: "exorcist",
-        type: "magical",
-        name: "エクソシスト",
-        description:
-            "悪しき者を祓う祓魔師。アンデッド系に絶大な効果を発揮する上位聖職者。",
+        id: 'exorcist',
+        type: 'magical',
+        name: 'エクソシスト',
+        description: '悪しき者を祓う祓魔師。アンデッド系に絶大な効果を発揮する上位聖職者。',
         atkBonus: 20,
         defBonus: 15,
         hpBonus: 60,
-        reqLevel: 50,
+        reqLevel: 30,
         skills: {
-            50: ["exorcism"],
-            60: ["holy_arrow"],
-            70: ["defense_buff"],
-        },
-    }),
+            30: ['exorcism'],
+            35: ['divine_judgment'],
+            40: ['sanctified_ground'],
+            45: ['unwavering_faith']
+        }
+    })
 };

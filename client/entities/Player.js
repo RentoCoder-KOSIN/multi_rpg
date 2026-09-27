@@ -392,32 +392,53 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.stats.atk = 5 + (str * 2) + jobAtkBonus;  // STR 1 = ATK +2 + Job Bonus
         }
         this.stats.def = 3 + Math.floor(vit * 0.5) + jobDefBonus;
-        this.stats.maxHp = 80 + (vit * 10) + jobHpBonus;
+        // HPの伸び方は GROWTH_CONFIG で一括調整できる。
+        // レベルのべき乗成分（序盤は緩やか、終盤にしっかり伸びる）と
+        // VIT由来の成分を足してから、最後に HP_GROWTH_MULTIPLIER をまとめて掛ける。
+        const hpFromLevel = Math.pow(this.stats.level || 1, GROWTH_CONFIG.HP_LEVEL_EXPONENT) * GROWTH_CONFIG.HP_LEVEL_SCALE;
+        const hpFromVit = vit * GROWTH_CONFIG.HP_PER_VIT;
+        this.stats.maxHp = GROWTH_CONFIG.HP_BASE + Math.round((hpFromLevel + hpFromVit) * GROWTH_CONFIG.HP_GROWTH_MULTIPLIER) + jobHpBonus;
         this.stats.maxMp = 30 + (men * 5);
 
-        // --- パッシブスキルの効果を適用 ---
+        // --- パッシブスキルの効果を汎用的に適用 ---
+        // 新しいパッシブを追加するとき、ここにif文を増やす必要はない。
+        // スキル定義側の effect にキーを書けば、対応する効果が自動で乗る。
+        // 対応キー: atkMult, defMult, maxHpMult, maxHpFlat, maxMpFlat, maxMpMult,
+        //           speedFlat, critChanceFlat, lifestealFlat, expMultBonus,
+        //           cooldownMult, mpCostMult, healPowerMult
         const unlocked = this.stats.unlockedSkills || [];
+        let passiveSpeedBonus = 0;
+        let passiveCritBonus = 0;
+        let passiveLifestealBonus = 0;
+        this.stats.cooldownMult = 1.0;  // combat.js がスキルCTに掛ける（1.0=通常）
+        this.stats.mpCostMult = 1.0;    // combat.js がMP消費に掛ける（1.0=通常）
+        this.stats.healPowerMult = 1.0; // combat.js が回復量に掛ける（1.0=通常）
+        this.stats.expMultiplier = 1.0;
 
-        // 不屈の闘志: 攻撃力+10%
-        if (unlocked.includes('fighting_spirit')) {
-            this.stats.atk = Math.ceil(this.stats.atk * 1.1);
-        }
-        // 魔力の源泉: 最大MP+50
-        if (unlocked.includes('mana_well')) {
-            this.stats.maxMp += 50;
-        }
-        // 金剛の体: 防御力+15%
-        if (unlocked.includes('immovable_body')) {
-            this.stats.def = Math.ceil(this.stats.def * 1.15);
-        }
-        // 風の如く: 移動速度+30
-        const speedSkillBonus = unlocked.includes('wind_walker') ? 30 : 0;
+        unlocked.forEach(skillId => {
+            const skillDef = SKILLS[skillId];
+            if (!skillDef || skillDef.type !== 'passive' || !skillDef.effect) return;
+            const e = skillDef.effect;
+
+            if (e.atkMult) this.stats.atk = Math.ceil(this.stats.atk * e.atkMult);
+            if (e.defMult) this.stats.def = Math.ceil(this.stats.def * e.defMult);
+            if (e.maxHpMult) this.stats.maxHp = Math.ceil(this.stats.maxHp * e.maxHpMult);
+            if (e.maxHpFlat) this.stats.maxHp += e.maxHpFlat;
+            if (e.maxMpFlat) this.stats.maxMp += e.maxMpFlat;
+            if (e.maxMpMult) this.stats.maxMp = Math.ceil(this.stats.maxMp * e.maxMpMult);
+            if (e.speedFlat) passiveSpeedBonus += e.speedFlat;
+            if (e.critChanceFlat) passiveCritBonus += e.critChanceFlat;
+            if (e.lifestealFlat) passiveLifestealBonus += e.lifestealFlat;
+            if (e.expMultBonus) this.stats.expMultiplier += e.expMultBonus;
+            if (e.cooldownMult) this.stats.cooldownMult *= e.cooldownMult;
+            if (e.mpCostMult) this.stats.mpCostMult *= e.mpCostMult;
+            if (e.healPowerMult) this.stats.healPowerMult *= e.healPowerMult;
+        });
 
         // 特殊ステータスの基礎値
-        this.stats.critChance = dex * 0.01;
-        this.stats.lifesteal = 0;
-        this.stats.speedBonus = (dex * 2) + speedSkillBonus;
-        this.stats.expMultiplier = 1.0;
+        this.stats.critChance = (dex * 0.01) + passiveCritBonus;
+        this.stats.lifesteal = passiveLifestealBonus;
+        this.stats.speedBonus = (dex * 2) + passiveSpeedBonus;
 
         // ステータス割り振り画面で「装備によってここまで補正されている」を
         // 表示できるように、装備を加算する直前（素のステータス）を控えておく。

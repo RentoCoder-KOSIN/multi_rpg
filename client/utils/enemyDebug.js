@@ -2,6 +2,7 @@
  * 敵のデバッグ表示ユーティリティ
  * 敵の動きや状態を可視化してテスト
  */
+import { ENEMY_ATTACK_RANGE } from '../config.js';
 
 export function createEnemyDebugUI(scene) {
     if (!scene.enemyDebugText) {
@@ -108,5 +109,39 @@ export function drawEnemyDetectionRanges(scene, graphics) {
         // 敵の位置を小さなマーク
         graphics.fillStyle(0xff00ff, 1);
         graphics.fillPointShape(new Phaser.Geom.Point(enemy.x, enemy.y), 3);
+    });
+}
+
+/**
+ * 敵の攻撃間合いを常時、薄い輪として表示する。
+ * 「敵の攻撃の間合いがわからない」対策の可視化で、Dキーのデバッグ表示とは
+ * 独立して常に呼び出される想定（BaseGameScene.update() から呼ばれる）。
+ *
+ * サーバー管理の敵（isServerManaged）は本当の判定距離である
+ * ENEMY_ATTACK_RANGE（config.js。サーバー側の値をミラーしたもの）を使い、
+ * ローカル限定の敵（ボスなど）は自身が持つ attackRange を使う。
+ * Enemy インスタンスは scene.children.list に全て乗っているため、
+ * networkManager 経由では見えないローカルのボスもここで正しく拾える。
+ */
+export function drawEnemyAttackRanges(scene) {
+    if (!scene.player || !scene.player.active) return;
+
+    if (!scene._enemyRangeGraphics) {
+        scene._enemyRangeGraphics = scene.add.graphics();
+        scene._enemyRangeGraphics.setDepth(4); // 地面より上、敵やHPバーより下
+    }
+    const g = scene._enemyRangeGraphics;
+    g.clear();
+
+    scene.children.list.forEach(child => {
+        if (!child.active) return;
+        // Enemy クラスを import すると循環importのリスクがあるため、
+        // ダックタイピングで判定する（敵なら必ず持っているプロパティで見分ける）。
+        if (typeof child.attackRange !== 'number' || typeof child.isServerManaged !== 'boolean') return;
+
+        const range = child.isServerManaged ? ENEMY_ATTACK_RANGE : (child.attackRange || 60);
+
+        g.lineStyle(1, 0xff3333, 0.35);
+        g.strokeCircle(child.x, child.y, range);
     });
 }

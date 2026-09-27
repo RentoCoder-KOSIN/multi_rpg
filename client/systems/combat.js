@@ -105,8 +105,8 @@ export function usePlayerSkill(scene, skillId) {
     const lastUse = player.skillCooldowns[skillId] || 0;
     const hasHolyWeapon = player.stats.equipment.weapon === 'holy_weapon';
 
-    // Holy weapon: half cooldown, zero MP cost
-    let cdTime = skill.cd || 2000;
+    // Holy weapon: half cooldown, zero MP cost。パッシブのcooldownMultも重ねて掛ける
+    let cdTime = (skill.cd || 2000) * (player.stats.cooldownMult ?? 1);
     if (hasHolyWeapon) cdTime = Math.floor(cdTime * 0.5);
 
     if (now - lastUse < cdTime) {
@@ -114,7 +114,7 @@ export function usePlayerSkill(scene, skillId) {
         return;
     }
 
-    const mpCost = hasHolyWeapon ? 0 : (skill.mpCost || 0);
+    const mpCost = hasHolyWeapon ? 0 : Math.ceil((skill.mpCost || 0) * (player.stats.mpCostMult ?? 1));
     if (player.stats.mp < mpCost) {
         if (scene.notificationUI) scene.notificationUI.show('MPが足りません！', 'error');
         return;
@@ -221,7 +221,7 @@ function applyPartySkill(scene, skillId, skill, range) {
             const skillLevel = player.stats.skillLevels?.[skillId] || 1;
             const int = player.stats.int || 5;
             const baseHeal = skill.effect?.healPower || 50;
-            const healAmount = Math.ceil(baseHeal * (1 + (int * 0.1)) * (1 + (skillLevel - 1) * 0.2));
+            const healAmount = Math.ceil(baseHeal * (1 + (int * 0.1)) * (1 + (skillLevel - 1) * 0.2) * (player.stats.healPowerMult ?? 1));
 
             target.stats.hp = Math.min(target.stats.maxHp, target.stats.hp + healAmount);
             const healText = scene.add.text(target.x, target.y - 40, `+${healAmount}`, {

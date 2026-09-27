@@ -161,3 +161,179 @@ export const JOBS = {
 `!job.reqLevel` で初期職業だけを絞り込んでいるため、うっかり
 `reqLevel: 1` を書くと初期職業が選択肢から消えてしまいます。
 上位職（転職先）だけ `reqLevel: 30` のように指定してください。
+
+---
+
+## 追記: バランス調整・戦闘バグ修正・スキル大幅改訂
+
+### プレイヤーのHP成長率を調整可能にした
+
+`client/gameConstants.js` の `GROWTH_CONFIG` に以下を追加した。
+
+```js
+HP_BASE: 80,
+HP_PER_VIT: 10,
+HP_GROWTH_MULTIPLIER: 1.5, // ここだけ変えればHPの伸びを一括調整できる
+```
+
+`Player.js` の `maxHp` 計算式はこれを参照するようになっている
+（`HP_BASE + round(VIT * HP_PER_VIT * HP_GROWTH_MULTIPLIER) + 職業のHPボーナス`）。
+
+なお、当初の依頼は「`config.js` で倍率を変えられるように」だったが、
+`client/config.js` は Scene クラス群を import しており、そこから
+`Player.js` が `config.js` を参照すると循環import
+（`Cannot access '...' before initialization`）を起こす。
+`gameConstants.js` は元々「Sceneに依存しない軽量な定数専用ファイル」として
+用意されていたため、同じ目的でここに置いている。
+
+### バグ修正: ボスに通常攻撃（SPACE）が当たらない
+
+`performBasicAttack()`（`client/systems/combat.js`）が、対象の敵を
+`scene.networkManager.getEnemies()`（サーバー管理の敵の一覧）からしか
+探していなかった。ローカル限定で生成されるボス（`socket: null` で
+生成される）はこの一覧に登録されないため、通常攻撃の対象に一切
+含まれなかった。スキルは別ロジック（`scene.children.list` から
+`Enemy` インスタンスを全て探す）だったため、スキルだけはボスに当たっていた。
+
+通常攻撃もスキルと同じ探し方（`scene.children.list` を `Enemy` で
+フィルタ）に統一して修正。今後、敵の当たり判定に関わるロジックを
+書くときは、`scene.networkManager.getEnemies()` だけでなく、
+ローカル限定の敵（ボスなど）が漏れていないか必ず確認すること。
+
+### 敵の攻撃間合いの可視化
+
+`client/utils/enemyDebug.js` に既に `drawEnemyDetectionRanges()` という
+関数が定義されていたが、どこからも呼ばれていない **デッドコード** だった
+（Dキーのデバッグ表示は別のテキストパネルのみで、輪の描画は一度も
+呼ばれていなかった）。
+
+新たに `drawEnemyAttackRanges(scene)` を追加し、`BaseGameScene.update()`
+から毎フレーム呼ぶようにした。サーバー管理の敵は `client/config.js` の
+`ENEMY_ATTACK_RANGE`（サーバー側 `server/config.js` の値をミラーしたもの。
+値を変えたら両方揃えること）を、ローカル限定の敵（ボスなど）は各自の
+`attackRange` を使って、敵の周囲に薄い赤の輪を常時表示する。
+
+Dキーのデバッグテキストパネルとは独立して常時ONになっている。
+もし通常プレイ中は表示したくない場合は、`BaseGameScene.js` の
+`drawEnemyAttackRanges(this);` の呼び出しを
+`if (this.showEnemyDebug) { drawEnemyAttackRanges(this); }` に変えれば、
+Dキーを押したときだけ表示される。
+
+### スキルの大幅改訂（職業間の重複解消・パッシブ拡充）
+
+**変更前の問題点**
+- `slash` / `sonic_wave` / `ice_needle` / `dark_nova` / `whirlwind` が、
+  無関係な職業間（例: ファイターとレンジャー）でそのまま重複して
+  使われていた。
+- 基本職ごとにスキル数がバラバラ（4〜7個）で、上位職は新規スキルが
+  1個だけしか増えなかった。
+- ほとんどのスキルが「攻撃」か「バフ」で、常時発動のパッシブは
+  4種類しかなかった。
+
+**変更後**
+- 職業間のスキルID重複はゼロ（Node上で全職業・全スキルを実際に
+  読み込んで機械的に検証済み。合計66種のユニークなスキル、重複なし）。
+- 基本職6職業（ファイター/メイジ/タンク/レンジャー/サモナー/プリースト）は
+  全て「合計7スキル」に統一。
+- 上位職6職業（ナイト/アークメイジ/パラディン/スナイパー/ハイサモナー/
+  エクソシスト）は、それぞれ「新規に増える4スキル」で統一
+  （継承元のスキルは`SkillManagerUI.js`が職業の系譜を自動で辿って
+  引き継ぐので、上位職側の定義に再度書く必要はない）。
+- パッシブスキルを4種類→24種類に拡充。全職業に最低1〜2個配置。
+
+**パッシブの仕組みを汎用化**
+
+以前は `fighting_spirit` など4つのパッシブが `Player.js` に
+個別のif文でハードコードされていた。新しいパッシブを追加するたびに
+このif文を増やす必要があり、スケールしない書き方だった。
+
+`defineSkill()` の `effect` フィールドに以下のキーを書くと、
+`Player.js` の `applyEquipmentStats()` が自動で適用する
+（新しいif文を増やす必要はない）:
+
+| キー | 効果 |
+|---|---|
+| `atkMult` | 攻撃力に倍率 |
+| `defMult` | 防御力に倍率 |
+| `maxHpMult` / `maxHpFlat` | 最大HPに倍率／固定加算 |
+| `maxMpFlat` / `maxMpMult` | 最大MPに固定加算／倍率 |
+| `speedFlat` | 移動速度に固定加算 |
+| `critChanceFlat` | 会心率に固定加算 |
+| `lifestealFlat` | 与ダメージの一部を自分のHPとして吸収 |
+| `expMultBonus` | 獲得経験値の倍率に加算（例: 0.1 → +10%） |
+| `cooldownMult` | スキルのクールタイムに倍率（combat.js側で消費） |
+| `mpCostMult` | スキルのMP消費に倍率（combat.js側で消費） |
+| `healPowerMult` | 回復スキルの効果量に倍率（combat.js側で消費） |
+
+例:
+```js
+my_new_passive: defineSkill({
+    id: 'my_new_passive',
+    name: '新しいパッシブ',
+    type: 'passive',
+    unlockCost: 100,
+    icon: '✨',
+    description: '常時：攻撃力+12%',
+    effect: { atkMult: 1.12 }
+}),
+```
+
+これで十分。`Player.js` を触る必要はない。
+
+---
+
+## 追記2: 突撃命令のテコ入れ・レベルアップ計算の確認・HP成長カーブの再調整
+
+### 突撃命令（サモナーの`command_attack`）が機能してるように見えなかった件
+
+実際には動いていましたが、効果が弱すぎて体感できなかった、というのが実態でした。
+`SummonedBeast.commandAttack()` は元々「攻撃クールダウンのリセット」と
+「3秒間だけ移動速度2倍」しかしておらず、召喚獣は元々0.8秒間隔で自動攻撃する
+上に、射程(50px)内に既にいないと何も見た目上の変化が起きません。プレイヤーが
+少し離れた場所からこのスキルを押しても、画面上は何も起きたように見えない
+状況になっていました。
+
+「命令」らしく、押した瞬間に必ず効果が見える即時ダメージ（`atk × 2.2`、
+レベル差補正込み）を追加しました。距離に関わらず現在のターゲットに直撃し、
+ダメージ数値と「命令実行！」の文字が出ます。従来の速度アップ効果もそのまま
+残しています。
+
+### レベルアップ計算について
+
+`Player.gainExp()` は既に正しく実装されていました。大量の経験値が一度に
+入った場合、`while (this.stats.exp >= this.stats.maxExp)` のループで
+毎回 `levelUp()` を呼び、`levelUp()` の中で `this.stats.level++` した
+**後**に `this.stats.maxExp = calcMaxExp(this.stats.level)` を再計算して
+いるため、2段以上レベルアップする場合も、常に「レベルアップ後の新しい
+次のレベルに必要な経験値」を基準に消費されます。古い（レベルアップ前の）
+`maxExp` を使い続けてしまうバグではありませんでした。
+
+### HP成長カーブの再調整（Lv100・VIT無振りで概ね1万）
+
+以前は `maxHp = HP_BASE + round(VIT * HP_PER_VIT * HP_GROWTH_MULTIPLIER) + 職業ボーナス`
+というVIT一次関数だった。VITはレベルごとに自動で+1しか増えないため、
+「Lv100でVITを振らずに1万」を狙って倍率を上げると、Lv1のHPまで
+一緒に跳ね上がってしまう問題があった。
+
+そこでレベル自体のべき乗成分を別に加えたカーブに変更した
+（`client/gameConstants.js` の `GROWTH_CONFIG`）:
+
+```js
+maxHp = HP_BASE
+      + round( (level^HP_LEVEL_EXPONENT * HP_LEVEL_SCALE + VIT * HP_PER_VIT) * HP_GROWTH_MULTIPLIER )
+      + 職業のHPボーナス
+```
+
+デフォルト値（`HP_LEVEL_EXPONENT: 2`, `HP_LEVEL_SCALE: 0.88`）で、
+VITを一切振らずレベルだけ上げた場合のHPは概ね:
+
+| レベル | HP（目安） |
+|---|---|
+| 1 | 約120〜330 |
+| 30 | 約1200〜1400 |
+| 50 | 約2800〜3000 |
+| 70 | 約5100〜5300 |
+| 100 | 約9900〜10100 |
+
+`HP_GROWTH_MULTIPLIER` は変わらず「このカーブ全体を一括で何倍にもする」
+ための倍率として残してある（1.0 = このバランス）。

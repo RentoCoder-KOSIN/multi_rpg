@@ -2,40 +2,32 @@
  * サモナースキル
  * 召喚獣を操り戦場を支配する召喚術師
  */
-import { defineSkill } from "../schema.js";
+import { defineSkill } from '../schema.js';
 
 export const SUMMONER_SKILLS = {
     summon: defineSkill({
-        id: "summon",
-        name: "サモン",
-        type: "active",
-        cd: 15000,
-        mpCost: 60,
-        unlockCost: 10,
-        color: 0x9370db,
-        icon: "👻",
-        description: "召喚獣を呼び出して戦わせる。",
+        id: 'summon', name: 'サモン', type: 'active',
+        cd: 15000, mpCost: 20, unlockCost: 10,
+        color: 0x9370db, icon: '👻',
+        description: '召喚獣を呼び出して戦わせる。'
     }),
     mega_summon: defineSkill({
-        id: "mega_summon",
-        name: "メガサモン",
-        type: "active",
-        cd: 30000,
-        mpCost: 150,
-        unlockCost: 50,
-        color: 0x800080,
-        icon: "👿",
-        description: "強力な召喚獣を呼び出す。",
+        id: 'mega_summon', name: 'メガサモン', type: 'active',
+        cd: 30000, mpCost: 50, unlockCost: 50,
+        color: 0x800080, icon: '👿',
+        description: '強力な召喚獣を呼び出す。'
     }),
     command_attack: defineSkill({
-        id: "command_attack",
-        name: "突撃命令",
-        type: "active",
-        cd: 10000,
-        mpCost: 30,
-        unlockCost: 100,
-        color: 0xffd700,
-        icon: "🚩",
-        description: "召喚獣に突撃させる。",
+        id: 'command_attack', name: '突撃命令', type: 'active',
+        cd: 10000, mpCost: 30, unlockCost: 100,
+        color: 0xffd700, icon: '🚩',
+        description: '召喚獣に突撃させる。'
     }),
+    spirit_bolt: defineSkill({
+        id: 'spirit_bolt', name: 'スピリットボルト', type: 'active',
+        cd: 3000, damageMult: 8, mpCost: 12, unlockCost: 80,
+        range: 170, rangeType: 'circle',
+        color: 0xda70d6, icon: '🔮',
+        description: '精霊の力を凝縮した弾を放つ。'
+    })
 };
