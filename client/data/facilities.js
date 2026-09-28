@@ -1,56 +1,58 @@
 /**
- * マップ上の施設（鍛冶屋・クエストボード・ギルドショップなど）の定義。
+ * マップ上の施設（鍛冶屋・武器屋・防具屋・雑貨屋・クエストボードなど）の「種類」の定義。
+ * 配置と設定は Tiled で行う。ここは「どんな種類の施設があるか」だけを持つ。
  *
- * ★新しい施設/場所を足すには、ここにエントリを足すだけ★（シーンのコードは触らなくてよい）
+ * ■ 施設を置く手順（Tiled）
+ *   1. マップに オブジェクトレイヤー「FacilityTrigger」を作る（グループの中でもOK）
+ *   2. 四角形オブジェクトを、施設の入口あたりに置く（プレイヤーが重なる範囲）
+ *   3. オブジェクトにカスタムプロパティを付ける
+ *        facility  (string) 必須  施設の種類。下の FACILITY_TYPES のキー
+ *        shop      (string)       facility=shop のとき、data/shops.js の SHOP_LOADOUTS のキー
+ *        category  (string)       facility=shop のとき weapon / armor / item で品揃えを絞る（省略可）
+ *        label     (string)       地面に出す看板の文字。省略時はオブジェクト名 → 種類の既定名（shopは店名）
+ *        icon      (string)       看板の絵文字。省略時は種類の既定。空文字で絵文字なし
+ *        color     (string)       枠と看板の色 "#ff8844" 形式。省略時は種類の既定
+ *        showLabel (bool)         false で看板と枠を非表示（判定だけ残す）
  *
- * 座標の決め方は2通り:
- *   1) Tiledのオブジェクトレイヤー「FacilityTrigger」に矩形を置き、カスタムプロパティ
- *      facility = <施設id> を付ける → マップ側の座標が優先される（推奨）
- *   2) 下の zone にワールドのピクセル座標を書く（Tiledを触れないときのフォールバック）
- *
- * 項目:
- *   id       施設id（Tiledのfacilityプロパティと一致させる）
- *   zone     { x, y, width, height } 判定エリア（左上基準・ピクセル）
- *   label    地面に出す看板テキスト（省略可。省略時は看板なし）
- *   prompt   近づいたときに出すメッセージ
- *   ui       開くUIのシーンプロパティ名（例: 'blacksmithUI'）
- *   method   UIに対して呼ぶメソッド（'toggle' | 'open'。既定 'toggle'）
- *   args     methodに渡す引数（例: ['guild_shop']）
- *   color    看板/枠の色（省略可）
+ * ■ 新しい種類の施設を足す（コード側）
+ *   FACILITY_TYPES に1エントリ足す。開くUIは scene[ui] のメソッド method(...args) を呼ぶ。
+ *   そのUIをシーンがまだ持っていないときは scenes/base/facilities.js の UI_FACTORIES に生成方法を足す。
  */
-export const FACILITIES = {
-    // 街: 武器屋の東隣の空き地に鍛冶屋
-    city: [
-        {
-            id: 'blacksmith',
-            zone: { x: 1520, y: 1058, width: 200, height: 154 },
-            label: '⚒️ 鍛冶屋',
-            prompt: '[E] 鍛冶屋を開く',
-            ui: 'blacksmithUI',
-            color: 0xff8844,
-        },
-    ],
+import { getShopLoadout } from './shops.js';
 
-    // ギルド1F: クエストボードとショップカウンター
-    // （実際にタイル画像を描画して確認した座標。
-    //   掲示板: (1-6, 10-11) / ショップカウンター: (23-25, 28-29)）
-    guild1f: [
-        {
-            id: 'quest_board',
-            zone: { x: 32, y: 384, width: 192, height: 56 },
-            prompt: '[E] クエストボードを見る',
-            ui: 'guildQuestBoardUI',
-        },
-        {
-            id: 'guild_shop',
-            zone: { x: 736, y: 832, width: 96, height: 64 },
-            prompt: '[E] ギルドショップを開く',
-            ui: 'shopUI',
-            method: 'open',
-            args: ['guild_shop'],
-        },
-    ],
-};
-
+export const FACILITY_LAYER_NAME = 'FacilityTrigger';
 export const FACILITY_INTERACT_KEY = 'E';
 export const FACILITY_PROMPT_INTERVAL_MS = 3000;
+
+export const FACILITY_TYPES = {
+    // 鍛冶屋: 武器/防具に属性を付与する
+    blacksmith: {
+        icon: '⚒️',
+        color: 0xff8844,
+        defaultLabel: '鍛冶屋',
+        prompt: (label) => `[E] ${label}を開く`,
+        ui: 'blacksmithUI',
+        method: 'toggle',
+    },
+
+    // 店: 武器屋・防具屋・雑貨屋・ギルドショップなど。品揃えは shop プロパティ(SHOP_LOADOUTS)で決まる
+    shop: {
+        icon: '🛒',
+        color: 0x44cc88,
+        defaultLabel: (props) => getShopLoadout(props.shop).title,
+        prompt: (label) => `[E] ${label}を開く`,
+        ui: 'shopUI',
+        method: 'open',
+        args: (props) => [props.shop, props.category || null],
+    },
+
+    // クエストボード: クエストの受注・報告
+    quest_board: {
+        icon: '📜',
+        color: 0x00ccaa,
+        defaultLabel: 'クエストボード',
+        prompt: (label) => `[E] ${label}を見る`,
+        ui: 'guildQuestBoardUI',
+        method: 'toggle',
+    },
+};

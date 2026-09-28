@@ -155,8 +155,8 @@ export default class BaseGameScene extends Phaser.Scene {
         createGameUI(this, config);
         registerInputHandlers(this);
 
-        // 鍛冶屋・クエストボードなどの施設（data/facilities.js）。UIは使うときに参照するので生成順は問わない
-        setupFacilities(this, config.mapKey);
+        // 鍛冶屋・各種ショップ・クエストボードなどの施設。Tiledの「FacilityTrigger」レイヤーから作る（data/facilities.js）
+        setupFacilities(this);
 
         const playerNames = this.registry.get('playerNames') || {};
         const socket = this.networkManager.getSocket();
@@ -190,6 +190,7 @@ export default class BaseGameScene extends Phaser.Scene {
         // cursorsそのものを渡さないのではなく「どのキーも押されていない」状態を渡す）。
         const windowOpen = isAnyWindowOpen(this);
         this.player.update(windowOpen ? NEUTRAL_CURSORS : this.cursors);
+        if (windowOpen && this.player.body) this.player.setVelocity(0, 0); // ショップ等を開いている間は立ち止まる
         // Attack / skills are disabled while a window is open
         if (!windowOpen && this.attackKey && Phaser.Input.Keyboard.JustDown(this.attackKey)) {
             this.performBasicAttack();
