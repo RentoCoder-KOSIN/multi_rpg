@@ -1,5 +1,5 @@
 {
-    "activeFile": "guild1f.json",
+    "activeFile": "city.json",
     "expandedProjectPaths": [
         "."
     ],
@@ -10,21 +10,25 @@
             "selectedLayer": 0,
             "viewCenter": {
                 "x": 383.657448706512,
-                "y": 319.71454058876003
+                "y": 318.9533154921201
             }
         },
         "battle.json#tiles": {
             "scaleInDock": 1
         },
         "city.json": {
+            "expandedGroupLayers": [
+                37
+            ],
             "expandedObjectLayers": [
-                41
+                41,
+                42
             ],
             "scale": 1,
             "selectedLayer": 17,
             "viewCenter": {
-                "x": 1754,
-                "y": 437
+                "x": 2095,
+                "y": 1592
             }
         },
         "city.json#tiles": {
@@ -34,11 +38,14 @@
             "scaleInDock": 1
         },
         "guild1f.json": {
+            "expandedObjectLayers": [
+                13
+            ],
             "scale": 0.5254687499999999,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 479.57181088314013,
-                "y": 479.5718108831401
+                "x": 480.52334225394,
+                "y": 480.52334225394
             }
         },
         "guild1f.json#tiles": {
@@ -49,7 +56,7 @@
             "selectedLayer": 0,
             "viewCenter": {
                 "x": 480.52334225394,
-                "y": 479.5718108831401
+                "y": 480.52334225394
             }
         },
         "guild2f.json#tiles": {
@@ -65,8 +72,8 @@
     "project": "rpg_map.tiled-project",
     "recentFiles": [
         "battle.json",
-        "city.json",
         "guild2f.json",
-        "guild1f.json"
+        "guild1f.json",
+        "city.json"
     ]
 }
