@@ -85,14 +85,11 @@ export function applySkillEffect(scene, skillId, sourceUser, isRemote = false) {
         scene.time.delayedCall(500, () => emitter.destroy());
     };
 
-    if (['slash', 'heavy_slash', 'whirlwind', 'judgment_cut'].includes(skillId)) {
-        playSlashEffect(ctx);
-    } else if (['fireball', 'big_fireball', 'meteor_swarm', 'abyss_storm', 'dark_nova'].includes(skillId)) {
-        playMagicBlastEffect(ctx);
-    } else if (skill.targetType === 'party') {
-        playSupportEffect(ctx);
-    } else if (['sonic_wave', 'ice_needle', 'holy_arrow'].includes(skillId)) {
-        playProjectileEffect(ctx);
+    // 演出はスキル定義の vfx で決まる（スキルIDによる分岐は無し）。新しい演出タイプは VFX_PLAYERS に足す
+    const vfxType = skill.vfx || (skill.targetType === 'party' ? 'support' : null);
+    const play = VFX_PLAYERS[vfxType];
+    if (play) {
+        play(ctx);
     } else {
         ctx.createBurst(skill.color || 0xffffff, 15, 100);
     }
@@ -100,7 +97,7 @@ export function applySkillEffect(scene, skillId, sourceUser, isRemote = false) {
 
 // Melee slash: expanding ring for circle skills, diagonal line for the rest
 function playSlashEffect({ scene, skill, skillId, direction, startX, startY, actualRange, effectScale, createBurst }) {
-    const slashColor = (skillId === 'heavy_slash') ? 0xff0000 : (skillId === 'judgment_cut' ? 0x00ffff : 0xffffff);
+    const slashColor = skill.vfxOptions?.slashColor ?? 0xffffff;
 
     if (skill.rangeType === 'circle') {
         const circle = scene.add.circle(startX, startY, 5 * effectScale, slashColor, 0.6);
@@ -141,7 +138,7 @@ function playMagicBlastEffect({ scene, skill, skillId, isRemote, remoteScale, di
         onComplete: () => circle.destroy()
     });
 
-    const baseQuantity = (skillId === 'meteor_swarm' || skillId === 'abyss_storm') ? 30 : 15;
+    const baseQuantity = skill.vfxOptions?.particleCount ?? 15;
     const emitter = scene.add.particles(targetX, startY, 'water', {
         speed: { min: 50 * effectScale, max: 200 * effectScale },
         scale: { start: 0.6 * effectScale, end: 0 },
@@ -155,7 +152,7 @@ function playMagicBlastEffect({ scene, skill, skillId, isRemote, remoteScale, di
 
     // Shake only for own casts or casts near the local player
     if (!isRemote || Phaser.Math.Distance.Between(scene.player.x, scene.player.y, startX, startY) < 400) {
-        if (skillId === 'meteor_swarm' || skillId === 'abyss_storm' || skillId === 'big_fireball') {
+        if (skill.vfxOptions?.shake) {
             scene.cameras.main.shake(200, 0.005 * effectScale);
         }
     }
@@ -202,7 +199,7 @@ function playProjectileEffect({ scene, skill, skillId, direction, startX, startY
     emitter.explode(Math.max(1, Math.ceil(8 * effectScale * remoteScale)), startX, startY);
 
     let projectile;
-    if (skillId === 'holy_arrow') {
+    if (skill.vfxOptions?.projectile === 'bolt') {
         projectile = scene.add.rectangle(startX, startY, 40 * effectScale, 4 * effectScale, color, 1);
     } else {
         projectile = scene.add.arc(startX, startY, 30 * effectScale, -30, 30, false, color, 0.8);
@@ -218,3 +215,11 @@ function playProjectileEffect({ scene, skill, skillId, direction, startX, startY
         onComplete: () => projectile.destroy()
     });
 }
+
+// 演出タイプ名 → 再生関数。skill.vfx（data/schema.js の VALID_VFX_TYPES）と対応
+const VFX_PLAYERS = {
+    slash: playSlashEffect,
+    blast: playMagicBlastEffect,
+    projectile: playProjectileEffect,
+    support: playSupportEffect,
+};

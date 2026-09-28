@@ -1,6 +1,9 @@
 import { ITEMS } from "../data/items.js";
 import BaseWindowUI from "./BaseWindowUI.js";
-import { ELEMENTS, ELEMENT_INFO, STRONG_AGAINST, getOrbItemId } from "../data/elements.js";
+import {
+    ELEMENTS, ELEMENT_INFO, ELEMENT_RULES, STRONG_AGAINST, WEAK_TO, getOrbItemId,
+    getElementGroups, getWeaponBonusSummary, getElementColorCss,
+} from "../data/elements.js";
 import { areEffectsEnabled } from "../utils/effectsSettings.js";
 
 /**
@@ -47,11 +50,7 @@ export default class BlacksmithUI extends BaseWindowUI {
         this.createHelpButton();
         this.createHelpOverlay();
 
-        this.scene.input.keyboard.on('keydown-B', () => {
-            const scene = this.scene;
-            if (scene.inventoryUI?.isOpen || scene.shopUI?.isOpen || scene.equipmentUI?.isOpen) return;
-            this.toggle();
-        });
+        // 鍛冶屋は街の鍛冶屋エリア(CityScene)でEキーを押したときだけ開く（どこでも開けるショートカットは無し）
     }
 
     open() {
@@ -106,35 +105,39 @@ export default class BlacksmithUI extends BaseWindowUI {
             fontSize: '18px', fontFamily: font, color: '#ffffff', stroke: '#ff8844', strokeThickness: 3
         }).setOrigin(0.5));
 
-        // --- 五角形の相性図（矢印は「強い」方向 = 1.7倍） ---
-        const cx = -150, cy = -10, R = 105, nodeR = 26;
-        const order = ['fire', 'earth', 'wind', 'thunder', 'water']; // 強い順の輪
-        const pos = order.map((el, i) => {
-            const a = -Math.PI / 2 + (Math.PI * 2 * i) / order.length;
-            return { el, x: cx + Math.cos(a) * R, y: cy + Math.sin(a) * R };
-        });
-
+        // --- 相性図（属性の定義から自動生成。矢印は「強い」方向） ---
+        const nodeR = 26;
+        const area = { cx: -150, top: -h / 2 + 95, width: 290, height: h - 95 - 90 };
         const gfx = this.scene.add.graphics();
         hc.add(gfx);
-        pos.forEach((from, i) => {
-            const to = pos[(i + 1) % pos.length];
+        const nodePos = this.layoutElementGroups(getElementGroups(), area, nodeR);
+
+        const drawArrow = (from, to, offset) => {
             const dx = to.x - from.x, dy = to.y - from.y;
-            const len = Math.hypot(dx, dy);
+            const len = Math.hypot(dx, dy) || 1;
             const ux = dx / len, uy = dy / len;
-            const sx = from.x + ux * (nodeR + 3), sy = from.y + uy * (nodeR + 3);
-            const ex = to.x - ux * (nodeR + 3), ey = to.y - uy * (nodeR + 3);
+            const px = -uy, py = ux;
+            const sx = from.x + ux * (nodeR + 3) + px * offset, sy = from.y + uy * (nodeR + 3) + py * offset;
+            const ex = to.x - ux * (nodeR + 3) + px * offset, ey = to.y - uy * (nodeR + 3) + py * offset;
             gfx.lineStyle(3, 0xffaa44, 1);
             gfx.lineBetween(sx, sy, ex, ey);
-            const px = -uy, py = ux;
             gfx.fillStyle(0xffaa44, 1);
             gfx.fillTriangle(
                 ex, ey,
                 ex - ux * 12 + px * 7, ey - uy * 12 + py * 7,
                 ex - ux * 12 - px * 7, ey - uy * 12 - py * 7
             );
+        };
+        Object.entries(nodePos).forEach(([atk, from]) => {
+            STRONG_AGAINST[atk].forEach((def) => {
+                const to = nodePos[def];
+                if (!to) return;
+                const mutual = STRONG_AGAINST[def].includes(atk); // 互いに強い場合は2本を少しずらして描く
+                drawArrow(from, to, mutual ? 5 : 0);
+            });
         });
 
-        pos.forEach(({ el, x, y }) => {
+        Object.entries(nodePos).forEach(([el, { x, y }]) => {
             const info = ELEMENT_INFO[el];
             hc.add(this.scene.add.circle(x, y, nodeR, 0x1a1a2e, 1).setStrokeStyle(3, info.color));
             hc.add(this.scene.add.text(x, y - 5, info.icon, { fontSize: '18px' }).setOrigin(0.5));
@@ -143,74 +146,54 @@ export default class BlacksmithUI extends BaseWindowUI {
             }).setOrigin(0.5));
         });
 
-        // 光 ⇔ 闇（互いに強い。五角形の輪とは無関係）
-        const pairY = cy + R + 68;
-        const lightPos = { x: cx - 48, y: pairY };
-        const darkPos = { x: cx + 48, y: pairY };
-        gfx.lineStyle(3, 0xffaa44, 1);
-        gfx.lineBetween(lightPos.x + nodeR + 3, pairY, darkPos.x - nodeR - 3, pairY);
-        gfx.fillStyle(0xffaa44, 1);
-        gfx.fillTriangle(darkPos.x - nodeR - 3, pairY, darkPos.x - nodeR - 15, pairY - 7, darkPos.x - nodeR - 15, pairY + 7);
-        gfx.fillTriangle(lightPos.x + nodeR + 3, pairY, lightPos.x + nodeR + 15, pairY - 7, lightPos.x + nodeR + 15, pairY + 7);
-        [['light', lightPos], ['dark', darkPos]].forEach(([el, { x, y }]) => {
-            const info = ELEMENT_INFO[el];
-            hc.add(this.scene.add.circle(x, y, nodeR, 0x1a1a2e, 1).setStrokeStyle(3, info.color));
-            hc.add(this.scene.add.text(x, y - 5, info.icon, { fontSize: '18px' }).setOrigin(0.5));
-            hc.add(this.scene.add.text(x, y + 14, info.name, {
-                fontSize: '9px', fontFamily: font, color: '#ffffff', stroke: '#000', strokeThickness: 2
+        // 輪になっているグループの中心に凡例
+        (this._groupCenters || []).forEach(({ x, y }) => {
+            hc.add(this.scene.add.text(x, y, '矢印は\n「強い」向き', {
+                fontSize: '9px', fontFamily: font, color: '#ffaa44', align: 'center', lineSpacing: 6
             }).setOrigin(0.5));
         });
-
-        hc.add(this.scene.add.text(cx, cy, '矢印は\n「強い」向き', {
-            fontSize: '9px', fontFamily: font, color: '#ffaa44', align: 'center', lineSpacing: 6
-        }).setOrigin(0.5));
 
         // --- 属性ごとの強み・弱み一覧 ---
-        const weakOf = {};
-        Object.entries(STRONG_AGAINST).forEach(([atk, def]) => { weakOf[def] = atk; });
-
+        const names = (list) => list.length ? list.map((e) => `${ELEMENT_INFO[e].icon}${ELEMENT_INFO[e].name}`).join('') : '-';
         const lx = 5;
         let ly = -h / 2 + 100;
+        const rowH = Math.min(36, (h / 2 - 130 - ly) / ELEMENTS.length);
         ELEMENTS.forEach((el) => {
             const info = ELEMENT_INFO[el];
-            const strong = ELEMENT_INFO[STRONG_AGAINST[el]];
-            const weak = ELEMENT_INFO[weakOf[el]];
             hc.add(this.scene.add.text(lx, ly, `${info.icon} ${info.name}`, {
-                fontSize: '13px', fontFamily: font, color: '#' + info.color.toString(16).padStart(6, '0'),
+                fontSize: '13px', fontFamily: font, color: getElementColorCss(el),
                 stroke: '#000', strokeThickness: 2
             }).setOrigin(0, 0.5));
-            hc.add(this.scene.add.text(lx + 85, ly, `強い:${strong.icon}${strong.name}`, {
+            hc.add(this.scene.add.text(lx + 85, ly, `強い:${names(STRONG_AGAINST[el])}`, {
                 fontSize: '11px', fontFamily: font, color: '#ffaa44'
             }).setOrigin(0, 0.5));
-            if (STRONG_AGAINST[STRONG_AGAINST[el]] === el) {
-                // 光⇔闇のように互いに強い関係（弱点なし）
-                hc.add(this.scene.add.text(lx + 85 + 120, ly, '(お互い)', {
-                    fontSize: '11px', fontFamily: font, color: '#88aacc'
-                }).setOrigin(0, 0.5));
-            } else {
-                hc.add(this.scene.add.text(lx + 85 + 120, ly, `弱い:${weak.icon}${weak.name}`, {
-                    fontSize: '11px', fontFamily: font, color: '#88aacc'
-                }).setOrigin(0, 0.5));
-            }
-            ly += 36;
+            hc.add(this.scene.add.text(lx + 85 + 120, ly, `弱い:${names(WEAK_TO[el])}`, {
+                fontSize: '11px', fontFamily: font, color: '#88aacc'
+            }).setOrigin(0, 0.5));
+            ly += rowH;
         });
 
         // --- 倍率 ---
         ly += 8;
-        hc.add(this.scene.add.text(lx, ly, '強い相手へ 1.7倍 / 普通 1.0倍 / 弱い相手へ 0.6倍', {
+        const { advantageMultiplier, disadvantageMultiplier } = ELEMENT_RULES;
+        hc.add(this.scene.add.text(lx, ly, `強い相手へ ${advantageMultiplier}倍 / 普通 1.0倍 / 弱い相手へ ${disadvantageMultiplier}倍`, {
             fontSize: '10px', fontFamily: font, color: '#ffffff'
         }).setOrigin(0, 0.5));
         hc.add(this.scene.add.text(lx, ly + 22, '（武器=与ダメージ / 防具=被ダメージに適用）', {
             fontSize: '9px', fontFamily: font, color: '#8899aa'
         }).setOrigin(0, 0.5));
 
-        // --- 状態異常のヒント ---
-        hc.add(this.scene.add.text(0, h / 2 - 60, '武器に付与すると状態異常が出やすくなる', {
-            fontSize: '10px', fontFamily: font, color: '#ffffff'
-        }).setOrigin(0.5));
-        hc.add(this.scene.add.text(0, h / 2 - 38, '💧水=凍結   ⚡雷=麻痺   🪨土=毒', {
-            fontSize: '11px', fontFamily: font, color: '#ffdd88'
-        }).setOrigin(0.5));
+        // --- 状態異常のヒント（属性の weaponBonus 定義から自動生成） ---
+        const bonusSummary = getWeaponBonusSummary();
+        if (bonusSummary.length) {
+            hc.add(this.scene.add.text(0, h / 2 - 60, '武器に付与すると状態異常が出やすくなる', {
+                fontSize: '10px', fontFamily: font, color: '#ffffff'
+            }).setOrigin(0.5));
+            hc.add(this.scene.add.text(0, h / 2 - 38,
+                bonusSummary.map(({ element, label }) => `${ELEMENT_INFO[element].icon}${ELEMENT_INFO[element].name}=${label}`).join('   '), {
+                    fontSize: '11px', fontFamily: font, color: '#ffdd88'
+                }).setOrigin(0.5));
+        }
 
         // --- とじるボタン ---
         const close = this.scene.add.text(w / 2 - 40, -h / 2 + 40, '✕', {
@@ -225,6 +208,65 @@ export default class BlacksmithUI extends BaseWindowUI {
         hc.add(close);
 
         this.container.add(hc);
+    }
+
+    /**
+     * 属性グループ(輪/ペア/単独)を、指定エリア内に自動配置して { 属性id: {x,y} } を返す。
+     * 収まらないときは輪の半径を縮める。this._groupCenters に輪の中心座標(凡例用)を入れる。
+     */
+    layoutElementGroups(groups, area, nodeR) {
+        const ringRadius = (n, scale) => (n <= 2 ? 48 : Math.min(105, 40 + n * 13)) * scale;
+        const boxOf = (n, scale) => {
+            const size = (n === 1 ? 0 : ringRadius(n, scale) * 2) + nodeR * 2;
+            return { w: size, h: n === 2 ? nodeR * 2 : size };
+        };
+        const gap = 14;
+
+        let scale = 1, rows;
+        for (; scale >= 0.4; scale -= 0.1) {
+            rows = [];
+            let row = { items: [], w: 0, h: 0 };
+            groups.forEach((g) => {
+                const box = boxOf(g.length, scale);
+                if (row.items.length && row.w + gap + box.w > area.width) {
+                    rows.push(row);
+                    row = { items: [], w: 0, h: 0 };
+                }
+                row.items.push({ g, box });
+                row.w += (row.items.length > 1 ? gap : 0) + box.w;
+                row.h = Math.max(row.h, box.h);
+            });
+            rows.push(row);
+            const totalH = rows.reduce((sum, r) => sum + r.h, 0) + gap * (rows.length - 1);
+            if (totalH <= area.height) break;
+        }
+
+        const totalH = rows.reduce((sum, r) => sum + r.h, 0) + gap * (rows.length - 1);
+        let y = area.top + (area.height - totalH) / 2;
+        const pos = {};
+        this._groupCenters = [];
+        rows.forEach((row) => {
+            let x = area.cx - row.w / 2;
+            row.items.forEach(({ g, box }) => {
+                const cx = x + box.w / 2, cy = y + row.h / 2;
+                const n = g.length;
+                if (n >= 3) this._groupCenters.push({ x: cx, y: cy });
+                g.forEach((el, i) => {
+                    if (n === 1) { pos[el] = { x: cx, y: cy }; return; }
+                    if (n === 2) {
+                        const r = ringRadius(n, scale);
+                        pos[el] = { x: cx + (i === 0 ? -r : r), y: cy };
+                        return;
+                    }
+                    const a = -Math.PI / 2 + (Math.PI * 2 * i) / n;
+                    const r = ringRadius(n, scale);
+                    pos[el] = { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r };
+                });
+                x += box.w + gap;
+            });
+            y += row.h + gap;
+        });
+        return pos;
     }
 
     updateGold() {

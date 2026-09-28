@@ -8,7 +8,7 @@ import { defineSkill } from '../schema.js';
 export const ADVANCED_SKILLS = {
     // --- ナイト (騎士 - ファイター上位職) ---
     judgment_cut: defineSkill({
-        id: 'judgment_cut', name: '絶・次元斬', type: 'active',
+        id: 'judgment_cut', vfx: 'slash', vfxOptions: { slashColor: 0x00ffff }, name: '絶・次元斬', type: 'active',
         cd: 4000, damageMult: 35, mpCost: 40, unlockCost: 500,
         range: 250, rangeType: 'line',
         color: 0x00ffff, icon: '💠',
@@ -24,7 +24,7 @@ export const ADVANCED_SKILLS = {
 
     // --- アークメイジ (メイジ上位職) ---
     abyss_storm: defineSkill({
-        id: 'abyss_storm', element: 'dark', name: 'アビスストーム', type: 'active',
+        id: 'abyss_storm', vfx: 'blast', vfxOptions: { particleCount: 30, shake: true }, element: 'dark', name: 'アビスストーム', type: 'active',
         cd: 12000, damageMult: 45, mpCost: 100, unlockCost: 500,
         range: 350, rangeType: 'circle',
         color: 0x4b0082, icon: '🌀',

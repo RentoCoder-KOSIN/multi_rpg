@@ -1,5 +1,6 @@
 // Creates the HUD and windows of a game scene.
 import QuestTrackerUI from '../../ui/QuestTrackerUI.js';
+import QuestLogUI from '../../ui/QuestLogUI.js';
 import MapNameUI from '../../ui/MapNameUI.js';
 import NotificationUI from '../../ui/NotificationUI.js';
 import PlayerStatsUI from '../../ui/PlayerStatsUI.js';
@@ -37,6 +38,10 @@ export function createGameUI(scene, config) {
     ).setOrigin(0.5).setScrollFactor(0).setVisible(false).setStrokeStyle(2, 0xffff00, 1);
 
     if (config.showQuestTracker) scene.questTrackerUI = new QuestTrackerUI(scene, scene.questManager);
+
+    // クエスト専用ウィンドウ（サイドメニュー/Qキーで開く）
+    scene.questLogUI = new QuestLogUI(scene, scene.questManager);
+    scene.questLogUI.createUI();
 
     startTutorialQuest(scene);
 

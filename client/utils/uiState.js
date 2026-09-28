@@ -10,6 +10,7 @@ export function isAnyWindowOpen(scene) {
         scene.statAllocationUI?.isOpen ||
         scene.guildQuestBoardUI?.isOpen ||
         scene.blacksmithUI?.isOpen ||
+        scene.questLogUI?.isOpen ||
         (scene.settingsUI && scene.settingsUI.visible)
     );
 }

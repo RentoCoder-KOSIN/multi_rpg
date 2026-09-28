@@ -1,5 +1,5 @@
 import { defineItem } from "./schema.js";
-import { ELEMENTS, ELEMENT_INFO, getOrbItemId } from "./elements.js";
+import { ELEMENTS, ELEMENT_INFO, getOrbItemId, getOrbPrice } from "./elements.js";
 
 // --- 属性の玉 ---
 // 鍛冶屋(BlacksmithUI)で購入し、鍛冶屋で武器・防具に使うことでその属性を付与できる。
@@ -14,7 +14,7 @@ const ELEMENT_ORBS = Object.fromEntries(
                 id,
                 name: `${info.name}の玉`,
                 type: "material",
-                price: 800,
+                price: getOrbPrice(el),
                 stats: {},
                 description: `${info.icon} 鍛冶屋で武器や防具に${info.name}属性を付与できる魔法の玉。`,
             }),

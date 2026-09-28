@@ -6,7 +6,7 @@ import { defineSkill } from '../schema.js';
 
 export const PRIEST_SKILLS = {
     holy_arrow: defineSkill({
-        id: 'holy_arrow', element: 'light',
+        id: 'holy_arrow', vfx: 'projectile', vfxOptions: { projectile: 'bolt' }, element: 'light',
         name: 'ホーリーアロー',
         type: 'active',
         cd: 2000,

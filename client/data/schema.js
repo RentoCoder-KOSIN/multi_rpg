@@ -23,6 +23,8 @@ const VALID_RANGE_TYPES = ['circle', 'line', 'fan'];
 const VALID_TARGET_TYPES = ['enemy', 'party'];
 const VALID_ITEM_TYPES = ['weapon', 'armor', 'accessory', 'consumable', 'material'];
 const VALID_SKILL_TYPES = ['active', 'passive'];
+// スキル発動時の演出タイプ（systems/skillEffects.js の VFX_PLAYERS のキーと一致させる）
+const VALID_VFX_TYPES = ['slash', 'blast', 'projectile', 'support'];
 const VALID_JOB_TYPES = ['physical', 'magical'];
 
 function assert(condition, message) {
@@ -74,6 +76,10 @@ export function defineSkill({
     effect = {},
     // 魔法スキルの属性（'fire' など）。未設定なら武器に付与した属性が使われる
     element = null,
+    // 演出タイプ（'slash' | 'blast' | 'projectile' | 'support'）。未設定なら targetType が party ならsupport、他は汎用バースト
+    vfx = null,
+    // 演出の細かい調整: { slashColor, particleCount, shake, projectile: 'arc'|'bolt' }
+    vfxOptions = {},
 } = {}) {
     assert(id, 'skill is missing an id');
     assert(name, `skill "${id}": missing a name`);
@@ -81,9 +87,10 @@ export function defineSkill({
     assert(VALID_RANGE_TYPES.includes(rangeType), `skill "${id}": rangeType must be one of ${VALID_RANGE_TYPES.join(', ')}`);
     assert(VALID_TARGET_TYPES.includes(targetType), `skill "${id}": targetType must be one of ${VALID_TARGET_TYPES.join(', ')}`);
 
+    assert(vfx === null || VALID_VFX_TYPES.includes(vfx), `skill "${id}": vfx must be one of ${VALID_VFX_TYPES.join(', ')}`);
     assert(element === null || ELEMENTS.includes(element), `skill "${id}": unknown element "${element}"`);
 
-    return { id, name, type, description, icon, color, cd, mpCost, unlockCost, damageMult, range, rangeType, targetType, effect, element };
+    return { id, name, type, description, icon, color, cd, mpCost, unlockCost, damageMult, range, rangeType, targetType, effect, element, vfx, vfxOptions };
 }
 
 /**

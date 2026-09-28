@@ -35,3 +35,17 @@ export const GROWTH_CONFIG = {
     HP_LEVEL_SCALE: 0.88,
     HP_GROWTH_MULTIPLIER: 1.0,
 };
+
+// 戦闘・経済まわりの調整値
+export const COMBAT_CONFIG = {
+    CRIT_MULTIPLIER: 1.5,     // 会心時のダメージ倍率
+};
+export const ECONOMY_CONFIG = {
+    SELL_RATE: 0.6,           // 売却額 = 購入価格 × この割合
+};
+
+// クエストUIの表示件数
+export const QUEST_UI_CONFIG = {
+    TRACKER_MAX_VISIBLE: 3,   // 画面右上のトラッカーに同時表示する最大件数
+    LOG_PER_PAGE: 4,          // クエストウィンドウの1ページあたり件数
+};

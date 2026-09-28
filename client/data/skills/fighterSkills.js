@@ -6,7 +6,7 @@ import { defineSkill } from "../schema.js";
 
 export const FIGHTER_SKILLS = {
     slash: defineSkill({
-        id: "slash",
+        id: "slash", vfx: 'slash',
         name: "スラッシュ",
         type: "active",
         cd: 1500,
@@ -20,7 +20,7 @@ export const FIGHTER_SKILLS = {
         description: "力強く斬りつける。",
     }),
     whirlwind: defineSkill({
-        id: "whirlwind",
+        id: "whirlwind", vfx: 'slash',
         name: "ホイールウィンド",
         type: "active",
         cd: 4000,
@@ -34,7 +34,7 @@ export const FIGHTER_SKILLS = {
         description: "回転斬りで周囲をなぎ倒す。",
     }),
     heavy_slash: defineSkill({
-        id: "heavy_slash",
+        id: "heavy_slash", vfx: 'slash', vfxOptions: { slashColor: 0xff0000 },
         name: "ヘビースラッシュ",
         type: "active",
         cd: 3000,
@@ -48,7 +48,7 @@ export const FIGHTER_SKILLS = {
         description: "渾身の一撃。",
     }),
     sonic_wave: defineSkill({
-        id: "sonic_wave",
+        id: "sonic_wave", vfx: 'projectile',
         name: "ソニックウェーブ",
         type: "active",
         cd: 3000,

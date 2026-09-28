@@ -1,8 +1,15 @@
+import { pinToScreen } from '../utils/screenFixed.js';
+import { QUEST_UI_CONFIG } from '../gameConstants.js';
+
+const MAX_VISIBLE = QUEST_UI_CONFIG.TRACKER_MAX_VISIBLE; // 残りは「他N件」、詳細はクエストウィンドウで
+
 export default class QuestTrackerUI {
     constructor(scene, questManager) {
         this.scene = scene;
         this.questManager = questManager;
         this.questItems = [];
+        this.collapsed = false; // ヘッダーをクリックで折りたたみ/展開
+        this.lastQuests = [];
 
         const gameWidth = scene.scale.gameSize ? scene.scale.gameSize.width : scene.scale.width;
         const panelWidth = 280;
@@ -11,6 +18,7 @@ export default class QuestTrackerUI {
         const safeX = gameWidth - panelWidth - margin;
         const safeY = margin;
         this.container = scene.add.container(safeX, safeY).setScrollFactor(0).setDepth(1000);
+        pinToScreen(this.container);
 
         if (scene.scale) {
             scene.scale.on('resize', () => {
@@ -32,6 +40,20 @@ export default class QuestTrackerUI {
             strokeThickness: 3
         });
         this.container.add(this.title);
+
+        // ヘッダー全体をクリックすると折りたたみ/展開
+        this.toggleIcon = scene.add.text(panelWidth - 20, 12, '▼', {
+            fontSize: '12px', color: '#ffffff', fontFamily: 'Arial'
+        }).setOrigin(1, 0);
+        this.container.add(this.toggleIcon);
+        const headerHit = scene.add.rectangle(0, 0, panelWidth, 35, 0x000000, 0)
+            .setOrigin(0).setInteractive({ useHandCursor: true });
+        headerHit.on('pointerdown', (pointer, x, y, event) => {
+            if (event) event.stopPropagation();
+            this.collapsed = !this.collapsed;
+            this.update(this.lastQuests);
+        });
+        this.container.add(headerHit);
 
         this.questContainer = scene.add.container(0, 40);
         this.container.add(this.questContainer);
@@ -56,6 +78,8 @@ export default class QuestTrackerUI {
     }
 
     update(quests) {
+        this.lastQuests = quests || [];
+
         // 全要素を一括削除
         if (this.questContainer && this.questContainer.active) {
             this.questContainer.removeAll(true);
@@ -64,18 +88,37 @@ export default class QuestTrackerUI {
         // 個別の参照リストもクリア
         this.questItems = [];
 
-        if (!quests || !quests.length) {
+        const total = this.lastQuests.length;
+        this.title.setText(total ? `📜 QUESTS (${total})` : '📜 QUESTS');
+        this.toggleIcon.setText(this.collapsed ? '▶' : '▼');
+
+        // 折りたたみ中、またはクエスト無しはヘッダーだけ表示
+        if (this.collapsed || !total) {
             this.drawBackground(280, 50);
             return;
         }
 
+        // 達成済み(報告待ち)を先頭に、最大MAX_VISIBLE件だけ表示
+        const sorted = [...this.lastQuests].sort(
+            (a, b) => (b.status === 'completed') - (a.status === 'completed'));
+        const shown = sorted.slice(0, MAX_VISIBLE);
+
         let yOffset = 0;
-        quests.forEach((q) => {
+        shown.forEach((q) => {
             const questItem = this.createQuestItem(q, yOffset);
             this.questItems.push(questItem);
             this.questContainer.add(questItem.container);
             yOffset += questItem.height + 10;
         });
+
+        const hidden = total - shown.length;
+        if (hidden > 0) {
+            const more = this.scene.add.text(140, yOffset - 2, `他${hidden}件… [Q]で一覧`, {
+                fontSize: '8px', color: '#aaaaaa', fontFamily: '"Press Start 2P"'
+            }).setOrigin(0.5, 0);
+            this.questContainer.add(more);
+            yOffset += 20;
+        }
 
         this.drawBackground(280, Math.max(50, yOffset + 50));
     }

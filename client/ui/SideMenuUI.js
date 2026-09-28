@@ -53,8 +53,8 @@ export default class SideMenuUI {
             { icon: '🎒', label: 'Inv', key: 'I', color: '#e94560', action: () => this.scene.inventoryUI.toggle() },
             { icon: '🛡️', label: 'Equ', key: 'S', color: '#4a90e2', action: () => this.scene.equipmentUI.toggle() },
             { icon: '📊', label: 'Sta', key: 'P', color: '#ffd700', action: () => this.scene.statAllocationUI.toggle() },
+            { icon: '📜', label: 'Qst', key: 'Q', color: '#00ccaa', action: () => this.scene.questLogUI.toggle() },
             { icon: '🔮', label: 'Skl', key: 'K', color: '#533483', action: () => this.scene.skillManagerUI.toggle() },
-            { icon: '⚒️', label: 'Smt', key: 'B', color: '#ff8844', action: () => this.scene.blacksmithUI.toggle() },
             { icon: '👥', label: 'Pty', key: 'Y', color: '#00ff00', action: () => this.scene.partyUI.toggle() },
             { icon: '⚙️', label: 'Set', key: 'O', color: '#aaaaaa', action: () => this.scene.settingsUI.toggle() }
         ];

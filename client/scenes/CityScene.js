@@ -1,10 +1,8 @@
 import BaseGameScene from './BaseGameScene.js';
-import ShopUI from '../ui/ShopUI.js';
 
 export default class CityScene extends BaseGameScene {
     constructor() {
         super('city');
-        this.shopUI = null;
         this.shopTriggers = [];
     }
 
@@ -19,9 +17,6 @@ export default class CityScene extends BaseGameScene {
 
     create(data) {
         super.create(data);
-
-        // ShopUIの初期化
-        this.shopUI = new ShopUI(this);
 
         // ShopTriggerの取得
         this.setupShopTriggers();
@@ -104,7 +99,7 @@ export default class CityScene extends BaseGameScene {
         super.update(time, delta);
 
         // ショップが開いている間はプレイヤーの入力を制限するなどの処理が必要
-        if (this.shopUI && this.shopUI.isOpen) {
+        if ((this.shopUI && this.shopUI.isOpen) || (this.blacksmithUI && this.blacksmithUI.isOpen)) { // ウィンドウ中は移動停止
             if (this.player) {
                 this.player.setVelocity(0, 0);
             }

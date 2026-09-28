@@ -25,6 +25,7 @@ import { preloadCommonAssets } from './base/assets.js';
 import { registerNetworkCallbacks } from './base/networkCallbacks.js';
 import { createGameKeys, registerInputHandlers } from './base/input.js';
 import { createGameUI, setupEnemyDebug } from './base/ui.js';
+import { setupFacilities } from './base/facilities.js';
 import {
     updateEnemyContactDamage,
     regenerateMp,
@@ -153,6 +154,9 @@ export default class BaseGameScene extends Phaser.Scene {
         createGameKeys(this, config);
         createGameUI(this, config);
         registerInputHandlers(this);
+
+        // 鍛冶屋・クエストボードなどの施設（data/facilities.js）。UIは使うときに参照するので生成順は問わない
+        setupFacilities(this, config.mapKey);
 
         const playerNames = this.registry.get('playerNames') || {};
         const socket = this.networkManager.getSocket();

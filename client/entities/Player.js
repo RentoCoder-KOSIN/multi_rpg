@@ -3,8 +3,11 @@ import { ITEMS } from "../data/items.js";
 import { SKILLS } from "../data/skills.js";
 import { getEnemyStats } from "../data/enemyStats.js";
 import { getLevelDiffMultiplier, getExpLevelMultiplier } from "../utils/levelScaling.js";
-import { TOTAL_SKILL_SLOTS, GROWTH_CONFIG } from "../gameConstants.js";
-import { ELEMENTS, getElementMultiplier, getElementColor } from "../data/elements.js";
+import { TOTAL_SKILL_SLOTS, GROWTH_CONFIG, COMBAT_CONFIG } from "../gameConstants.js";
+import {
+    ELEMENTS, getElementMultiplier, getBlendedElementMultiplier, getElementColor,
+    getWeaponElementBonus, resolveElement, resistKey, damageKey, collectElementStats,
+} from "../data/elements.js";
 import { showDamageNumber } from "../utils/damagePopup.js";
 
 // 状態異常の基本持続時間（ms）。武器の属性付与などから発生する。
@@ -469,10 +472,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // 装備由来の特殊効果（毎回リセットしてから再計算する）
         this.stats.atkMultiplier = 1.0;
-        this.stats.fireResist = 0;   // %
-        this.stats.iceResist = 0;    // %
-        this.stats.fireDamage = 0;   // 固定加算ダメージ
-        this.stats.iceDamage = 0;    // 固定加算ダメージ
+        // 属性耐性(%) / 属性固定加算ダメージ。{ 属性id: 値 } で持つので、属性を足しても書き換え不要
+        this.stats.elementResist = {};
+        this.stats.elementDamage = {};
         this.stats.freezeChance = 0; // 0〜1
         this.stats.deathChance = 0;  // 0〜1（即死効果）
         this.stats.poisonEquipped = false;
@@ -505,10 +507,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.stats.speedBonus += getVal(item.speedBonus || s.speedBonus);
 
             // 属性・特殊効果
-            this.stats.fireResist += getVal(s.fireResist);
-            this.stats.iceResist += getVal(s.iceResist);
-            this.stats.fireDamage += getVal(s.fireDamage);
-            this.stats.iceDamage += getVal(s.iceDamage);
+            // xxxResist / xxxDamage（xxxは属性id。旧名 ice も水として集計）。値が関数の項目にも対応
+            [[resistKey, this.stats.elementResist], [damageKey, this.stats.elementDamage]].forEach(([keyFn, target]) => {
+                const resolved = {};
+                Object.keys(s).forEach((k) => { resolved[k] = getVal(s[k]); });
+                Object.entries(collectElementStats(resolved, keyFn)).forEach(([el, v]) => {
+                    target[el] = (target[el] || 0) + v;
+                });
+            });
             this.stats.freezeChance += getVal(s.freezeChance);
             this.stats.deathChance += getVal(s.deathChance);
             this.stats.paralyzeChance += getVal(s.paralyzeChance);
@@ -526,16 +532,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.stats.weaponElement = this.stats.itemElements?.[this.stats.equipment.weapon] || null;
         this.stats.armorElement = this.stats.itemElements?.[this.stats.equipment.armor] || null;
 
-        // 武器の属性に応じて状態異常の追加発生率を付与する
-        // 水属性: 凍結、雷属性: 麻痺、土属性: 毒（鍛冶屋で属性を付けるほど旨みが出るように）
-        if (this.stats.weaponElement === 'water') {
-            this.stats.freezeChance += 0.15;
-        } else if (this.stats.weaponElement === 'thunder') {
-            this.stats.paralyzeChance += 0.15;
-        } else if (this.stats.weaponElement === 'earth') {
-            this.stats.poisonChance += 0.15;
-            this.stats.poisonDamage += Math.max(5, Math.ceil(this.stats.atk * 0.1));
-        }
+        // 武器の属性ごとの追加効果（凍結/麻痺/毒など）。効果の中身は data/elements.js の weaponBonus で定義
+        Object.entries(getWeaponElementBonus(this.stats.weaponElement, this.stats.atk)).forEach(([key, value]) => {
+            this.stats[key] = (this.stats[key] || 0) + value;
+        });
 
         // ここまでで武器/防具/宝具による補正が乗った後の値なので、装備前との差分を
         // 「装備補正値」として保持する（UI表示用。種による永続加算はここに含めない）。
@@ -589,21 +589,22 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         let amount = Math.ceil(atk * multiplier);
 
         // 属性ダメージ（固定加算。会心の後に上乗せ）
-        const elementalBonus = (this.stats.fireDamage || 0) + (this.stats.iceDamage || 0);
+        const elementalBonus = Object.values(this.stats.elementDamage || {}).reduce((sum, v) => sum + v, 0);
 
         // クリティカル判定
         const isCrit = Math.random() < (this.stats.critChance || 0);
         if (isCrit) {
-            amount = Math.ceil(amount * 1.5);
+            amount = Math.ceil(amount * COMBAT_CONFIG.CRIT_MULTIPLIER);
         }
 
         amount += elementalBonus;
 
         // 新属性システム: 武器に付与した属性 vs 敵の属性（相性が良ければ1.7倍、悪ければ0.6倍）
         const targetElement = target ? (target.element || (target.type ? getEnemyStats(target.type)?.element : null)) : null;
-        // 魔法スキルなど属性を持つスキルはその属性、無ければ武器の属性で判定する
-        const attackElement = skillElement || this.stats.weaponElement || null;
-        const affinityMult = getElementMultiplier(attackElement, targetElement);
+        // スキル属性7 : 武器属性3 で相性倍率を混ぜる。片方だけならそちらが100%、
+        // 通常攻撃などスキル属性が無ければ武器属性のみ、どちらも無ければ無属性(1.0倍)
+        const { multiplier: affinityMult, element: attackElement } =
+            getBlendedElementMultiplier(skillElement, this.stats.weaponElement, targetElement);
         if (affinityMult !== 1.0) {
             amount = Math.ceil(amount * affinityMult);
         }
@@ -857,16 +858,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             finalAmount *= 100 / (100 + def);
         }
 
-        // 属性耐性（装備の fireResist / iceResist）。attacker の種類から属性を判定する
-        let attackerElement = attacker?.element || null;
+        // 属性耐性（装備の xxxResist）。attacker の種類から属性を判定して軽減する
+        let attackerElement = resolveElement(attacker?.element) || null;
         if (attacker && attacker.type) {
             const enemyDef = getEnemyStats(attacker.type);
-            if (enemyDef?.element === 'fire' && this.stats.fireResist) {
-                finalAmount *= Math.max(0, 1 - this.stats.fireResist / 100);
-            } else if (enemyDef?.element === 'ice' && this.stats.iceResist) {
-                finalAmount *= Math.max(0, 1 - this.stats.iceResist / 100);
-            }
-            if (!attackerElement) attackerElement = enemyDef?.element || null;
+            if (!attackerElement) attackerElement = resolveElement(enemyDef?.element) || null;
+        }
+        const resist = attackerElement ? (this.stats.elementResist?.[attackerElement] || 0) : 0;
+        if (resist) {
+            finalAmount *= Math.max(0, 1 - resist / 100);
         }
 
         // 新属性システム: 敵の属性 vs 防具に付与した属性

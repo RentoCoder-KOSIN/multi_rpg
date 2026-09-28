@@ -1,5 +1,6 @@
 import { ITEMS } from "../data/items.js";
 import BaseWindowUI from "./BaseWindowUI.js";
+import { ECONOMY_CONFIG } from "../gameConstants.js";
 
 export default class InventoryUI extends BaseWindowUI {
     constructor(scene) {
@@ -261,9 +262,9 @@ export default class InventoryUI extends BaseWindowUI {
             // 装備品はまとめ使用の対象外（useAllは無視）
             this.scene.player.equipItem(itemId);
         } else if (item.type === 'material') {
-            // 属性の玉などの素材はここでは使用しない（鍛冶屋[B]で使う）
+            // 属性の玉などの素材はここでは使用しない（街の鍛冶屋で使う）
             if (this.scene.notificationUI) {
-                this.scene.notificationUI.show('鍛冶屋で装備に使用できます（Bキー）', 'info');
+                this.scene.notificationUI.show('街の鍛冶屋で装備に使用できます', 'info');
             }
         } else {
             this.useItem(index, useAll);
@@ -373,8 +374,8 @@ export default class InventoryUI extends BaseWindowUI {
             return;
         }
 
-        // 購入価格(price)の60%が売却額。price未設定のアイテムは売却不可。
-        const sellPrice = Math.floor((item.price || 0) * 0.6);
+        // 購入価格(price)の ECONOMY_CONFIG.SELL_RATE 倍が売却額。price未設定のアイテムは売却不可。
+        const sellPrice = Math.floor((item.price || 0) * ECONOMY_CONFIG.SELL_RATE);
         if (sellPrice <= 0) {
             if (this.scene.notificationUI) this.scene.notificationUI.show('このアイテムは売れません', 'error');
             return;

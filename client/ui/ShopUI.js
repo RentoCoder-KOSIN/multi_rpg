@@ -2,6 +2,12 @@ import { ITEMS } from "../data/items.js";
 import { getShopLoadout, resolveShopItems } from "../data/shops.js";
 import BaseWindowUI from "./BaseWindowUI.js";
 import { areEffectsEnabled } from "../utils/effectsSettings.js";
+import { collectElementStats, resistKey, damageKey, getElementName } from "../data/elements.js";
+
+// 装備statsから属性ごとの表示文言を作る（属性を追加してもここは書き換え不要）
+function elementStatParts(stats, keyFn, format) {
+    return Object.entries(collectElementStats(stats, keyFn)).map(([el, v]) => format(el, v));
+}
 
 // 武器・防具・消耗品のステータスを、購入前に一目でわかる短い文字列にまとめる。
 // 「買うときに攻撃力とかステータスがわからない」を解消するための表示用ヘルパー。
@@ -24,8 +30,7 @@ function summarizeItemStats(item) {
         if (lifesteal) parts.push(`吸収${Math.round(lifesteal * 100)}%`);
         const speed = item.speedBonus ?? s.speedBonus;
         if (speed) parts.push(`速度+${speed}`);
-        if (s.fireDamage) parts.push(`火+${s.fireDamage}`);
-        if (s.iceDamage) parts.push(`氷+${s.iceDamage}`);
+        parts.push(...elementStatParts(s, damageKey, (el, v) => `${getElementName(el)}+${v}`));
         if (s.freezeChance) parts.push(`凍結${Math.round(s.freezeChance * 100)}%`);
         if (s.deathChance) parts.push(`即死${Math.round(s.deathChance * 100)}%`);
         if (s.attackMultiplier) parts.push(`ATK×${s.attackMultiplier}`);
@@ -34,8 +39,7 @@ function summarizeItemStats(item) {
     } else if (item.type === 'armor') {
         const def = item.def ?? s.defense;
         if (def) parts.push(`DEF+${def}`);
-        if (s.fireResist) parts.push(`火耐性+${s.fireResist}%`);
-        if (s.iceResist) parts.push(`氷耐性+${s.iceResist}%`);
+        parts.push(...elementStatParts(s, resistKey, (el, v) => `${getElementName(el)}耐性+${v}%`));
         if (s.attackMultiplier) parts.push(`ATK×${s.attackMultiplier}`);
         if (s.poison) parts.push('⚠HPが徐々に減る');
     } else if (item.type === 'accessory') {
@@ -49,8 +53,7 @@ function summarizeItemStats(item) {
         if (s.critChance) parts.push(`会心+${Math.round(s.critChance * 100)}%`);
         if (s.lifesteal) parts.push(`吸収${Math.round(s.lifesteal * 100)}%`);
         if (s.speedBonus) parts.push(`速度+${s.speedBonus}`);
-        if (s.fireResist) parts.push(`火耐性+${s.fireResist}%`);
-        if (s.iceResist) parts.push(`氷耐性+${s.iceResist}%`);
+        parts.push(...elementStatParts(s, resistKey, (el, v) => `${getElementName(el)}耐性+${v}%`));
         if (s.attackMultiplier) parts.push(`ATK×${s.attackMultiplier}`);
         if (s.expMultiplier) parts.push(`EXP×${s.expMultiplier}`);
         if (s.poison) parts.push('⚠HPが徐々に減る');

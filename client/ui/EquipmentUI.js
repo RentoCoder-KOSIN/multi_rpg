@@ -46,7 +46,7 @@ export default class EquipmentUI extends BaseWindowUI {
         this.createSlot(0, 0, 'ARMOR', equipment.armor);
         this.createSlot(0, 90, 'RELIC', equipment.relic);
 
-        const hint = this.scene.add.text(0, 130, '⚒ 鍛冶屋[B]で武器/防具に属性を付与できる', {
+        const hint = this.scene.add.text(0, 130, '⚒ 街の鍛冶屋で武器/防具に属性を付与できる', {
             fontSize: '8px', fontFamily: '"Press Start 2P"', color: '#888888'
         }).setOrigin(0.5);
         this.slotContainer.add(hint);
