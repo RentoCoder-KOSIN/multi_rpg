@@ -1,5 +1,6 @@
 import { ITEMS } from "../data/items.js";
 import BaseWindowUI from "./BaseWindowUI.js";
+import { ELEMENT_INFO } from "../data/elements.js";
 
 export default class EquipmentUI extends BaseWindowUI {
     constructor(scene) {
@@ -22,7 +23,7 @@ export default class EquipmentUI extends BaseWindowUI {
 
         // キーボード操作 (Sキー)
         this.scene.input.keyboard.on('keydown-S', () => {
-            if (this.scene.inventoryUI?.isOpen || this.scene.shopUI?.isOpen) return;
+            if (this.scene.inventoryUI?.isOpen || this.scene.shopUI?.isOpen || this.scene.blacksmithUI?.isOpen) return;
             this.toggle();
         });
     }
@@ -44,6 +45,11 @@ export default class EquipmentUI extends BaseWindowUI {
         this.createSlot(0, -90, 'WEAPON', equipment.weapon);
         this.createSlot(0, 0, 'ARMOR', equipment.armor);
         this.createSlot(0, 90, 'RELIC', equipment.relic);
+
+        const hint = this.scene.add.text(0, 130, '⚒ 鍛冶屋[B]で武器/防具に属性を付与できる', {
+            fontSize: '8px', fontFamily: '"Press Start 2P"', color: '#888888'
+        }).setOrigin(0.5);
+        this.slotContainer.add(hint);
 
         // ステータス表示
         const statsText = `ATK: ${player.stats.atk}  DEF: ${player.stats.def}`;
@@ -90,7 +96,10 @@ export default class EquipmentUI extends BaseWindowUI {
         const itemName = item ? item.name : '--- なし ---';
         const itemColor = item ? '#ffffff' : '#666666';
 
-        const nameTxt = this.scene.add.text(-145, 5, itemName, {
+        const attachedElement = item ? this.scene.player?.stats?.itemElements?.[itemId] : null;
+        const elementTag = attachedElement ? ` ${ELEMENT_INFO[attachedElement].icon}` : '';
+
+        const nameTxt = this.scene.add.text(-145, 5, `${itemName}${elementTag}`, {
             fontSize: '14px', fontFamily: '"Press Start 2P"', color: itemColor
         });
         slot.add(nameTxt);

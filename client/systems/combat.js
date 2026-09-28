@@ -6,10 +6,14 @@ import { applySkillEffect, showHitEffect, showCriticalEffect } from './skillEffe
 import { applyBuffVisual } from './buffVisuals.js';
 import { spawnSummon, destroySummon, isSummonSkill } from './summons.js';
 import { areEffectsEnabled } from '../utils/effectsSettings.js';
+import { getElementColor } from '../data/elements.js';
 
 const BASIC_ATTACK_RANGE = 80;
 const BASIC_ATTACK_COOLDOWN_MS = 500;
 const FREEZE_DURATION_MS = 3000;
+const PARALYZE_DURATION_MS = 2500;
+const POISON_TICK_MS = 1000;
+const POISON_TICKS = 5;
 
 // アンデブ系（エクソシズムなどの特効対象）。Enemy.type の文字列で判定する
 const UNDEAD_ENEMY_TYPES = ['skeleton', 'ghost'];
@@ -33,6 +37,66 @@ function showFreezeEffect(scene, enemy) {
     }
 }
 
+function showParalyzeEffect(scene, enemy) {
+    const text = scene.add.text(enemy.x, enemy.y - 20, '⚡麻痺', {
+        fontSize: '12px', color: '#ffee55', fontFamily: '"Press Start 2P"', stroke: '#000', strokeThickness: 2
+    }).setOrigin(0.5);
+    scene.tweens.add({ targets: text, y: enemy.y - 60, alpha: 0, duration: 800, onComplete: () => text.destroy() });
+    if (enemy.setTint) {
+        enemy.setTint(0xffee55);
+        scene.time.delayedCall(PARALYZE_DURATION_MS, () => { if (enemy.active) enemy.clearTint(); });
+    }
+}
+
+function showPoisonEffect(scene, enemy) {
+    const text = scene.add.text(enemy.x, enemy.y - 20, '☠️毒', {
+        fontSize: '12px', color: '#aa66ff', fontFamily: '"Press Start 2P"', stroke: '#000', strokeThickness: 2
+    }).setOrigin(0.5);
+    scene.tweens.add({ targets: text, y: enemy.y - 60, alpha: 0, duration: 800, onComplete: () => text.destroy() });
+}
+
+// getDamage()の結果から、ダメージ数値表示に渡す色/相性情報を組み立てる。
+// 属性が付いていれば数字をその属性色で表示し、相性が良い/悪いときだけ
+// 背景にギザギザ(抜群)/にじみ(いまひとつ)のエフェクトが付く(showDamageNumber側で処理)。
+function buildHitInfo(damageData) {
+    const affinity = damageData.isElementAdvantage ? 'super' : (damageData.isElementWeak ? 'weak' : null);
+    const color = damageData.element ? getElementColor(damageData.element) : null;
+    if (!affinity && color === null) return null;
+    return { color, affinity };
+}
+
+// 毒: 1秒おきに数tickダメージを与え続ける（enemy.takeDamageと同じ経路を通すので
+// サーバーへの反映・撃破処理・ドロップ等は通常の攻撃と同様に扱われる）
+function applyPoisonDot(scene, enemy, player, tickDamage) {
+    if (!tickDamage || tickDamage <= 0) return;
+    showPoisonEffect(scene, enemy);
+
+    let ticksLeft = POISON_TICKS;
+    const timer = scene.time.addEvent({
+        delay: POISON_TICK_MS,
+        repeat: POISON_TICKS - 1,
+        callback: () => {
+            ticksLeft--;
+            if (!enemy || !enemy.active) {
+                timer.remove();
+                return;
+            }
+            enemy.takeDamage(tickDamage, player, null);
+            if (ticksLeft <= 0) timer.remove();
+        }
+    });
+}
+
+// 与ダメージ判定(getDamage結果)に応じて、クリティカル/即死/属性相性/状態異常の
+// 演出とサーバーへの状態異常付与をまとめて行う。基本攻撃・スキル両方から呼ばれる。
+function applyHitEffects(scene, enemy, player, damageData) {
+    if (damageData.isCrit) showCriticalEffect(scene, enemy);
+    if (damageData.isExecute) showExecuteEffect(scene, enemy, player);
+    if (damageData.isFreeze) showFreezeEffect(scene, enemy);
+    else if (damageData.isParalyze) showParalyzeEffect(scene, enemy);
+    if (damageData.isPoison) applyPoisonDot(scene, enemy, player, damageData.poisonTick);
+}
+
 /**
  * SPACE attack: hits every server-managed enemy within range.
  */
@@ -41,6 +105,11 @@ export function performBasicAttack(scene) {
 
     const player = scene.player;
     const now = scene.time.now;
+
+    if (player.isImmobilized && player.isImmobilized()) {
+        if (scene.notificationUI) scene.notificationUI.show('状態異常で動けない！', 'error');
+        return;
+    }
 
     if (player.lastAttackTime && now - player.lastAttackTime < BASIC_ATTACK_COOLDOWN_MS) {
         return;
@@ -77,13 +146,13 @@ export function performBasicAttack(scene) {
         const damageData = player.getDamage(1, enemy);
         const damage = damageData.amount;
 
-        const effects = damageData.isFreeze ? { freezeMs: FREEZE_DURATION_MS } : null;
-        enemy.takeDamage(damage, player, effects);
+        const effects = {};
+        if (damageData.isFreeze) effects.freezeMs = FREEZE_DURATION_MS;
+        else if (damageData.isParalyze) effects.paralyzeMs = PARALYZE_DURATION_MS;
+        enemy.takeDamage(damage, player, Object.keys(effects).length ? effects : null, buildHitInfo(damageData));
         enemy.lastHitTime = now;
 
-        if (damageData.isCrit) showCriticalEffect(scene, enemy);
-        if (damageData.isExecute) showExecuteEffect(scene, enemy, player);
-        if (damageData.isFreeze) showFreezeEffect(scene, enemy);
+        applyHitEffects(scene, enemy, player, damageData);
 
         if (areEffectsEnabled(scene)) scene.cameras.main.shake(100, 0.005);
     });
@@ -100,6 +169,11 @@ export function usePlayerSkill(scene, skillId) {
     if (!skill) return;
 
     if (isAnyWindowOpen(scene)) return;
+
+    if (player.isImmobilized && player.isImmobilized()) {
+        if (scene.notificationUI) scene.notificationUI.show('状態異常で動けない！', 'error');
+        return;
+    }
 
     const now = Date.now();
     const lastUse = player.skillCooldowns[skillId] || 0;
@@ -293,12 +367,12 @@ function applyDamageSkill(scene, skill, { enemies, range, rangeType, direction, 
             damage = Math.ceil(damage * skill.effect.vsUndead);
         }
 
-        if (damageData.isCrit) showCriticalEffect(scene, enemy);
-        if (damageData.isExecute) showExecuteEffect(scene, enemy, player);
-        if (damageData.isFreeze) showFreezeEffect(scene, enemy);
+        const effects = {};
+        if (damageData.isFreeze) effects.freezeMs = FREEZE_DURATION_MS;
+        else if (damageData.isParalyze) effects.paralyzeMs = PARALYZE_DURATION_MS;
+        enemy.takeDamage(damage, player, Object.keys(effects).length ? effects : null, buildHitInfo(damageData));
 
-        const effects = damageData.isFreeze ? { freezeMs: FREEZE_DURATION_MS } : null;
-        enemy.takeDamage(damage, player, effects);
+        applyHitEffects(scene, enemy, player, damageData);
 
         // Lifesteal
         if (player.stats.lifesteal > 0) {

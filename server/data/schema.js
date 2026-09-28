@@ -48,6 +48,9 @@ function defineEnemy({
     exp = 0,
     gold = 0,
     element = null,
+    // 敵の攻撃がプレイヤーに状態異常を与える場合に設定する。
+    // 例: { type: 'poison', chance: 0.25, duration: 4000, tickDamage: 20 }
+    statusEffect = null,
     drops = [],
 } = {}) {
     assert(id, 'enemy is missing an id');
@@ -58,7 +61,7 @@ function defineEnemy({
 
     // `displayName` is the field name existing client/server code already
     // reads over the wire; `name` is the schema-facing alias.
-    return { id, name, displayName: name, level, hp, atk, def, exp, gold, element, drops };
+    return { id, name, displayName: name, level, hp, atk, def, exp, gold, element, statusEffect, drops };
 }
 
 module.exports = { defineEnemy };

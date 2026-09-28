@@ -260,6 +260,11 @@ export default class InventoryUI extends BaseWindowUI {
         if (item.type === 'weapon' || item.type === 'armor' || item.type === 'accessory') {
             // 装備品はまとめ使用の対象外（useAllは無視）
             this.scene.player.equipItem(itemId);
+        } else if (item.type === 'material') {
+            // 属性の玉などの素材はここでは使用しない（鍛冶屋[B]で使う）
+            if (this.scene.notificationUI) {
+                this.scene.notificationUI.show('鍛冶屋で装備に使用できます（Bキー）', 'info');
+            }
         } else {
             this.useItem(index, useAll);
         }

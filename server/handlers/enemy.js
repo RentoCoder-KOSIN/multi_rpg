@@ -44,7 +44,7 @@ module.exports = function registerEnemyHandlers(socket, { io, aiManager, enemySe
         });
     }
 
-    socket.on("enemyHit", ({ id, damage, freezeMs }) => {
+    socket.on("enemyHit", ({ id, damage, freezeMs, paralyzeMs }) => {
         const mapKey = socket.data.map;
         const enemy = enemies[mapKey]?.[id];
         if (!enemy) return;
@@ -54,6 +54,11 @@ module.exports = function registerEnemyHandlers(socket, { io, aiManager, enemySe
         // 凍結効果（氷属性武器など）: 一定時間、移動と攻撃を止める
         if (freezeMs > 0) {
             enemy.frozenUntil = Date.now() + freezeMs;
+        }
+
+        // 麻痺効果（風属性武器など）: 凍結と同様、一定時間移動と攻撃を止める
+        if (paralyzeMs > 0) {
+            enemy.paralyzedUntil = Date.now() + paralyzeMs;
         }
 
         if (enemy.hp <= 0) {

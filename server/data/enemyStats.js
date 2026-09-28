@@ -14,6 +14,7 @@ const ENEMY_STATS = {
         def: 1,
         exp: 80,
         gold: 50,
+        element: "water",
         drops: [
             { id: "potion", chance: 0.05 },
             { id: "mp_potion", chance: 0.05 },
@@ -29,6 +30,7 @@ const ENEMY_STATS = {
         def: 5,
         exp: 240,
         gold: 70,
+        element: "wind",
         drops: [
             { id: "potion", chance: 0.15 },
             { id: "mp_potion", chance: 0.1 },
@@ -44,6 +46,7 @@ const ENEMY_STATS = {
         def: 12,
         exp: 1500,
         gold: 250,
+        element: "earth",
         drops: [
             { id: "potion", chance: 0.2 },
             { id: "mp_potion", chance: 0.15 },
@@ -59,6 +62,7 @@ const ENEMY_STATS = {
         def: 20,
         exp: 3700,
         gold: 400,
+        element: "dark",
         drops: [
             { id: "high_potion", chance: 0.05 },
             { id: "mp_potion", chance: 0.1 },
@@ -74,6 +78,7 @@ const ENEMY_STATS = {
         def: 50,
         exp: 6800,
         gold: 600,
+        element: "fire",
         drops: [
             { id: "high_potion", chance: 0.1 },
             { id: "high_mp_potion", chance: 0.05 },
@@ -89,6 +94,9 @@ const ENEMY_STATS = {
         def: 60,
         exp: 9500,
         gold: 1200,
+        element: "earth",
+        // 毒の短剣を使う: 25%の確率で4秒間の毒(1tickにつき最大HPの約2%相当)を付与
+        statusEffect: { type: "poison", chance: 0.25, duration: 4000, tickDamage: 25 },
         drops: [
             { id: "high_potion", chance: 0.15 },
             { id: "high_mp_potion", chance: 0.1 },
@@ -104,6 +112,9 @@ const ENEMY_STATS = {
         def: 80,
         exp: 20000,
         gold: 3200,
+        element: "dark",
+        // 冷気を帯びた恐怖で20%の確率で2.5秒間麻痺させる
+        statusEffect: { type: "paralyze", chance: 0.2, duration: 2500 },
         drops: [
             { id: "high_potion", chance: 0.1 },
             { id: "high_mp_potion", chance: 0.1 },
@@ -119,6 +130,7 @@ const ENEMY_STATS = {
         def: 100,
         exp: 26000,
         gold: 10000,
+        element: "earth",
         drops: [
             { id: "high_potion", chance: 0.2 },
             { id: "high_mp_potion", chance: 0.2 },
@@ -134,6 +146,7 @@ const ENEMY_STATS = {
         def: 150,
         exp: 80000,
         gold: 14000,
+        element: "wind",
         drops: [
             { id: "high_potion", chance: 0.3 },
             { id: "high_mp_potion", chance: 0.3 },
@@ -149,6 +162,7 @@ const ENEMY_STATS = {
         def: 40,
         exp: 28000,
         gold: 2500,
+        element: "light",
         drops: [
             { id: "hero_sword", chance: 0.1 },
             { id: "high_potion", chance: 1.0 },

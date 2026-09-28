@@ -20,7 +20,7 @@
 
 const VALID_RANGE_TYPES = ['circle', 'line', 'fan'];
 const VALID_TARGET_TYPES = ['enemy', 'party'];
-const VALID_ITEM_TYPES = ['weapon', 'armor', 'accessory', 'consumable'];
+const VALID_ITEM_TYPES = ['weapon', 'armor', 'accessory', 'consumable', 'material'];
 const VALID_SKILL_TYPES = ['active', 'passive'];
 const VALID_JOB_TYPES = ['physical', 'magical'];
 

@@ -35,7 +35,8 @@ export function registerInputHandlers(scene) {
         if (scene.sideMenuUI) scene.sideMenuUI.toggle();
     });
     scene.input.keyboard.on('keydown-K', () => {
-        if (!scene.shopUI.isOpen && !scene.inventoryUI.isOpen && !scene.equipmentUI.isOpen && !scene.statAllocationUI.isOpen) {
+        if (!scene.shopUI.isOpen && !scene.inventoryUI.isOpen && !scene.equipmentUI.isOpen &&
+            !scene.statAllocationUI.isOpen && !scene.blacksmithUI?.isOpen) {
             scene.skillManagerUI.toggle();
         }
     });
@@ -76,6 +77,8 @@ function closeTopWindow(scene) {
         scene.statAllocationUI.toggle();
     } else if (scene.skillManagerUI && scene.skillManagerUI.isOpen) {
         scene.skillManagerUI.toggle();
+    } else if (scene.blacksmithUI && scene.blacksmithUI.isOpen) {
+        scene.blacksmithUI.toggle();
     } else if (scene.settingsUI && scene.settingsUI.visible) { // SettingsUI exposes `visible`, not `isOpen`
         scene.settingsUI.toggle();
     }

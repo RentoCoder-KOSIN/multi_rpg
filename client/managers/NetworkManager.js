@@ -190,7 +190,15 @@ export default class NetworkManager {
                 if (areEffectsEnabled(this.scene) && this.scene?.cameras?.main) {
                     this.scene.cameras.main.shake(50, 0.002);
                 }
-                player.takeDamage(data.damage || 0, { type: data.enemyType });
+                // 状態異常（凍結・麻痺・毒）: サーバーが確率判定した結果を受け取って反映する
+                const se = data.statusEffect;
+                const effects = se ? {
+                    freezeMs: se.type === 'freeze' ? se.duration : undefined,
+                    paralyzeMs: se.type === 'paralyze' ? se.duration : undefined,
+                    poisonMs: se.type === 'poison' ? se.duration : undefined,
+                    poisonTick: se.type === 'poison' ? se.tickDamage : undefined,
+                } : null;
+                player.takeDamage(data.damage || 0, { type: data.enemyType }, effects);
                 console.log(`[NetworkManager] enemyAttack from ${data.enemyType} (${data.enemyId}): ${data.damage} dmg`);
             }
         });

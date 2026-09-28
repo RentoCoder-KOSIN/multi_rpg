@@ -11,6 +11,7 @@ const {
 const { players, enemies } = require("../state");
 const { findSocketByPlayerId } = require("../utils/socketUtils");
 const { getLevelDiffMultiplier } = require("../utils/levelScaling");
+const { getEnemyStats } = require("../data/enemyStats");
 
 // dx/dy は px/秒 なので、経過時間(秒)を掛けて1tickあたりの移動量に変換する
 // 例: approach 50px/s * 0.15s = 7.5px/tick
@@ -66,12 +67,21 @@ function tryAttack(io, aiManager, enemy, result, mapPlayers) {
 
         aiManager.notifyAttackHit(enemy.id, damage);
 
+        // 状態異常（凍結・麻痺・毒）: 敵定義に statusEffect があれば確率判定する
+        const def = getEnemyStats(enemy.type);
+        let statusEffect = null;
+        if (def?.statusEffect && Math.random() < (def.statusEffect.chance || 0)) {
+            const { type, duration, tickDamage } = def.statusEffect;
+            statusEffect = { type, duration, tickDamage };
+        }
+
         const targetSocket = findSocketByPlayerId(io, result.targetPlayerId);
         if (targetSocket) {
             targetSocket.emit("enemyAttack", {
                 enemyId: enemy.id,
                 enemyType: enemy.type,
-                damage
+                damage,
+                statusEffect
             });
         }
     }
@@ -90,9 +100,11 @@ function updateMapEnemies(io, aiManager, mapKey) {
         // ※ 学習自体は凍結中も止めない（isLearning計算やQ値更新は継続する）
         const result = aiManager.updateEnemy(enemy.id, mapPlayers, mapEnemies);
         const isFrozen = enemy.frozenUntil && Date.now() < enemy.frozenUntil;
+        const isParalyzed = enemy.paralyzedUntil && Date.now() < enemy.paralyzedUntil;
+        const isImmobilized = isFrozen || isParalyzed;
 
-        if (isFrozen) {
-            // 凍結中は移動も攻撃も行わない
+        if (isImmobilized) {
+            // 凍結中・麻痺中は移動も攻撃も行わない
         } else if (isTooFarFromSpawn(enemy)) {
             returnToSpawn(enemy);
         } else if (result) {
@@ -102,7 +114,7 @@ function updateMapEnemies(io, aiManager, mapKey) {
             wander(enemy);
         }
 
-        if (!isFrozen && result?.shouldAttack && result.targetPlayerId) {
+        if (!isImmobilized && result?.shouldAttack && result.targetPlayerId) {
             tryAttack(io, aiManager, enemy, result, mapPlayers);
         }
 

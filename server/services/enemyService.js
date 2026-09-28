@@ -54,7 +54,8 @@ function createEnemyService({ io, aiManager }) {
             def: stats.def || 0,
             exp: stats.exp,
             gold: stats.gold,
-            drops: stats.drops
+            drops: stats.drops,
+            element: stats.element || null
         };
 
         enemies[mapKey][id] = enemy;

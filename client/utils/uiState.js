@@ -9,6 +9,7 @@ export function isAnyWindowOpen(scene) {
         scene.skillManagerUI?.isOpen ||
         scene.statAllocationUI?.isOpen ||
         scene.guildQuestBoardUI?.isOpen ||
+        scene.blacksmithUI?.isOpen ||
         (scene.settingsUI && scene.settingsUI.visible)
     );
 }

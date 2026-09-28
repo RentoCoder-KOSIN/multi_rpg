@@ -4,6 +4,15 @@ import { SKILLS } from "../data/skills.js";
 import { getEnemyStats } from "../data/enemyStats.js";
 import { getLevelDiffMultiplier, getExpLevelMultiplier } from "../utils/levelScaling.js";
 import { TOTAL_SKILL_SLOTS, GROWTH_CONFIG } from "../gameConstants.js";
+import { getElementMultiplier, getElementColor } from "../data/elements.js";
+import { showDamageNumber } from "../utils/damagePopup.js";
+
+// 状態異常の基本持続時間（ms）。武器の属性付与などから発生する。
+const STATUS_DURATIONS = {
+    freeze: 3000,
+    paralyze: 2500,
+};
+const POISON_TICK_INTERVAL_MS = 1000;
 
 // レベルアップに必要な経験値を計算する。
 // 以前は maxExp *= 1.5 という「複利」計算だったため、
@@ -54,6 +63,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         // バフ管理用
         this.activeBuffs = {}; // { buffType: { value, endTime } }
 
+        // 状態異常管理用（凍結・麻痺・毒）。セーブデータには含めない一時的な状態。
+        this.statusEffects = {}; // { freeze: {endTime}, paralyze: {endTime}, poison: {endTime, tickDamage} }
+        this.lastPoisonTick = 0;
+
         // ステータス初期化
         this.initializeStats();
     }
@@ -90,6 +103,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             dex: saved.dex || 5,  // Dexterity - クリティカル率・回避率に影響
             job: saved.job || 'none',
             inventory: saved.inventory || [],
+            // 鍛冶屋で武器/防具(アイテムID)に付与した属性。 { itemId: 'fire' | 'water' | ... }
+            itemElements: saved.itemElements || {},
             // relic (宝具) を新規追加。 ...(saved.equipment || {}) を後に展開することで、
             // 旧セーブデータ（relicキーが無い）でも weapon/armor はそのまま引き継ぎつつ
             // relic だけ null で補える。
@@ -459,6 +474,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.stats.deathChance = 0;  // 0〜1（即死効果）
         this.stats.poisonEquipped = false;
 
+        // 新属性システム（火・水・風・土・光・闇）。鍛冶屋で武器/防具に付与した属性。
+        this.stats.paralyzeChance = 0; // 0〜1
+        this.stats.poisonChance = 0;   // 0〜1
+        this.stats.poisonDamage = 0;   // 毒の1tickあたりの固定ダメージ
+
         const weapon = ITEMS[this.stats.equipment.weapon];
         const armor = ITEMS[this.stats.equipment.armor];
         const relic = ITEMS[this.stats.equipment.relic]; // 宝具スロット
@@ -488,6 +508,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.stats.iceDamage += getVal(s.iceDamage);
             this.stats.freezeChance += getVal(s.freezeChance);
             this.stats.deathChance += getVal(s.deathChance);
+            this.stats.paralyzeChance += getVal(s.paralyzeChance);
+            this.stats.poisonChance += getVal(s.poisonChance);
+            this.stats.poisonDamage += getVal(s.poisonDamage);
             if (s.attackMultiplier) this.stats.atkMultiplier *= s.attackMultiplier;
             if (s.poison) this.stats.poisonEquipped = true;
 
@@ -495,6 +518,21 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             if (item.expMultiplier) this.stats.expMultiplier += (item.expMultiplier - 1.0);
             if (s.expMultiplier) this.stats.expMultiplier += (getVal(s.expMultiplier) - 1.0);
         });
+
+        // 鍛冶屋で付与した属性（武器/防具のアイテムIDに紐づく）
+        this.stats.weaponElement = this.stats.itemElements?.[this.stats.equipment.weapon] || null;
+        this.stats.armorElement = this.stats.itemElements?.[this.stats.equipment.armor] || null;
+
+        // 武器の属性に応じて状態異常の追加発生率を付与する
+        // 水属性: 凍結、風属性: 麻痺、闇属性: 毒（鍛冶屋で属性を付けるほど旨みが出るように）
+        if (this.stats.weaponElement === 'water') {
+            this.stats.freezeChance += 0.15;
+        } else if (this.stats.weaponElement === 'wind') {
+            this.stats.paralyzeChance += 0.15;
+        } else if (this.stats.weaponElement === 'dark') {
+            this.stats.poisonChance += 0.15;
+            this.stats.poisonDamage += Math.max(5, Math.ceil(this.stats.atk * 0.1));
+        }
 
         // ここまでで武器/防具/宝具による補正が乗った後の値なので、装備前との差分を
         // 「装備補正値」として保持する（UI表示用。種による永続加算はここに含めない）。
@@ -558,6 +596,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         amount += elementalBonus;
 
+        // 新属性システム: 武器に付与した属性 vs 敵の属性（相性が良ければ1.7倍、悪ければ0.6倍）
+        const targetElement = target ? (target.element || (target.type ? getEnemyStats(target.type)?.element : null)) : null;
+        const affinityMult = getElementMultiplier(this.stats.weaponElement, targetElement);
+        if (affinityMult !== 1.0) {
+            amount = Math.ceil(amount * affinityMult);
+        }
+        const isElementAdvantage = affinityMult > 1.0;
+        const isElementWeak = affinityMult < 1.0;
+
         // 敵の防御力による軽減（フラット減算。プレイヤーが受けるダメージの計算式と揃えてある）
         const targetDef = target ? (target.def ?? target.stats?.def ?? 0) : 0;
         if (targetDef > 0) {
@@ -572,10 +619,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             amount = Math.max(amount, target.hp || amount);
         }
 
-        // 凍結効果（付与するかどうかの判定のみ。実際の付与は呼び出し側で行う）
+        // 状態異常（付与するかどうかの判定のみ。実際の付与は呼び出し側で行う）
         const isFreeze = this.stats.freezeChance > 0 && Math.random() < this.stats.freezeChance;
+        const isParalyze = !isFreeze && this.stats.paralyzeChance > 0 && Math.random() < this.stats.paralyzeChance;
+        const isPoison = this.stats.poisonChance > 0 && Math.random() < this.stats.poisonChance;
+        const poisonTick = this.stats.poisonDamage || 0;
 
-        return { amount, isCrit, isExecute, isFreeze };
+        return {
+            amount, isCrit, isExecute, isFreeze, isParalyze, isPoison, poisonTick,
+            isElementAdvantage, isElementWeak, element: this.stats.weaponElement || null,
+        };
     }
 
     /**
@@ -790,7 +843,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         return true;
     }
 
-    takeDamage(amount, attacker) {
+    takeDamage(amount, attacker, effects = null) {
         let finalAmount = amount;
 
         // 防御力によるダメージ軽減（逓減方式: DEFが高いほど軽減率が上がるが0にはならない）
@@ -800,6 +853,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         // 属性耐性（装備の fireResist / iceResist）。attacker の種類から属性を判定する
+        let attackerElement = attacker?.element || null;
         if (attacker && attacker.type) {
             const enemyDef = getEnemyStats(attacker.type);
             if (enemyDef?.element === 'fire' && this.stats.fireResist) {
@@ -807,6 +861,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             } else if (enemyDef?.element === 'ice' && this.stats.iceResist) {
                 finalAmount *= Math.max(0, 1 - this.stats.iceResist / 100);
             }
+            if (!attackerElement) attackerElement = enemyDef?.element || null;
+        }
+
+        // 新属性システム: 敵の属性 vs 防具に付与した属性
+        let affinityMult = 1.0;
+        if (attackerElement && this.stats.armorElement) {
+            affinityMult = getElementMultiplier(attackerElement, this.stats.armorElement);
+            finalAmount *= affinityMult;
         }
 
         finalAmount = Math.max(1, Math.round(finalAmount));
@@ -814,24 +876,82 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.stats.hp = Math.max(0, this.stats.hp - finalAmount);
         this.saveStats();
 
-        // ダメージ数値の表示
-        const text = this.scene.add.text(this.x, this.y - 20, `-${finalAmount}`, {
-            fontSize: '16px',
-            color: '#ff0000',
-            fontFamily: 'Press Start 2P',
-            stroke: '#000',
-            strokeThickness: 2
-        });
-        this.scene.tweens.add({
-            targets: text,
-            y: this.y - 60,
-            alpha: 0,
-            duration: 800,
-            onComplete: () => text.destroy()
-        });
+        // ダメージ数値の表示（属性があればその色、相性が良い/悪いなら背景エフェクト）
+        const affinity = affinityMult > 1.0 ? 'super' : (affinityMult < 1.0 ? 'weak' : null);
+        const hitColor = attackerElement ? getElementColor(attackerElement) : 0xff0000;
+        showDamageNumber(this.scene, this.x, this.y, finalAmount, { color: hitColor, affinity });
+
+        // 敵からの状態異常（凍結・麻痺・毒）を付与
+        if (effects) {
+            if (effects.freezeMs) this.applyStatusEffect('freeze', effects.freezeMs);
+            if (effects.paralyzeMs) this.applyStatusEffect('paralyze', effects.paralyzeMs);
+            if (effects.poisonMs) this.applyStatusEffect('poison', effects.poisonMs, effects.poisonTick || 0);
+        }
 
         if (this.stats.hp <= 0) {
             this.die();
+        }
+    }
+
+    /**
+     * 状態異常（凍結・麻痺・毒）を付与する。凍結/麻痺は移動・攻撃・スキル使用を止める。
+     * 毒は一定間隔で継続ダメージを与える。
+     */
+    applyStatusEffect(type, duration, tickDamage = 0) {
+        if (!this.isLocal || !this.active) return;
+        const now = Date.now();
+        this.statusEffects[type] = { endTime: now + duration, tickDamage };
+
+        if (type === 'poison') this.lastPoisonTick = now;
+
+        if (this.scene.notificationUI) {
+            const labels = { freeze: '❄️凍結してしまった！', paralyze: '⚡麻痺してしまった！', poison: '☠️毒を受けた！' };
+            this.scene.notificationUI.show(labels[type] || `状態異常: ${type}`, 'error');
+        }
+
+        if ((type === 'freeze' || type === 'paralyze') && this.setTint) {
+            const tint = type === 'freeze' ? 0x99ddff : 0xffee55;
+            this.setTint(tint);
+        }
+    }
+
+    /**
+     * 凍結中/麻痺中は移動・攻撃・スキル使用ができない。
+     */
+    isImmobilized() {
+        const now = Date.now();
+        const freeze = this.statusEffects.freeze;
+        const paralyze = this.statusEffects.paralyze;
+        return !!(freeze && now < freeze.endTime) || !!(paralyze && now < paralyze.endTime);
+    }
+
+    /**
+     * 状態異常の期限切れ処理と、毒の継続ダメージのtickを進める。update()から毎フレーム呼ぶ。
+     */
+    updateStatusEffects(now) {
+        let anyExpired = false;
+        Object.keys(this.statusEffects).forEach((type) => {
+            if (this.statusEffects[type].endTime <= now) {
+                delete this.statusEffects[type];
+                anyExpired = true;
+            }
+        });
+        if (anyExpired && !this.statusEffects.freeze && !this.statusEffects.paralyze && this.clearTint) {
+            this.clearTint();
+        }
+
+        const poison = this.statusEffects.poison;
+        if (poison && poison.tickDamage > 0 && now - this.lastPoisonTick >= POISON_TICK_INTERVAL_MS) {
+            this.lastPoisonTick = now;
+            this.stats.hp = Math.max(0, this.stats.hp - poison.tickDamage);
+            this.saveStats();
+
+            const text = this.scene.add.text(this.x, this.y - 20, `-${poison.tickDamage}`, {
+                fontSize: '14px', color: '#aa66ff', fontFamily: 'Press Start 2P', stroke: '#000', strokeThickness: 2
+            }).setOrigin(0.5);
+            this.scene.tweens.add({ targets: text, y: this.y - 55, alpha: 0, duration: 700, onComplete: () => text.destroy() });
+
+            if (this.stats.hp <= 0) this.die();
         }
     }
 
@@ -905,6 +1025,17 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             const now = this.scene.time.now;
             const body = this.body;
             if (!body) return;
+
+            // 凍結・麻痺中の状態異常を進行させる（期限切れ処理・毒tick）
+            this.updateStatusEffects(Date.now());
+
+            // 凍結/麻痺中は移動できない
+            if (this.isImmobilized()) {
+                this.moveTarget = null;
+                body.setVelocity(0, 0);
+                this.anims.play('idle', true);
+                return;
+            }
 
             // キー入力を優先
             let isMovingByKey = cursors.left.isDown || cursors.right.isDown || cursors.up.isDown || cursors.down.isDown;

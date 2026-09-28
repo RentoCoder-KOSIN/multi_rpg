@@ -5,6 +5,7 @@ import NotificationUI from '../../ui/NotificationUI.js';
 import PlayerStatsUI from '../../ui/PlayerStatsUI.js';
 import SkillBarUI from '../../ui/SkillBarUI.js';
 import EquipmentUI from '../../ui/EquipmentUI.js';
+import BlacksmithUI from '../../ui/BlacksmithUI.js';
 import StatAllocationUI from '../../ui/StatAllocationUI.js';
 import SkillManagerUI from '../../ui/SkillManagerUI.js';
 import SettingsUI from '../../ui/SettingsUI.js';
@@ -45,6 +46,8 @@ export function createGameUI(scene, config) {
     scene.skillBarUI = new SkillBarUI(scene, scene.player);
     scene.equipmentUI = new EquipmentUI(scene);
     scene.equipmentUI.createUI();
+    scene.blacksmithUI = new BlacksmithUI(scene);
+    scene.blacksmithUI.createUI();
     scene.statAllocationUI = new StatAllocationUI(scene);
     scene.statAllocationUI.createUI();
     scene.skillManagerUI = new SkillManagerUI(scene);

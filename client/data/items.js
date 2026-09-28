@@ -1,6 +1,30 @@
 import { defineItem } from "./schema.js";
+import { ELEMENTS, ELEMENT_INFO, getOrbItemId } from "./elements.js";
+
+// --- 属性の玉 ---
+// 鍛冶屋(BlacksmithUI)で購入し、鍛冶屋で武器・防具に使うことでその属性を付与できる。
+// 装備品ではないため type は 'material'（スタック可能・装備不可）。
+const ELEMENT_ORBS = Object.fromEntries(
+    ELEMENTS.map((el) => {
+        const info = ELEMENT_INFO[el];
+        const id = getOrbItemId(el);
+        return [
+            id,
+            defineItem({
+                id,
+                name: `${info.name}の玉`,
+                type: "material",
+                price: 800,
+                stats: {},
+                description: `${info.icon} 鍛冶屋で武器や防具に${info.name}属性を付与できる魔法の玉。`,
+            }),
+        ];
+    })
+);
 
 export const ITEMS = {
+    ...ELEMENT_ORBS,
+
     // --- 武器 --
     holy_weapon: defineItem({
         id: "holy_weapon",

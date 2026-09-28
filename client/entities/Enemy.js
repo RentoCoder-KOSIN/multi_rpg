@@ -4,6 +4,7 @@ import EnemyAI from '../ai/EnemyAI.js';
 import { ENEMY_AI_CONFIG } from '../config.js';
 import { getLevelDiffMultiplier } from '../utils/levelScaling.js';
 import { areEffectsEnabled } from '../utils/effectsSettings.js';
+import { showDamageNumber } from '../utils/damagePopup.js';
 
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, texture, type, id = null, spawnId = null, socket = null, serverData = {}) {
@@ -57,6 +58,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.def = serverData.def ?? stats.def ?? 0;
         this.expValue = serverData.exp || stats.exp;
         this.goldValue = serverData.gold || stats.gold;
+        // 属性（火・水・風・土・光・闇）。武器属性との相性判定や、
+        // プレイヤー防具属性との相性判定（敵の攻撃属性として）に使う
+        this.element = serverData.element || stats.element || null;
 
         // 敵AI設定
         this.detectRange = 300; // プレイヤー検出範囲
@@ -182,7 +186,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.hpBar.setVisible(this.active);
     }
 
-    takeDamage(amount, attacker, effects = null) {
+    takeDamage(amount, attacker, effects = null, hitInfo = null) {
         if (!this.active) return;
 
         // ローカルでのHP変動（予測）
@@ -193,21 +197,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
             this.socket.emit('enemyHit', { id: this.id, damage: amount, ...(effects || {}) });
         }
 
-        // ダメージ数値の表示
-        const text = this.scene.add.text(this.x, this.y - 20, `-${amount}`, {
-            fontSize: '14px',
-            color: '#ffffff',
-            fontFamily: 'Press Start 2P',
-            stroke: '#000',
-            strokeThickness: 2
-        });
-        this.scene.tweens.add({
-            targets: text,
-            y: this.y - 60,
-            alpha: 0,
-            duration: 800,
-            onComplete: () => text.destroy()
-        });
+        // ダメージ数値の表示（属性が付いていればその色、相性が良い/悪いなら背景エフェクト）
+        showDamageNumber(this.scene, this.x, this.y, amount, hitInfo || {});
 
         // ノックバック効果
         if (attacker) {
