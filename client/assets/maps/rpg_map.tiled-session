@@ -21,14 +21,14 @@
                 37
             ],
             "expandedObjectLayers": [
-                41,
-                42
+                42,
+                41
             ],
             "scale": 1,
             "selectedLayer": 17,
             "viewCenter": {
-                "x": 2095,
-                "y": 1592
+                "x": 1600.5,
+                "y": 1600.5
             }
         },
         "city.json#tiles": {

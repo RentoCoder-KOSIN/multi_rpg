@@ -2,6 +2,7 @@ import { ITEMS } from "../data/items.js";
 import { SKILLS } from "../data/skills.js";
 import { GROWTH_CONFIG } from "../gameConstants.js";
 import { pinToScreen } from '../utils/screenFixed.js';
+import { getUILayout } from './UILayoutManager.js';
 
 export default class PlayerStatsUI {
     constructor(scene, player) {
@@ -11,9 +12,10 @@ export default class PlayerStatsUI {
     }
 
     createUI() {
-        // メインコンテナ
-        this.container = this.scene.add.container(15, 15).setScrollFactor(0).setDepth(2000);
+        // Main container (position is managed by UILayoutManager: right of the menu button)
+        this.container = this.scene.add.container(0, 0).setScrollFactor(0).setDepth(2000);
         pinToScreen(this.container);
+        getUILayout(this.scene).register('stats', this.container);
 
         // 背景 (少し透明度を上げる)
         this.bg = this.scene.add.graphics();
@@ -51,13 +53,15 @@ export default class PlayerStatsUI {
 
         // XP
         this.expLabel = this.scene.add.text(barX, 32 + spacing * 2, 'XP', { fontSize: '8px', color: '#5eff5e', fontFamily: '"Press Start 2P"' });
-        this.expBarBg = this.scene.add.rectangle(barX + 25, 36 + spacing * 2, barWidth - 25, 3, 0x222222).setOrigin(0, 0.5);
-        this.expBar = this.scene.add.rectangle(barX + 25, 36 + spacing * 2, barWidth - 25, 3, 0x5eff5e).setOrigin(0, 0.5);
+        this.expBarBg = this.scene.add.rectangle(barX + 25, 36 + spacing * 2, barWidth - 25, barHeight, 0x222222).setOrigin(0, 0.5);
+        this.expBar = this.scene.add.rectangle(barX + 25, 36 + spacing * 2, barWidth - 25, barHeight, 0x5eff5e).setOrigin(0, 0.5);
+        // Numeric EXP display, same style as HP/MP
+        this.expText = this.scene.add.text(barX + 25 + (barWidth - 25) / 2, 36 + spacing * 2, '0/0', { fontSize: '7px', color: '#ffffff', fontFamily: '"Press Start 2P"' }).setOrigin(0.5);
         // 経験値倍率装備の効果が「今実際に効いているか」を常時ひと目でわかるように表示
         this.expMultText = this.scene.add.text(barX + 25, 36 + spacing * 2 + 8, '', {
             fontSize: '7px', fontFamily: '"Press Start 2P"', color: '#ffff55'
         });
-        this.container.add([this.expLabel, this.expBarBg, this.expBar, this.expMultText]);
+        this.container.add([this.expLabel, this.expBarBg, this.expBar, this.expText, this.expMultText]);
 
         // 下部エリア
         this.infoBg = this.scene.add.graphics();
@@ -116,6 +120,7 @@ export default class PlayerStatsUI {
 
         const expPercent = Math.min(1, Math.max(0, stats.exp / stats.maxExp));
         this.expBar.width = Math.max(0, barAreaWidth * expPercent);
+        this.expText.setText(`${Math.floor(stats.exp)}/${stats.maxExp}`);
 
         if (this.expMultText) {
             const mult = stats.expMultiplier || 1.0;

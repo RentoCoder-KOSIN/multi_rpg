@@ -1,3 +1,5 @@
+import { getUILayout } from './UILayoutManager.js';
+
 /**
  * AI Stats UI - 敵AIの学習状況を表示
  */
@@ -10,14 +12,12 @@ export default class AIStatsUI {
     }
 
     createUI() {
-        const gameWidth = this.scene.scale.gameSize ? this.scene.scale.gameSize.width : this.scene.scale.width;
-        const gameHeight = this.scene.scale.gameSize ? this.scene.scale.gameSize.height : this.scene.scale.height;
-
-        // コンテナ
-        this.container = this.scene.add.container(10, gameHeight - 150);
+        // Container (position is managed by UILayoutManager: bottom-left)
+        this.container = this.scene.add.container(0, 0);
         this.container.setScrollFactor(0);
         this.container.setDepth(1000);
         this.container.setVisible(false);
+        getUILayout(this.scene).register('aiStats', this.container);
 
         // 背景
         this.bg = this.scene.add.rectangle(0, 0, 250, 140, 0x000000, 0.8);

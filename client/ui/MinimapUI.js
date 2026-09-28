@@ -1,3 +1,6 @@
+import { UI_LAYOUT } from './uiLayout.js';
+import { getUILayout } from './UILayoutManager.js';
+
 /**
  * Minimap UI - 安定版レーダー形式ミニマップ（マスク不使用）
  */
@@ -38,9 +41,8 @@ export default class MinimapUI {
         this.container = null;
         this.terrainGraphics = null; // 地形（滅多に変わらないのでキャッシュする）
         this.entityGraphics = null;  // 敵・仲間など、毎フレーム動くもの
-        this.size = 140; // 少しコンパクトに
+        this.size = UI_LAYOUT.minimap.size.w;
         this.zoom = 0.15; // バランスの良い拡大率
-        this.padding = 15;
         this.radius = this.size / 2;
 
         // 地形の再描画をプレイヤーがタイルをまたいだ時だけに絞るためのキャッシュ
@@ -52,12 +54,11 @@ export default class MinimapUI {
     }
 
     createUI() {
-        const gameWidth = this.scene.scale.gameSize ? this.scene.scale.gameSize.width : this.scene.scale.width;
-        const gameHeight = this.scene.scale.gameSize ? this.scene.scale.gameSize.height : this.scene.scale.height;
-        // コンテナ作成
-        this.container = this.scene.add.container(gameWidth - this.size - this.padding, gameHeight - this.size - this.padding);
+        // Position is managed by UILayoutManager (top-right corner)
+        this.container = this.scene.add.container(0, 0);
         this.container.setScrollFactor(0);
         this.container.setDepth(5000); // 確実に最前面へ
+        getUILayout(this.scene).register('minimap', this.container);
 
         // 背景
         const bg = this.scene.add.graphics();

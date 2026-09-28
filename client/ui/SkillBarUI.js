@@ -2,15 +2,17 @@ import { SKILLS } from "../data/skills.js";
 import { JOBS } from "../data/jobs.js";
 import { TOTAL_SKILL_SLOTS } from "../gameConstants.js";
 import { pinToScreen } from "../utils/screenFixed.js";
+import { UI_LAYOUT } from "./uiLayout.js";
+import { getUILayout } from "./UILayoutManager.js";
 
 const SLOT_SIZE = 60;
-// 中央(角度0)から見た円周上の広がり。横方向は大きめ・縦方向は小さめにして、
-// 画面下端で見切れないようゆるいアーチ状の「円」に配置する。
-const WHEEL_RADIUS_X = 140;
-const WHEEL_RADIUS_Y = 50;
+// The skill slots sit on a real circle (the dial). The container origin is the dial center,
+// so the active slot (angle 0) is at (0, -DIAL_RADIUS), i.e. the top of the circle.
+const DIAL_RADIUS = UI_LAYOUT.skillDial.radius;
+const DIAL_BG_RADIUS = DIAL_RADIUS + UI_LAYOUT.skillDial.bgPadding; // = half of the layout size
 const ANGLE_STEP = 360 / TOTAL_SKILL_SLOTS; // スロット1個あたりの角度
 const FADE_START_ANGLE = 40;   // これを超えた角度から縮小・フェードを開始
-const VISIBLE_ANGLE_LIMIT = 100; // これを超えたら完全に非表示（負荷軽減）
+const VISIBLE_ANGLE_LIMIT = 85;  // beyond this angle the slot is hidden (keeps the arrow buttons clear)
 
 export default class SkillBarUI {
     constructor(scene, player) {
@@ -23,25 +25,19 @@ export default class SkillBarUI {
     }
 
     createUI() {
-        const gameWidth = this.scene.scale.gameSize ? this.scene.scale.gameSize.width : this.scene.scale.width;
-        const gameHeight = this.scene.scale.gameSize ? this.scene.scale.gameSize.height : this.scene.scale.height;
-
-        // バーのコンテナ（画面下中央）
-        this.container = this.scene.add.container(gameWidth / 2, gameHeight - 50).setScrollFactor(0).setDepth(2000);
-        // 注意: コンテナ自体にsetScrollFactor(0)しても、中の子要素は既定でscrollFactor(1)のままになり、
-        // 見た目はカメラ追従せず固定表示されているのに、クリック判定だけがカメラのスクロール分ズレてしまう
-        // （プレイヤーが動いてカメラがスクロールすると矢印ボタンが押せなくなる）。
-        // pinToScreen()で今後追加する子要素も含めてscrollFactor(0)に揃える。
+        // Container origin = dial center. Position is managed by UILayoutManager (bottom-right corner).
+        this.container = this.scene.add.container(0, 0).setScrollFactor(0).setDepth(2000);
+        // Note: setScrollFactor(0) on a container does not reach its children, so their hit areas
+        // drift with the camera. pinToScreen() also pins children added later.
         pinToScreen(this.container);
+        getUILayout(this.scene).register('skillDial', this.container);
 
-        // メイン背景（中央付近のスロットだけを収める控えめなパネル）
-        const bgWidth = 240;
-        const bgHeight = 110;
+        // Round background
         const mainBg = this.scene.add.graphics();
         mainBg.fillStyle(0x000000, 0.35);
-        mainBg.fillRoundedRect(-bgWidth / 2, -bgHeight / 2 - 5, bgWidth, bgHeight, 20);
-        mainBg.lineStyle(2, 0xffffff, 0.08);
-        mainBg.strokeRoundedRect(-bgWidth / 2, -bgHeight / 2 - 5, bgWidth, bgHeight, 20);
+        mainBg.fillCircle(0, 0, DIAL_BG_RADIUS);
+        mainBg.lineStyle(2, 0xffffff, 0.12);
+        mainBg.strokeCircle(0, 0, DIAL_BG_RADIUS);
         this.container.add(mainBg);
 
         // スロットをTOTAL_SKILL_SLOTS個、仮想の円周上に均等配置する。
@@ -108,12 +104,14 @@ export default class SkillBarUI {
             });
         }
 
-        this.createRotateButtons(bgWidth);
+        this.createRotateButtons();
     }
 
-    createRotateButtons(bgWidth) {
-        this.leftArrow = this.createArrowButton(-bgWidth / 2 - 24, -8, '◀', () => this.rotate(-1));
-        this.rightArrow = this.createArrowButton(bgWidth / 2 + 24, -8, '▶', () => this.rotate(1));
+    // Arrows sit on both sides of the dial center, inside the round background
+    createRotateButtons() {
+        const arrowX = DIAL_RADIUS + 18;
+        this.leftArrow = this.createArrowButton(-arrowX, 0, '◀', () => this.rotate(-1));
+        this.rightArrow = this.createArrowButton(arrowX, 0, '▶', () => this.rotate(1));
     }
 
     createArrowButton(x, y, label, onClick) {
@@ -194,10 +192,10 @@ export default class SkillBarUI {
             }
             slot.slotContainer.setVisible(true);
 
-            // 円周上の位置（中央=真上、外側にいくほど下に沈んで隠れていく）
+            // Position on the circle (angle 0 = top of the dial)
             const rad = Phaser.Math.DegToRad(relativeAngle);
-            const px = WHEEL_RADIUS_X * Math.sin(rad);
-            const py = WHEEL_RADIUS_Y * (1 - Math.cos(rad));
+            const px = DIAL_RADIUS * Math.sin(rad);
+            const py = -DIAL_RADIUS * Math.cos(rad);
 
             // 中央から離れるほど縮小・フェードして「回転して奥に隠れる」見た目にする
             const fade = Phaser.Math.Clamp(

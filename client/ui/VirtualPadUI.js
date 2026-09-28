@@ -1,4 +1,5 @@
 import { pinToScreen } from '../utils/screenFixed.js';
+import { getUILayout } from './UILayoutManager.js';
 export default class VirtualPadUI {
     constructor(scene) {
         this.scene = scene;
@@ -7,11 +8,10 @@ export default class VirtualPadUI {
     }
 
     createUI() {
-        const { width, height } = this.scene.scale;
-
-        // 右下に配置
-        this.container = this.scene.add.container(width - 80, height - 80).setScrollFactor(0).setDepth(150000);
+        // Position is managed by UILayoutManager (bottom-right, stacked above the skill dial)
+        this.container = this.scene.add.container(0, 0).setScrollFactor(0).setDepth(150000);
         pinToScreen(this.container);
+        getUILayout(this.scene).register('virtualPad', this.container);
 
         // 会話ボタン (Cキー相当)
         this.createActionButton(-100, 0, '💬', '#ffff00', () => {

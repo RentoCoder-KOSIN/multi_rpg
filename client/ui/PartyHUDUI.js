@@ -1,9 +1,11 @@
+import { getUILayout } from './UILayoutManager.js';
+
 export default class PartyHUDUI {
     constructor(scene) {
         this.scene = scene;
-        // 左側に配置 (プレイヤーのステータスUIの下あたり)
-        // プレイヤーのステータスは 15, 15 に配置されている (高さ155)
-        this.container = this.scene.add.container(15, 180).setScrollFactor(0).setDepth(1500);
+        // Position is managed by UILayoutManager (right side, under the minimap).
+        this.container = this.scene.add.container(0, 0).setScrollFactor(0).setDepth(1500);
+        getUILayout(this.scene).register('party', this.container);
         this.partyData = null;
     }
 

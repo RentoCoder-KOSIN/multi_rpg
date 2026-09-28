@@ -1,7 +1,13 @@
 import { pinToScreen } from '../utils/screenFixed.js';
 import { QUEST_UI_CONFIG } from '../gameConstants.js';
+import { UI_LAYOUT } from './uiLayout.js';
+import { getUILayout } from './UILayoutManager.js';
 
 const MAX_VISIBLE = QUEST_UI_CONFIG.TRACKER_MAX_VISIBLE; // 残りは「他N件」、詳細はクエストウィンドウで
+
+const PANEL_WIDTH = UI_LAYOUT.quest.size.w; // expanded width
+const TAB_WIDTH = 100;                      // collapsed width (a small tab stuck to the left edge)
+const HEADER_HEIGHT = UI_LAYOUT.quest.size.h; // header-only height
 
 export default class QuestTrackerUI {
     constructor(scene, questManager) {
@@ -11,21 +17,12 @@ export default class QuestTrackerUI {
         this.collapsed = false; // ヘッダーをクリックで折りたたみ/展開
         this.lastQuests = [];
 
-        const gameWidth = scene.scale.gameSize ? scene.scale.gameSize.width : scene.scale.width;
-        const panelWidth = 280;
-        const margin = 20;
-
-        const safeX = gameWidth - panelWidth - margin;
-        const safeY = margin;
-        this.container = scene.add.container(safeX, safeY).setScrollFactor(0).setDepth(1000);
+        // Position is managed by UILayoutManager (left edge, vertically centered).
+        // The height changes with the quest count, so it is reported via setSize().
+        this.layoutMgr = getUILayout(scene);
+        this.container = scene.add.container(0, 0).setScrollFactor(0).setDepth(1000);
         pinToScreen(this.container);
-
-        if (scene.scale) {
-            scene.scale.on('resize', () => {
-                const newWidth = scene.scale.gameSize ? scene.scale.gameSize.width : scene.scale.width;
-                this.container.setPosition(newWidth - panelWidth - margin, margin);
-            });
-        }
+        this.layoutMgr.register('quest', this.container);
 
         // 背景パネル (ガラス効果)
         this.bgGfx = scene.add.graphics();
@@ -42,12 +39,13 @@ export default class QuestTrackerUI {
         this.container.add(this.title);
 
         // ヘッダー全体をクリックすると折りたたみ/展開
-        this.toggleIcon = scene.add.text(panelWidth - 20, 12, '▼', {
+        this.toggleIcon = scene.add.text(PANEL_WIDTH - 20, 12, '◀', {
             fontSize: '12px', color: '#ffffff', fontFamily: 'Arial'
         }).setOrigin(1, 0);
         this.container.add(this.toggleIcon);
-        const headerHit = scene.add.rectangle(0, 0, panelWidth, 35, 0x000000, 0)
+        const headerHit = scene.add.rectangle(0, 0, PANEL_WIDTH, 35, 0x000000, 0)
             .setOrigin(0).setInteractive({ useHandCursor: true });
+        this.headerHit = headerHit;
         headerHit.on('pointerdown', (pointer, x, y, event) => {
             if (event) event.stopPropagation();
             this.collapsed = !this.collapsed;
@@ -65,7 +63,19 @@ export default class QuestTrackerUI {
         this.update(questManager.getActiveQuests());
     }
 
+    // Collapsed = narrow tab, expanded = full panel. Only the width changes (horizontal collapse).
+    applyWidth(width) {
+        this.toggleIcon.setX(width - 20);
+        // Keep the clickable header area in sync with the visible width
+        this.headerHit.setSize(width, 35);
+        if (this.headerHit.input && this.headerHit.input.hitArea) {
+            this.headerHit.input.hitArea.width = width;
+            this.headerHit.input.hitArea.height = 35;
+        }
+    }
+
     drawBackground(width, height) {
+        this.layoutMgr.setSize('quest', width, height); // re-centers the panel vertically
         this.bgGfx.clear();
         this.bgGfx.fillStyle(0x1a1a2e, 0.85);
         this.bgGfx.fillRoundedRect(0, 0, width, height, 12);
@@ -89,12 +99,22 @@ export default class QuestTrackerUI {
         this.questItems = [];
 
         const total = this.lastQuests.length;
-        this.title.setText(total ? `📜 QUESTS (${total})` : '📜 QUESTS');
-        this.toggleIcon.setText(this.collapsed ? '▶' : '▼');
+        this.toggleIcon.setText(this.collapsed ? '▶' : '◀');
 
-        // 折りたたみ中、またはクエスト無しはヘッダーだけ表示
-        if (this.collapsed || !total) {
-            this.drawBackground(280, 50);
+        // Collapsed: small tab with the quest count only
+        if (this.collapsed) {
+            this.title.setText(`📜${total}`);
+            this.applyWidth(TAB_WIDTH);
+            this.drawBackground(TAB_WIDTH, HEADER_HEIGHT);
+            return;
+        }
+
+        this.title.setText(total ? `📜 QUESTS (${total})` : '📜 QUESTS');
+        this.applyWidth(PANEL_WIDTH);
+
+        // No quests: header only
+        if (!total) {
+            this.drawBackground(PANEL_WIDTH, HEADER_HEIGHT);
             return;
         }
 
@@ -120,7 +140,7 @@ export default class QuestTrackerUI {
             yOffset += 20;
         }
 
-        this.drawBackground(280, Math.max(50, yOffset + 50));
+        this.drawBackground(PANEL_WIDTH, Math.max(HEADER_HEIGHT, yOffset + 50));
     }
 
     createQuestItem(quest, yOffset) {

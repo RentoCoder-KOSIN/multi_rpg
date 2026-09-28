@@ -14,28 +14,26 @@ import SideMenuUI from '../../ui/SideMenuUI.js';
 import VirtualPadUI from '../../ui/VirtualPadUI.js';
 import AIStatsUI from '../../ui/AIStatsUI.js';
 import MinimapUI from '../../ui/MinimapUI.js';
+import { getUILayout } from '../../ui/UILayoutManager.js';
 import { createEnemyDebugUI } from '../../utils/enemyDebug.js';
 
 /**
  * Create the HUD and every window except Shop/Inventory/Party (created earlier in create()).
  */
 export function createGameUI(scene, config) {
-    // Use the real game size so positions are correct in Phaser.Scale.FIT mode
-    const gameWidth = scene.scale.gameSize ? scene.scale.gameSize.width : scene.scale.width;
-    const gameHeight = scene.scale.gameSize ? scene.scale.gameSize.height : scene.scale.height;
-
+    // "[C] talk" prompt. Its position is managed by UILayoutManager ('interactPrompt').
     scene.interactText = scene.add.text(
-        gameWidth / 2,
-        gameHeight - 120,
+        0, 0,
         '[C] 会話',
         { fontSize: '16px', color: '#ffff00', fontFamily: 'Press Start 2P', stroke: '#000', strokeThickness: 3 }
     ).setOrigin(0.5).setScrollFactor(0).setVisible(false);
 
     scene.interactBg = scene.add.rectangle(
-        gameWidth / 2,
-        gameHeight - 120,
+        0, 0,
         150, 35, 0x000000, 0.7
     ).setOrigin(0.5).setScrollFactor(0).setVisible(false).setStrokeStyle(2, 0xffff00, 1);
+
+    getUILayout(scene).register('interactPrompt', [scene.interactText, scene.interactBg]);
 
     if (config.showQuestTracker) scene.questTrackerUI = new QuestTrackerUI(scene, scene.questManager);
 
