@@ -1,6 +1,6 @@
 import { ITEMS } from "../data/items.js";
 import BaseWindowUI from "./BaseWindowUI.js";
-import { ELEMENTS, ELEMENT_INFO, getOrbItemId } from "../data/elements.js";
+import { ELEMENTS, ELEMENT_INFO, STRONG_AGAINST, getOrbItemId } from "../data/elements.js";
 import { areEffectsEnabled } from "../utils/effectsSettings.js";
 
 /**
@@ -44,6 +44,9 @@ export default class BlacksmithUI extends BaseWindowUI {
         this.bodyContainer = this.scene.add.container(0, 0);
         this.container.add(this.bodyContainer);
 
+        this.createHelpButton();
+        this.createHelpOverlay();
+
         this.scene.input.keyboard.on('keydown-B', () => {
             const scene = this.scene;
             if (scene.inventoryUI?.isOpen || scene.shopUI?.isOpen || scene.equipmentUI?.isOpen) return;
@@ -54,7 +57,174 @@ export default class BlacksmithUI extends BaseWindowUI {
     open() {
         if (!this.container) this.createUI();
         super.open();
+        if (this.helpContainer) this.helpContainer.setVisible(false);
         this.refresh();
+    }
+
+    // タイトル横の「？」ボタン（属性相性の説明を開く）
+    createHelpButton() {
+        const x = this.config.width / 2 - 80;
+        const y = -this.config.height / 2 + 35;
+        const btn = this.scene.add.container(x, y);
+        const bg = this.scene.add.circle(0, 0, 16, 0x1a1a2e, 0.9).setStrokeStyle(2, 0xff8844);
+        const q = this.scene.add.text(0, 0, '?', {
+            fontSize: '18px', fontFamily: 'Arial', color: '#ffffff', fontStyle: 'bold'
+        }).setOrigin(0.5);
+        btn.add([bg, q]);
+        btn.setSize(36, 36);
+        btn.setInteractive({ useHandCursor: true });
+        btn.on('pointerdown', (p, lx, ly, event) => {
+            if (event) event.stopPropagation();
+            this.helpContainer.setVisible(!this.helpContainer.visible);
+        });
+        btn.on('pointerover', () => bg.setStrokeStyle(3, 0xffffff));
+        btn.on('pointerout', () => bg.setStrokeStyle(2, 0xff8844));
+        this.container.add(btn);
+    }
+
+    // 属性相性の説明パネル（五角形の相性図 + 一覧 + 倍率）
+    createHelpOverlay() {
+        const w = this.config.width;
+        const h = this.config.height;
+        const font = '"Press Start 2P"';
+        const hc = this.scene.add.container(0, 0);
+        hc.setVisible(false);
+        this.helpContainer = hc;
+
+        const bg = this.scene.add.graphics();
+        bg.fillStyle(0x10182e, 0.98);
+        bg.fillRoundedRect(-w / 2 + 15, -h / 2 + 15, w - 30, h - 30, 16);
+        bg.lineStyle(2, 0xff8844, 0.8);
+        bg.strokeRoundedRect(-w / 2 + 15, -h / 2 + 15, w - 30, h - 30, 16);
+        hc.add(bg);
+
+        const blocker = this.scene.add.rectangle(0, 0, w - 30, h - 30, 0x000000, 0).setInteractive();
+        blocker.on('pointerdown', (p, lx, ly, event) => { if (event) event.stopPropagation(); });
+        hc.add(blocker);
+
+        hc.add(this.scene.add.text(0, -h / 2 + 45, '属性の相性', {
+            fontSize: '18px', fontFamily: font, color: '#ffffff', stroke: '#ff8844', strokeThickness: 3
+        }).setOrigin(0.5));
+
+        // --- 五角形の相性図（矢印は「強い」方向 = 1.7倍） ---
+        const cx = -150, cy = -10, R = 105, nodeR = 26;
+        const order = ['fire', 'earth', 'wind', 'thunder', 'water']; // 強い順の輪
+        const pos = order.map((el, i) => {
+            const a = -Math.PI / 2 + (Math.PI * 2 * i) / order.length;
+            return { el, x: cx + Math.cos(a) * R, y: cy + Math.sin(a) * R };
+        });
+
+        const gfx = this.scene.add.graphics();
+        hc.add(gfx);
+        pos.forEach((from, i) => {
+            const to = pos[(i + 1) % pos.length];
+            const dx = to.x - from.x, dy = to.y - from.y;
+            const len = Math.hypot(dx, dy);
+            const ux = dx / len, uy = dy / len;
+            const sx = from.x + ux * (nodeR + 3), sy = from.y + uy * (nodeR + 3);
+            const ex = to.x - ux * (nodeR + 3), ey = to.y - uy * (nodeR + 3);
+            gfx.lineStyle(3, 0xffaa44, 1);
+            gfx.lineBetween(sx, sy, ex, ey);
+            const px = -uy, py = ux;
+            gfx.fillStyle(0xffaa44, 1);
+            gfx.fillTriangle(
+                ex, ey,
+                ex - ux * 12 + px * 7, ey - uy * 12 + py * 7,
+                ex - ux * 12 - px * 7, ey - uy * 12 - py * 7
+            );
+        });
+
+        pos.forEach(({ el, x, y }) => {
+            const info = ELEMENT_INFO[el];
+            hc.add(this.scene.add.circle(x, y, nodeR, 0x1a1a2e, 1).setStrokeStyle(3, info.color));
+            hc.add(this.scene.add.text(x, y - 5, info.icon, { fontSize: '18px' }).setOrigin(0.5));
+            hc.add(this.scene.add.text(x, y + 14, info.name, {
+                fontSize: '9px', fontFamily: font, color: '#ffffff', stroke: '#000', strokeThickness: 2
+            }).setOrigin(0.5));
+        });
+
+        // 光 ⇔ 闇（互いに強い。五角形の輪とは無関係）
+        const pairY = cy + R + 68;
+        const lightPos = { x: cx - 48, y: pairY };
+        const darkPos = { x: cx + 48, y: pairY };
+        gfx.lineStyle(3, 0xffaa44, 1);
+        gfx.lineBetween(lightPos.x + nodeR + 3, pairY, darkPos.x - nodeR - 3, pairY);
+        gfx.fillStyle(0xffaa44, 1);
+        gfx.fillTriangle(darkPos.x - nodeR - 3, pairY, darkPos.x - nodeR - 15, pairY - 7, darkPos.x - nodeR - 15, pairY + 7);
+        gfx.fillTriangle(lightPos.x + nodeR + 3, pairY, lightPos.x + nodeR + 15, pairY - 7, lightPos.x + nodeR + 15, pairY + 7);
+        [['light', lightPos], ['dark', darkPos]].forEach(([el, { x, y }]) => {
+            const info = ELEMENT_INFO[el];
+            hc.add(this.scene.add.circle(x, y, nodeR, 0x1a1a2e, 1).setStrokeStyle(3, info.color));
+            hc.add(this.scene.add.text(x, y - 5, info.icon, { fontSize: '18px' }).setOrigin(0.5));
+            hc.add(this.scene.add.text(x, y + 14, info.name, {
+                fontSize: '9px', fontFamily: font, color: '#ffffff', stroke: '#000', strokeThickness: 2
+            }).setOrigin(0.5));
+        });
+
+        hc.add(this.scene.add.text(cx, cy, '矢印は\n「強い」向き', {
+            fontSize: '9px', fontFamily: font, color: '#ffaa44', align: 'center', lineSpacing: 6
+        }).setOrigin(0.5));
+
+        // --- 属性ごとの強み・弱み一覧 ---
+        const weakOf = {};
+        Object.entries(STRONG_AGAINST).forEach(([atk, def]) => { weakOf[def] = atk; });
+
+        const lx = 5;
+        let ly = -h / 2 + 100;
+        ELEMENTS.forEach((el) => {
+            const info = ELEMENT_INFO[el];
+            const strong = ELEMENT_INFO[STRONG_AGAINST[el]];
+            const weak = ELEMENT_INFO[weakOf[el]];
+            hc.add(this.scene.add.text(lx, ly, `${info.icon} ${info.name}`, {
+                fontSize: '13px', fontFamily: font, color: '#' + info.color.toString(16).padStart(6, '0'),
+                stroke: '#000', strokeThickness: 2
+            }).setOrigin(0, 0.5));
+            hc.add(this.scene.add.text(lx + 85, ly, `強い:${strong.icon}${strong.name}`, {
+                fontSize: '11px', fontFamily: font, color: '#ffaa44'
+            }).setOrigin(0, 0.5));
+            if (STRONG_AGAINST[STRONG_AGAINST[el]] === el) {
+                // 光⇔闇のように互いに強い関係（弱点なし）
+                hc.add(this.scene.add.text(lx + 85 + 120, ly, '(お互い)', {
+                    fontSize: '11px', fontFamily: font, color: '#88aacc'
+                }).setOrigin(0, 0.5));
+            } else {
+                hc.add(this.scene.add.text(lx + 85 + 120, ly, `弱い:${weak.icon}${weak.name}`, {
+                    fontSize: '11px', fontFamily: font, color: '#88aacc'
+                }).setOrigin(0, 0.5));
+            }
+            ly += 36;
+        });
+
+        // --- 倍率 ---
+        ly += 8;
+        hc.add(this.scene.add.text(lx, ly, '強い相手へ 1.7倍 / 普通 1.0倍 / 弱い相手へ 0.6倍', {
+            fontSize: '10px', fontFamily: font, color: '#ffffff'
+        }).setOrigin(0, 0.5));
+        hc.add(this.scene.add.text(lx, ly + 22, '（武器=与ダメージ / 防具=被ダメージに適用）', {
+            fontSize: '9px', fontFamily: font, color: '#8899aa'
+        }).setOrigin(0, 0.5));
+
+        // --- 状態異常のヒント ---
+        hc.add(this.scene.add.text(0, h / 2 - 60, '武器に付与すると状態異常が出やすくなる', {
+            fontSize: '10px', fontFamily: font, color: '#ffffff'
+        }).setOrigin(0.5));
+        hc.add(this.scene.add.text(0, h / 2 - 38, '💧水=凍結   ⚡雷=麻痺   🪨土=毒', {
+            fontSize: '11px', fontFamily: font, color: '#ffdd88'
+        }).setOrigin(0.5));
+
+        // --- とじるボタン ---
+        const close = this.scene.add.text(w / 2 - 40, -h / 2 + 40, '✕', {
+            fontSize: '20px', fontFamily: 'Arial', color: '#ffffff'
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        close.on('pointerdown', (p, lx2, ly2, event) => {
+            if (event) event.stopPropagation();
+            hc.setVisible(false);
+        });
+        close.on('pointerover', () => close.setColor('#ff4b2b'));
+        close.on('pointerout', () => close.setColor('#ffffff'));
+        hc.add(close);
+
+        this.container.add(hc);
     }
 
     updateGold() {

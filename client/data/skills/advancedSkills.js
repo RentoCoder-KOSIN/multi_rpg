@@ -24,14 +24,14 @@ export const ADVANCED_SKILLS = {
 
     // --- アークメイジ (メイジ上位職) ---
     abyss_storm: defineSkill({
-        id: 'abyss_storm', name: 'アビスストーム', type: 'active',
+        id: 'abyss_storm', element: 'dark', name: 'アビスストーム', type: 'active',
         cd: 12000, damageMult: 45, mpCost: 100, unlockCost: 500,
         range: 350, rangeType: 'circle',
         color: 0x4b0082, icon: '🌀',
         description: '深淵の嵐を呼び寄せ、全てを飲み込む。'
     }),
     chain_lightning: defineSkill({
-        id: 'chain_lightning', name: 'チェインライトニング', type: 'active',
+        id: 'chain_lightning', element: 'thunder', name: 'チェインライトニング', type: 'active',
         cd: 6000, damageMult: 28, mpCost: 45, unlockCost: 500,
         range: 220, rangeType: 'fan',
         color: 0xffff33, icon: '⚡',
@@ -40,14 +40,14 @@ export const ADVANCED_SKILLS = {
 
     // --- パラディン (タンク上位職) ---
     holy_sanctuary: defineSkill({
-        id: 'holy_sanctuary', name: 'ホーリーサンクチュアリ', type: 'active',
+        id: 'holy_sanctuary', element: 'light', name: 'ホーリーサンクチュアリ', type: 'active',
         cd: 20000, damageMult: 15, mpCost: 80, unlockCost: 500,
         range: 300, rangeType: 'circle',
         color: 0xffff00, icon: '✝️',
         description: '神聖な領域を展開し、敵には裁きを、味方には加護を。'
     }),
     smite: defineSkill({
-        id: 'smite', name: 'スマイト', type: 'active',
+        id: 'smite', element: 'light', name: 'スマイト', type: 'active',
         cd: 5000, damageMult: 18, mpCost: 35, unlockCost: 500,
         range: 150, rangeType: 'circle',
         color: 0xfff2cc, icon: '⚡',
@@ -73,7 +73,7 @@ export const ADVANCED_SKILLS = {
 
     // --- エクソシスト (プリースト上位職) ---
     exorcism: defineSkill({
-        id: 'exorcism', name: 'エクソシズム', type: 'active',
+        id: 'exorcism', element: 'light', name: 'エクソシズム', type: 'active',
         cd: 8000, damageMult: 30, mpCost: 60, unlockCost: 500,
         range: 300, rangeType: 'line',
         color: 0xfff2cc, icon: '⛧',
@@ -81,7 +81,7 @@ export const ADVANCED_SKILLS = {
         effect: { vsUndead: 2.0 }
     }),
     divine_judgment: defineSkill({
-        id: 'divine_judgment', name: 'ディヴァインジャッジメント', type: 'active',
+        id: 'divine_judgment', element: 'light', name: 'ディヴァインジャッジメント', type: 'active',
         cd: 9000, damageMult: 32, mpCost: 65, unlockCost: 500,
         range: 280, rangeType: 'line',
         color: 0xffe4b5, icon: '⚡',

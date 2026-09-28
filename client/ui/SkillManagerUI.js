@@ -2,6 +2,7 @@ import { SKILLS } from "../data/skills.js";
 import { JOBS } from "../data/jobs.js";
 import BaseWindowUI from "./BaseWindowUI.js";
 import { TOTAL_SKILL_SLOTS } from "../gameConstants.js";
+import { ELEMENT_INFO } from "../data/elements.js";
 
 const DIGIT_CODES = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8'].slice(0, TOTAL_SKILL_SLOTS);
 
@@ -262,7 +263,9 @@ export default class SkillManagerUI extends BaseWindowUI {
                 // MP消費量がひと目でわかるように説明文の頭に付ける
                 // （「MP消費量がわからない」への対応）
                 const mpCost = skillDef.mpCost || 0;
-                const descStr = `MP:${mpCost}  ${skillDef.description}`;
+                const elInfo = skillDef.element ? ELEMENT_INFO[skillDef.element] : null;
+                const elTag = elInfo ? `[${elInfo.icon}${elInfo.name}属性] ` : '';
+                const descStr = `MP:${mpCost}  ${elTag}${skillDef.description}`;
                 const desc = this.scene.add.text(-220, 15, descStr, {
                     fontSize: '10px', color: '#aaaaaa'
                 });

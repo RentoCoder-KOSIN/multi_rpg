@@ -359,7 +359,7 @@ function applyDamageSkill(scene, skill, { enemies, range, rangeType, direction, 
 
         if (!isHit) return;
 
-        const damageData = player.getDamage(damageMultiplier, enemy);
+        const damageData = player.getDamage(damageMultiplier, enemy, skill.element || null);
         let damage = damageData.amount;
 
         // アンデッド特効（エクソシズムなど effect.vsUndead を持つスキル）

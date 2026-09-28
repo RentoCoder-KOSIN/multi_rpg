@@ -5,6 +5,7 @@ import { ENEMY_AI_CONFIG } from '../config.js';
 import { getLevelDiffMultiplier } from '../utils/levelScaling.js';
 import { areEffectsEnabled } from '../utils/effectsSettings.js';
 import { showDamageNumber } from '../utils/damagePopup.js';
+import { ELEMENT_INFO } from '../data/elements.js';
 
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, texture, type, id = null, spawnId = null, socket = null, serverData = {}) {
@@ -58,7 +59,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.def = serverData.def ?? stats.def ?? 0;
         this.expValue = serverData.exp || stats.exp;
         this.goldValue = serverData.gold || stats.gold;
-        // 属性（火・水・風・土・光・闇）。武器属性との相性判定や、
+        // 属性（火・水・雷・風・土・光・闇）。武器属性との相性判定や、
         // プレイヤー防具属性との相性判定（敵の攻撃属性として）に使う
         this.element = serverData.element || stats.element || null;
 
@@ -112,7 +113,10 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     createNameLabel() {
         const displayName = getEnemyDisplayName(this.type);
-        const label = `Lv.${this.level} ${displayName}`;
+        // 属性があれば名前の横に表示（例: Lv.1 スライム 💧水）
+        const elInfo = this.element ? ELEMENT_INFO[this.element] : null;
+        const elTag = elInfo ? ` ${elInfo.icon}${elInfo.name}` : '';
+        const label = `Lv.${this.level} ${displayName}${elTag}`;
 
         this.nameText = this.scene.add.text(0, 0, label, {
             fontSize: '10px',

@@ -4,7 +4,7 @@ import { SKILLS } from "../data/skills.js";
 import { getEnemyStats } from "../data/enemyStats.js";
 import { getLevelDiffMultiplier, getExpLevelMultiplier } from "../utils/levelScaling.js";
 import { TOTAL_SKILL_SLOTS, GROWTH_CONFIG } from "../gameConstants.js";
-import { getElementMultiplier, getElementColor } from "../data/elements.js";
+import { ELEMENTS, getElementMultiplier, getElementColor } from "../data/elements.js";
 import { showDamageNumber } from "../utils/damagePopup.js";
 
 // 状態異常の基本持続時間（ms）。武器の属性付与などから発生する。
@@ -104,7 +104,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             job: saved.job || 'none',
             inventory: saved.inventory || [],
             // 鍛冶屋で武器/防具(アイテムID)に付与した属性。 { itemId: 'fire' | 'water' | ... }
-            itemElements: saved.itemElements || {},
+            // 存在しない属性の付与（属性定義の変更前のデータなど）は破棄する
+            itemElements: Object.fromEntries(
+                Object.entries(saved.itemElements || {}).filter(([, el]) => ELEMENTS.includes(el))
+            ),
             // relic (宝具) を新規追加。 ...(saved.equipment || {}) を後に展開することで、
             // 旧セーブデータ（relicキーが無い）でも weapon/armor はそのまま引き継ぎつつ
             // relic だけ null で補える。
@@ -474,7 +477,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.stats.deathChance = 0;  // 0〜1（即死効果）
         this.stats.poisonEquipped = false;
 
-        // 新属性システム（火・水・風・土・光・闇）。鍛冶屋で武器/防具に付与した属性。
+        // 新属性システム（火・水・雷・風・土・光・闇）。鍛冶屋で武器/防具に付与した属性。
         this.stats.paralyzeChance = 0; // 0〜1
         this.stats.poisonChance = 0;   // 0〜1
         this.stats.poisonDamage = 0;   // 毒の1tickあたりの固定ダメージ
@@ -524,12 +527,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.stats.armorElement = this.stats.itemElements?.[this.stats.equipment.armor] || null;
 
         // 武器の属性に応じて状態異常の追加発生率を付与する
-        // 水属性: 凍結、風属性: 麻痺、闇属性: 毒（鍛冶屋で属性を付けるほど旨みが出るように）
+        // 水属性: 凍結、雷属性: 麻痺、土属性: 毒（鍛冶屋で属性を付けるほど旨みが出るように）
         if (this.stats.weaponElement === 'water') {
             this.stats.freezeChance += 0.15;
-        } else if (this.stats.weaponElement === 'wind') {
+        } else if (this.stats.weaponElement === 'thunder') {
             this.stats.paralyzeChance += 0.15;
-        } else if (this.stats.weaponElement === 'dark') {
+        } else if (this.stats.weaponElement === 'earth') {
             this.stats.poisonChance += 0.15;
             this.stats.poisonDamage += Math.max(5, Math.ceil(this.stats.atk * 0.1));
         }
@@ -559,7 +562,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
      * 最終的なダメージ計算
      * 武器の特殊効果などを反映可能にする
      */
-    getDamage(multiplier = 1, target = null) {
+    getDamage(multiplier = 1, target = null, skillElement = null) {
         // レベル差補正（自分が格上なら伸び、格下ならほぼ通らない）
         if (target) {
             const targetLevel = (target.level !== undefined) ? target.level : (target.stats?.level ?? 1);
@@ -598,7 +601,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // 新属性システム: 武器に付与した属性 vs 敵の属性（相性が良ければ1.7倍、悪ければ0.6倍）
         const targetElement = target ? (target.element || (target.type ? getEnemyStats(target.type)?.element : null)) : null;
-        const affinityMult = getElementMultiplier(this.stats.weaponElement, targetElement);
+        // 魔法スキルなど属性を持つスキルはその属性、無ければ武器の属性で判定する
+        const attackElement = skillElement || this.stats.weaponElement || null;
+        const affinityMult = getElementMultiplier(attackElement, targetElement);
         if (affinityMult !== 1.0) {
             amount = Math.ceil(amount * affinityMult);
         }
@@ -627,7 +632,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         return {
             amount, isCrit, isExecute, isFreeze, isParalyze, isPoison, poisonTick,
-            isElementAdvantage, isElementWeak, element: this.stats.weaponElement || null,
+            isElementAdvantage, isElementWeak, element: attackElement,
         };
     }
 

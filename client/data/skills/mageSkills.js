@@ -6,7 +6,7 @@ import { defineSkill } from "../schema.js";
 
 export const MAGE_SKILLS = {
     fireball: defineSkill({
-        id: "fireball",
+        id: "fireball", element: 'fire',
         name: "ファイアボール",
         type: "active",
         cd: 3000,
@@ -20,7 +20,7 @@ export const MAGE_SKILLS = {
         description: "火球を放つ。",
     }),
     ice_needle: defineSkill({
-        id: "ice_needle",
+        id: "ice_needle", element: 'water',
         name: "アイスニードル",
         type: "active",
         cd: 4000,
@@ -34,7 +34,7 @@ export const MAGE_SKILLS = {
         description: "氷の針を扇状に放つ。",
     }),
     big_fireball: defineSkill({
-        id: "big_fireball",
+        id: "big_fireball", element: 'fire',
         name: "爆裂魔法",
         type: "active",
         cd: 5000,
@@ -48,7 +48,7 @@ export const MAGE_SKILLS = {
         description: "巨大な爆発を引き起こす。",
     }),
     dark_nova: defineSkill({
-        id: "dark_nova",
+        id: "dark_nova", element: 'dark',
         name: "ダークノヴァ",
         type: "active",
         cd: 8000,
@@ -62,7 +62,7 @@ export const MAGE_SKILLS = {
         description: "闇の爆発を周囲に引き起こす。",
     }),
     meteor_swarm: defineSkill({
-        id: "meteor_swarm",
+        id: "meteor_swarm", element: 'fire',
         name: "メテオスウォーム",
         type: "active",
         cd: 15000,
@@ -76,7 +76,7 @@ export const MAGE_SKILLS = {
         description: "隕石を降らせて広範囲を焼き払う。",
     }),
     thunder_storm: defineSkill({
-        id: "thunder_storm",
+        id: "thunder_storm", element: 'thunder',
         name: "サンダーストーム",
         type: "active",
         cd: 12000,

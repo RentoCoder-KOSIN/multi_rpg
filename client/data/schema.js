@@ -1,3 +1,4 @@
+import { ELEMENTS } from './elements.js';
 /**
  * Data schema for items, skills and jobs.
  *
@@ -71,6 +72,8 @@ export function defineSkill({
     rangeType = 'circle',
     targetType = 'enemy',
     effect = {},
+    // 魔法スキルの属性（'fire' など）。未設定なら武器に付与した属性が使われる
+    element = null,
 } = {}) {
     assert(id, 'skill is missing an id');
     assert(name, `skill "${id}": missing a name`);
@@ -78,7 +81,9 @@ export function defineSkill({
     assert(VALID_RANGE_TYPES.includes(rangeType), `skill "${id}": rangeType must be one of ${VALID_RANGE_TYPES.join(', ')}`);
     assert(VALID_TARGET_TYPES.includes(targetType), `skill "${id}": targetType must be one of ${VALID_TARGET_TYPES.join(', ')}`);
 
-    return { id, name, type, description, icon, color, cd, mpCost, unlockCost, damageMult, range, rangeType, targetType, effect };
+    assert(element === null || ELEMENTS.includes(element), `skill "${id}": unknown element "${element}"`);
+
+    return { id, name, type, description, icon, color, cd, mpCost, unlockCost, damageMult, range, rangeType, targetType, effect, element };
 }
 
 /**
