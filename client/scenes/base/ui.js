@@ -14,6 +14,8 @@ import SideMenuUI from '../../ui/SideMenuUI.js';
 import VirtualPadUI from '../../ui/VirtualPadUI.js';
 import AIStatsUI from '../../ui/AIStatsUI.js';
 import MinimapUI from '../../ui/MinimapUI.js';
+import ReincarnationUI from '../../ui/ReincarnationUI.js';
+import ObjectiveIndicatorUI from '../../ui/ObjectiveIndicatorUI.js';
 import { getUILayout } from '../../ui/UILayoutManager.js';
 import { createEnemyDebugUI } from '../../utils/enemyDebug.js';
 
@@ -62,6 +64,10 @@ export function createGameUI(scene, config) {
     scene.aiTrainingEnabled = true; // global reinforcement-learning switch
     scene.aiStatsUI = new AIStatsUI(scene);
     scene.minimapUI = new MinimapUI(scene);
+    scene.reincarnationUI = new ReincarnationUI(scene);
+    scene.reincarnationUI.createUI();
+    // 「次に何をすればいいか/どこに行けばいいか」を常時示すインジケーター（レベル不問）
+    scene.objectiveIndicatorUI = new ObjectiveIndicatorUI(scene);
 
     // The virtual pad is only for touch devices
     scene.isMobile = !scene.sys.game.device.os.desktop;

@@ -57,8 +57,9 @@ export default class QuestTrackerUI {
         this.container.add(this.questContainer);
 
         questManager.onUpdate(quests => {
+            if (!this.container || !this.container.active) return; // 破棄済みなら何もしない
             this.update(quests);
-        });
+        }, scene);
 
         this.update(questManager.getActiveQuests());
     }

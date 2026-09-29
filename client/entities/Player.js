@@ -3,7 +3,7 @@ import { ITEMS } from "../data/items.js";
 import { SKILLS } from "../data/skills.js";
 import { getEnemyStats } from "../data/enemyStats.js";
 import { getLevelDiffMultiplier, getExpLevelMultiplier } from "../utils/levelScaling.js";
-import { TOTAL_SKILL_SLOTS, GROWTH_CONFIG, COMBAT_CONFIG } from "../gameConstants.js";
+import { TOTAL_SKILL_SLOTS, GROWTH_CONFIG, COMBAT_CONFIG, REINCARNATION_CONFIG } from "../gameConstants.js";
 import {
     ELEMENTS, getElementMultiplier, getBlendedElementMultiplier, getElementColor,
     getWeaponElementBonus, resolveElement, resistKey, damageKey, collectElementStats,
@@ -105,6 +105,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             men: saved.men || 5,  // Mental - MP最大値に影響
             dex: saved.dex || 5,  // Dexterity - クリティカル率・回避率に影響
             job: saved.job || 'none',
+            // 輪廻転生した回数。転生ごとの基礎ステータス強化に使う。
+            reincarnationCount: saved.reincarnationCount || 0,
             inventory: saved.inventory || [],
             // 鍛冶屋で武器/防具(アイテムID)に付与した属性。 { itemId: 'fire' | 'water' | ... }
             // 存在しない属性の付与（属性定義の変更前のデータなど）は破棄する
@@ -152,8 +154,23 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const newJob = JOBS[jobId];
         this.stats.job = jobId;
 
-        // 前の職業のスキル構成が持ち越されないようにリセット
+        // 前の職業のスキル構成が持ち越されないようにリセット。
+        // 以前は activeSkills（スキルバーの装備枠）だけをリセットしており、
+        // unlockedSkills/skillLevels は残ったままだったため、転職後も
+        // スキルマネージャーから前の職業のスキルをそのまま再装備できてしまっていた
+        // （SkillManagerUI側で「系譜外だが既に習得しているスキル」として一覧に出ていたバグ）。
+        // ここで確実に習得済みスキルごと破棄する。
+        //
+        // 例外: 輪廻転生（reincarnate()）の直後だけは、_skipSkillResetOnNextJob フラグにより
+        // このリセットをスキップし、習得済みスキルを持ち越せるようにする。
         this.stats.activeSkills = new Array(TOTAL_SKILL_SLOTS).fill(null);
+        const keepSkills = !!this.stats._skipSkillResetOnNextJob;
+        if (!keepSkills) {
+            this.stats.unlockedSkills = [];
+            this.stats.skillLevels = {};
+            this.stats.jobExp = 0;
+        }
+        this.stats._skipSkillResetOnNextJob = false;
         this.skillCooldowns = {};
 
         this.applyEquipmentStats(); // ボーナスを含めて再計算
@@ -165,6 +182,65 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         if (this.scene.notificationUI) {
             this.scene.notificationUI.show(`ジョブを${newJob.name}に変更しました！`, 'success');
         }
+    }
+
+    // 輪廻転生が可能かどうか（Lv上限に到達しているか）
+    canReincarnate() {
+        return this.stats.level >= REINCARNATION_CONFIG.REQUIRED_LEVEL;
+    }
+
+    // 輪廻転生: Lv100到達後に実行できる。レベル1からやり直しつつ職業を選び直せるが、
+    // 通常の転職（setJob）と違い、習得済みスキル（unlockedSkills/skillLevels）は持ち越せる。
+    // その代わり、基礎ステータス（STR/INT/VIT/MEN/DEX）が永続的に大幅強化される。
+    reincarnate() {
+        if (!this.isLocal) return false;
+
+        if (!this.canReincarnate()) {
+            if (this.scene.notificationUI) {
+                this.scene.notificationUI.show(`輪廻転生にはLv${REINCARNATION_CONFIG.REQUIRED_LEVEL}が必要です`, 'error');
+            }
+            return false;
+        }
+
+        this.stats.reincarnationCount = (this.stats.reincarnationCount || 0) + 1;
+
+        // レベル・経験値をリセット
+        this.stats.level = 1;
+        this.stats.exp = 0;
+        this.stats.maxExp = calcMaxExp(1);
+
+        // 職業を選び直せるようにする。次に setJob() が呼ばれたときだけ
+        // 習得済みスキルのリセットをスキップさせるフラグを立てておく。
+        this.stats.job = 'none';
+        this.stats._skipSkillResetOnNextJob = true;
+        this.stats.activeSkills = new Array(TOTAL_SKILL_SLOTS).fill(null);
+        this.skillCooldowns = {};
+        // unlockedSkills / skillLevels はそのまま維持する（通常の転職との最大の違い）
+
+        // 基礎ステータスを永続的に大幅強化
+        const bonus = REINCARNATION_CONFIG.BASE_STAT_BONUS;
+        this.stats.str += bonus;
+        this.stats.int += bonus;
+        this.stats.vit += bonus;
+        this.stats.men += bonus;
+        this.stats.dex += bonus;
+        this.stats.statPoints += REINCARNATION_CONFIG.BONUS_STAT_POINTS;
+
+        this.applyEquipmentStats();
+        this.stats.hp = this.stats.maxHp;
+        this.stats.mp = this.stats.maxMp;
+        this.saveStats();
+
+        if (this.scene.notificationUI) {
+            this.scene.notificationUI.show(
+                `輪廻転生した！(${this.stats.reincarnationCount}回目) 基礎ステータスが大幅に上昇し、Lv1から再スタート！`,
+                'warning'
+            );
+        }
+        if (this.scene.playerStatsUI) this.scene.playerStatsUI.update();
+        if (this.scene.playerNameUI) this.scene.playerNameUI.updateLevel(this.stats.level);
+
+        return true;
     }
 
     promoteJob(newJobId) {
@@ -420,6 +496,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const hpFromVit = vit * GROWTH_CONFIG.HP_PER_VIT;
         this.stats.maxHp = GROWTH_CONFIG.HP_BASE + Math.round((hpFromLevel + hpFromVit) * GROWTH_CONFIG.HP_GROWTH_MULTIPLIER) + jobHpBonus;
         this.stats.maxMp = 30 + (men * 5);
+
+        // 職業ごとのステータス倍率（data/jobs.js の atkMult/defMult/hpMult/mpMult。未設定の職業は1.0）。
+        // 固定値ボーナスと違い、レベルが上がっても職業の個性が残る。パッシブ・装備の補正はこの後に乗る。
+        this.stats.atk = Math.ceil(this.stats.atk * (jobDef?.atkMult ?? 1));
+        this.stats.def = Math.ceil(this.stats.def * (jobDef?.defMult ?? 1));
+        this.stats.maxHp = Math.ceil(this.stats.maxHp * (jobDef?.hpMult ?? 1));
+        this.stats.maxMp = Math.ceil(this.stats.maxMp * (jobDef?.mpMult ?? 1));
 
         // --- パッシブスキルの効果を汎用的に適用 ---
         // 新しいパッシブを追加するとき、ここにif文を増やす必要はない。

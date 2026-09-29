@@ -18,12 +18,33 @@ export default class QuestManager {
         localStorage.setItem('playerQuests', JSON.stringify(this.quests));
     }
 
-    onUpdate(cb) {
+    // ownerScene を渡すと、そのシーンが shutdown/destroy された時点でリスナーを自動解除する。
+    // （プレイヤー死亡時の scene.restart() などで古いUIのリスナーが残り続け、
+    //  破棄済みの Phaser オブジェクトを触って例外→後続の処理が止まるバグの対策）
+    onUpdate(cb, ownerScene = null) {
         this.listeners.push(cb);
+        const off = () => {
+            this.listeners = this.listeners.filter(l => l !== cb);
+        };
+        if (ownerScene && ownerScene.events) {
+            ownerScene.events.once('shutdown', off);
+            ownerScene.events.once('destroy', off);
+        }
+        return off;
     }
 
     emitUpdate() {
-        this.listeners.forEach(cb => cb(this.getActiveQuests()));
+        const quests = this.getActiveQuests();
+        // 1つのリスナーが例外を投げても、他のリスナーと呼び出し元（クエスト進行・報告処理）を止めない。
+        // 例外を出したリスナーは壊れている（破棄済みUI）可能性が高いので外す。
+        [...this.listeners].forEach(cb => {
+            try {
+                cb(quests);
+            } catch (e) {
+                console.warn('[QuestManager] listener failed, removing it:', e);
+                this.listeners = this.listeners.filter(l => l !== cb);
+            }
+        });
     }
 
     startQuest(id) {

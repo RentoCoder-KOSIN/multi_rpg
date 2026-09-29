@@ -223,6 +223,7 @@ export default class BaseGameScene extends Phaser.Scene {
         if (this.playerNameUI) this.playerNameUI.updatePosition();
         if (this.playerStatsUI) this.playerStatsUI.update();
         if (this.minimapUI) this.minimapUI.update();
+        if (this.objectiveIndicatorUI) this.objectiveIndicatorUI.update(time);
 
         updateEnemyContactDamage(this);
 

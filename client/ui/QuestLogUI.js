@@ -40,7 +40,7 @@ export default class QuestLogUI extends BaseWindowUI {
         // クエストが更新されたとき、開いていれば表示を更新する
         this.questManager.onUpdate(() => {
             if (this.isOpen && this.container?.active) this.refresh();
-        });
+        }, this.scene);
     }
 
     open() {

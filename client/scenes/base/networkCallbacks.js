@@ -45,7 +45,12 @@ export function registerNetworkCallbacks(scene) {
 
 // Rewards are already split among the party by the server, so grant whatever we receive
 function handleEnemyKilled(scene, enemyData) {
-    if (scene.questManager) scene.questManager.onEnemyKilled(enemyData.type);
+    // クエスト更新で例外が出ても、経験値・ゴールド・ドロップの付与は止めない
+    try {
+        if (scene.questManager) scene.questManager.onEnemyKilled(enemyData.type);
+    } catch (e) {
+        console.warn('[handleEnemyKilled] quest update failed:', e);
+    }
 
     if (scene.player && scene.player.active) {
         const exp = enemyData.exp || 0;

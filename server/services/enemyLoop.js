@@ -87,6 +87,41 @@ function tryAttack(io, aiManager, enemy, result, mapPlayers) {
     }
 }
 
+// クエスト用ボスは Q学習AIを使わず、単純な「近くのプレイヤーを追いかけて攻撃」で動かす。
+// 以前はループ側でボスを丸ごとスキップしていたため、サーバー管理になったボスが
+// 動かず攻撃もしてこなかった。
+const BOSS_AGGRO_RADIUS = 450;   // px: この距離内のプレイヤーを追跡する
+const BOSS_LEASH_RADIUS = 600;   // px: スポーン地点からこれ以上離れたら帰還する
+const BOSS_MOVE_SPEED = 70;      // px/秒
+
+function updateBoss(io, aiManager, enemy, mapPlayers) {
+    // 最も近い生存プレイヤーを狙う
+    let target = null;
+    let nearest = Infinity;
+    for (const p of Object.values(mapPlayers)) {
+        const d = Math.hypot(enemy.x - p.x, enemy.y - p.y);
+        if (d < nearest) { nearest = d; target = p; }
+    }
+
+    const tooFar = Math.hypot(enemy.x - enemy.spawnX, enemy.y - enemy.spawnY) > BOSS_LEASH_RADIUS;
+
+    if (tooFar || !target || nearest > BOSS_AGGRO_RADIUS) {
+        // 誰も近くにいなければスポーン地点へ戻る（着いたらその場で待機）
+        if (Math.hypot(enemy.x - enemy.spawnX, enemy.y - enemy.spawnY) > 5) returnToSpawn(enemy);
+        return "idle";
+    }
+
+    // 攻撃範囲の少し手前まで近づく（範囲内なら立ち止まって攻撃）
+    if (nearest > ENEMY_ATTACK_RANGE * 0.8) {
+        const angle = Math.atan2(target.y - enemy.y, target.x - enemy.x);
+        enemy.x += Math.cos(angle) * BOSS_MOVE_SPEED * MOVE_SCALE;
+        enemy.y += Math.sin(angle) * BOSS_MOVE_SPEED * MOVE_SCALE;
+    }
+
+    tryAttack(io, aiManager, enemy, { targetPlayerId: target.id }, mapPlayers);
+    return "chase";
+}
+
 function updateMapEnemies(io, aiManager, mapKey) {
     const mapEnemies = enemies[mapKey];
     if (!mapEnemies) return;
@@ -94,7 +129,13 @@ function updateMapEnemies(io, aiManager, mapKey) {
     const mapPlayers = collectAlivePlayersOnMap(mapKey);
 
     for (const enemy of Object.values(mapEnemies)) {
-        if (enemy.type === "boss") continue;
+        if (enemy.type === "boss") {
+            const isFrozen = enemy.frozenUntil && Date.now() < enemy.frozenUntil;
+            const isParalyzed = enemy.paralyzedUntil && Date.now() < enemy.paralyzedUntil;
+            const action = (isFrozen || isParalyzed) ? "idle" : updateBoss(io, aiManager, enemy, mapPlayers);
+            io.to(`map:${mapKey}`).emit("enemyMoved", { id: enemy.id, x: enemy.x, y: enemy.y, action });
+            continue;
+        }
 
         // AI による行動決定（未登録などで結果が無い場合は null）
         // ※ 学習自体は凍結中も止めない（isLearning計算やQ値更新は継続する）

@@ -1,14 +1,11 @@
 import BaseGameScene from './BaseGameScene.js';
-import Enemy from '../entities/Enemy.js';
 import AIStatsUI from '../ui/AIStatsUI.js';
-import { getLevelDiffMultiplier } from '../utils/levelScaling.js';
 
 export default class BattleScene extends BaseGameScene {
     constructor() {
         super('battle');
         this.player = null;
         this.cursors = null;
-        this.boss = null;
         this.bossSpawned = false;
         this.bossDefeated = false;
     }
@@ -27,9 +24,33 @@ export default class BattleScene extends BaseGameScene {
         super.create(data);
 
         // BattleScene専用の初期化
-        this.boss = null;
         this.bossSpawned = false;
         this.bossDefeated = false;
+
+        // ボスはサーバー管理の敵として出現させる（spawnBoss参照）。
+        // これにより、同じマップにいる全員に同じ個体が見え、撃破もパーティー内で共有される
+        // （以前はクライアントローカルにEnemyを生成していたため、マルチプレイに対応しておらず、
+        // 独自のdestroyイベント処理などが原因で撃破直後にフリーズすることがあった）。
+        // 撃破通知はサーバーから "enemyDefeated" として全員にブロードキャストされるので、
+        // ここで直接socketを購読して bossDefeated フラグを更新する。
+        const socket = this.networkManager?.getSocket();
+        this.onServerBossDefeated = (data) => {
+            if (data.type !== 'boss') return;
+            this.bossSpawned = false;
+            this.bossDefeated = true;
+
+            if (this.notificationUI) {
+                this.notificationUI.show('ボスを撃破しました！NPCに報告してください。', 'success');
+            }
+            if (this.dialogue) {
+                this.dialogue.showSystemMessage('ボスを撃破しました！NPCに報告してください。');
+            }
+        };
+        if (socket) {
+            socket.on('enemyDefeated', this.onServerBossDefeated);
+            this.events.once('shutdown', () => socket.off('enemyDefeated', this.onServerBossDefeated));
+            this.events.once('destroy', () => socket.off('enemyDefeated', this.onServerBossDefeated));
+        }
 
         // DialogueManagerのstartDialogueを拡張してボス召喚機能を追加
         const originalStartDialogue = this.dialogue.startDialogue.bind(this.dialogue);
@@ -100,59 +121,6 @@ export default class BattleScene extends BaseGameScene {
 
         // AI Stats UI
         this.aiStatsUI = new AIStatsUI(this);
-
-        // 学習モード切り替え (Shift+T)
-        this.input.keyboard.on('keydown-T', (event) => {
-            if (event.shiftKey && this.boss && this.boss.ai) {
-                this.boss.ai.setTrainingMode(!this.boss.ai.isTraining);
-                const mode = this.boss.ai.isTraining ? 'ON' : 'OFF';
-                if (this.notificationUI) {
-                    this.notificationUI.show(`AI Training: ${mode}`, 'info');
-                }
-                console.log(`[BattleScene] AI Training mode: ${mode}`);
-            }
-        });
-    }
-
-    getBossSpawnPosition() {
-        // boss_spawnレイヤーから位置を取得
-        let bossSpawnLayer = null;
-        let bossSpawnObjects = null;
-
-        // 方法1: getObjectLayer を使用
-        if (typeof this.map.getObjectLayer === 'function') {
-            bossSpawnLayer = this.map.getObjectLayer('boss_spawn');
-            if (bossSpawnLayer && bossSpawnLayer.objects) {
-                bossSpawnObjects = bossSpawnLayer.objects;
-            }
-        }
-
-        // 方法2: map.layers から直接検索
-        if (!bossSpawnObjects && this.map.layers) {
-            const layerData = this.map.layers.find(l => l.name === 'boss_spawn' && l.type === 'objectgroup');
-            if (layerData && layerData.objects) {
-                bossSpawnObjects = layerData.objects;
-            }
-        }
-
-        // 方法3: objectsFromObjectLayer を使用
-        if (!bossSpawnObjects && typeof this.map.objectsFromObjectLayer === 'function') {
-            bossSpawnObjects = this.map.objectsFromObjectLayer('boss_spawn');
-        }
-
-        if (!bossSpawnObjects || !Array.isArray(bossSpawnObjects) || bossSpawnObjects.length === 0) {
-            console.warn('[BattleScene] boss_spawn layer not found or empty! Using fallback position.');
-            return { x: 400, y: 300 }; // フォールバック位置
-        }
-
-        // 最初のboss_spawnオブジェクトを使用
-        const obj = bossSpawnObjects[0];
-        // PlayerのsetOrigin(0.5, 1)を考慮して、中央下基準に補正
-        const x = obj.x + (obj.width || 0) / 2;
-        const y = obj.y + (obj.height || 0);
-
-        console.log(`[BattleScene] Boss spawn position from boss_spawn: (${x}, ${y})`);
-        return { x, y };
     }
 
     spawnBoss() {
@@ -161,54 +129,15 @@ export default class BattleScene extends BaseGameScene {
             return;
         }
 
-        console.log('[BattleScene] spawnBoss() called');
+        console.log('[BattleScene] Requesting boss spawn from server...');
         this.bossSpawned = true;
 
-        // boss_spawnレイヤーから位置を取得
-        const { x: bossX, y: bossY } = this.getBossSpawnPosition();
-        console.log('[BattleScene] Boss spawn position:', bossX, bossY);
-
-        try {
-            // ボスを生成（Enemyクラスが自動的にサイズと当たり判定を調整する）
-            this.boss = new Enemy(this, bossX, bossY, 'slime', 'boss', null, null, null);
-            console.log('[BattleScene] Boss created successfully');
-
-
-            // ボスが破壊された時の処理を追加
-            this.boss.on('destroy', () => {
-                if (this.boss && this.boss.hp <= 0) {
-                    this.onBossDefeated();
-                } else if (!this.bossDefeated) {
-                    // 何らかの理由で撃破以外で消えた場合
-                    this.bossSpawned = false;
-                }
-            });
-        } catch (error) {
-            console.error('[BattleScene] Error creating boss:', error);
-            this.bossSpawned = false;
-            return;
-        }
-
-        // マップとの衝突
-        if (this.collidableLayers) {
-            this.collidableLayers.forEach(layer => {
-                this.physics.add.collider(this.boss, layer);
-            });
-        }
-
-        // BattleScene.js
-        this.physics.add.overlap(this.player, this.boss, () => {
-            if (this.boss && this.boss.active && this.player.active) {
-                const now = this.time.now;
-
-                // 敵（ボス）がプレイヤーを攻撃
-                if (!this.player.lastHitTime || now - this.player.lastHitTime > 1000) {
-                    const levelMult = getLevelDiffMultiplier(this.boss.level, this.player.stats?.level ?? 1);
-                    this.player.takeDamage(Math.max(1, Math.ceil(this.boss.atk * levelMult)));
-                    this.player.lastHitTime = now;
-                }
-            }
-        });
+        // サーバーにボスの出現を要求する。実際の生成・座標決定(boss_spawnレイヤー読込)・
+        // 全員への同期は server/services/enemyService.js の spawnBossOnDemand が行う。
+        // 通常の敵と同じ経路(enemySpawnedイベント)でクライアントに届くため、
+        // entitySetup.js の spawnEnemyFromServer が衝突判定やサーバーAIの攻撃受信を
+        // 自動的にセットアップしてくれる。
+        this.networkManager.requestBossSpawn();
 
         // 通知
         if (this.notificationUI) {
@@ -217,27 +146,6 @@ export default class BattleScene extends BaseGameScene {
 
         // ダイアログ表示
         this.dialogue.showSystemMessage('ボスが召喚されました！倒してください！');
-    }
-
-    onBossDefeated() {
-        if (this.bossDefeated) return;
-
-        this.bossDefeated = true;
-        this.bossSpawned = false;
-        this.boss = null;
-
-        // クエスト進捗を更新
-        if (this.questManager) {
-            this.questManager.onEnemyKilled('boss');
-        }
-
-        // 通知
-        if (this.notificationUI) {
-            this.notificationUI.show('ボスを撃破しました！NPCに報告してください。', 'success');
-        }
-
-        // ダイアログ表示
-        this.dialogue.showSystemMessage('ボスを撃破しました！NPCに報告してください。');
     }
 
     handleBossReport(npc) {
@@ -284,15 +192,7 @@ export default class BattleScene extends BaseGameScene {
 
     update(time, delta) {
         super.update(time, delta);
-
-        // ボスの更新（ローカル管理の場合）
-        if (this.boss && this.boss.active) {
-            this.boss.update(time, delta);
-
-            // スキル攻撃などでHPが0になった場合もチェック
-            if (this.boss.hp <= 0) {
-                this.onBossDefeated();
-            }
-        }
+        // ボスはサーバー管理の敵になったため、ここでの更新・HPチェックは不要
+        // （撃破判定は create() で購読している "enemyDefeated" ソケットイベントで行う）。
     }
 }

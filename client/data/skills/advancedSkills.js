@@ -12,7 +12,8 @@ export const ADVANCED_SKILLS = {
         cd: 4000, damageMult: 35, mpCost: 40, unlockCost: 500,
         range: 250, rangeType: 'line',
         color: 0x00ffff, icon: '💠',
-        description: '空間を切り裂く超高速の一閃。'
+        description: '空間を切り裂く超高速の一閃。',
+        hitType: 'single',
     }),
     guardian_slash: defineSkill({
         id: 'guardian_slash', name: 'ガーディアンスラッシュ', type: 'active',
@@ -35,7 +36,8 @@ export const ADVANCED_SKILLS = {
         cd: 6000, damageMult: 28, mpCost: 45, unlockCost: 500,
         range: 220, rangeType: 'fan',
         color: 0xffff33, icon: '⚡',
-        description: '雷撃が周囲の敵を連鎖して撃つ。'
+        description: '雷撃が周囲の敵を連鎖して撃つ。',
+        maxTargets: 4,
     }),
 
     // --- パラディン (タンク上位職) ---
@@ -52,7 +54,8 @@ export const ADVANCED_SKILLS = {
         range: 150, rangeType: 'circle',
         color: 0xfff2cc, icon: '⚡',
         description: '天罰を下す一撃。アンデッド系に1.5倍のダメージ。',
-        effect: { vsUndead: 1.5 }
+        effect: { vsUndead: 1.5 },
+        hitType: 'single',
     }),
 
     // --- スナイパー (レンジャー上位職) ---
@@ -68,7 +71,8 @@ export const ADVANCED_SKILLS = {
         cd: 4000, damageMult: 26, mpCost: 30, unlockCost: 500,
         range: 320, rangeType: 'line',
         color: 0xff4444, icon: '🎯',
-        description: '急所を正確に撃ち抜く必殺の一射。'
+        description: '急所を正確に撃ち抜く必殺の一射。',
+        hitType: 'single',
     }),
 
     // --- エクソシスト (プリースト上位職) ---
@@ -78,7 +82,8 @@ export const ADVANCED_SKILLS = {
         range: 300, rangeType: 'line',
         color: 0xfff2cc, icon: '⛧',
         description: '邪悪なる存在を祓い清める神聖なる裁き。アンデッド系に2倍のダメージ。',
-        effect: { vsUndead: 2.0 }
+        effect: { vsUndead: 2.0 },
+        hitType: 'single',
     }),
     divine_judgment: defineSkill({
         id: 'divine_judgment', element: 'light', name: 'ディヴァインジャッジメント', type: 'active',
@@ -86,7 +91,8 @@ export const ADVANCED_SKILLS = {
         range: 280, rangeType: 'line',
         color: 0xffe4b5, icon: '⚡',
         description: '天より下る裁きの光。アンデッド系に1.5倍のダメージ。',
-        effect: { vsUndead: 1.5 }
+        effect: { vsUndead: 1.5 },
+        hitType: 'single',
     }),
 
     // --- ハイサモナー (サモナー上位職) ---

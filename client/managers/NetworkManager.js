@@ -471,6 +471,9 @@ export default class NetworkManager {
         }
     }
     notifyEnemyDefeat(enemyId) { if (this.socket && this.socket.connected) this.socket.emit('enemyDefeat', { id: enemyId }); }
+    // クエスト用ボス（boss_spawnレイヤー）をサーバー側で出現させるよう要求する。
+    // サーバー管理の敵になるため、マップにいる全員に同じ個体が見え、撃破も共有される。
+    requestBossSpawn() { if (this.socket && this.socket.connected) this.socket.emit('requestBossSpawn'); }
     sendEnemyHit(enemyId, damage, effects = null) {
         if (this.socket && this.socket.connected) this.socket.emit('enemyHit', { id: enemyId, damage, ...(effects || {}) });
     }

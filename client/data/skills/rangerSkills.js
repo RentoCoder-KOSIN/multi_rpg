@@ -10,7 +10,8 @@ export const RANGER_SKILLS = {
         cd: 2000, damageMult: 5, mpCost: 12, unlockCost: 10,
         range: 250, rangeType: 'circle',
         color: 0x00ff00, icon: '🏹',
-        description: '目にも止まぬ速射。'
+        description: '目にも止まぬ速射。',
+        hitType: 'single',
     }),
     arrow_rain: defineSkill({
         id: 'arrow_rain', name: 'アローレイン', type: 'active',
@@ -31,7 +32,8 @@ export const RANGER_SKILLS = {
         cd: 4000, damageMult: 8, mpCost: 18, unlockCost: 100,
         range: 200, rangeType: 'fan',
         color: 0x7fff00, icon: '🏹',
-        description: '扇状に矢をばらまく。'
+        description: '扇状に矢をばらまく。',
+        maxTargets: 3,
     }),
     explosive_arrow: defineSkill({
         id: 'explosive_arrow', name: 'エクスプロージョンアロー', type: 'active',

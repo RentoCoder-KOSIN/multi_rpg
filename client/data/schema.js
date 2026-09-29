@@ -21,6 +21,8 @@ import { ELEMENTS } from './elements.js';
 
 const VALID_RANGE_TYPES = ['circle', 'line', 'fan'];
 const VALID_TARGET_TYPES = ['enemy', 'party'];
+// 命中方式: 'area' = 範囲内の敵すべて / 'single' = 範囲内で一番近い敵1体だけ
+const VALID_HIT_TYPES = ['area', 'single'];
 const VALID_ITEM_TYPES = ['weapon', 'armor', 'accessory', 'consumable', 'material'];
 const VALID_SKILL_TYPES = ['active', 'passive'];
 // スキル発動時の演出タイプ（systems/skillEffects.js の VFX_PLAYERS のキーと一致させる）
@@ -46,6 +48,7 @@ function assert(condition, message) {
  *           cd: 3000,
  *           range: 150,
  *           rangeType: 'circle',
+ *           hitType: 'single', // 'single'=一番近い1体 / 'area'=範囲内全員（省略時）
  *           icon: '✨',
  *           description: 'What it does.',
  *       }),
@@ -73,6 +76,12 @@ export function defineSkill({
     range = 0,
     rangeType = 'circle',
     targetType = 'enemy',
+    // 単体スキルか範囲スキルか。'single' は range/rangeType の範囲内で一番近い1体だけに当たる。
+    // 'area'（既定）は範囲内の全員。
+    hitType = 'area',
+    // hitType が 'area' のとき、当たる敵の数の上限（近い順）。null なら無制限。
+    // 例: 3体まで貫通する連射スキル -> maxTargets: 3
+    maxTargets = null,
     effect = {},
     // 魔法スキルの属性（'fire' など）。未設定なら武器に付与した属性が使われる
     element = null,
@@ -87,10 +96,13 @@ export function defineSkill({
     assert(VALID_RANGE_TYPES.includes(rangeType), `skill "${id}": rangeType must be one of ${VALID_RANGE_TYPES.join(', ')}`);
     assert(VALID_TARGET_TYPES.includes(targetType), `skill "${id}": targetType must be one of ${VALID_TARGET_TYPES.join(', ')}`);
 
+    assert(VALID_HIT_TYPES.includes(hitType), `skill "${id}": hitType must be one of ${VALID_HIT_TYPES.join(', ')}`);
+    assert(maxTargets === null || (Number.isInteger(maxTargets) && maxTargets >= 1), `skill "${id}": maxTargets must be a positive integer or null`);
+
     assert(vfx === null || VALID_VFX_TYPES.includes(vfx), `skill "${id}": vfx must be one of ${VALID_VFX_TYPES.join(', ')}`);
     assert(element === null || ELEMENTS.includes(element), `skill "${id}": unknown element "${element}"`);
 
-    return { id, name, type, description, icon, color, cd, mpCost, unlockCost, damageMult, range, rangeType, targetType, effect, element, vfx, vfxOptions };
+    return { id, name, type, description, icon, color, cd, mpCost, unlockCost, damageMult, range, rangeType, targetType, hitType, maxTargets, effect, element, vfx, vfxOptions };
 }
 
 /**
@@ -106,6 +118,10 @@ export function defineSkill({
  *           atkBonus: 5, defBonus: 5, hpBonus: 20,
  *           skills: { 1: ['my_skill'], 5: ['another_skill'] },
  *           nextJob: 'my_advanced_job', // omit for a job with no promotion
+ *           atkMult: 1.0, defMult: 1.0, hpMult: 1.0, mpMult: 1.0, // ステータス倍率（省略時1.0）
+ *           attackCooldownMult: 1.0, // 通常攻撃の間隔倍率（小さいほど速い）
+ *           attackRange: 80,   // 通常攻撃の距離(px)
+ *           attackHit: 'area', // 'area'=範囲内全員 / 'single'=一番近い1体
  *       }),
  *   };
  *
@@ -124,12 +140,29 @@ export function defineJob({
     reqLevel = null,
     skills = {},
     nextJob = null,
+    // ステータス倍率（1.0 = 標準）。atkBonus等の固定値と違い、レベルが上がっても差が残る。
+    // Player.applyEquipmentStats で基礎値に掛ける（パッシブ・装備の補正はその後に乗る）
+    atkMult = 1,
+    defMult = 1,
+    hpMult = 1,
+    mpMult = 1,
+    // 通常攻撃の間隔にかける倍率（小さいほど速い。0.7=約1.4倍速、1.2=遅め）
+    attackCooldownMult = 1,
+    // 通常攻撃（SPACE）の届く距離(px)。近接職は短く、遠距離職は長くする
+    attackRange = 80,
+    // 通常攻撃の命中方式。'area' = 範囲内の全員 / 'single' = 一番近い1体だけ
+    attackHit = 'area',
 } = {}) {
     assert(id, 'job is missing an id');
     assert(name, `job "${id}": missing a name`);
     assert(VALID_JOB_TYPES.includes(type), `job "${id}": type must be one of ${VALID_JOB_TYPES.join(', ')}`);
 
-    const job = { id, type, name, description, atkBonus, defBonus, hpBonus, skills, nextJob };
+    [['atkMult', atkMult], ['defMult', defMult], ['hpMult', hpMult], ['mpMult', mpMult], ['attackCooldownMult', attackCooldownMult]]
+        .forEach(([key, value]) => assert(value > 0, `job "${id}": ${key} must be positive`));
+    assert(attackRange > 0, `job "${id}": attackRange must be positive`);
+    assert(VALID_HIT_TYPES.includes(attackHit), `job "${id}": attackHit must be one of ${VALID_HIT_TYPES.join(', ')}`);
+
+    const job = { id, type, name, description, atkBonus, defBonus, hpBonus, skills, nextJob, atkMult, defMult, hpMult, mpMult, attackCooldownMult, attackRange, attackHit };
     if (reqLevel) job.reqLevel = reqLevel;
     return job;
 }

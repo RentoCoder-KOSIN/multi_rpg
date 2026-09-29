@@ -22,7 +22,8 @@ export const TANK_SKILLS = {
         cd: 6000, damageMult: 8, mpCost: 15, unlockCost: 100,
         range: 90, rangeType: 'circle',
         color: 0xcd853f, icon: '🛡️',
-        description: '盾で殴りつける。'
+        description: '盾で殴りつける。',
+        hitType: 'single',
     }),
     spike_guard: defineSkill({
         id: 'spike_guard', name: 'スパイクガード', type: 'active',

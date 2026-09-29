@@ -7,8 +7,31 @@ import { applyBuffVisual } from './buffVisuals.js';
 import { spawnSummon, destroySummon, isSummonSkill } from './summons.js';
 import { areEffectsEnabled } from '../utils/effectsSettings.js';
 import { getElementColor } from '../data/elements.js';
+import { JOBS } from '../data/jobs.js';
 
-const BASIC_ATTACK_RANGE = 80;
+// 職業が未設定（none）などのときに使う通常攻撃の既定値。職業ごとの値は data/jobs.js の attackRange / attackHit
+const DEFAULT_BASIC_ATTACK_RANGE = 80;
+
+// 通常攻撃の距離と命中方式を、現在の職業から取得する
+function getBasicAttackSpec(player) {
+    const job = JOBS[player.stats?.job];
+    return {
+        range: job?.attackRange ?? DEFAULT_BASIC_ATTACK_RANGE,
+        hit: job?.attackHit ?? 'area',
+        // 通常攻撃の間隔（職業の attackCooldownMult で速さが変わる）
+        cooldown: BASIC_ATTACK_COOLDOWN_MS * (job?.attackCooldownMult ?? 1)
+    };
+}
+
+// 通常攻撃の届く範囲を一瞬だけ輪で見せる（職業ごとの射程の違いが分かるように）
+function showAttackRangeRing(scene, player, range) {
+    if (!areEffectsEnabled(scene)) return;
+    const feetY = player.body ? player.body.bottom : player.y + 16;
+    const ring = scene.add.circle(player.x, feetY, range, 0xffffff, 0.06)
+        .setStrokeStyle(2, 0xffffff, 0.5).setDepth(9);
+    if (scene.minimapCameraIgnore) scene.minimapCameraIgnore(ring);
+    scene.tweens.add({ targets: ring, alpha: 0, duration: 250, onComplete: () => ring.destroy() });
+}
 const BASIC_ATTACK_COOLDOWN_MS = 500;
 const FREEZE_DURATION_MS = 3000;
 const PARALYZE_DURATION_MS = 2500;
@@ -111,18 +134,20 @@ export function performBasicAttack(scene) {
         return;
     }
 
-    if (player.lastAttackTime && now - player.lastAttackTime < BASIC_ATTACK_COOLDOWN_MS) {
+    const { range: attackRange, hit: attackHit, cooldown: attackCooldown } = getBasicAttackSpec(player);
+
+    if (player.lastAttackTime && now - player.lastAttackTime < attackCooldown) {
         return;
     }
 
-    const enemies = [];
+    let enemies = [];
     const allEnemies = scene.networkManager?.getEnemies() || {};
 
     Object.values(allEnemies).forEach(enemy => {
         if (!enemy || !enemy.active) return;
 
         const dist = Math.hypot(enemy.x - player.x, enemy.y - player.y);
-        if (dist < BASIC_ATTACK_RANGE) {
+        if (dist < attackRange) {
             enemies.push(enemy);
         }
     });
@@ -139,6 +164,11 @@ export function performBasicAttack(scene) {
         return prevDist < currDist ? prev : curr;
     });
     player.facingDirection = (nearest.x < player.x) ? -1 : 1;
+
+    // 単体攻撃の職業（遠距離職など）は、一番近い1体だけに当たる
+    if (attackHit === 'single') enemies = [nearest];
+
+    showAttackRangeRing(scene, player, attackRange);
 
     enemies.forEach(enemy => {
         if (!enemy || !enemy.active) return;
@@ -335,10 +365,13 @@ function giveBuff(scene, target, targetId, buffType, value, duration) {
     scene.networkManager.sendBuff(targetId, buffType, value, duration);
 }
 
-// Damage every enemy inside the skill's area (circle / line / fan)
+// Damage the enemies inside the skill's area (circle / line / fan).
+// skill.hitType === 'single' なら範囲内で一番近い1体だけ、'area' なら範囲内の全員
+// （skill.maxTargets があれば近い順にその数まで）に当てる。
 function applyDamageSkill(scene, skill, { enemies, range, rangeType, direction, damageMultiplier }) {
     const player = scene.player;
 
+    const candidates = [];
     enemies.forEach(enemy => {
         const dx = enemy.x - player.x;
         const dy = enemy.y - (player.y - 20); // measure from around the waist
@@ -357,8 +390,15 @@ function applyDamageSkill(scene, skill, { enemies, range, rangeType, direction, 
             isHit = inFront && dist < range && Math.abs(dy) < Math.abs(dx) + 20;
         }
 
-        if (!isHit) return;
+        if (isHit) candidates.push({ enemy, dist });
+    });
 
+    // 近い順に並べ、単体スキルなら1体、上限付きならその数までに絞る
+    candidates.sort((a, b) => a.dist - b.dist);
+    const limit = skill.hitType === 'single' ? 1 : (skill.maxTargets || Infinity);
+    const targets = candidates.slice(0, limit).map(c => c.enemy);
+
+    targets.forEach(enemy => {
         const damageData = player.getDamage(damageMultiplier, enemy, skill.element || null);
         let damage = damageData.amount;
 

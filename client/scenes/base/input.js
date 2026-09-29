@@ -41,6 +41,14 @@ export function registerInputHandlers(scene) {
         }
     });
 
+    // R: 輪廻転生ウィンドウ
+    scene.input.keyboard.on('keydown-R', () => {
+        if (!scene.shopUI.isOpen && !scene.inventoryUI.isOpen && !scene.equipmentUI.isOpen &&
+            !scene.statAllocationUI.isOpen && !scene.blacksmithUI?.isOpen && !scene.skillManagerUI?.isOpen) {
+            scene.reincarnationUI?.toggle();
+        }
+    });
+
     // ESC closes one open window (topmost in this order)
     scene.escKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
     scene.escKey.on('down', () => closeTopWindow(scene));
@@ -79,6 +87,8 @@ function closeTopWindow(scene) {
         scene.skillManagerUI.toggle();
     } else if (scene.blacksmithUI && scene.blacksmithUI.isOpen) {
         scene.blacksmithUI.toggle();
+    } else if (scene.reincarnationUI && scene.reincarnationUI.isOpen) {
+        scene.reincarnationUI.toggle();
     } else if (scene.settingsUI && scene.settingsUI.visible) { // SettingsUI exposes `visible`, not `isOpen`
         scene.settingsUI.toggle();
     }

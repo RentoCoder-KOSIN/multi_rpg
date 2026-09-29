@@ -29,23 +29,23 @@ export default class SkillManagerUI extends BaseWindowUI {
         const panelHeight = this.config.height;
 
         // Job Exp Display
-        this.jobExpText = this.scene.add.text(-panelWidth / 2 + 40, -panelHeight / 2 + 80, '', {
+        this.jobExpText = this.scene.add.text(-panelWidth / 2 + 40, -panelHeight / 2 + 72, '', {
             fontSize: '14px', fontFamily: '"Press Start 2P"', color: '#ffd700'
         });
         this.container.add(this.jobExpText);
 
         // Active Skills Display (Current Setup)
-        this.activeSkillsContainer = this.scene.add.container(0, -panelHeight / 2 + 130);
+        this.activeSkillsContainer = this.scene.add.container(0, -panelHeight / 2 + 125);
         this.container.add(this.activeSkillsContainer);
         this.refreshActiveSkillsDisplay();
 
         // Scrollable List Area
         const { width: sceneWidth, height: sceneHeight } = this.scene.scale;
-        this.listContainer = this.scene.add.container(0, 50);
+        this.listContainer = this.scene.add.container(0, 0);
         const maskShape = this.scene.add.graphics();
         maskShape.setScrollFactor(0);
         maskShape.fillStyle(0xffffff);
-        maskShape.fillRect(sceneWidth / 2 - panelWidth / 2 + 20, sceneHeight / 2 - 150, panelWidth - 40, 320);
+        maskShape.fillRect(sceneWidth / 2 - panelWidth / 2 + 20, sceneHeight / 2 - 80, panelWidth - 40, 275);
         const mask = maskShape.createGeometryMask();
         maskShape.setVisible(false);
         this.listContainer.setMask(mask);
@@ -95,11 +95,11 @@ export default class SkillManagerUI extends BaseWindowUI {
 
         const activeSkills = player.stats.activeSkills;
 
-        // 8枠を4列×2行で表示（3枠だった頃の1行表示だと収まらないため）
-        const columns = 4;
-        const spacingX = 120;
-        const spacingY = 90;
-        const startX = -((Math.min(columns, TOTAL_SKILL_SLOTS) - 1) * spacingX) / 2;
+        // 8枠を1行で表示（2行にすると下のスキル一覧と重なって見づらいため）
+        const columns = TOTAL_SKILL_SLOTS;
+        const spacingX = 76;
+        const spacingY = 0;
+        const startX = -((columns - 1) * spacingX) / 2;
 
         for (let i = 0; i < TOTAL_SKILL_SLOTS; i++) {
             const col = i % columns;
@@ -109,14 +109,14 @@ export default class SkillManagerUI extends BaseWindowUI {
             const skillId = activeSkills[i];
             const skillDef = SKILLS[skillId];
 
-            const bg = this.scene.add.rectangle(x, y, 70, 70, 0x222233).setStrokeStyle(2, 0x4a90e2);
-            const label = this.scene.add.text(x - 27, y - 27, `${i + 1}`, { fontSize: '10px', color: '#888888' });
+            const bg = this.scene.add.rectangle(x, y, 62, 62, 0x222233).setStrokeStyle(2, 0x4a90e2);
+            const label = this.scene.add.text(x - 26, y - 26, `${i + 1}`, { fontSize: '10px', color: '#888888' });
 
             this.activeSkillsContainer.add([bg, label]);
 
             if (skillDef) {
-                const icon = this.scene.add.text(x, y - 8, skillDef.icon, { fontSize: '26px' }).setOrigin(0.5);
-                const name = this.scene.add.text(x, y + 22, skillDef.name, { fontSize: '8px', color: '#ffffff', align: 'center' }).setOrigin(0.5);
+                const icon = this.scene.add.text(x, y - 6, skillDef.icon, { fontSize: '24px' }).setOrigin(0.5);
+                const name = this.scene.add.text(x, y + 20, skillDef.name, { fontSize: '8px', color: '#ffffff', align: 'center' }).setOrigin(0.5);
                 this.activeSkillsContainer.add([icon, name]);
             } else {
                 const empty = this.scene.add.text(x, y, 'Empty', { fontSize: '10px', color: '#444455' }).setOrigin(0.5);
@@ -202,7 +202,7 @@ export default class SkillManagerUI extends BaseWindowUI {
             return a.reqLevel - b.reqLevel;
         });
 
-        const startY = -120;
+        const startY = -50; // 一覧の先頭アイテムの中心（枠の下、ガイド文の上に収まる）
         const itemHeight = 70;
 
         allSkills.forEach((skillInfo, index) => {
@@ -265,7 +265,13 @@ export default class SkillManagerUI extends BaseWindowUI {
                 const mpCost = skillDef.mpCost || 0;
                 const elInfo = skillDef.element ? ELEMENT_INFO[skillDef.element] : null;
                 const elTag = elInfo ? `[${elInfo.icon}${elInfo.name}属性] ` : '';
-                const descStr = `MP:${mpCost}  ${elTag}${skillDef.description}`;
+                // 攻撃スキルは単体/範囲（上限付きは「範囲(最大N体)」）を表示
+                let hitTag = '';
+                if (skillDef.targetType === 'enemy' && skillDef.damageMult > 0) {
+                    if (skillDef.hitType === 'single') hitTag = '[単体] ';
+                    else hitTag = skillDef.maxTargets ? `[範囲・最大${skillDef.maxTargets}体] ` : '[範囲] ';
+                }
+                const descStr = `MP:${mpCost}  ${hitTag}${elTag}${skillDef.description}`;
                 const desc = this.scene.add.text(-220, 15, descStr, {
                     fontSize: '10px', color: '#aaaaaa'
                 });
@@ -355,7 +361,7 @@ export default class SkillManagerUI extends BaseWindowUI {
                 item.container.setScale(1.02);
 
                 // Scroll
-                const targetY = -(Math.max(0, i - 2) * 70);
+                const targetY = -(Math.max(0, i - 3) * 70);
                 this.listContainer.y = targetY;
             } else {
                 this.drawListItem(item.bg, 600, 60, 0x1a1a2e, 0.8, 0x444455, 0.5);

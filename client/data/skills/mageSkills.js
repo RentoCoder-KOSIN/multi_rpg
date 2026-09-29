@@ -18,6 +18,7 @@ export const MAGE_SKILLS = {
         color: 0xff4500,
         icon: "🔥",
         description: "火球を放つ。",
+        hitType: "single",
     }),
     ice_needle: defineSkill({
         id: "ice_needle", vfx: 'projectile', element: 'water',
@@ -32,6 +33,7 @@ export const MAGE_SKILLS = {
         color: 0xadd8e6,
         icon: "❄️",
         description: "氷の針を扇状に放つ。",
+        hitType: "single",
     }),
     big_fireball: defineSkill({
         id: "big_fireball", vfx: 'blast', vfxOptions: { shake: true }, element: 'fire',

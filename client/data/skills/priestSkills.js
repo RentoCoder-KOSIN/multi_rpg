@@ -17,6 +17,7 @@ export const PRIEST_SKILLS = {
         rangeType: 'line',
         color: 0xffd700,
         icon: '✨',
-        description: '聖なる光の矢を放ち、邪悪を浄化する。'
+        description: '聖なる光の矢を放ち、邪悪を浄化する。',
+        hitType: 'single',
     })
 };

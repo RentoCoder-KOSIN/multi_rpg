@@ -96,7 +96,12 @@ const ENEMY_STATS = {
         gold: 1200,
         element: "earth",
         // 毒の短剣を使う: 25%の確率で4秒間の毒(1tickにつき最大HPの約2%相当)を付与
-        statusEffect: { type: "poison", chance: 0.25, duration: 4000, tickDamage: 25 },
+        statusEffect: {
+            type: "poison",
+            chance: 0.25,
+            duration: 4000,
+            tickDamage: 25,
+        },
         drops: [
             { id: "high_potion", chance: 0.15 },
             { id: "high_mp_potion", chance: 0.1 },
@@ -128,7 +133,7 @@ const ENEMY_STATS = {
         hp: 50000,
         atk: 750,
         def: 100,
-        exp: 26000,
+        exp: 36000,
         gold: 10000,
         element: "earth",
         drops: [
@@ -157,7 +162,7 @@ const ENEMY_STATS = {
         id: "boss",
         name: "森の守護者",
         level: 20,
-        hp: 2000,
+        hp: 1800,
         atk: 50,
         def: 40,
         exp: 28000,
@@ -173,8 +178,8 @@ const ENEMY_STATS = {
         id: "dragon_boss",
         name: "エンシェントドラゴン",
         level: 100,
-        hp: 8000000,
-        atk: 35000,
+        hp: 4000000,
+        atk: 3500,
         def: 500,
         exp: 25000000,
         gold: 10000000,

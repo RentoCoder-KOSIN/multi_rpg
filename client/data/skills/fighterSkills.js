@@ -18,6 +18,7 @@ export const FIGHTER_SKILLS = {
         color: 0xffffff,
         icon: "⚔️",
         description: "力強く斬りつける。",
+        hitType: "single",
     }),
     whirlwind: defineSkill({
         id: "whirlwind", vfx: 'slash',
@@ -46,6 +47,7 @@ export const FIGHTER_SKILLS = {
         color: 0xff0000,
         icon: "🗡️",
         description: "渾身の一撃。",
+        hitType: "single",
     }),
     sonic_wave: defineSkill({
         id: "sonic_wave", vfx: 'projectile',

@@ -139,7 +139,10 @@ export default class DialogueManager {
         // 報告済みの場合
         const isTutorial = this.scene.currentMapKey === 'tutorial';
         const level = this.scene.player?.stats?.level || 0;
-        const canReselect = isTutorial && level <= 10 && (npc.jobs || npc.jobQuest);
+        // チュートリアル中の序盤(Lv10以下)、または輪廻転生直後(job === 'none')は
+        // 職業選択NPCと何度でも話して職業を選び直せる。
+        const jobIsUnset = this.scene.player?.stats?.job === 'none';
+        const canReselect = (isTutorial && level <= 10 || jobIsUnset) && (npc.jobs || npc.jobQuest);
 
         if (npc.questId && qm.isFinished(npc.questId) && !canReselect) {
             const data = { name: npc.name, dialogue: [`クエスト「${npc.questId}」は達成済みだよ。さらに修行を積んでね！`] };

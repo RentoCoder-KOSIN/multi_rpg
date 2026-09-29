@@ -68,7 +68,11 @@ module.exports = function registerEnemyHandlers(socket, { io, aiManager, enemySe
 
             notifyDefeat(mapKey, enemy, rollDrops(enemy));
 
-            setTimeout(() => enemyService.respawnEnemy(mapKey, enemy), enemy.respawnDelay);
+            // クエスト用ボスなど noAutoRespawn な敵は、倒された後に自動では復活しない。
+            // 再度挑戦したい場合は requestBossSpawn で明示的にスポーンし直す。
+            if (!enemy.noAutoRespawn) {
+                setTimeout(() => enemyService.respawnEnemy(mapKey, enemy), enemy.respawnDelay);
+            }
         } else {
             io.to(`map:${mapKey}`).emit("enemyStatUpdate", {
                 id,
@@ -76,5 +80,15 @@ module.exports = function registerEnemyHandlers(socket, { io, aiManager, enemySe
                 maxHp: enemy.maxHp
             });
         }
+    });
+
+    // クエスト用ボス（boss_spawnレイヤーのもの）をこのプレイヤーのいるマップに出現させる。
+    // 既に同じスポーン地点のボスが生きていれば何もしない（enemyService側で二重湧き防止）。
+    // これにより、同じマップにいる全員に同じボスが見え、パーティー共有の撃破通知・
+    // 経験値分配もそのまま適用される（notifyDefeat参照）。
+    socket.on("requestBossSpawn", () => {
+        const mapKey = socket.data.map;
+        if (!mapKey) return;
+        enemyService.spawnBossOnDemand(mapKey);
     });
 };

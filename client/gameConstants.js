@@ -49,3 +49,10 @@ export const QUEST_UI_CONFIG = {
     TRACKER_MAX_VISIBLE: 3,   // 画面右上のトラッカーに同時表示する最大件数
     LOG_PER_PAGE: 4,          // クエストウィンドウの1ページあたり件数
 };
+
+// 輪廻転生まわりの調整値
+export const REINCARNATION_CONFIG = {
+    REQUIRED_LEVEL: 100,      // 輪廻転生に必要なレベル
+    BASE_STAT_BONUS: 15,      // 転生1回ごとにSTR/INT/VIT/MEN/DEXそれぞれへ永続加算される値
+    BONUS_STAT_POINTS: 30,    // 転生1回ごとに追加で貰える自由配分ステータスポイント
+};
