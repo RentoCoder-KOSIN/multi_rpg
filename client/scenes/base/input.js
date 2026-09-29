@@ -1,6 +1,7 @@
 // Keyboard / pointer setup for game scenes.
 import { isAnyWindowOpen } from '../../utils/uiState.js';
 import { TOTAL_SKILL_SLOTS } from '../../gameConstants.js';
+import { createAim, beginBasicAim, releaseAim } from '../../systems/aim.js';
 
 /**
  * Create the gameplay keys polled in update().
@@ -26,6 +27,16 @@ export function createGameKeys(scene, config) {
  */
 export function registerInputHandlers(scene) {
     scene.attackKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+    // 攻撃・スキルは「押している間は範囲表示、離したら発動」（systems/aim.js）
+    createAim(scene);
+    scene.attackKey.on('down', () => beginBasicAim(scene, 'space', scene.attackKey));
+    scene.attackKey.on('up', () => releaseAim(scene, 'space'));
+    (scene.skillKeys || []).forEach((key, index) => {
+        const owner = `key-skill-${index}`;
+        key.on('down', () => scene.beginSkillAim(index, owner, key));
+        key.on('up', () => releaseAim(scene, owner));
+    });
 
     // O: settings, M: side menu, K: skill manager
     scene.input.keyboard.on('keydown-O', () => {

@@ -18,13 +18,22 @@ export default class VirtualPadUI {
             this.scene.handleInteraction();
         }, 'Talk');
 
-        // スキルボタン 1, 2, 3
-        this.createActionButton(0, -100, '1', '#5eff5e', () => this.scene.handleSkillUse(0), 'Skill 1');
-        this.createActionButton(60, -60, '2', '#5eff5e', () => this.scene.handleSkillUse(1), 'Skill 2');
-        this.createActionButton(100, 0, '3', '#5eff5e', () => this.scene.handleSkillUse(2), 'Skill 3');
+        // スキルボタン 1, 2, 3：押している間は範囲表示、離したら発動（指をボタンの外へ滑らせると中断）
+        this.createSkillButton(0, -100, '1', 0);
+        this.createSkillButton(60, -60, '2', 1);
+        this.createSkillButton(100, 0, '3', 2);
     }
 
-    createActionButton(x, y, label, color, action, name) {
+    createSkillButton(x, y, label, slotIndex) {
+        const owner = `pad-skill-${slotIndex}`;
+        this.createActionButton(x, y, label, '#5eff5e', () => this.scene.beginSkillAim(slotIndex, owner), `Skill ${slotIndex + 1}`, {
+            onRelease: () => this.scene.releaseAim(owner),
+            onCancel: () => this.scene.cancelAim(owner)
+        });
+    }
+
+    // handlers.onRelease: ボタン上で指/マウスを離した時。handlers.onCancel: ボタンの外に出た時
+    createActionButton(x, y, label, color, action, name, handlers = {}) {
         const btn = this.scene.add.container(x, y);
         const bg = this.scene.add.circle(0, 0, 35, 0x1a1a2e, 0.6).setStrokeStyle(3, color);
         const txt = this.scene.add.text(0, 0, label, {
@@ -39,8 +48,15 @@ export default class VirtualPadUI {
             bg.setFillStyle(color, 0.4);
             action();
         });
-        btn.on('pointerup', () => bg.setFillStyle(0x1a1a2e, 0.6));
-        btn.on('pointerout', () => bg.setFillStyle(0x1a1a2e, 0.6));
+        btn.on('pointerup', () => {
+            bg.setFillStyle(0x1a1a2e, 0.6);
+            if (handlers.onRelease) handlers.onRelease();
+        });
+        btn.on('pointerout', (pointer) => {
+            bg.setFillStyle(0x1a1a2e, 0.6);
+            // 指を離した時にも pointerout が来るので、まだ押したまま外へ出た時だけ中断扱いにする
+            if (handlers.onCancel && pointer && pointer.isDown) handlers.onCancel();
+        });
 
         this.container.add(btn);
     }

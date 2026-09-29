@@ -35,6 +35,7 @@ import {
 } from './base/frameUpdate.js';
 
 import { performBasicAttack, usePlayerSkill } from '../systems/combat.js';
+import { beginSkillAim, releaseAim, cancelAim, updateAim } from '../systems/aim.js';
 import { showHitEffect } from '../systems/skillEffects.js';
 import { destroySummon } from '../systems/summons.js';
 import { addOtherPlayer, spawnEnemyFromServer } from '../systems/entitySetup.js';
@@ -183,7 +184,10 @@ export default class BaseGameScene extends Phaser.Scene {
     }
 
     update(time, delta) {
-        if (!this.player || !this.player.active) return;
+        if (!this.player || !this.player.active) {
+            if (this.aimState) cancelAim(this); // 倒れた等で範囲表示だけ残らないように
+            return;
+        }
 
         // スキル画面などウィンドウが開いている間は、矢印キーでプレイヤーが
         // 動いてしまわないようにする（HP/MP自然回復や位置同期は止めたくないので、
@@ -191,18 +195,8 @@ export default class BaseGameScene extends Phaser.Scene {
         const windowOpen = isAnyWindowOpen(this);
         this.player.update(windowOpen ? NEUTRAL_CURSORS : this.cursors);
         if (windowOpen && this.player.body) this.player.setVelocity(0, 0); // ショップ等を開いている間は立ち止まる
-        // Attack / skills are disabled while a window is open
-        if (!windowOpen && this.attackKey && Phaser.Input.Keyboard.JustDown(this.attackKey)) {
-            this.performBasicAttack();
-        }
-
-        if (!windowOpen && this.skillKeys) {
-            this.skillKeys.forEach((key, index) => {
-                if (Phaser.Input.Keyboard.JustDown(key)) {
-                    this.handleSkillUse(index);
-                }
-            });
-        }
+        // 攻撃・スキルの入力は systems/aim.js（押している間は範囲表示、離したら発動）。
+        // ウィンドウが開いている間は入力を受け付けず、表示中の範囲もupdateAim内で消える
 
         if (Phaser.Input.Keyboard.JustDown(this.partyKey)) {
             this.partyUI.toggle();
@@ -211,6 +205,7 @@ export default class BaseGameScene extends Phaser.Scene {
         this.networkManager.checkPendingPlayers();
         this.networkManager.updateRemotePlayers();
         this.networkManager.updateEnemies(time, delta);
+        updateAim(this); // 敵の位置が更新された後に、範囲と赤ハイライトを描く
 
         if (this.showEnemyDebug && this.enemyDebugText && this.enemyDebugText.visible) {
             updateEnemyDebugUI(this);
@@ -249,6 +244,15 @@ export default class BaseGameScene extends Phaser.Scene {
             this.usePlayerSkill(skillId);
         }
     }
+
+    // スキルの範囲表示を開始する（押した時）。離した時は releaseAim(owner) で発動
+    beginSkillAim(index, owner, keyObj = null) {
+        if (!this.player || !this.player.active) return;
+        const skillId = this.player.stats.activeSkills?.[index];
+        if (skillId) beginSkillAim(this, skillId, owner, keyObj);
+    }
+    releaseAim(owner) { releaseAim(this, owner); }
+    cancelAim(owner = null) { cancelAim(this, owner); }
 
     performBasicAttack() { performBasicAttack(this); }
     usePlayerSkill(skillId) { usePlayerSkill(this, skillId); }

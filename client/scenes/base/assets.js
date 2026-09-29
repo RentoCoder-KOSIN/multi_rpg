@@ -2,17 +2,17 @@
 
 // enemy type -> sprite file under assets/enemy/
 const ENEMY_SPRITES = {
-    slime: 'slime1.png',
-    bat: 'pipo-enemy001.png',
-    forest_slime: 'slime2.png',
-    skeleton: 'pipo-enemy010.png',
-    red_slime: 'slime3.png',
-    goblin: 'pipo-enemy014.png',
-    ghost: 'pipo-enemy035.png',
-    orc: 'pipo-enemy016.png',
-    dire_wolf: 'pipo-enemy018.png',
-    boss: 'pipo-boss001.png',
-    dragon_boss: 'pipo-boss004.png'
+    slime: "slime1.png", // art-sourceにスライムは無いので従来のまま
+    bat: "pipo-enemy001a.png", // コウモリ
+    forest_slime: "slime2.png", // 同上
+    skeleton: "pipo-enemy039.png", // ガイコツ
+    red_slime: "slime3.png", // 同上
+    goblin: "pipo-enemy013.png", // ハンマーを持った小鬼
+    ghost: "pipo-enemy010a.png", // ゴースト
+    orc: "pipo-enemy015.png", // 棍棒を持った緑の鬼
+    dire_wolf: "pipo-enemy002.png", // オオカミ
+    boss: "pipo-enemy043.png", // 魔王
+    dragon_boss: "pipo-enemy044d.png", // 赤いドラゴン
 };
 
 /**
@@ -20,15 +20,18 @@ const ENEMY_SPRITES = {
  * @param {{mapKey: string, mapFile: string}} config - scene config from getSceneConfig()
  */
 export function preloadCommonAssets(scene, config) {
-    scene.load.image('tiles', 'assets/tiles/tileChip.png');
+    scene.load.image("tiles", "assets/tiles/tileChip.png");
     scene.load.tilemapTiledJSON(config.mapKey, config.mapFile);
-    scene.load.spritesheet('dude', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
+    scene.load.spritesheet("dude", "assets/dude.png", {
+        frameWidth: 32,
+        frameHeight: 48,
+    });
 
     Object.entries(ENEMY_SPRITES).forEach(([type, file]) => {
         scene.load.image(type, `assets/enemy/${file}`);
     });
 
-    scene.load.image('water', 'assets/tiles/water.png');
-    scene.load.image('lava', 'assets/tiles/lava.png');
-    scene.load.audio('bgm', 'sounds/bgm.mp3');
+    scene.load.image("water", "assets/tiles/water.png");
+    scene.load.image("lava", "assets/tiles/lava.png");
+    scene.load.audio("bgm", "sounds/bgm.mp3");
 }

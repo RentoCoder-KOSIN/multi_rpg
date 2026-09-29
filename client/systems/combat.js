@@ -26,8 +26,8 @@ function getBasicAttackSpec(player) {
 // 通常攻撃の届く範囲を一瞬だけ輪で見せる（職業ごとの射程の違いが分かるように）
 function showAttackRangeRing(scene, player, range) {
     if (!areEffectsEnabled(scene)) return;
-    const feetY = player.body ? player.body.bottom : player.y + 16;
-    const ring = scene.add.circle(player.x, feetY, range, 0xffffff, 0.06)
+    // 命中判定(findBasicAttackTargets)と同じ中心に描く（押下中の範囲表示aim.jsとも一致させる）
+    const ring = scene.add.circle(player.x, player.y, range, 0xffffff, 0.06)
         .setStrokeStyle(2, 0xffffff, 0.5).setDepth(9);
     if (scene.minimapCameraIgnore) scene.minimapCameraIgnore(ring);
     scene.tweens.add({ targets: ring, alpha: 0, duration: 250, onComplete: () => ring.destroy() });
@@ -121,7 +121,33 @@ function applyHitEffects(scene, enemy, player, damageData) {
 }
 
 /**
- * SPACE attack: hits every server-managed enemy within range.
+ * 通常攻撃の対象を決める（実際の攻撃と、SPACE押下中の範囲プレビューの両方で使う）。
+ * @returns {{range:number, hit:string, cooldown:number, inRange:Array, nearest:object|null, targets:Array}}
+ */
+export function findBasicAttackTargets(scene, player) {
+    const { range, hit, cooldown } = getBasicAttackSpec(player);
+    const inRange = [];
+    const allEnemies = scene.networkManager?.getEnemies() || {};
+
+    Object.values(allEnemies).forEach(enemy => {
+        if (!enemy || !enemy.active) return;
+        if (Math.hypot(enemy.x - player.x, enemy.y - player.y) < range) inRange.push(enemy);
+    });
+
+    if (inRange.length === 0) return { range, hit, cooldown, inRange, nearest: null, targets: [] };
+
+    const nearest = inRange.reduce((prev, curr) => {
+        const prevDist = Math.hypot(prev.x - player.x, prev.y - player.y);
+        const currDist = Math.hypot(curr.x - player.x, curr.y - player.y);
+        return prevDist < currDist ? prev : curr;
+    });
+    // 単体攻撃の職業（遠距離職など）は、一番近い1体だけに当たる
+    const targets = hit === 'single' ? [nearest] : inRange;
+    return { range, hit, cooldown, inRange, nearest, targets };
+}
+
+/**
+ * SPACE attack (キーを離した時に呼ばれる): hits every server-managed enemy within range.
  */
 export function performBasicAttack(scene) {
     if (!scene.player || !scene.player.active) return;
@@ -134,39 +160,19 @@ export function performBasicAttack(scene) {
         return;
     }
 
-    const { range: attackRange, hit: attackHit, cooldown: attackCooldown } = getBasicAttackSpec(player);
+    const { range: attackRange, cooldown: attackCooldown, nearest, targets: enemies } = findBasicAttackTargets(scene, player);
 
     if (player.lastAttackTime && now - player.lastAttackTime < attackCooldown) {
         return;
     }
 
-    let enemies = [];
-    const allEnemies = scene.networkManager?.getEnemies() || {};
-
-    Object.values(allEnemies).forEach(enemy => {
-        if (!enemy || !enemy.active) return;
-
-        const dist = Math.hypot(enemy.x - player.x, enemy.y - player.y);
-        if (dist < attackRange) {
-            enemies.push(enemy);
-        }
-    });
-
-    if (enemies.length === 0) {
+    if (!nearest) {
         if (scene.notificationUI) scene.notificationUI.show('攻撃範囲内に敵がいません', 'error');
         return;
     }
 
     // Face the nearest enemy
-    const nearest = enemies.reduce((prev, curr) => {
-        const prevDist = Math.hypot(prev.x - player.x, prev.y - player.y);
-        const currDist = Math.hypot(curr.x - player.x, curr.y - player.y);
-        return prevDist < currDist ? prev : curr;
-    });
     player.facingDirection = (nearest.x < player.x) ? -1 : 1;
-
-    // 単体攻撃の職業（遠距離職など）は、一番近い1体だけに当たる
-    if (attackHit === 'single') enemies = [nearest];
 
     showAttackRangeRing(scene, player, attackRange);
 
@@ -190,8 +196,109 @@ export function performBasicAttack(scene) {
     player.lastAttackTime = now;
 }
 
+// --- スキルの共通計算（実行時と、ボタン押下中の範囲プレビューの両方で使う） ---
+
+// Holy weapon: half cooldown, zero MP cost。パッシブのcooldownMult/mpCostMultも重ねて掛ける
+export function getSkillCooldownMs(player, skill) {
+    const hasHolyWeapon = player.stats.equipment?.weapon === 'holy_weapon';
+    let cdTime = (skill.cd || 2000) * (player.stats.cooldownMult ?? 1);
+    if (hasHolyWeapon) cdTime = Math.floor(cdTime * 0.5);
+    return cdTime;
+}
+
+export function getSkillMpCost(player, skill) {
+    const hasHolyWeapon = player.stats.equipment?.weapon === 'holy_weapon';
+    return hasHolyWeapon ? 0 : Math.ceil((skill.mpCost || 0) * (player.stats.mpCostMult ?? 1));
+}
+
+/** クールダウンとMPの両方が満たされていて、今すぐ撃てるか */
+export function isSkillReady(player, skillId) {
+    const skill = SKILLS[skillId];
+    if (!skill) return false;
+    const lastUse = player.skillCooldowns[skillId] || 0;
+    return Date.now() - lastUse >= getSkillCooldownMs(player, skill) &&
+        player.stats.mp >= getSkillMpCost(player, skill);
+}
+
+/**
+ * 「押して範囲表示→離して発動」にするスキルか。
+ * 召喚・突撃命令は範囲を持たないので、押した瞬間に即発動する（false）。
+ */
+export function skillNeedsAim(skillId) {
+    if (!SKILLS[skillId]) return false;
+    return !isSummonSkill(skillId) && skillId !== 'command_attack';
+}
+
+/** スキルレベルによる範囲補正(+10%/Lv)を含めた、実際の射程と範囲タイプ */
+export function getSkillAimSpec(player, skillId) {
+    const skill = SKILLS[skillId];
+    if (!skill) return null;
+    const skillLevel = player.stats.skillLevels?.[skillId] || 1;
+    const rangeBonus = 1 + (skillLevel - 1) * 0.1;
+    return {
+        skill,
+        range: (skill.range || 80) * rangeBonus,
+        rangeType: skill.rangeType || 'circle',
+        isParty: skill.targetType === 'party'
+    };
+}
+
+/** スキルの判定対象になる敵一覧 */
+export function getSkillEnemyPool(scene) {
+    return scene.children.list.filter(child => child instanceof Enemy && child.active);
+}
+
+// fan / line スキルの自動向き補正: 射程の1.5倍以内で一番近い敵の方向（-1 / 1）。いなければnull
+export function findNearestEnemyDirection(player, enemies, range) {
+    let nearest = null;
+    let minDist = range * 1.5;
+    enemies.forEach(e => {
+        const d = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
+        if (d < minDist) {
+            minDist = d;
+            nearest = e;
+        }
+    });
+    return nearest ? ((nearest.x < player.x) ? -1 : 1) : null;
+}
+
+/**
+ * ダメージスキルの命中対象を決める（circle / line / fan、近い順、単体・maxTargets対応）。
+ * 実際の攻撃と範囲プレビューで同じ結果になるよう、判定はここだけに置く。
+ * 判定の中心は腰あたり(player.y - 20)。
+ */
+export function selectSkillTargets(player, skill, { enemies, range, rangeType, direction }) {
+    const candidates = [];
+    enemies.forEach(enemy => {
+        const dx = enemy.x - player.x;
+        const dy = enemy.y - (player.y - 20); // measure from around the waist
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        let isHit = false;
+        const inFront = (direction > 0) ? dx > 0 : dx < 0;
+
+        if (rangeType === 'circle') {
+            isHit = dist < range;
+        } else if (rangeType === 'line') {
+            // Straight line ahead (about +-40 vertically)
+            isHit = inFront && Math.abs(dx) < range && Math.abs(dy) < 40;
+        } else if (rangeType === 'fan') {
+            // Cone ahead (about 90 degrees)
+            isHit = inFront && dist < range && Math.abs(dy) < Math.abs(dx) + 20;
+        }
+
+        if (isHit) candidates.push({ enemy, dist });
+    });
+
+    // 近い順に並べ、単体スキルなら1体、上限付きならその数までに絞る
+    candidates.sort((a, b) => a.dist - b.dist);
+    const limit = skill.hitType === 'single' ? 1 : (skill.maxTargets || Infinity);
+    return candidates.slice(0, limit).map(c => c.enemy);
+}
+
 /**
  * Use an active skill: checks cooldown and MP, plays the effect, then applies the result.
+ * （ボタン/キーを離した時に呼ばれる。召喚・突撃命令だけは押した瞬間に呼ばれる）
  */
 export function usePlayerSkill(scene, skillId) {
     const player = scene.player;
@@ -207,18 +314,14 @@ export function usePlayerSkill(scene, skillId) {
 
     const now = Date.now();
     const lastUse = player.skillCooldowns[skillId] || 0;
-    const hasHolyWeapon = player.stats.equipment.weapon === 'holy_weapon';
-
-    // Holy weapon: half cooldown, zero MP cost。パッシブのcooldownMultも重ねて掛ける
-    let cdTime = (skill.cd || 2000) * (player.stats.cooldownMult ?? 1);
-    if (hasHolyWeapon) cdTime = Math.floor(cdTime * 0.5);
+    const cdTime = getSkillCooldownMs(player, skill);
 
     if (now - lastUse < cdTime) {
         if (scene.notificationUI) scene.notificationUI.show('クールダウン中...', 'error');
         return;
     }
 
-    const mpCost = hasHolyWeapon ? 0 : Math.ceil((skill.mpCost || 0) * (player.stats.mpCostMult ?? 1));
+    const mpCost = getSkillMpCost(player, skill);
     if (player.stats.mp < mpCost) {
         if (scene.notificationUI) scene.notificationUI.show('MPが足りません！', 'error');
         return;
@@ -263,30 +366,18 @@ export function usePlayerSkill(scene, skillId) {
         return;
     }
 
-    // Skill level scaling: +15% effect and +10% range per level
+    // Skill level scaling: +15% effect (damage) and +10% range per level
     const skillLevel = player.stats.skillLevels?.[skillId] || 1;
     const levelBonus = 1 + (skillLevel - 1) * 0.15;
-    const rangeBonus = 1 + (skillLevel - 1) * 0.1;
 
-    const range = (skill.range || 80) * rangeBonus;
+    const { range, rangeType } = getSkillAimSpec(player, skillId);
     const damageMultiplier = (skill.damageMult || 1) * levelBonus;
-    const rangeType = skill.rangeType || 'circle';
-    const enemies = scene.children.list.filter(child => child instanceof Enemy && child.active);
+    const enemies = getSkillEnemyPool(scene);
 
     // Auto-face the nearest enemy for fan / line skills
     if (rangeType === 'fan' || rangeType === 'line') {
-        let nearest = null;
-        let minDist = range * 1.5;
-        enemies.forEach(e => {
-            const d = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
-            if (d < minDist) {
-                minDist = d;
-                nearest = e;
-            }
-        });
-        if (nearest) {
-            player.facingDirection = (nearest.x < player.x) ? -1 : 1;
-        }
+        const autoDir = findNearestEnemyDirection(player, enemies, range);
+        if (autoDir) player.facingDirection = autoDir;
     }
 
     // Facing: right = 1, left = -1 (walk-left/right アニメーションを使うため flipX ではなく facingDirection を見る)
@@ -371,32 +462,7 @@ function giveBuff(scene, target, targetId, buffType, value, duration) {
 function applyDamageSkill(scene, skill, { enemies, range, rangeType, direction, damageMultiplier }) {
     const player = scene.player;
 
-    const candidates = [];
-    enemies.forEach(enemy => {
-        const dx = enemy.x - player.x;
-        const dy = enemy.y - (player.y - 20); // measure from around the waist
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        let isHit = false;
-        const inFront = (direction > 0) ? dx > 0 : dx < 0;
-
-        if (rangeType === 'circle') {
-            isHit = dist < range;
-        } else if (rangeType === 'line') {
-            // Straight line ahead (about +-40 vertically)
-            isHit = inFront && Math.abs(dx) < range && Math.abs(dy) < 40;
-        } else if (rangeType === 'fan') {
-            // Cone ahead (about 90 degrees)
-            isHit = inFront && dist < range && Math.abs(dy) < Math.abs(dx) + 20;
-        }
-
-        if (isHit) candidates.push({ enemy, dist });
-    });
-
-    // 近い順に並べ、単体スキルなら1体、上限付きならその数までに絞る
-    candidates.sort((a, b) => a.dist - b.dist);
-    const limit = skill.hitType === 'single' ? 1 : (skill.maxTargets || Infinity);
-    const targets = candidates.slice(0, limit).map(c => c.enemy);
+    const targets = selectSkillTargets(player, skill, { enemies, range, rangeType, direction });
 
     targets.forEach(enemy => {
         const damageData = player.getDamage(damageMultiplier, enemy, skill.element || null);
