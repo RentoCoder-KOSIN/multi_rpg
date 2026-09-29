@@ -1,12 +1,4 @@
 import TitleScene from "./scenes/TitleScene.js";
-import GameScene from "./scenes/GameScene.js";
-import BattleScene from "./scenes/BattleScene.js";
-import CityScene from "./scenes/CityScene.js";
-import ForestScene from "./scenes/ForestScene.js";
-import GuildScene from "./scenes/GuildScene.js";
-import Guild2Scene from "./scenes/Guild2Scene.js";
-import WetLandScene from "./scenes/WetlandScene.js";
-import VolcanoScene from "./scenes/VolcanoScene.js";
 
 // サーバー設定
 export const SERVER_CONFIG = {
@@ -65,17 +57,8 @@ const config = {
         },
     },
 
-    scene: [
-        TitleScene,
-        GameScene,
-        BattleScene,
-        CityScene,
-        ForestScene,
-        GuildScene,
-        Guild2Scene,
-        WetLandScene,
-        VolcanoScene,
-    ],
+    // TitleScene only: main.js appends one scene per map (scenes/mapScenes.js)
+    scene: [TitleScene],
 
     scale: {
         mode: Phaser.Scale.FIT,

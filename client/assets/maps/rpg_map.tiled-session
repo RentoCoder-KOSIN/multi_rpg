@@ -1,5 +1,5 @@
 {
-    "activeFile": "city.json",
+    "activeFile": "guild1f.json",
     "expandedProjectPaths": [
         "."
     ],
@@ -10,7 +10,7 @@
             "selectedLayer": 0,
             "viewCenter": {
                 "x": 383.657448706512,
-                "y": 318.9533154921201
+                "y": 319.71454058876003
             }
         },
         "battle.json#tiles": {
@@ -21,20 +21,31 @@
                 37
             ],
             "expandedObjectLayers": [
-                42,
-                41
+                41,
+                42
             ],
             "scale": 1,
             "selectedLayer": 17,
             "viewCenter": {
                 "x": 1600.5,
-                "y": 1600.5
+                "y": 1600
             }
         },
         "city.json#tiles": {
             "scaleInDock": 1
         },
         "city.json#water": {
+            "scaleInDock": 1
+        },
+        "forest.json": {
+            "scale": 0.16090625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 1597.2033404544572,
+                "y": 1597.203340454457
+            }
+        },
+        "forest.json#tiles": {
             "scaleInDock": 1
         },
         "guild1f.json": {
@@ -44,8 +55,8 @@
             "scale": 0.5254687499999999,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 480.52334225394,
-                "y": 480.52334225394
+                "x": 479.57181088314013,
+                "y": 479.5718108831401
             }
         },
         "guild1f.json#tiles": {
@@ -55,11 +66,50 @@
             "scale": 0.5254687499999999,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 480.52334225394,
-                "y": 480.52334225394
+                "x": 479.57181088314013,
+                "y": 479.5718108831401
             }
         },
         "guild2f.json#tiles": {
+            "scaleInDock": 1
+        },
+        "tutorial.json": {
+            "scale": 0.42007812499999997,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 480.86293472196394,
+                "y": 640.3570764366748
+            }
+        },
+        "tutorial.json#tiles": {
+            "scaleInDock": 1
+        },
+        "volcano.json": {
+            "scale": 0.3218125,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 798.6016702272286,
+                "y": 798.6016702272285
+            }
+        },
+        "volcano.json#lava": {
+            "scaleInDock": 1
+        },
+        "volcano.json#tiles": {
+            "scaleInDock": 1
+        },
+        "wetland.json": {
+            "scale": 0.16090625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 1600.3107399495048,
+                "y": 1597.203340454457
+            }
+        },
+        "wetland.json#tiles": {
+            "scaleInDock": 1
+        },
+        "wetland.json#waters": {
             "scaleInDock": 1
         }
     },
@@ -67,13 +117,21 @@
         "battle.json",
         "city.json",
         "guild1f.json",
-        "guild2f.json"
+        "guild2f.json",
+        "forest.json",
+        "tutorial.json",
+        "volcano.json",
+        "wetland.json"
     ],
     "project": "rpg_map.tiled-project",
     "recentFiles": [
         "battle.json",
+        "city.json",
+        "wetland.json",
+        "volcano.json",
+        "tutorial.json",
+        "forest.json",
         "guild2f.json",
-        "guild1f.json",
-        "city.json"
+        "guild1f.json"
     ]
 }

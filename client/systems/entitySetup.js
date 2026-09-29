@@ -57,7 +57,8 @@ export function addOtherPlayer(scene, id, x, y) {
  * NetworkManager has already checked that the enemy does not exist yet.
  */
 export function spawnEnemyFromServer(scene, data) {
-    const textureKey = data.type || 'slime';
+    // 敵データに無いtype（Tiledのタイプミスなど）は、画像が無くて緑のmissing表示にならないようスライムの画像で代用する
+    const textureKey = scene.textures.exists(data.type) ? data.type : 'slime';
     const enemy = new Enemy(scene, data.x, data.y, textureKey, data.type, data.id, data.spawnId, scene.networkManager.getSocket(), data);
 
     // このEnemyインスタンスのために作った Collider をここに集めておき、

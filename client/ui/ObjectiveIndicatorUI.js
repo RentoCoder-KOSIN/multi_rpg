@@ -1,21 +1,9 @@
 import { QUESTS } from '../data/quests.js';
+import { getMapDisplayName } from '../data/maps.js';
 
 const RECOMPUTE_INTERVAL_MS = 500;
 const ARROW_RADIUS = 26;      // プレイヤーの足元を中心に、矢印を置く半径(px)
 const LABEL_LINE_HEIGHT = 12; // ラベル1行ぶんの高さ
-
-// マップキー -> 表示名（転移先の案内用）
-const MAP_DISPLAY_NAMES = {
-    tutorial: 'チュートリアル',
-    GameScene: 'チュートリアル',
-    battle: '戦場',
-    city: '街',
-    forest: '森',
-    wetland: '湿地',
-    volcano: '火山',
-    guild1f: 'ギルド1F',
-    guild2f: 'ギルド2F'
-};
 
 // 「次に何をすればいいか／どこに行けばいいか」を示すコンパス型インジケーター。
 // 画面固定のHUDではなく、プレイヤーの足元（ワールド座標）に表示する。
@@ -140,7 +128,7 @@ export default class ObjectiveIndicatorUI {
             const d = Phaser.Math.Distance.Between(player.x, player.y, cx, cy);
             if (d < bestDist) {
                 bestDist = d;
-                const name = MAP_DISPLAY_NAMES[tp.targetMap] || String(tp.targetMap).toUpperCase();
+                const name = getMapDisplayName(tp.targetMap); // 表示名はサーバーのマップ情報（Tiledの displayName）から
                 best = { x: cx, y: cy, label: `転移: ${name}` };
             }
         });

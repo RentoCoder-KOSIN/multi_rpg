@@ -10,6 +10,8 @@ const { createPartyService } = require("./services/partyService");
 const { startEnemyLoop } = require("./services/enemyLoop");
 const { registerConnectionHandler } = require("./handlers");
 const { getPublicEnemyStats } = require("./data/enemyStats");
+const { getPublicMaps } = require("./data/maps");
+const { warnAboutContent } = require("./utils/validateContent");
 
 const app = express();
 const server = http.createServer(app);
@@ -23,7 +25,13 @@ app.get("/api/enemy-stats", (req, res) => {
     res.json(getPublicEnemyStats());
 });
 
+// The map list is discovered from assets/maps/*.json; the client builds its scenes from it at boot.
+app.get("/api/maps", (req, res) => {
+    res.json(getPublicMaps());
+});
+
 // --- 起動時の初期化 ---
+warnAboutContent();
 loadAIData();
 
 const enemyService = createEnemyService({ io, aiManager });

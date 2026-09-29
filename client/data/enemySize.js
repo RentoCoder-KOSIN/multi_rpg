@@ -1,18 +1,17 @@
 /**
  * Enemy render size and hitbox (client-only, purely visual settings).
+ *
+ * The size class of each enemy (`size: 'small' | 'medium' | ...`) is defined once,
+ * together with the rest of its data, in server/data/enemyStats.js and arrives via /api/enemy-stats.
  */
-export const ENEMY_SIZE_CONFIG = {
-    slime: { targetWidth: 40, targetHeight: 40, hitWidth: 32, hitHeight: 26 },
-    forest_slime: { targetWidth: 40, targetHeight: 40, hitWidth: 32, hitHeight: 26 },
-    red_slime: { targetWidth: 40, targetHeight: 40, hitWidth: 32, hitHeight: 26 },
-    bat: { targetWidth: 40, targetHeight: 40, hitWidth: 32, hitHeight: 26 },
-    skeleton: { targetWidth: 48, targetHeight: 48, hitWidth: 34, hitHeight: 44 },
-    goblin: { targetWidth: 48, targetHeight: 48, hitWidth: 34, hitHeight: 44 },
-    ghost: { targetWidth: 48, targetHeight: 48, hitWidth: 34, hitHeight: 44 },
-    orc: { targetWidth: 60, targetHeight: 60, hitWidth: 50, hitHeight: 52 },
-    dire_wolf: { targetWidth: 60, targetHeight: 60, hitWidth: 50, hitHeight: 52 },
+import { getEnemyStats } from './enemyStats.js';
+
+export const SIZE_PRESETS = {
+    small: { targetWidth: 40, targetHeight: 40, hitWidth: 32, hitHeight: 26 },
+    medium: { targetWidth: 48, targetHeight: 48, hitWidth: 34, hitHeight: 44 },
+    large: { targetWidth: 60, targetHeight: 60, hitWidth: 50, hitHeight: 52 },
     boss: { targetWidth: 80, targetHeight: 80, hitWidth: 64, hitHeight: 64 },
-    dragon_boss: { targetWidth: 80, targetHeight: 80, hitWidth: 64, hitHeight: 64 }
+    huge: { targetWidth: 110, targetHeight: 110, hitWidth: 90, hitHeight: 90 }
 };
 
 /**
@@ -20,5 +19,5 @@ export const ENEMY_SIZE_CONFIG = {
  * @returns {Object} size and hitbox settings
  */
 export function getEnemySizeConfig(type) {
-    return ENEMY_SIZE_CONFIG[type] || ENEMY_SIZE_CONFIG.slime;
+    return SIZE_PRESETS[getEnemyStats(type).size] || SIZE_PRESETS.small;
 }

@@ -1,3 +1,5 @@
+import { resolveSceneKey, getMapKeyForScene } from '../data/maps.js';
+
 export function setupTeleportsFromMap(scene, map) {
     const tpLayer = map.getObjectLayer('Teleports');
     if (!tpLayer) return [];
@@ -55,38 +57,9 @@ export function updateTeleports(scene, player, npcs, teleports) {
             // Check if already transitioning
             if (scene._isTeleporting) return;
 
-            let targetSceneKey = tp.targetMap;
-
-            // シーンキーの解決（エイリアスや大文字小文字の吸収）
-            if (targetSceneKey && !scene.scene.get(targetSceneKey)) {
-                console.warn(`[Teleport] Scene '${targetSceneKey}' not found. Attempting to resolve...`);
-                // マッピング定義
-                const keyMap = {
-                    'battleScene': 'battle',
-                    'BattleScene': 'battle',
-                    'tutorial': 'GameScene', // GameSceneがtutorialマップを担当
-                    'Tutorial': 'GameScene',
-                    'city': 'city',
-                    'City': 'city',
-                    'forest': 'forest',
-                    'Forest': 'forest'
-                };
-
-                if (keyMap[targetSceneKey]) {
-                    console.log(`[Teleport] Resolved '${targetSceneKey}' to '${keyMap[targetSceneKey]}'`);
-                    targetSceneKey = keyMap[targetSceneKey];
-                } else {
-                    // Phaserのシーンマネージャーから検索（ケースインセンシティブなど）
-                    const found = scene.scene.manager.scenes.find(s => {
-                        const sceneKey = s.sys.settings.key;
-                        return sceneKey && targetSceneKey && sceneKey.toLowerCase() === targetSceneKey.toLowerCase();
-                    });
-                    if (found) {
-                        targetSceneKey = found.sys.settings.key;
-                        console.log(`[Teleport] Resolved via case-insensitivity to '${targetSceneKey}'`);
-                    }
-                }
-            }
+            // 転移先の名前（マップキー・シーンキー・大文字小文字違い・旧別名）をシーンキーに解決する。
+            // マップは assets/maps/*.json から自動登録されるので、ここに対応表を足す必要は無い
+            const targetSceneKey = resolveSceneKey(tp.targetMap);
 
             // 最終確認
             if (!targetSceneKey || !scene.scene.get(targetSceneKey)) {
@@ -99,17 +72,8 @@ export function updateTeleports(scene, player, npcs, teleports) {
 
             // マップ変更をサーバーに通知（シーン再起動前に送信）
             if (scene.networkManager) {
-                // サーバーにはマップキー（tutorial/city/battle）を送るべきか、シーンキーを送るべきか？
-                // config.jsのmapKeyと一致させるのが理想。
-                // ここではターゲットマップ名をそのまま送るか、シーンキーを送るか。
-                // tp.targetMapが 'battle' なら問題ない。 'battleScene' なら 'battle' にしたほうがいいかも。
-                // 安全のため、targetSceneKey（解決後の有効なキー）を使用するが、
-                // GameSceneの場合は 'tutorial' を送りたいかもしれない。
-                // いったん targetSceneKey を送るが、GameScene 特有の処理が必要なら調整。
-                let mapKeyToSend = targetSceneKey;
-                if (targetSceneKey === 'GameScene') mapKeyToSend = 'tutorial';
-
-                scene.networkManager.changeMap(mapKeyToSend, player.x, player.y);
+                // サーバーにはマップキー（tutorial など）を送る
+                scene.networkManager.changeMap(getMapKeyForScene(targetSceneKey), player.x, player.y);
             }
 
             // マップ名を更新
@@ -122,7 +86,7 @@ export function updateTeleports(scene, player, npcs, teleports) {
             scene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, (cam, effect) => {
                 console.log(`[Teleport] Fade complete. Starting scene: ${targetSceneKey}`);
                 scene.scene.start(targetSceneKey, {
-                    mapKey: targetSceneKey === 'GameScene' ? 'tutorial' : targetSceneKey,
+                    mapKey: getMapKeyForScene(targetSceneKey),
                     spawn: tp.targetSpawn,
                     x: tp.destX,
                     y: tp.destY

@@ -6,7 +6,7 @@
 
 let enemyStats = {};
 
-const FALLBACK_STATS = { displayName: '???', hp: 1, atk: 0, def: 0, exp: 0, gold: 0 };
+const FALLBACK_STATS = { displayName: '???', sprite: null, size: 'small', hp: 1, atk: 0, def: 0, exp: 0, gold: 0 };
 
 /**
  * Fetch enemy stats from the server. Call once before starting Phaser.
@@ -15,6 +15,13 @@ export async function loadEnemyStats() {
     const res = await fetch('/api/enemy-stats');
     if (!res.ok) throw new Error(`Failed to load enemy stats: HTTP ${res.status}`);
     enemyStats = await res.json();
+}
+
+/**
+ * @returns {Object} type -> stats for every enemy the server knows (used to preload sprites)
+ */
+export function getAllEnemyStats() {
+    return enemyStats;
 }
 
 /**

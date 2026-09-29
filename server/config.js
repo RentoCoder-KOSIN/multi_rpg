@@ -1,6 +1,18 @@
 const path = require("path");
 
+const fs = require("fs");
+
 const CLIENT_DIR = path.join(__dirname, "..", "client");
+const MAPS_DIR = path.join(CLIENT_DIR, "assets", "maps");
+
+// MAPS_DIR 直下の *.json のファイル名(拡張子なし)をマップキーとして返す
+function discoverMaps(dir) {
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir)
+        .filter(f => f.toLowerCase().endsWith(".json"))
+        .map(f => f.slice(0, -".json".length))
+        .sort();
+}
 
 module.exports = {
     // --- サーバー ---
@@ -10,20 +22,12 @@ module.exports = {
 
     // --- パス ---
     CLIENT_DIR,
-    MAPS_DIR: path.join(CLIENT_DIR, "assets", "maps"),
+    MAPS_DIR,
     AI_DATA_PATH: path.join(__dirname, "data", "sharedAI.json"),
 
     // --- マップ ---
-    KNOWN_MAPS: [
-        "tutorial",
-        "city",
-        "battle",
-        "forest",
-        "guild1f",
-        "guild2f",
-        "wetland",
-        "volcano",
-    ],
+    // assets/maps/ に置いたTiledのJSONを自動で検出する（マップ追加時にここを編集する必要は無い）
+    KNOWN_MAPS: discoverMaps(MAPS_DIR),
 
     // --- プレイヤー初期値 ---
     DEFAULT_HP: 100,

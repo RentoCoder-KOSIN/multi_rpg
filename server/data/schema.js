@@ -12,6 +12,9 @@ function assert(condition, message) {
     }
 }
 
+// 画面上の大きさのプリセット（client/data/enemySize.js の SIZE_PRESETS と対応）
+const ENEMY_SIZES = ['small', 'medium', 'large', 'boss', 'huge'];
+
 /**
  * How to add a new enemy:
  *
@@ -22,6 +25,8 @@ function assert(condition, message) {
  *       my_enemy: defineEnemy({
  *           id: 'my_enemy',
  *           name: 'My Enemy',
+ *           sprite: 'pipo-enemy013.png',   // client/assets/enemy/ 内のファイル名
+ *           size: 'medium',                // small / medium / large / boss / huge
  *           level: 10,
  *           hp: 1000,
  *           atk: 50,
@@ -41,6 +46,10 @@ function assert(condition, message) {
 function defineEnemy({
     id,
     name,
+    // 見た目。sprite は client/assets/enemy/ 内のファイル名（省略時は `<id>.png`）、
+    // size は画面上の大きさのプリセット
+    sprite = null,
+    size = 'medium',
     level = 1,
     hp,
     atk,
@@ -55,13 +64,14 @@ function defineEnemy({
 } = {}) {
     assert(id, 'enemy is missing an id');
     assert(name, `enemy "${id}": missing a name`);
+    assert(ENEMY_SIZES.includes(size), `enemy "${id}": size must be one of ${ENEMY_SIZES.join(', ')} (got "${size}")`);
     assert(Number.isFinite(hp) && hp > 0, `enemy "${id}": hp must be a positive number`);
     assert(Number.isFinite(atk) && atk >= 0, `enemy "${id}": atk must be a non-negative number`);
     assert(Number.isFinite(def) && def >= 0, `enemy "${id}": def must be a non-negative number`);
 
     // `displayName` is the field name existing client/server code already
     // reads over the wire; `name` is the schema-facing alias.
-    return { id, name, displayName: name, level, hp, atk, def, exp, gold, element, statusEffect, drops };
+    return { id, name, displayName: name, sprite: sprite || `${id}.png`, size, level, hp, atk, def, exp, gold, element, statusEffect, drops };
 }
 
-module.exports = { defineEnemy };
+module.exports = { defineEnemy, ENEMY_SIZES };

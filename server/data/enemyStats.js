@@ -8,6 +8,8 @@ const ENEMY_STATS = {
     slime: defineEnemy({
         id: "slime",
         name: "スライム",
+        sprite: "slime1.png",
+        size: "small",
         level: 1,
         hp: 50,
         atk: 5,
@@ -24,6 +26,8 @@ const ENEMY_STATS = {
     bat: defineEnemy({
         id: "bat",
         name: "コウモリ",
+        sprite: "pipo-enemy001a.png",
+        size: "small",
         level: 6,
         hp: 600,
         atk: 30,
@@ -40,6 +44,8 @@ const ENEMY_STATS = {
     forest_slime: defineEnemy({
         id: "forest_slime",
         name: "森のスライム",
+        sprite: "slime2.png",
+        size: "small",
         level: 14,
         hp: 1200,
         atk: 75,
@@ -56,6 +62,8 @@ const ENEMY_STATS = {
     skeleton: defineEnemy({
         id: "skeleton",
         name: "スケルトン",
+        sprite: "pipo-enemy039.png",
+        size: "medium",
         level: 24,
         hp: 2000,
         atk: 120,
@@ -72,6 +80,8 @@ const ENEMY_STATS = {
     red_slime: defineEnemy({
         id: "red_slime",
         name: "レッドスライム",
+        sprite: "slime3.png",
+        size: "small",
         level: 34,
         hp: 2800,
         atk: 350,
@@ -88,6 +98,8 @@ const ENEMY_STATS = {
     goblin: defineEnemy({
         id: "goblin",
         name: "ゴブリン",
+        sprite: "pipo-enemy013.png",
+        size: "medium",
         level: 42,
         hp: 3500,
         atk: 450,
@@ -111,6 +123,8 @@ const ENEMY_STATS = {
     ghost: defineEnemy({
         id: "ghost",
         name: "ゴースト",
+        sprite: "pipo-enemy010a.png",
+        size: "medium",
         level: 58,
         hp: 35000,
         atk: 505,
@@ -129,6 +143,8 @@ const ENEMY_STATS = {
     orc: defineEnemy({
         id: "orc",
         name: "オーク",
+        sprite: "pipo-enemy015.png",
+        size: "large",
         level: 70,
         hp: 50000,
         atk: 750,
@@ -145,6 +161,8 @@ const ENEMY_STATS = {
     dire_wolf: defineEnemy({
         id: "dire_wolf",
         name: "ダイアウルフ",
+        sprite: "pipo-enemy002.png",
+        size: "large",
         level: 88,
         hp: 75000,
         atk: 1900,
@@ -161,6 +179,8 @@ const ENEMY_STATS = {
     boss: defineEnemy({
         id: "boss",
         name: "森の守護者",
+        sprite: "pipo-enemy043.png",
+        size: "boss",
         level: 20,
         hp: 1800,
         atk: 50,
@@ -177,6 +197,8 @@ const ENEMY_STATS = {
     dragon_boss: defineEnemy({
         id: "dragon_boss",
         name: "エンシェントドラゴン",
+        sprite: "pipo-enemy044d.png",
+        size: "boss",
         level: 100,
         hp: 4000000,
         atk: 3500,
@@ -214,13 +236,15 @@ function getEnemyStats(type) {
 
 /**
  * Stats that are safe to expose to clients (no drop tables).
- * @returns {Object} type -> { displayName, level, hp, atk, def, exp, gold }
+ * @returns {Object} type -> { displayName, sprite, size, level, hp, atk, def, exp, gold, element }
  */
 function getPublicEnemyStats() {
     const result = {};
     for (const [type, s] of Object.entries(ENEMY_STATS)) {
         result[type] = {
             displayName: s.displayName,
+            sprite: s.sprite,
+            size: s.size,
             level: s.level || 1,
             hp: scaledHp(s.hp),
             atk: scaledAtk(s.atk),

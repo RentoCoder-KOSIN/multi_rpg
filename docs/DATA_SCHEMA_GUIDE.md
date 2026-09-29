@@ -59,6 +59,8 @@ const ENEMY_STATS = {
     new_enemy: defineEnemy({
         id: "new_enemy",
         name: "新しい敵",
+        sprite: "pipo-enemy013.png",   // client/assets/enemy/ 内の画像ファイル名
+        size: "medium",                // small / medium / large / boss / huge
         level: 10,
         hp: 1000,
         atk: 50,
@@ -72,7 +74,8 @@ const ENEMY_STATS = {
 
 `id` / `name` / `hp` / `atk` が無いか、数値であるべき所が数値でないと
 サーバー起動時に例外で気づけます。あとはマップの `enemy_spawn` レイヤーで
-`type: "new_enemy"` を指定すればスポーンします。
+`type: "new_enemy"` を指定すればスポーンします（画像・大きさもこの定義から読まれます）。
+マップ追加も含めた手順は `docs/map-and-enemy-guide.md` を参照。
 
 ### アイテムを追加する（`client/data/items.js`）
 
