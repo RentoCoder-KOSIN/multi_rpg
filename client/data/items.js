@@ -566,6 +566,23 @@ export const ITEMS = {
             return Math.ceil(baseAtk * multiplier);
         },
     }),
+    // --- リセットアイテム（使用処理は InventoryUI.useItem。1回の使用で1個だけ消費する） ---
+    stat_reset_book: defineItem({
+        id: "stat_reset_book",
+        name: "ステータスリセットの書",
+        description: "ステータスポイントで割り振ったSTR/INT/VIT/MEN/DEX/AGIを全て返還する。（レベルアップの自然成長・転生ボーナスは戻らない）",
+        price: 20000,
+        type: "consumable",
+        stats: { resetStats: true },
+    }),
+    job_reset_book: defineItem({
+        id: "job_reset_book",
+        name: "職業リセットの書",
+        description: "職業を「なし」に戻す。職業管理人で基本職から選び直せる。習得スキルとJob EXPはリセットされる。（レベルとステータスはそのまま）",
+        price: 30000,
+        type: "consumable",
+        stats: { resetJob: true },
+    }),
     resurrection_scroll: defineItem({
         id: "resurrection_scroll",
         name: "復活の秘巻物",

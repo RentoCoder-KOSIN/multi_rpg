@@ -1,4 +1,5 @@
 import { resolveSceneKey, getMapKeyForScene } from '../data/maps.js';
+import { isTeleportUnlocked, describeMissingQuests } from './questGate.js';
 
 export function setupTeleportsFromMap(scene, map) {
     const tpLayer = map.getObjectLayer('Teleports');
@@ -34,23 +35,20 @@ export function updateTeleports(scene, player, npcs, teleports) {
     const playerBounds = player.getBounds();
 
     teleports.forEach(tp => {
-        let blocked = false;
+        // 「報告済み」または「達成済み（報告待ち）」のクエストが、requiredQuest（カンマ区切りで複数可）の全てで揃っていれば通れる
+        const blocked = !isTeleportUnlocked(scene.questManager, tp);
 
-        if (tp.unlocked) {
-            blocked = false;
-        } else if (tp.requiredQuest) {
-            // クエストマネージャーの状態をチェック
-            if (scene.questManager) {
-                // 「報告済み」または「達成済み（報告待ち）」であればロック解除
-                blocked = !(scene.questManager.isFinished(tp.requiredQuest) || scene.questManager.isCompleted(tp.requiredQuest));
-            } else {
-                // クエストマネージャーがない場合のフォールバック（NPCの状態を見る）
-                const npc = npcs.find(n => String(n.questId) === String(tp.requiredQuest));
-                blocked = !npc?.is_Complited;
+        if (blocked) {
+            // 転移に重なったときだけ、なぜ通れないかを（3秒に1回まで）教える
+            const lockRect = new Phaser.Geom.Rectangle(tp.x, tp.y, tp.width, tp.height);
+            const now = scene.time?.now ?? Date.now();
+            if (Phaser.Geom.Rectangle.Overlaps(lockRect, playerBounds) && (!scene._lastLockedTeleportMsg || now - scene._lastLockedTeleportMsg > 3000)) {
+                scene._lastLockedTeleportMsg = now;
+                const detail = describeMissingQuests(scene.questManager, tp.requiredQuest);
+                scene.notificationUI?.show(`このマップのクエストを全て達成すると先へ進めます。${detail}`, 'error', 4000);
             }
+            return;
         }
-
-        if (blocked) return;
 
         const tpRect = new Phaser.Geom.Rectangle(tp.x, tp.y, tp.width, tp.height);
         if (Phaser.Geom.Rectangle.Overlaps(tpRect, playerBounds)) {

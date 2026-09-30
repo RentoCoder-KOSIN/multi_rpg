@@ -39,7 +39,8 @@ export const QUESTS = {
             gold: 400,
             item: 'travel_cloak'
         },
-        nextQuest: 'brave_check'
+        area: 'forest',
+        nextQuest: 'forest_skeleton_hunt'
     },
     brave_check: {
         id: 'brave_check',
@@ -52,8 +53,8 @@ export const QUESTS = {
             exp: 10000,
             gold: 8000,
             item: 'iron_shield'
-        },
-        nextQuest: 'kill_orc'
+        }
+        // ボス戦マップ(battle)のクエスト。街への転移の解放条件（battle.json の Teleports.requiredQuest）
     },
     kill_bat: {
         id: 'kill_bat',
@@ -67,6 +68,7 @@ export const QUESTS = {
             gold: 200,
             item: 'heal_potion_small'
         },
+        area: 'wetland',
         nextQuest: 'kill_skeleton'
     },
     kill_skeleton: {
@@ -81,6 +83,7 @@ export const QUESTS = {
             gold: 600,
             item: 'iron_sword'
         },
+        area: 'forest',
         nextQuest: 'skeleton_extermination'
     },
     skeleton_extermination: {
@@ -94,7 +97,8 @@ export const QUESTS = {
             exp: 15000,
             gold: 20000,
             item: 'power_seed'
-        }
+        },
+        area: 'forest'
     },
     kill_goblin: {
         id: 'kill_goblin',
@@ -108,7 +112,8 @@ export const QUESTS = {
             gold: 1000,
             item: 'brass_knuckles'
         },
-        nextQuest: 'kill_orc'
+        area: 'wetland',
+        nextQuest: 'swamp_boss_quest'
     },
     kill_orc: {
         id: 'kill_orc',
@@ -122,7 +127,8 @@ export const QUESTS = {
             gold: 3000,
             item: 'plate_armor'
         },
-        nextQuest: 'orc_hero'
+        area: 'volcano',
+        nextQuest: 'kill_dire_wolf'
     },
     orc_hero: {
         id: 'orc_hero',
@@ -135,7 +141,8 @@ export const QUESTS = {
             exp: 20000,
             gold: 50000,
             item: 'shield_seed'
-        }
+        },
+        area: 'volcano'
     },
     kill_ghost: {
         id: 'kill_ghost',
@@ -149,7 +156,8 @@ export const QUESTS = {
             gold: 1500,
             item: 'high_potion'
         },
-        nextQuest: 'ghost_buster'
+        area: 'volcano',
+        nextQuest: 'kill_orc'
     },
     ghost_buster: {
         id: 'ghost_buster',
@@ -163,7 +171,7 @@ export const QUESTS = {
             gold: 30000,
             item: 'magic_seed'
         },
-        nextQuest: 'dragon_slayer'
+        area: 'volcano'
     },
     dragon_slayer: {
         id: 'dragon_slayer',
@@ -176,7 +184,8 @@ export const QUESTS = {
             exp: 50000,
             gold: 100000,
             item: 'hero_sword'
-        }
+        },
+        area: 'volcano'
     },
     kill_dire_wolf: {
         id: 'kill_dire_wolf',
@@ -189,7 +198,53 @@ export const QUESTS = {
             exp: 3500,
             gold: 5000,
             item: 'wooden_bow'
-        }
+        },
+        area: 'volcano',
+        nextQuest: 'dragon_slayer'
+    },
+    // ===== マップクエスト（そのマップの敵を倒す → マップボスを倒す）=====
+    // 各マップの「MAP_CLEAR_QUESTS」を全て達成すると、次のマップへの転移が解放される（下部のヘルパー参照）。
+    forest_skeleton_hunt: {
+        id: 'forest_skeleton_hunt',
+        title: '森の骸骨狩り',
+        description: '森をさまようスケルトンを20体倒せ。',
+        type: 'kill',
+        target: 'skeleton',
+        required: 20,
+        reward: { exp: 3000, gold: 1500, item: 'high_potion' },
+        area: 'forest',
+        nextQuest: 'forest_boss_quest'
+    },
+    forest_boss_quest: {
+        id: 'forest_boss_quest',
+        title: '森の主トレント (Boss)',
+        description: '森の奥に潜むマップボス「森の主トレント」を討伐せよ。',
+        type: 'kill',
+        target: 'forest_boss',
+        required: 1,
+        reward: { exp: 30000, gold: 8000, item: 'power_seed' },
+        area: 'forest'
+    },
+    wetland_red_slime: {
+        id: 'wetland_red_slime',
+        title: '湿地の赤い脅威',
+        description: 'レッドスライムを15体倒せ。',
+        type: 'kill',
+        target: 'red_slime',
+        required: 15,
+        reward: { exp: 8000, gold: 3000, item: 'high_potion' },
+        area: 'wetland',
+        nextQuest: 'kill_goblin'
+    },
+    swamp_boss_quest: {
+        id: 'swamp_boss_quest',
+        title: '沼の主ヌシ (Boss)',
+        description: '湿地の底に棲むマップボス「沼の主ヌシ」を討伐せよ。',
+        type: 'kill',
+        target: 'swamp_boss',
+        required: 1,
+        reward: { exp: 120000, gold: 25000, item: 'shield_seed' },
+        area: 'wetland'
     },
     slime_massacre: {
         id: 'slime_massacre',
@@ -205,3 +260,31 @@ export const QUESTS = {
         }
     }
 };
+
+// ===== マップの進行（クエストで次のマップへ進む仕組み）=====
+//
+// 街から先のマップは、下の順番で「そのマップのクエストを全て達成」すると次のマップへ進める。
+//   forest（最初から行ける） → wetland → volcano
+// 進行の解放は2か所で実現している:
+//   1. 転移（街 → 次のマップ）: Tiled の Teleports の requiredQuest に、下の MAP_CLEAR_QUESTS をカンマ区切りで書く
+//      （city.json に設定済み。全て達成しないと通れない。utils/questGate.js が判定する）
+//   2. クエストの受注: quest.area が付いたクエストは、そのマップが解放されるまで受注できない
+//      （ギルドの掲示板にも出ない。QuestManager.canStart / areaUnlocked）
+//
+// 新しいマップを足すときは、AREA_ORDER の末尾に足し、MAP_CLEAR_QUESTS にそのマップのクエストIDを並べ、
+// 街の該当 Teleports の requiredQuest に「前のマップのMAP_CLEAR_QUESTS」を書けばよい。
+export const AREA_ORDER = ['forest', 'wetland', 'volcano'];
+
+// マップごとの「全部達成すると次のマップに進める」クエスト
+export const MAP_CLEAR_QUESTS = {
+    forest: ['kill_forest_slime', 'forest_skeleton_hunt', 'forest_boss_quest'],
+    wetland: ['wetland_red_slime', 'kill_goblin', 'swamp_boss_quest'],
+    volcano: ['kill_ghost', 'kill_orc', 'kill_dire_wolf', 'dragon_slayer'],
+};
+
+/** area の1つ前のマップ（最初のマップなら null） */
+export function previousArea(area) {
+    const i = AREA_ORDER.indexOf(area);
+    return i > 0 ? AREA_ORDER[i - 1] : null;
+}
+

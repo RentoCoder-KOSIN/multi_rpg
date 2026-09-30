@@ -156,8 +156,13 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         );
     }
 
+    // マップボス（size:'boss'。type名は 'boss' とは限らない: forest_boss, swamp_boss, dragon_boss ...）か
+    isBossSize() {
+        return getEnemyStats(this.type)?.size === 'boss';
+    }
+
     createHealthBar() {
-        const barWidth = this.type === 'boss' ? 100 : 40;
+        const barWidth = this.isBossSize() ? 100 : 40;
         this.hpBarBg = this.scene.add.rectangle(0, 0, barWidth, 5, 0x000000);
         this.hpBarBg.setDepth(10);
         this.hpBar = this.scene.add.rectangle(0, 0, barWidth, 5, 0x00ff00);
@@ -179,7 +184,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         }
 
         const percent = Math.max(0, this.hp / this.maxHp);
-        this.hpBar.width = (this.type === 'boss' ? 100 : 40) * percent;
+        this.hpBar.width = (this.isBossSize() ? 100 : 40) * percent;
 
         // 色を体力に合わせて変更
         if (percent < 0.3) this.hpBar.setFillStyle(0xff0000);

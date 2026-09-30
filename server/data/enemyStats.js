@@ -194,6 +194,51 @@ const ENEMY_STATS = {
             { id: "high_mp_potion", chance: 1.0 },
         ],
     }),
+    // --- マップボス ---
+    // 各マップに1体ずつ常駐し、倒すとリスポーンまで時間が空く（respawnDelayはTiledの enemy_spawn 側で指定）。
+    // size: 'boss' の敵は、Q学習AIではなく「近づいて攻撃」するボス専用ロジックで動く（server/services/enemyLoop.js）。
+    // 森のマップボス（森ゾーンの敵 Lv14〜24 の上）
+    forest_boss: defineEnemy({
+        id: "forest_boss",
+        name: "森の主トレント",
+        sprite: "pipo-enemy006.png",
+        size: "boss",
+        level: 30,
+        hp: 15000,
+        atk: 220,
+        def: 45,
+        exp: 40000,
+        gold: 8000,
+        element: "earth",
+        drops: [
+            { id: "high_potion", chance: 1.0 },
+            { id: "high_mp_potion", chance: 1.0 },
+            { id: "power_seed", chance: 0.3 },
+        ],
+    }),
+    // 湿地のマップボス（湿地ゾーンの敵 Lv34〜42 の上）
+    swamp_boss: defineEnemy({
+        id: "swamp_boss",
+        name: "沼の主ヌシ",
+        sprite: "pipo-enemy042.png",
+        size: "boss",
+        level: 52,
+        hp: 60000,
+        atk: 520,
+        def: 90,
+        exp: 150000,
+        gold: 30000,
+        element: "water",
+        // 毒をまとった牙: 30%の確率で5秒間の毒
+        statusEffect: { type: "poison", chance: 0.3, duration: 5000, tickDamage: 40 },
+        drops: [
+            { id: "high_potion", chance: 1.0 },
+            { id: "high_mp_potion", chance: 1.0 },
+            { id: "shield_seed", chance: 0.3 },
+            { id: "magic_seed", chance: 0.1 },
+        ],
+    }),
+    // 火山のマップボス（最終ボス）
     dragon_boss: defineEnemy({
         id: "dragon_boss",
         name: "エンシェントドラゴン",
@@ -229,6 +274,11 @@ function scaledHp(rawHp) {
  * @param {string} type - 敵のタイプ
  * @returns {Object} 敵の統計情報
  */
+// size:'boss' の敵は、ボス専用ロジック（追跡して攻撃）で動かす。type名が 'boss' でなくても判定できる。
+function isBossType(type) {
+    return ENEMY_STATS[type]?.size === "boss";
+}
+
 function getEnemyStats(type) {
     const s = ENEMY_STATS[type] || ENEMY_STATS.slime;
     return { ...s, hp: scaledHp(s.hp), atk: scaledAtk(s.atk) };
@@ -257,4 +307,4 @@ function getPublicEnemyStats() {
     return result;
 }
 
-module.exports = { ENEMY_STATS, getEnemyStats, getPublicEnemyStats };
+module.exports = { ENEMY_STATS, getEnemyStats, getPublicEnemyStats, isBossType };

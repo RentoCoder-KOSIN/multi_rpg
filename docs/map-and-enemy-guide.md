@@ -31,7 +31,7 @@
    | `targetMap` | 行き先のマップキー（必須） |
    | `targetSpawn` | 行き先の `PlayerSpawn` の `name`（座標より優先） |
    | `destX` / `destY` | 行き先の出現座標（`targetSpawn` が無い時） |
-   | `requiredQuest` | このクエストを達成するまで通れない |
+   | `requiredQuest` | このクエストを達成するまで通れない。カンマ区切りで複数指定でき、全て達成すると通れる（例: `kill_forest_slime,forest_skeleton_hunt,forest_boss_quest`）。マップごとのクリアクエストは `client/data/quests.js` の `MAP_CLEAR_QUESTS` |
    | `unlocked` | true ならいつでも通れる |
 
    行き先のマップにも、戻り用の `Teleports` を置くのを忘れずに。
@@ -71,3 +71,9 @@ npm run check
 - `enemy_spawn` の `type` が敵データに無い
 - 敵の画像ファイルが無い
 - どこからも転移で辿り着けないマップ
+
+## マップボスを置く
+
+1. `server/data/enemyStats.js` に `size: "boss"` の敵を追加する（type名は `boss` でなくてよい。`size: "boss"` の敵は、Q学習ではなく「近づいて攻撃」するボス専用ロジックで動く）
+2. マップの `enemy_spawn` に `type` と `respawnDelay`（ms。倒した後の復活までの時間）を付けて1体置く
+3. `client/data/quests.js` にボス討伐クエスト（`type: 'kill'`, `target` にボスのtype, `area` にマップ名）を追加し、`MAP_CLEAR_QUESTS` に並べる

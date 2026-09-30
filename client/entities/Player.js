@@ -3,7 +3,7 @@ import { ITEMS } from "../data/items.js";
 import { SKILLS } from "../data/skills.js";
 import { getEnemyStats } from "../data/enemyStats.js";
 import { getLevelDiffMultiplier, getExpLevelMultiplier } from "../utils/levelScaling.js";
-import { TOTAL_SKILL_SLOTS, GROWTH_CONFIG, COMBAT_CONFIG, REINCARNATION_CONFIG } from "../gameConstants.js";
+import { TOTAL_SKILL_SLOTS, GROWTH_CONFIG, COMBAT_CONFIG, REINCARNATION_CONFIG, AGI_CONFIG, RESET_CONFIG } from "../gameConstants.js";
 import {
     ELEMENTS, getElementMultiplier, getBlendedElementMultiplier, getElementColor,
     getWeaponElementBonus, resolveElement, resistKey, damageKey, collectElementStats,
@@ -103,7 +103,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             int: saved.int || 5,  // Intelligence - 魔法攻撃力に影響
             vit: saved.vit || 5,  // Vitality - HP最大値に影響
             men: saved.men || 5,  // Mental - MP最大値に影響
-            dex: saved.dex || 5,  // Dexterity - クリティカル率・回避率に影響
+            dex: saved.dex || 5,  // Dexterity - クリティカル率・速度に影響
+            agi: saved.agi || AGI_CONFIG.BASE_AGI,  // Agility - 敵の攻撃を回避する確率に影響
             job: saved.job || 'none',
             // 輪廻転生した回数。転生ごとの基礎ステータス強化に使う。
             reincarnationCount: saved.reincarnationCount || 0,
@@ -124,6 +125,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             activeSkills: this.padActiveSkills(saved.activeSkills)
         };
 
+        // ステータスポイントで割り振った分の記録（ステータスリセットの書で返還するために使う）。
+        // この項目が無い古いセーブデータは、レベル・職業タイプ・転生回数から自然成長分を差し引いた推定値で初期化する。
+        this.stats.allocatedStats = this.sanitizeAllocatedStats(saved.allocatedStats) || this.estimateAllocatedStats();
+
         this.applyEquipmentStats(); // 装備中のステータスを反映
 
         // インベントリのマイグレーション (文字列配列 -> オブジェクト配列)
@@ -132,6 +137,36 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         this.saveStats();
+    }
+
+    // 保存済みの割り振り記録を { str,int,vit,men,dex,agi } の非負整数に整える。無効なら null
+    sanitizeAllocatedStats(raw) {
+        if (!raw || typeof raw !== 'object') return null;
+        const out = {};
+        RESET_CONFIG.STAT_KEYS.forEach(k => { out[k] = Math.max(0, Math.floor(Number(raw[k]) || 0)); });
+        return out;
+    }
+
+    // 割り振り記録が無い古いセーブデータ向けの推定。
+    // 「初期値 + 転生ボーナス + レベルアップの自然成長」を現在値から引いた残りを、ポイントで振った分とみなす。
+    // （転職でタイプが変わっていた場合など多少ずれる可能性はあるが、0未満には絶対にならない）
+    estimateAllocatedStats() {
+        const lv = Math.max(1, this.stats.level || 1);
+        const grow = lv - 1;
+        const jobType = JOBS[this.stats.job]?.type || null;
+        const rein = (this.stats.reincarnationCount || 0) * REINCARNATION_CONFIG.BASE_STAT_BONUS;
+        const base = RESET_CONFIG.BASE_VALUE + rein;
+        const natural = {
+            str: base + grow * (jobType === 'physical' ? 2 : 1),
+            int: base + grow * (jobType === 'magical' ? 2 : 1),
+            vit: base + grow,
+            men: base + grow,
+            dex: base + grow,
+            agi: base, // AGIはレベルアップでは自動成長しない
+        };
+        const out = {};
+        RESET_CONFIG.STAT_KEYS.forEach(k => { out[k] = Math.max(0, (this.stats[k] || 0) - natural[k]); });
+        return out;
     }
 
     // 保存済みのactiveSkills配列をTOTAL_SKILL_SLOTS件になるまでnullで埋める
@@ -224,6 +259,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.stats.vit += bonus;
         this.stats.men += bonus;
         this.stats.dex += bonus;
+        this.stats.agi = (this.stats.agi || AGI_CONFIG.BASE_AGI) + bonus;
         this.stats.statPoints += REINCARNATION_CONFIG.BONUS_STAT_POINTS;
 
         this.applyEquipmentStats();
@@ -247,6 +283,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         if (!this.isLocal || !JOBS[newJobId]) return false;
         const currentJobData = JOBS[this.stats.job];
         const newJobData = JOBS[newJobId];
+        if (!currentJobData) return false;
 
         // 条件チェック
         if (this.stats.level < (newJobData.reqLevel || 50)) {
@@ -254,7 +291,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             return false;
         }
 
-        if (currentJobData.nextJob !== newJobId) {
+        // 上位職は基本職ごとに複数（nextJobs）ある。現在の職業から進める先だけ許可する
+        const allowedNext = currentJobData?.nextJobs || (currentJobData?.nextJob ? [currentJobData.nextJob] : []);
+        if (!allowedNext.includes(newJobId)) {
             return false;
         }
 
@@ -514,6 +553,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         let passiveSpeedBonus = 0;
         let passiveCritBonus = 0;
         let passiveLifestealBonus = 0;
+        let passiveDodgeBonus = 0;
         this.stats.cooldownMult = 1.0;  // combat.js がスキルCTに掛ける（1.0=通常）
         this.stats.mpCostMult = 1.0;    // combat.js がMP消費に掛ける（1.0=通常）
         this.stats.healPowerMult = 1.0; // combat.js が回復量に掛ける（1.0=通常）
@@ -534,6 +574,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             if (e.speedFlat) passiveSpeedBonus += e.speedFlat;
             if (e.critChanceFlat) passiveCritBonus += e.critChanceFlat;
             if (e.lifestealFlat) passiveLifestealBonus += e.lifestealFlat;
+            if (e.dodgeChanceFlat) passiveDodgeBonus += e.dodgeChanceFlat;
             if (e.expMultBonus) this.stats.expMultiplier += e.expMultBonus;
             if (e.cooldownMult) this.stats.cooldownMult *= e.cooldownMult;
             if (e.mpCostMult) this.stats.mpCostMult *= e.mpCostMult;
@@ -552,6 +593,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const baseDef = this.stats.def;
         const baseCritChance = this.stats.critChance;
         const baseSpeedBonus = this.stats.speedBonus;
+
+        // 回避率の固定加算分（パッシブ + 装備の dodgeChance）。AGI由来の分は getDodgeChance() が別に計算する
+        this.stats.dodgeChanceFlat = passiveDodgeBonus;
 
         // 装備由来の特殊効果（毎回リセットしてから再計算する）
         this.stats.atkMultiplier = 1.0;
@@ -588,6 +632,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.stats.critChance += getVal(item.critChance || s.critChance);
             this.stats.lifesteal += getVal(item.lifesteal || s.lifesteal);
             this.stats.speedBonus += getVal(item.speedBonus || s.speedBonus);
+            this.stats.dodgeChanceFlat += getVal(item.dodgeChance || s.dodgeChance);
 
             // 属性・特殊効果
             // xxxResist / xxxDamage（xxxは属性id。旧名 ice も水として集計）。値が関数の項目にも対応
@@ -894,7 +939,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     /**
      * ステータスポイントを割り振る
-     * @param {string} stat - 'str', 'int', 'vit', 'men', 'dex'
+     * @param {string} stat - 'str', 'int', 'vit', 'men', 'dex', 'agi'
      * @param {number} points - 割り振るポイント数
      */
     allocateStatPoint(stat, points = 1) {
@@ -906,13 +951,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             return false;
         }
 
-        const validStats = ['str', 'int', 'vit', 'men', 'dex'];
+        const validStats = RESET_CONFIG.STAT_KEYS;
         if (!validStats.includes(stat)) {
             return false;
         }
 
         this.stats.statPoints -= points;
-        this.stats[stat] += points;
+        this.stats[stat] = (this.stats[stat] || 0) + points;
+        // 割り振った分を記録（ステータスリセットの書で返還する対象）
+        if (!this.stats.allocatedStats) this.stats.allocatedStats = this.sanitizeAllocatedStats({}) ;
+        this.stats.allocatedStats[stat] = (this.stats.allocatedStats[stat] || 0) + points;
 
         // 派生ステータスを再計算
         this.applyEquipmentStats();
@@ -923,7 +971,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             int: 'INT (魔法)',
             vit: 'VIT (HP)',
             men: 'MEN (MP)',
-            dex: 'DEX (クリティカル/速度)'
+            dex: 'DEX (クリティカル/速度)',
+            agi: 'AGI (回避)'
         };
 
         if (this.scene.notificationUI) {
@@ -932,7 +981,92 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         return true;
     }
 
+    /**
+     * ステータスリセット: ポイントで割り振った分を全て返還し、ステータスポイントに戻す。
+     * レベルアップの自然成長・転生ボーナス・アイテム（種）の加算分は戻らない。
+     * @returns {number} 返還したポイント数（0なら割り振りが無かった）
+     */
+    resetStatPoints() {
+        if (!this.isLocal) return 0;
+        const alloc = this.stats.allocatedStats || this.estimateAllocatedStats();
+        let refunded = 0;
+        RESET_CONFIG.STAT_KEYS.forEach(k => {
+            // 現在値が初期値を下回らないよう、念のためクランプする
+            const n = Math.min(alloc[k] || 0, Math.max(0, (this.stats[k] || 0) - RESET_CONFIG.BASE_VALUE));
+            if (n > 0) {
+                this.stats[k] -= n;
+                refunded += n;
+            }
+        });
+        this.stats.allocatedStats = this.sanitizeAllocatedStats({});
+        if (refunded <= 0) return 0;
+
+        this.stats.statPoints += refunded;
+        this.applyEquipmentStats();
+        this.stats.hp = Math.min(this.stats.hp, this.stats.maxHp);
+        this.stats.mp = Math.min(this.stats.mp, this.stats.maxMp);
+        this.saveStats();
+        if (this.scene.playerStatsUI) this.scene.playerStatsUI.update();
+        return refunded;
+    }
+
+    /**
+     * 職業リセット: 職業を「なし」に戻し、職業管理人で基本職を選び直せるようにする。
+     * 習得スキル・スキルレベル・装備スロットのスキルはリセットされる（通常の転職と同じ扱い）。
+     * レベルとステータスはそのまま。
+     */
+    resetJob() {
+        if (!this.isLocal) return false;
+        if (this.stats.job === 'none') return false;
+
+        this.stats.job = 'none';
+        this.stats.activeSkills = new Array(TOTAL_SKILL_SLOTS).fill(null);
+        this.stats.unlockedSkills = [];
+        this.stats.skillLevels = {};
+        this.stats.jobExp = 0;
+        this.stats._skipSkillResetOnNextJob = false;
+        this.skillCooldowns = {};
+
+        this.applyEquipmentStats();
+        this.stats.hp = Math.min(this.stats.hp, this.stats.maxHp);
+        this.stats.mp = Math.min(this.stats.mp, this.stats.maxMp);
+        this.saveStats();
+        if (this.scene.playerStatsUI) this.scene.playerStatsUI.update();
+        if (this.scene.skillBarUI) this.scene.skillBarUI.update();
+        return true;
+    }
+
+    // 現在の回避率（0〜MAX_DODGE_CHANCE）。AGIの逓減カーブ + 装備/パッシブの固定加算、上限でクランプ。
+    getDodgeChance() {
+        const agi = Math.max(0, this.stats.agi || 0);
+        const fromAgi = AGI_CONFIG.MAX_DODGE_CHANCE * agi / (agi + AGI_CONFIG.HALF_POINT);
+        const flat = this.stats.dodgeChanceFlat || 0;
+        return Math.min(AGI_CONFIG.MAX_DODGE_CHANCE, Math.max(0, fromAgi + flat));
+    }
+
+    // 回避判定。成功したらMISS表示を出して true を返す（ダメージ・状態異常はすべて無効）。
+    tryDodge() {
+        if (!this.isLocal) return false;
+        if (this.isImmobilized && this.isImmobilized()) return false; // 凍結・麻痺中は避けられない
+        if (Math.random() >= this.getDodgeChance()) return false;
+
+        const miss = this.scene.add.text(this.x, this.y - 30, 'MISS', {
+            fontSize: '14px', fontFamily: '"Press Start 2P"', color: '#8be9fd', stroke: '#000', strokeThickness: 3
+        }).setOrigin(0.5).setDepth(20);
+        this.scene.tweens.add({
+            targets: miss, y: miss.y - 45, alpha: 0, duration: 700,
+            onComplete: () => miss.destroy()
+        });
+        return true;
+    }
+
     takeDamage(amount, attacker, effects = null) {
+        // AGIによる回避。Player.takeDamage は敵の攻撃・接触ダメージからしか呼ばれない
+        // （毒の継続ダメージは stats.hp を直接減らすので、この判定は通らず避けられない）
+        if (this.tryDodge()) {
+            return;
+        }
+
         let finalAmount = amount;
 
         // 防御力によるダメージ軽減（逓減方式: DEFが高いほど軽減率が上がるが0にはならない）

@@ -118,7 +118,8 @@ export default class DialogueManager {
                     const key = event.key.toLowerCase();
                     if (key === 'y') {
                         qm.finishQuest(questId);
-                        this.scene.teleports.forEach(tp => { if (tp.requiredQuest === questId) tp.unlocked = true; });
+                        // 転移は updateTeleports が毎フレーム questGate で判定するので、ここで手動解放する必要は無い
+                        // （複数クエストの全達成が条件の転移は、最後の1つを報告した時点で自然に開く）
                         this.showSystemMessage(`クエスト「${title}」を報告しました！`);
                         if (this.scene.notificationUI) this.scene.notificationUI.show(`クエスト「${title}」を完了しました！`, 'success');
                     } else if (key === 'n') {
@@ -184,6 +185,20 @@ export default class DialogueManager {
 
         // --- 職業選択メニュー ---
         if (npc.jobs) {
+            // チュートリアル以外（街の職業管理人）では、職業が「なし」のときだけ選べる。
+            // すでに職業がある人は「職業リセットの書」を使ってから来てもらう。
+            if (!isTutorial && !jobIsUnset) {
+                const cur = JOBS[this.scene.player?.stats?.job];
+                this.startTypewriter(`${npc.name}: 今の職業は「${cur?.name || '不明'}」だね。職業を変えたいなら、雑貨屋の「職業リセットの書」を使ってからまた来てくれ。`);
+                this.scene.time.delayedCall(2500, () => {
+                    this.hideDialogueUI();
+                    this.isTalking = false;
+                    npc.talking = false;
+                    this.currentNPC = null;
+                });
+                return;
+            }
+
             // 基本職業のみ（reqLevelが設定されていないもの）を抽出
             const jobList = Object.values(JOBS).filter(job => !job.reqLevel);
             let jobText = (canReselect && qm.isFinished(npc.questId))
@@ -218,7 +233,10 @@ export default class DialogueManager {
                     };
                     const weaponId = jobWeapons[selectedJob.id];
                     if (weaponId) {
-                        player.addItem(weaponId);
+                        // 職業を選び直すたびに同じ初期武器が増えないよう、持っていなければ渡す
+                        const owned = (player.stats.inventory || []).some(e => (typeof e === 'string' ? e : e.id) === weaponId)
+                            || Object.values(player.stats.equipment || {}).includes(weaponId);
+                        if (!owned) player.addItem(weaponId);
                         player.equipItem(weaponId);
                     }
 

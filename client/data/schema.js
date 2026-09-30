@@ -117,7 +117,8 @@ export function defineSkill({
  *           description: 'What it does.',
  *           atkBonus: 5, defBonus: 5, hpBonus: 20,
  *           skills: { 1: ['my_skill'], 5: ['another_skill'] },
- *           nextJob: 'my_advanced_job', // omit for a job with no promotion
+ *           nextJobs: ['my_advanced_job_a', 'my_advanced_job_b'], // 進める上位職（複数可）。無ければ省略
+ *           // 上位職が1つだけなら nextJob: 'my_advanced_job' でも書ける（内部では nextJobs に統一される）
  *           atkMult: 1.0, defMult: 1.0, hpMult: 1.0, mpMult: 1.0, // ステータス倍率（省略時1.0）
  *           attackCooldownMult: 1.0, // 通常攻撃の間隔倍率（小さいほど速い）
  *           attackRange: 80,   // 通常攻撃の距離(px)
@@ -140,6 +141,7 @@ export function defineJob({
     reqLevel = null,
     skills = {},
     nextJob = null,
+    nextJobs = null,
     // ステータス倍率（1.0 = 標準）。atkBonus等の固定値と違い、レベルが上がっても差が残る。
     // Player.applyEquipmentStats で基礎値に掛ける（パッシブ・装備の補正はその後に乗る）
     atkMult = 1,
@@ -162,7 +164,10 @@ export function defineJob({
     assert(attackRange > 0, `job "${id}": attackRange must be positive`);
     assert(VALID_HIT_TYPES.includes(attackHit), `job "${id}": attackHit must be one of ${VALID_HIT_TYPES.join(', ')}`);
 
-    const job = { id, type, name, description, atkBonus, defBonus, hpBonus, skills, nextJob, atkMult, defMult, hpMult, mpMult, attackCooldownMult, attackRange, attackHit };
+    // 上位職の一覧。nextJobs を優先し、無ければ nextJob（単体指定）を配列にする。
+    // 旧コード互換のため nextJob には先頭の1つも入れておく。
+    const nexts = Array.isArray(nextJobs) ? nextJobs : (nextJob ? [nextJob] : []);
+    const job = { id, type, name, description, atkBonus, defBonus, hpBonus, skills, nextJob: nexts[0] || null, nextJobs: nexts, atkMult, defMult, hpMult, mpMult, attackCooldownMult, attackRange, attackHit };
     if (reqLevel) job.reqLevel = reqLevel;
     return job;
 }

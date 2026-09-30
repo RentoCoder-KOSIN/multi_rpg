@@ -11,7 +11,7 @@ const {
 const { players, enemies } = require("../state");
 const { findSocketByPlayerId } = require("../utils/socketUtils");
 const { getLevelDiffMultiplier } = require("../utils/levelScaling");
-const { getEnemyStats } = require("../data/enemyStats");
+const { getEnemyStats, isBossType } = require("../data/enemyStats");
 
 // dx/dy は px/秒 なので、経過時間(秒)を掛けて1tickあたりの移動量に変換する
 // 例: approach 50px/s * 0.15s = 7.5px/tick
@@ -129,7 +129,7 @@ function updateMapEnemies(io, aiManager, mapKey) {
     const mapPlayers = collectAlivePlayersOnMap(mapKey);
 
     for (const enemy of Object.values(mapEnemies)) {
-        if (enemy.type === "boss") {
+        if (isBossType(enemy.type)) {
             const isFrozen = enemy.frozenUntil && Date.now() < enemy.frozenUntil;
             const isParalyzed = enemy.paralyzedUntil && Date.now() < enemy.paralyzedUntil;
             const action = (isFrozen || isParalyzed) ? "idle" : updateBoss(io, aiManager, enemy, mapPlayers);

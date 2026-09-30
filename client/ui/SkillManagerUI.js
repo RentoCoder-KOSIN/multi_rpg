@@ -141,7 +141,7 @@ export default class SkillManagerUI extends BaseWindowUI {
         let lineage = [currentJob];
         let checkJobId = currentJob;
         while (true) {
-            let parent = Object.values(JOBS).find(j => j.nextJob === checkJobId);
+            let parent = Object.values(JOBS).find(j => (j.nextJobs || []).includes(checkJobId));
             if (parent) {
                 lineage.push(parent.id);
                 checkJobId = parent.id;
@@ -152,17 +152,19 @@ export default class SkillManagerUI extends BaseWindowUI {
 
         let allSkills = [];
 
-        // 上位職への転職チェック (現在の職業のみ)
-        if (jobDef && jobDef.nextJob) {
-            const nextJobDef = JOBS[jobDef.nextJob];
-            if (nextJobDef) {
-                allSkills.push({
-                    isPromotion: true,
-                    nextJobId: jobDef.nextJob,
-                    reqLevel: nextJobDef.reqLevel || 50,
-                    jobDef: nextJobDef
-                });
-            }
+        // 上位職への転職チェック (現在の職業のみ)。基本職からは複数の上位職（nextJobs）から選べる
+        if (jobDef && jobDef.nextJobs) {
+            jobDef.nextJobs.forEach(nextJobId => {
+                const nextJobDef = JOBS[nextJobId];
+                if (nextJobDef) {
+                    allSkills.push({
+                        isPromotion: true,
+                        nextJobId,
+                        reqLevel: nextJobDef.reqLevel || 50,
+                        jobDef: nextJobDef
+                    });
+                }
+            });
         }
 
         // 全職業系譜のスキルを集約
@@ -195,6 +197,7 @@ export default class SkillManagerUI extends BaseWindowUI {
 
         // ソート（転職情報を上、それ以外を必要レベル順。系譜外は基本下に）
         allSkills.sort((a, b) => {
+            if (a.isPromotion && b.isPromotion) return 0; // 上位職候補どうしは定義順のまま
             if (a.isPromotion) return -1;
             if (b.isPromotion) return 1;
             // 両方スキルなら、まず系譜かどうかで並べる

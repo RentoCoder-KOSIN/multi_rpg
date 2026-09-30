@@ -86,6 +86,9 @@ export function registerInputHandlers(scene) {
 }
 
 function closeTopWindow(scene) {
+    // 個数ダイアログが最前面。Escはそれだけを閉じる（ダイアログ自身のEsc処理に任せる）
+    if (scene.quantityDialog && scene.quantityDialog.isBlocking()) return;
+
     if (scene.shopUI && scene.shopUI.isOpen) {
         scene.shopUI.close();
     } else if (scene.inventoryUI && scene.inventoryUI.isOpen) {

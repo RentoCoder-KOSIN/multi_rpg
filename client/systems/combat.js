@@ -417,7 +417,12 @@ function applyPartySkill(scene, skillId, skill, range) {
     });
 
     targets.forEach(({ player: target, id: targetId }) => {
-        if (skillId === 'heal') {
+        // 専用処理のある heal / *_buff 以外の味方スキル（上位職の回復・バフ）は effect の内容で汎用的に処理する
+        const isGenericHeal = skillId !== 'heal' && skill.effect?.healPower && !skill.effect?.buffType;
+        const genericBuff = skill.effect?.buffType && !['attack_buff', 'defense_buff', 'speed_buff', 'summon_boost'].includes(skillId)
+            ? skill.effect : null;
+
+        if (skillId === 'heal' || isGenericHeal) {
             const skillLevel = player.stats.skillLevels?.[skillId] || 1;
             const int = player.stats.int || 5;
             const baseHeal = skill.effect?.healPower || 50;
@@ -445,6 +450,10 @@ function applyPartySkill(scene, skillId, skill, range) {
             giveBuff(scene, target, targetId, 'speed_buff', 50, 15000); // +50 speed
         } else if (skillId === 'summon_boost') {
             giveBuff(scene, target, targetId, 'summon_power_up', Math.ceil(player.stats.int * 2), 20000); // scales with INT
+        } else if (genericBuff) {
+            // effect.buffType = 'attack_buff' | 'defense_buff'。現在のATK/DEFの buffMult 倍を buffDuration(ms) のあいだ加算する
+            const baseValue = genericBuff.buffType === 'defense_buff' ? target.stats.def : target.stats.atk;
+            giveBuff(scene, target, targetId, genericBuff.buffType, Math.ceil(baseValue * (genericBuff.buffMult || 0.5)), genericBuff.buffDuration || 15000);
         }
     });
 }

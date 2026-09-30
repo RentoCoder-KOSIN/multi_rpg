@@ -12,4 +12,5 @@ export { TANK_SKILLS } from './tankSkills.js';
 export { RANGER_SKILLS } from './rangerSkills.js';
 export { SUMMONER_SKILLS } from './summonerSkills.js';
 export { ADVANCED_SKILLS } from './advancedSkills.js';
+export { ADVANCED_SKILLS_EXTRA } from './advancedSkillsExtra.js';
 export { PRIEST_SKILLS } from './priestSkills.js';

@@ -1,4 +1,5 @@
 import { QUESTS } from '../data/quests.js';
+import { isTeleportUnlocked } from '../utils/questGate.js';
 import { getMapDisplayName } from '../data/maps.js';
 
 const RECOMPUTE_INTERVAL_MS = 500;
@@ -116,11 +117,7 @@ export default class ObjectiveIndicatorUI {
         teleports.forEach(tp => {
             if (!tp.targetMap) return;
 
-            const unlocked = tp.unlocked
-                || !tp.requiredQuest
-                || qm.isFinished(tp.requiredQuest)
-                || qm.isCompleted(tp.requiredQuest);
-            if (!unlocked) return;
+            if (!isTeleportUnlocked(qm, tp)) return;
 
             // ローカルの座標系はTiledのオブジェクト左上なので、中心に補正して距離を測る
             const cx = tp.x + (tp.width || 32) / 2;

@@ -71,6 +71,9 @@ export default class BaseWindowUI {
         // 6. Common Keyboard Input
         this.scene.input.keyboard.on('keydown', (event) => {
             if (this.isOpen && event.code === 'Escape') {
+                // 個数ダイアログが開いている間（と閉じた直後）のEscは、ダイアログだけを閉じる
+                const dlg = this.scene.quantityDialog;
+                if (dlg && dlg !== this && dlg.isBlocking()) return;
                 this.toggle();
             }
         });

@@ -1,6 +1,6 @@
 import { ITEMS } from "../data/items.js";
 import BaseWindowUI from "./BaseWindowUI.js";
-import { ECONOMY_CONFIG } from "../gameConstants.js";
+import { entryId, entryCount, removableCount, removeFromInventory } from "../utils/inventoryOps.js";
 
 export default class InventoryUI extends BaseWindowUI {
     constructor(scene) {
@@ -32,21 +32,21 @@ export default class InventoryUI extends BaseWindowUI {
         detailBg.fillRoundedRect(-panelWidth / 2 + 20, panelHeight / 2 - 85, panelWidth - 40, 70, 10);
         this.container.add(detailBg);
 
-        this.detailText = this.scene.add.text(0, panelHeight / 2 - 50, '十字キーで選択、Enterで装備/使用（Shift+Enterでまとめて使用）\nDeleteで捨てる、Sキーで売る', {
+        this.detailText = this.scene.add.text(0, panelHeight / 2 - 50, '十字キーで選択、Enterで装備/使用（Shift+Enterでまとめて使用）\nUで個数を指定して使用、Deleteで捨てる（売るのはショップで）', {
             fontSize: '11px', fontFamily: '"Press Start 2P"', color: '#e0e0e0',
             wordWrap: { width: panelWidth - 60 }, align: 'center'
         }).setOrigin(0.5);
         this.container.add(this.detailText);
 
-        // 売却ボタン
-        this.sellBtn = this.scene.add.text(panelWidth / 2 - 72, panelHeight / 2 - 25, '💰', { fontSize: '24px' })
+        // 個数指定で使うボタン
+        this.useManyBtn = this.scene.add.text(panelWidth / 2 - 72, panelHeight / 2 - 25, '🔢', { fontSize: '24px' })
             .setOrigin(0.5)
             .setInteractive({ useHandCursor: true });
-        this.sellBtn.on('pointerdown', (e) => {
+        this.useManyBtn.on('pointerdown', (p, lx, ly, e) => {
             if (e) e.stopPropagation();
-            this.handleItemSell();
+            this.handleUseMany();
         });
-        this.container.add(this.sellBtn);
+        this.container.add(this.useManyBtn);
 
         // ゴミ箱ボタン
         this.trashBtn = this.scene.add.text(panelWidth / 2 - 40, panelHeight / 2 - 25, '🗑️', { fontSize: '24px' })
@@ -73,6 +73,9 @@ export default class InventoryUI extends BaseWindowUI {
 
         // キーボード登録 (BaseWindowUI の Esc 以外)
         this.scene.input.keyboard.on('keydown', (event) => {
+            // 個数ダイアログの操作中（と閉じた直後）は、そのキー入力をこちらで処理しない
+            if (this.scene.quantityDialog?.isBlocking()) return;
+
             // Iキーは常に（閉じている時でも）反応するように
             if (event.code === 'KeyI') {
                 if (!this.scene.shopUI?.isOpen) {
@@ -100,14 +103,15 @@ export default class InventoryUI extends BaseWindowUI {
                 }
             } else if (event.code === 'Delete' || event.code === 'Backspace') {
                 this.handleItemDiscard();
-            } else if (event.code === 'KeyS') {
-                this.handleItemSell();
+            } else if (event.code === 'KeyU') {
+                this.handleUseMany();
             }
             this.updateSelection();
         });
 
         // マウスホイールでの選択移動(1行分ずつ)
         this.scene.input.on('wheel', (pointer, gameObjects, deltaX, deltaY) => {
+            if (this.scene.quantityDialog?.isBlocking()) return;
             if (!this.isOpen || (this.scene.shopUI && this.scene.shopUI.isOpen)) return;
             const itemsPerRow = 5;
             if (deltaY > 0) {
@@ -272,7 +276,7 @@ export default class InventoryUI extends BaseWindowUI {
         this.refreshList();
     }
 
-    useItem(index, useAll = false) {
+    useItem(index, useAll = false, useCountOverride = null) {
         const invItem = this.inventory[index];
         if (!invItem) return;
 
@@ -283,10 +287,18 @@ export default class InventoryUI extends BaseWindowUI {
         if (!item || !player) return;
 
         // useAll=trueなら、その枠にスタックされている分をまとめて一気に消費する
-        const stackCount = (typeof invItem === 'object') ? (invItem.count || 1) : 1;
-        const useCount = useAll ? stackCount : 1;
-
+        const stackCount = entryCount(invItem);
         const s = item.stats || {};
+
+        // リセットの書は「まとめて使う」ことに意味が無いので、常に1個だけ使う。
+        // 効果が無い状況（割り振りが無い・職業が無い）では、確認も消費もしない。
+        if (s.resetStats || s.resetJob) {
+            this.useResetBook(index, invItem, s);
+            return;
+        }
+
+        // useCountOverride: 個数ダイアログで指定された個数。useAll=trueなら所持数ぶん全部
+        const useCount = Math.max(1, Math.min(stackCount, useCountOverride ?? (useAll ? stackCount : 1)));
 
         const heal = (item.heal || s.heal || 0) * useCount;
         if (heal > 0) {
@@ -356,91 +368,118 @@ export default class InventoryUI extends BaseWindowUI {
         if (this.scene.playerStatsUI) this.scene.playerStatsUI.update();
     }
 
-    handleItemSell() {
-        if (this.selectedIndex < 0 || this.selectedIndex >= this.inventory.length) return;
+    // リセットの書（ステータス/職業）の使用
+    useResetBook(index, invItem, s) {
+        const player = this.scene.player;
+        const notify = (msg, type = 'info') => this.scene.notificationUI?.show(msg, type);
 
+        if (s.resetStats) {
+            const alloc = player.stats.allocatedStats || player.estimateAllocatedStats();
+            const total = Object.values(alloc).reduce((a, b) => a + b, 0);
+            if (total <= 0) {
+                notify('割り振ったステータスポイントがありません', 'error');
+                return;
+            }
+            if (!confirm(`割り振った ${total} ポイントを全て返還します。よろしいですか？`)) return;
+            const refunded = player.resetStatPoints();
+            notify(`ステータスをリセットしました（${refunded}ポイント返還）。Pキーで振り直せます`, 'success');
+        } else if (s.resetJob) {
+            if (player.stats.job === 'none') {
+                notify('すでに職業がありません。職業管理人で職業を選べます', 'error');
+                return;
+            }
+            if (!confirm('職業を「なし」に戻します。習得スキルとJob EXPはリセットされます。よろしいですか？')) return;
+            player.resetJob();
+            notify('職業をリセットしました。街かチュートリアルの職業管理人で選び直してください', 'success');
+        }
+
+        removeFromInventory(player, index, 1);
+        if (this.selectedIndex >= player.stats.inventory.length) {
+            this.selectedIndex = Math.max(0, player.stats.inventory.length - 1);
+        }
+        player.saveStats();
+        if (this.scene.playerStatsUI) this.scene.playerStatsUI.update();
+        this.refreshList();
+    }
+
+    // Uキー / 🔢ボタン: 個数を指定して使う（消耗品のみ。装備品・素材は対象外）
+    handleUseMany() {
         const invItem = this.inventory[this.selectedIndex];
-        const itemId = (typeof invItem === 'string') ? invItem : invItem.id;
+        if (!invItem || !this.scene.player) return;
+        const item = ITEMS[entryId(invItem)];
+        if (!item) return;
 
-        if (!itemId || !this.scene.player) return;
+        if (item.type === 'weapon' || item.type === 'armor' || item.type === 'accessory') {
+            this.scene.notificationUI?.show('装備品は個数を指定して使えません', 'info');
+            return;
+        }
+        if (item.type === 'material') {
+            this.scene.notificationUI?.show('街の鍛冶屋で装備に使用できます', 'info');
+            return;
+        }
 
+        const count = entryCount(invItem);
+        if (count <= 1 || item.stats?.resetStats || item.stats?.resetJob) {
+            // 1個しかない/リセットの書は、個数を選ぶ意味が無いので通常の使用と同じ
+            this.handleItemClick(this.selectedIndex, false);
+            return;
+        }
+
+        const index = this.selectedIndex;
+        this.scene.quantityDialog.show({
+            title: '🔢 いくつ使う？',
+            itemName: item.name,
+            max: count,
+            confirmLabel: '使う',
+            onConfirm: (qty) => {
+                // ダイアログを開いている間にインベントリが変わっていないか確認してから使う
+                const current = this.scene.player.stats.inventory[index];
+                if (!current || entryId(current) !== entryId(invItem)) return;
+                this.useItem(index, false, Math.min(qty, entryCount(current)));
+                this.refreshList();
+                this.updateSelection();
+            },
+        });
+    }
+
+    // 🗑️ / Delete: 個数を選んで捨てる。売るのはショップ（ShopUI の「売る」）からだけ。
+    handleItemDiscard() {
+        if (this.selectedIndex < 0 || this.selectedIndex >= this.inventory.length) return;
+        const player = this.scene.player;
+        if (!player) return;
+
+        const index = this.selectedIndex;
+        const invItem = this.inventory[index];
+        const itemId = entryId(invItem);
         const item = ITEMS[itemId];
         if (!item) return;
 
-        // 装備中のアイテムは売れないようにする（捨てる場合と同じ制約）
-        if (this.scene.player.stats.equipment.weapon === itemId || this.scene.player.stats.equipment.armor === itemId ||
-            this.scene.player.stats.equipment.relic === itemId) {
-            if (this.scene.notificationUI) this.scene.notificationUI.show('装備中のアイテムは売れません', 'error');
+        // 装備中の1個は捨てられない（同じ装備を複数持っていれば、余った分は捨てられる）
+        const maxDiscard = removableCount(player, invItem);
+        if (maxDiscard <= 0) {
+            this.scene.notificationUI?.show('装備中のアイテムは捨てられません', 'error');
             return;
         }
 
-        // 購入価格(price)の ECONOMY_CONFIG.SELL_RATE 倍が売却額。price未設定のアイテムは売却不可。
-        const sellPrice = Math.floor((item.price || 0) * ECONOMY_CONFIG.SELL_RATE);
-        if (sellPrice <= 0) {
-            if (this.scene.notificationUI) this.scene.notificationUI.show('このアイテムは売れません', 'error');
-            return;
-        }
-
-        const confirmSell = confirm(`${item.name} を ${sellPrice}G で売りますか？`);
-        if (confirmSell) {
-            // 消費処理 (個数減算 or 削除) - 売る場合も1個ずつ
-            if (typeof invItem === 'object' && invItem.count > 1) {
-                invItem.count--;
-            } else {
-                this.scene.player.stats.inventory.splice(this.selectedIndex, 1);
-
-                // 選択インデックス調整
-                if (this.selectedIndex >= this.scene.player.stats.inventory.length) {
-                    this.selectedIndex = Math.max(0, this.scene.player.stats.inventory.length - 1);
+        this.scene.quantityDialog.show({
+            title: '🗑️ 捨てる',
+            itemName: `${item.name}${entryCount(invItem) > 1 ? `（所持 ${entryCount(invItem)}）` : ''}`,
+            max: maxDiscard,
+            confirmLabel: '捨てる',
+            onConfirm: (qty) => {
+                const current = player.stats.inventory[index];
+                if (!current || entryId(current) !== itemId) return;
+                const n = Math.min(qty, removableCount(player, current));
+                if (n <= 0) return;
+                removeFromInventory(player, index, n);
+                if (this.selectedIndex >= player.stats.inventory.length) {
+                    this.selectedIndex = Math.max(0, player.stats.inventory.length - 1);
                 }
-            }
-
-            // gainGold()は「GOLD +N」という別の通知も出すため、ここでは直接加算して
-            // 「何を売って何Gになったか」が分かる一つの通知にまとめる。
-            this.scene.player.stats.gold += sellPrice;
-            this.scene.player.saveStats();
-            if (this.scene.notificationUI) this.scene.notificationUI.show(`${item.name} を ${sellPrice}G で売りました`, 'success');
-            if (this.scene.playerStatsUI) this.scene.playerStatsUI.update();
-            if (this.scene.shopUI && typeof this.scene.shopUI.updateGold === 'function') this.scene.shopUI.updateGold();
-            this.refreshList();
-            this.updateSelection();
-        }
-    }
-
-    handleItemDiscard() {
-        if (this.selectedIndex < 0 || this.selectedIndex >= this.inventory.length) return;
-
-        const invItem = this.inventory[this.selectedIndex];
-        const itemId = (typeof invItem === 'string') ? invItem : invItem.id;
-
-        if (!itemId || !this.scene.player) return;
-
-        const item = ITEMS[itemId];
-        // 装備中のアイテムは捨てられないようにする
-        if (this.scene.player.stats.equipment.weapon === itemId || this.scene.player.stats.equipment.armor === itemId ||
-            this.scene.player.stats.equipment.relic === itemId) {
-            if (this.scene.notificationUI) this.scene.notificationUI.show('装備中のアイテムは捨てられません', 'error');
-            return;
-        }
-
-        const confirmDiscard = confirm(`${item.name} を捨てますか？`);
-        if (confirmDiscard) {
-            // 消費処理 (個数減算 or 削除) - 捨てる場合は1個ずつ
-            if (typeof invItem === 'object' && invItem.count > 1) {
-                invItem.count--;
-            } else {
-                this.scene.player.stats.inventory.splice(this.selectedIndex, 1);
-
-                // 選択インデックス調整
-                if (this.selectedIndex >= this.scene.player.stats.inventory.length) {
-                    this.selectedIndex = Math.max(0, this.scene.player.stats.inventory.length - 1);
-                }
-            }
-
-            this.scene.player.saveStats();
-            if (this.scene.notificationUI) this.scene.notificationUI.show(`${item.name} を捨てました`, 'info');
-            this.refreshList();
-            this.updateSelection();
-        }
+                player.saveStats();
+                this.scene.notificationUI?.show(`${item.name} を${n > 1 ? ` ${n}個 ` : ''}捨てました`, 'info');
+                this.refreshList();
+                this.updateSelection();
+            },
+        });
     }
 }

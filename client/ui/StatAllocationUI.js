@@ -1,4 +1,5 @@
 import BaseWindowUI from "./BaseWindowUI.js";
+import { AGI_CONFIG } from "../gameConstants.js";
 
 export default class StatAllocationUI extends BaseWindowUI {
     constructor(scene) {
@@ -28,11 +29,12 @@ export default class StatAllocationUI extends BaseWindowUI {
 
         // ステータス項目
         const stats = [
-            { key: 'str', label: '[1] STR', desc: '物理攻撃', effect: 'Phy ATK', y: -120 },
-            { key: 'int', label: '[2] INT', desc: '魔法攻撃', effect: 'Mag ATK', y: -60 },
-            { key: 'vit', label: '[3] VIT', desc: 'HP', effect: 'HP +10', y: 0 },
-            { key: 'men', label: '[4] MEN', desc: 'MP', effect: 'MP +5', y: 60 },
-            { key: 'dex', label: '[5] DEX', desc: 'クリ/速度', effect: 'Crit +1%', y: 120 }
+            { key: 'str', label: '[1] STR', desc: '物理攻撃', effect: 'Phy ATK', y: -130 },
+            { key: 'int', label: '[2] INT', desc: '魔法攻撃', effect: 'Mag ATK', y: -75 },
+            { key: 'vit', label: '[3] VIT', desc: 'HP', effect: 'HP +10', y: -20 },
+            { key: 'men', label: '[4] MEN', desc: 'MP', effect: 'MP +5', y: 35 },
+            { key: 'dex', label: '[5] DEX', desc: 'クリ/速度', effect: 'Crit +1%', y: 90 },
+            { key: 'agi', label: '[6] AGI', desc: '回避', effect: 'Dodge', y: 145 }
         ];
 
         this.statTexts = {};
@@ -63,7 +65,7 @@ export default class StatAllocationUI extends BaseWindowUI {
             this.effectTexts[stat.key] = effectText;
 
             // +ボタン
-            const plusBtn = this.scene.add.rectangle(width / 2 - 120, stat.y, 60, 50, 0x00aa00)
+            const plusBtn = this.scene.add.rectangle(width / 2 - 120, stat.y, 60, 44, 0x00aa00)
                 .setStrokeStyle(3, 0x00ff00)
                 .setInteractive({ useHandCursor: true });
 
@@ -83,7 +85,7 @@ export default class StatAllocationUI extends BaseWindowUI {
             });
 
             // +5ボタン
-            const plus5Btn = this.scene.add.rectangle(width / 2 - 50, stat.y, 70, 50, 0x0088aa)
+            const plus5Btn = this.scene.add.rectangle(width / 2 - 50, stat.y, 70, 44, 0x0088aa)
                 .setStrokeStyle(3, 0x00aaff)
                 .setInteractive({ useHandCursor: true });
 
@@ -109,14 +111,14 @@ export default class StatAllocationUI extends BaseWindowUI {
             ]);
         });
 
-        // キーボード操作 (1-5キー)
+        // キーボード操作 (1-6キー)
         this.scene.input.keyboard.on('keydown', (event) => {
             if (!this.isOpen) return;
 
             // Pキー以外の入力
             const keys = {
-                'Digit1': 'str', 'Digit2': 'int', 'Digit3': 'vit', 'Digit4': 'men', 'Digit5': 'dex',
-                'Numpad1': 'str', 'Numpad2': 'int', 'Numpad3': 'vit', 'Numpad4': 'men', 'Numpad5': 'dex'
+                'Digit1': 'str', 'Digit2': 'int', 'Digit3': 'vit', 'Digit4': 'men', 'Digit5': 'dex', 'Digit6': 'agi',
+                'Numpad1': 'str', 'Numpad2': 'int', 'Numpad3': 'vit', 'Numpad4': 'men', 'Numpad5': 'dex', 'Numpad6': 'agi'
             };
 
             const statKey = keys[event.code];
@@ -152,6 +154,7 @@ export default class StatAllocationUI extends BaseWindowUI {
         this.statTexts.vit?.setText(`[3] VIT: ${player.stats.vit || 5}`);
         this.statTexts.men?.setText(`[4] MEN: ${player.stats.men || 5}`);
         this.statTexts.dex?.setText(`[5] DEX: ${player.stats.dex || 5}`);
+        this.statTexts.agi?.setText(`[6] AGI: ${player.stats.agi || 5}`);
 
         this.updateEffectTexts(player);
 
@@ -183,5 +186,8 @@ export default class StatAllocationUI extends BaseWindowUI {
 
         const critPercent = Math.round((player.stats.critChance || 0) * 100);
         this.effectTexts.dex?.setText(`会心${critPercent}%${equipCritSuffix} 速度+${Math.round(player.stats.speedBonus || 0)}${equipSpeedSuffix}`);
+
+        const dodgePercent = (player.getDodgeChance() * 100).toFixed(1);
+        this.effectTexts.agi?.setText(`回避率 ${dodgePercent}% (上限${Math.round(AGI_CONFIG.MAX_DODGE_CHANCE * 100)}%)`);
     }
 }

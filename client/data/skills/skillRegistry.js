@@ -11,6 +11,7 @@ import { TANK_SKILLS } from './tankSkills.js';
 import { RANGER_SKILLS } from './rangerSkills.js';
 import { SUMMONER_SKILLS } from './summonerSkills.js';
 import { ADVANCED_SKILLS } from './advancedSkills.js';
+import { ADVANCED_SKILLS_EXTRA } from './advancedSkillsExtra.js';
 import { PRIEST_SKILLS } from './priestSkills.js';
 
 /**
@@ -32,7 +33,8 @@ export const SKILLS = {
     ...PRIEST_SKILLS,
 
     // 上位職スキル
-    ...ADVANCED_SKILLS
+    ...ADVANCED_SKILLS,
+    ...ADVANCED_SKILLS_EXTRA
 };
 
 /**
@@ -68,7 +70,27 @@ export const SKILLS_BY_JOB = {
     paladin: ['holy_sanctuary', 'smite', 'aegis_of_faith', 'retribution_aura'],
     sniper: ['death_rain', 'headshot', 'eagle_eye', 'swift_reload'],
     high_summoner: ['demon_lord_summon', 'arcane_barrage', 'overlords_pact', 'ancient_bond'],
-    exorcist: ['exorcism', 'divine_judgment', 'sanctified_ground', 'unwavering_faith']
+    exorcist: ['exorcism', 'divine_judgment', 'sanctified_ground', 'unwavering_faith'],
+
+    // 上位職（追加分。基本職ごとに4職になるよう増やした18職）
+    berserker: ['rampage_slash', 'blood_frenzy', 'bloodlust', 'berserk_heart'],
+    samurai: ['iai_slash', 'moonlit_blade', 'bushido', 'zanshin'],
+    dragon_knight: ['dragon_thrust', 'dragon_breath', 'dragon_scale', 'dragon_soul'],
+    elementalist: ['flame_lance', 'tempest_burst', 'elemental_mastery', 'prismatic_focus'],
+    warlock: ['curse_bolt', 'soul_drain', 'dark_pact', 'forbidden_knowledge'],
+    sage: ['thunder_judgment', 'arcane_ward', 'sages_wisdom', 'mana_flow'],
+    warden: ['bulwark_bash', 'fortress_aura', 'ironwall', 'vital_bastion'],
+    avenger: ['vengeful_strike', 'wrath_of_the_fallen', 'grudge', 'unyielding_wrath'],
+    juggernaut: ['colossus_slam', 'earthquake', 'titan_hide', 'unstoppable'],
+    ninja: ['shuriken_storm', 'shadow_assassinate', 'shadow_step', 'killer_instinct'],
+    gunslinger: ['quick_draw', 'bullet_hell', 'sharpshooter', 'gun_kata'],
+    wind_archer: ['gale_arrow', 'storm_volley', 'wind_veil', 'zephyr_focus'],
+    necromancer: ['death_bolt', 'grave_call', 'undead_pact', 'soul_harvest'],
+    beast_lord: ['primal_roar', 'wild_charge', 'pack_leader', 'wild_instinct'],
+    spirit_master: ['spirit_lance', 'spirit_storm', 'spirit_communion', 'ethereal_veil'],
+    saint: ['holy_radiance', 'benediction', 'divine_grace', 'saintly_aura'],
+    war_priest: ['holy_smash', 'sanctified_strike', 'zealous_might', 'holy_resolve'],
+    shadow_priest: ['shadow_bolt', 'void_prison', 'dark_devotion', 'twilight_veil']
 };
 
 /**

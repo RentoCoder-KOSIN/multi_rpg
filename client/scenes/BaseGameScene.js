@@ -16,6 +16,8 @@ import { updateEnemyDebugUI, drawEnemyAttackRanges } from '../utils/enemyDebug.j
 import { isAnyWindowOpen } from '../utils/uiState.js';
 import { createPlayerAnimations } from '../animations/playerAnimations.js';
 import ShopUI from '../ui/ShopUI.js';
+import QuantityDialogUI from '../ui/QuantityDialogUI.js';
+import { isTeleportUnlocked } from '../utils/questGate.js';
 import InventoryUI from '../ui/InventoryUI.js';
 import PartyUI from '../ui/PartyUI.js';
 import PartyHUDUI from '../ui/PartyHUDUI.js';
@@ -86,6 +88,9 @@ export default class BaseGameScene extends Phaser.Scene {
 
         // --- Player ---
         const { x, y } = resolvePlayerSpawn(this.map, data);
+        // 個数ダイアログは、キー入力を先に受け取れるよう、ショップ/インベントリより先に作る
+        this.quantityDialog = new QuantityDialogUI(this);
+        this.quantityDialog.createUI();
         this.shopUI = new ShopUI(this);
         this.inventoryUI = new InventoryUI(this);
         this.shopUI.createUI();
@@ -142,7 +147,8 @@ export default class BaseGameScene extends Phaser.Scene {
         // --- Teleports ---
         this.teleports = setupTeleportsFromMap(this, this.map) || [];
         this.teleports.forEach(tp => {
-            if (tp.requiredQuest && (this.questManager.isFinished(tp.requiredQuest) || this.questManager.isCompleted(tp.requiredQuest))) {
+            // requiredQuest はカンマ区切りで複数指定できる（全て達成で解放）
+            if (tp.requiredQuest && isTeleportUnlocked(this.questManager, tp)) {
                 tp.unlocked = true;
             }
         });

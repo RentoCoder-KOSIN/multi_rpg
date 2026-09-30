@@ -55,18 +55,18 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
 
         // ステータス設定
         let baseHp = 50000;
-        let atkMultiplier = 0.8;
+        let atkMultiplier = 1.8;
         let speedBonus = 0;
         let atkBaseMult = 2;
 
         if (type === "mega" || type === "mega_summon") {
             baseHp = 150000;
-            atkMultiplier = 1.5;
+            atkMultiplier = 3.5;
             speedBonus = 50;
             atkBaseMult = 3;
         } else if (type === "demon_lord" || type === "demon_lord_summon") {
             baseHp = 500000; // 圧倒的タフネス
-            atkMultiplier = 3.0; // 圧倒的攻撃力
+            atkMultiplier = 7.0; // 圧倒的攻撃力
             speedBonus = 100;
             atkBaseMult = 5;
         }

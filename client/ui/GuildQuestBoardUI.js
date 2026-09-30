@@ -83,6 +83,8 @@ export default class GuildQuestBoardUI extends BaseWindowUI {
         Object.keys(QUESTS).forEach(id => {
             const def = QUESTS[id];
             if (qm.isFinished(id)) return; // 報告済みは一覧から消す
+            // まだ解放されていないマップのクエストは、掲示板にも出さない（前のマップのクリアクエストを全て達成すると出る）
+            if (!qm.isStarted(id) && !qm.canStart(id)) return;
             if (qm.isCompleted(id)) {
                 turnin.push({ id, def });
             } else if (qm.isStarted(id)) {

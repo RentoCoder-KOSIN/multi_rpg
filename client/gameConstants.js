@@ -56,3 +56,21 @@ export const REINCARNATION_CONFIG = {
     BASE_STAT_BONUS: 15,      // 転生1回ごとにSTR/INT/VIT/MEN/DEXそれぞれへ永続加算される値
     BONUS_STAT_POINTS: 30,    // 転生1回ごとに追加で貰える自由配分ステータスポイント
 };
+
+// AGI（敏捷性）: 敵の攻撃を一定確率で回避する。
+// 回避率 = MAX_DODGE_CHANCE * agi / (agi + HALF_POINT) + パッシブ等の固定加算、を MAX_DODGE_CHANCE で頭打ちにする。
+// 逓減カーブなので、振れば振るほど伸びるが上限（既定45%）を超えて敵の攻撃が全く当たらなくなることはない。
+//   AGI 5 -> 約0.6%   AGI 100 -> 約10%   AGI 250 -> 約19%   AGI 500 -> 約27%   AGI 1000 -> 約33%（実測: test で確認済み）
+// 上限そのものを変えたいときは MAX_DODGE_CHANCE だけ、伸び方（上限への近づきやすさ）は HALF_POINT を変える。
+export const AGI_CONFIG = {
+    BASE_AGI: 5,              // 初期値（他の基本ステータスと同じ）
+    MAX_DODGE_CHANCE: 0.45,   // 回避率の絶対上限（ゲームバランスが崩れないよう、40〜50%を目安に）
+    HALF_POINT: 350,          // 回避率が上限の半分に達するAGI値
+};
+
+// ステータス/職業リセットアイテムの設定
+export const RESET_CONFIG = {
+    STAT_KEYS: ['str', 'int', 'vit', 'men', 'dex', 'agi'], // 割り振り対象の基本ステータス
+    BASE_VALUE: 5,            // 各ステータスの初期値
+};
+

@@ -43,7 +43,8 @@ export const SHOP_LOADOUTS = {
         items: [
             "potion", "high_potion", "menno_kayaku", "eatable_negi",
             "heal_potion_small", "heal_potion_large", "heal_izumi",
-            "power_seed", "shield_seed", "magic_seed"
+            "power_seed", "shield_seed", "magic_seed",
+            "stat_reset_book", "job_reset_book"
         ]
     },
     city_death: {

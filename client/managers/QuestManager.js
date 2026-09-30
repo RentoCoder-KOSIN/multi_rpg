@@ -1,4 +1,5 @@
 import { QUESTS } from "../data/quests.js";
+import { isAreaUnlocked } from "../utils/questGate.js";
 
 export default class QuestManager {
     constructor(scene) {
@@ -47,9 +48,22 @@ export default class QuestManager {
         });
     }
 
+    // マップ（area）付きのクエストは、前のマップのクエストを全て達成するまで受注できない
+    canStart(id) {
+        const def = QUESTS[id];
+        if (!def) return false;
+        return !def.area || isAreaUnlocked(this, def.area);
+    }
+
     startQuest(id) {
         const def = QUESTS[id];
-        if (!def || this.quests[id]) return;
+        if (!def || this.quests[id]) return false;
+        if (!this.canStart(id)) {
+            if (this.scene.notificationUI) {
+                this.scene.notificationUI.show(`「${def.title}」は、前のマップのクエストを全て達成すると受けられます`, 'error');
+            }
+            return false;
+        }
 
         this.quests[id] = {
             ...def,
@@ -59,6 +73,7 @@ export default class QuestManager {
 
         this.saveQuests();
         this.emitUpdate();
+        return true;
     }
 
     completeQuest(id) {

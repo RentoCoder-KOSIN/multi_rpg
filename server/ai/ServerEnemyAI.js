@@ -7,6 +7,7 @@ const ServerQLearning = require('./ServerQLearning');
 
 // 敵の行動定数
 const { ENEMY_ATTACK_RANGE } = require('../config');
+const { isBossType } = require('../data/enemyStats');
 
 const DETECT_RANGE = 300;
 // enemyLoop.js の実際の命中判定 (ENEMY_ATTACK_RANGE) と一致させる。
@@ -330,7 +331,7 @@ class ServerEnemyAIManager {
      * 敵が生成されたときに登録
      */
     registerEnemy(enemy) {
-        if (enemy.type === 'boss') return; // ボスは別ロジック
+        if (isBossType(enemy.type)) return; // ボス（size:'boss'）は別ロジック（enemyLoop.js の updateBoss）
         const agent = this.getAgent(enemy.type);
         this.instances[enemy.id] = new EnemyAgentInstance(enemy, agent);
     }

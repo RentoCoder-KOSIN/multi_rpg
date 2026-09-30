@@ -4,6 +4,7 @@
  */
 export function isAnyWindowOpen(scene) {
     return !!(
+        scene.quantityDialog?.isOpen ||
         scene.inventoryUI?.isOpen ||
         scene.shopUI?.isOpen ||
         scene.skillManagerUI?.isOpen ||
