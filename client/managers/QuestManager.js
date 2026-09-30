@@ -1,5 +1,7 @@
 import { QUESTS } from "../data/quests.js";
 import { isAreaUnlocked } from "../utils/questGate.js";
+import { isTeleportUnlocked } from '../utils/questGate.js';
+import { getMapDisplayName } from '../data/maps.js';
 
 export default class QuestManager {
     constructor(scene) {
@@ -87,6 +89,11 @@ export default class QuestManager {
 
         if (this.scene.notificationUI) {
             this.scene.notificationUI.show(`クエスト「${quest.title}」達成！報告してください。`, 'warning');
+            const nextTeleport = (this.scene.teleports || []).find(tp => tp.targetMap && isTeleportUnlocked(this, tp));
+            if (nextTeleport) {
+                const destination = getMapDisplayName(nextTeleport.targetMap);
+                this.scene.notificationUI.show(`次は「${destination}」への転移陣へ！水色の矢印を追ってください。`, 'info', 5000);
+            }
         }
     }
 

@@ -219,6 +219,10 @@ export default class DialogueManager {
                 if (index >= 0 && index < jobList.length) {
                     const selectedJob = jobList[index];
                     const player = this.scene.player;
+                    // チュートリアルで初めて職業を選んだときだけ、実際に各画面を
+                    // 試せる初期リソースを渡す。職業の選び直しでは再配布しない。
+                    const isFirstTutorialJob = this.scene.currentMapKey === 'tutorial' &&
+                        !player.stats.tutorialStarterRewardClaimed;
 
                     player.setJob(selectedJob.id);
 
@@ -238,6 +242,15 @@ export default class DialogueManager {
                             || Object.values(player.stats.equipment || {}).includes(weaponId);
                         if (!owned) player.addItem(weaponId);
                         player.equipItem(weaponId);
+                    }
+
+                    if (isFirstTutorialJob) {
+                        player.stats.jobExp += 300;
+                        player.stats.statPoints += 5;
+                        player.addItem('fire_orb');
+                        player.stats.tutorialStarterRewardClaimed = true;
+                        player.saveStats();
+                        this.scene.notificationUI?.show('チュートリアル報酬: Job EXP 300 / SP 5 / 火の玉', 'success', 5000);
                     }
 
                     // クエスト「choose_job」の完了

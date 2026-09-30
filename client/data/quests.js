@@ -16,10 +16,10 @@ export const QUESTS = {
     kill_slime: {
         id: 'kill_slime',
         title: 'スライム討伐の基礎',
-        description: 'スライムを10体倒せ',
+        description: '通常攻撃とスキルを試し、スライムを5体倒せ。',
         type: 'kill',
         target: 'slime',
-        required: 10,
+        required: 5,
         reward: {
             exp: 100,
             gold: 150,
@@ -45,7 +45,7 @@ export const QUESTS = {
     brave_check: {
         id: 'brave_check',
         title: '勇者の試練 (Boss)',
-        description: '森の守護者であるボスを討伐せよ。',
+        description: 'チュートリアルボスを倒し、回避・回復・スキルの使い方を確認せよ。',
         type: 'kill',
         target: 'boss',
         required: 1,
@@ -287,4 +287,3 @@ export function previousArea(area) {
     const i = AREA_ORDER.indexOf(area);
     return i > 0 ? AREA_ORDER[i - 1] : null;
 }
-

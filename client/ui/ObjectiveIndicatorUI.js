@@ -126,7 +126,8 @@ export default class ObjectiveIndicatorUI {
             if (d < bestDist) {
                 bestDist = d;
                 const name = getMapDisplayName(tp.targetMap); // 表示名はサーバーのマップ情報（Tiledの displayName）から
-                best = { x: cx, y: cy, label: `転移: ${name}` };
+                // 単なる行き先表示ではなく、進行後に何をすべきかが分かる文言にする。
+                best = { x: cx, y: cy, label: `次は ${name}へ: 転移陣` };
             }
         });
         return best;

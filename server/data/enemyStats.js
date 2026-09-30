@@ -41,6 +41,25 @@ const ENEMY_STATS = {
             { id: "holy_weapon", chance: 0.002 },
         ],
     }),
+    // 湿地に出る個体。チュートリアル相当の Lv.6 コウモリを高レベル帯に
+    // 混在させないため、湿地専用の派生種として定義する。
+    marsh_bat: defineEnemy({
+        id: "marsh_bat",
+        name: "湿地コウモリ",
+        sprite: "pipo-enemy001a.png",
+        size: "small",
+        level: 38,
+        hp: 3000,
+        atk: 320,
+        def: 45,
+        exp: 7600,
+        gold: 800,
+        element: "wind",
+        drops: [
+            { id: "high_potion", chance: 0.1 },
+            { id: "high_mp_potion", chance: 0.08 },
+        ],
+    }),
     forest_slime: defineEnemy({
         id: "forest_slime",
         name: "森のスライム",
@@ -181,12 +200,13 @@ const ENEMY_STATS = {
         name: "森の守護者",
         sprite: "pipo-enemy043.png",
         size: "boss",
-        level: 20,
-        hp: 1800,
-        atk: 50,
-        def: 40,
-        exp: 28000,
-        gold: 2500,
+        // 最初のボスは操作確認の締め。通常マップのボスとは別に低く調整する。
+        level: 5,
+        hp: 550,
+        atk: 12,
+        def: 5,
+        exp: 800,
+        gold: 300,
         element: "light",
         drops: [
             { id: "hero_sword", chance: 0.1 },

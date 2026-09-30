@@ -19,6 +19,7 @@ const { MAPS_DIR, KNOWN_MAPS } = require("../config");
 const MAP_META = {
     tutorial: { name: "チュートリアル", sceneKey: "GameScene" }, // GameSceneがtutorialマップを担当
     battle: { name: "戦場", showQuestTracker: false, showDebugKey: false },
+    starter_town: { name: "はじまりの街" },
     city: { name: "街" },
     forest: { name: "森" },
     wetland: { name: "湿地" },

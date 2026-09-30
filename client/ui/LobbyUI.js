@@ -7,6 +7,7 @@ export default class LobbyUI {
         this.maxPlayers = 4;
         this.myPlayerName = '';
         this.isReady = false;
+        this.gameSessionActive = false;
         this.useSaveData = !!localStorage.getItem('playerStats');
 
         this.createUI();
@@ -216,7 +217,12 @@ export default class LobbyUI {
         });
         socket.on('lobbyPlayerNameUpdate', (d) => { if (d.socketId) { this.playerNames[d.socketId] = d.name; this.updatePlayerList(); } });
         socket.on('lobbyPlayerReady', (d) => { if (d.socketId) { if (d.ready) this.readyPlayers.add(d.socketId); else this.readyPlayers.delete(d.socketId); this.updatePlayerList(); } });
-        socket.on('lobbyInfo', (d) => { if (d.playerNames) this.playerNames = { ...d.playerNames }; if (d.readyPlayers) this.readyPlayers = new Set(d.readyPlayers); this.updatePlayerList(d.players); });
+        socket.on('lobbyInfo', (d) => {
+            if (d.playerNames) this.playerNames = { ...d.playerNames };
+            if (d.readyPlayers) this.readyPlayers = new Set(d.readyPlayers);
+            this.gameSessionActive = !!d.gameSessionActive;
+            this.updatePlayerList(d.players);
+        });
         socket.on('lobbyKicked', () => { alert('ロビーからキックされました。'); window.location.reload(); });
         socket.on('lobbyGameStarted', () => {
             if (!this.useSaveData) { localStorage.removeItem('playerStats'); localStorage.removeItem('playerQuests'); }
@@ -295,10 +301,12 @@ export default class LobbyUI {
         if (this.startButton) {
             this.startButton.setVisible(can);
             this.startButtonText.setVisible(can);
+            this.startButtonText.setText(this.gameSessionActive ? '途中参加する' : 'ゲーム開始');
         }
     }
 
     canStart() {
+        if (this.gameSessionActive) return true;
         const ids = Object.keys(this.playerNames);
         if (ids.length === 0) return false;
         const myId = this.networkManager.getPlayerId();
@@ -306,7 +314,9 @@ export default class LobbyUI {
         return (sorted[0] === myId) && ids.every(id => this.readyPlayers.has(id));
     }
 
-    startGame() { this.networkManager.getSocket()?.emit('lobbyStartGame'); }
+    startGame() {
+        this.networkManager.getSocket()?.emit(this.gameSessionActive ? 'lobbyJoinGame' : 'lobbyStartGame');
+    }
 
     destroy() {
         if (this.htmlInput?.parentNode) this.htmlInput.parentNode.removeChild(this.htmlInput);

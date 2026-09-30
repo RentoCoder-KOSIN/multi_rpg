@@ -16,6 +16,7 @@ import AIStatsUI from '../../ui/AIStatsUI.js';
 import MinimapUI from '../../ui/MinimapUI.js';
 import ReincarnationUI from '../../ui/ReincarnationUI.js';
 import ObjectiveIndicatorUI from '../../ui/ObjectiveIndicatorUI.js';
+import TutorialGuideUI from '../../ui/TutorialGuideUI.js';
 import { getUILayout } from '../../ui/UILayoutManager.js';
 import { createEnemyDebugUI } from '../../utils/enemyDebug.js';
 
@@ -68,6 +69,8 @@ export function createGameUI(scene, config) {
     scene.reincarnationUI.createUI();
     // 「次に何をすればいいか/どこに行けばいいか」を常時示すインジケーター（レベル不問）
     scene.objectiveIndicatorUI = new ObjectiveIndicatorUI(scene);
+    // 初心者が各キー／画面の役割をその場で確認できるよう、チュートリアル中だけ表示する。
+    if (scene.currentMapKey === 'tutorial') scene.tutorialGuideUI = new TutorialGuideUI(scene);
 
     // The virtual pad is only for touch devices
     scene.isMobile = !scene.sys.game.device.os.desktop;
@@ -79,6 +82,18 @@ export function createGameUI(scene, config) {
 // The tutorial map starts the job-selection quest automatically
 function startTutorialQuest(scene) {
     const qm = scene.questManager;
+    // 報酬追加前に職業を選んでいたセーブデータも、チュートリアルに入った時点で救済する。
+    // フラグはPlayerの保存データに入るため、再入場や職業選び直しで重複しない。
+    if (scene.currentMapKey === 'tutorial' &&
+        scene.player?.stats?.job !== 'none' &&
+        !scene.player.stats.tutorialStarterRewardClaimed) {
+        scene.player.stats.jobExp += 300;
+        scene.player.stats.statPoints += 5;
+        scene.player.addItem('fire_orb');
+        scene.player.stats.tutorialStarterRewardClaimed = true;
+        scene.player.saveStats();
+        scene.notificationUI?.show('チュートリアル報酬: Job EXP 300 / SP 5 / 火の玉', 'success', 5000);
+    }
     if (scene.currentMapKey === 'tutorial' &&
         !qm.isStarted('choose_job') &&
         !qm.isCompleted('choose_job') &&

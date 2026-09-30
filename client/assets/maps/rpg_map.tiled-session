@@ -1,5 +1,5 @@
 {
-    "activeFile": "guild1f.json",
+    "activeFile": "starter_town.json",
     "expandedProjectPaths": [
         "."
     ],
@@ -21,8 +21,8 @@
                 37
             ],
             "expandedObjectLayers": [
-                41,
-                42
+                42,
+                41
             ],
             "scale": 1,
             "selectedLayer": 17,
@@ -41,7 +41,7 @@
             "scale": 0.16090625,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 1597.2033404544572,
+                "x": 1600.3107399495048,
                 "y": 1597.203340454457
             }
         },
@@ -66,16 +66,30 @@
             "scale": 0.5254687499999999,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 479.57181088314013,
+                "x": 480.52334225394003,
                 "y": 479.5718108831401
             }
         },
         "guild2f.json#tiles": {
             "scaleInDock": 1
         },
-        "tutorial.json": {
-            "scale": 0.42007812499999997,
+        "starter_town.json": {
+            "scale": 0.80453125,
             "selectedLayer": 0,
+            "viewCenter": {
+                "x": 319.44066809089145,
+                "y": 239.89124101767334
+            }
+        },
+        "starter_town.json#tiles": {
+            "scaleInDock": 1
+        },
+        "tutorial.json": {
+            "expandedObjectLayers": [
+                25
+            ],
+            "scale": 0.42007812499999997,
+            "selectedLayer": 8,
             "viewCenter": {
                 "x": 480.86293472196394,
                 "y": 640.3570764366748
@@ -88,7 +102,7 @@
             "scale": 0.3218125,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 798.6016702272286,
+                "x": 800.1553699747524,
                 "y": 798.6016702272285
             }
         },
@@ -121,17 +135,19 @@
         "forest.json",
         "tutorial.json",
         "volcano.json",
-        "wetland.json"
+        "wetland.json",
+        "starter_town.json"
     ],
     "project": "rpg_map.tiled-project",
     "recentFiles": [
         "battle.json",
         "city.json",
-        "wetland.json",
-        "volcano.json",
-        "tutorial.json",
-        "forest.json",
+        "guild1f.json",
         "guild2f.json",
-        "guild1f.json"
+        "forest.json",
+        "tutorial.json",
+        "volcano.json",
+        "wetland.json",
+        "starter_town.json"
     ]
 }

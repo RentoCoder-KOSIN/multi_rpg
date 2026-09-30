@@ -1,4 +1,5 @@
-const { lobbyPlayers, playerNames, players } = require("../state");
+const state = require("../state");
+const { lobbyPlayers, playerNames, players } = state;
 const { findSocketByPlayerId } = require("../utils/socketUtils");
 
 module.exports = function registerLobbyHandlers(socket, { io }) {
@@ -22,7 +23,8 @@ module.exports = function registerLobbyHandlers(socket, { io }) {
         io.to("lobby").emit("lobbyInfo", {
             players: lobbyPlayers,
             playerNames,
-            readyPlayers: Object.keys(lobbyPlayers).filter(id => lobbyPlayers[id].ready)
+            readyPlayers: Object.keys(lobbyPlayers).filter(id => lobbyPlayers[id].ready),
+            gameSessionActive: state.gameSessionActive
         });
 
         // 他のロビープレイヤーに新しいプレイヤーの参加を通知
@@ -73,15 +75,27 @@ module.exports = function registerLobbyHandlers(socket, { io }) {
         if (ids.length === 0) return;
         if (!ids.every(id => lobbyPlayers[id].ready)) return;
 
+        state.gameSessionActive = true;
         io.to("lobby").emit("lobbyGameStarted");
 
         ids.forEach(id => {
-            const s = io.sockets.sockets.get(id);
+            const s = findSocketByPlayerId(io, id);
             if (s) {
                 s.leave("lobby");
                 s.data.inLobby = false;
             }
             delete lobbyPlayers[id];
         });
+    });
+
+    // すでに出発済みのワールドには、待機・準備完了を要求せず途中参加できる。
+    socket.on("lobbyJoinGame", () => {
+        if (!state.gameSessionActive) return;
+
+        socket.emit("lobbyGameStarted");
+        socket.leave("lobby");
+        socket.data.inLobby = false;
+        delete lobbyPlayers[playerId];
+        io.to("lobby").emit("lobbyPlayerLeft", { players: lobbyPlayers });
     });
 };

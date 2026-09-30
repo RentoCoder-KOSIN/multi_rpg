@@ -285,7 +285,7 @@ export default class SkillManagerUI extends BaseWindowUI {
                 let statusColor = '#ffffff';
 
                 if (isUnlocked) {
-                    statusTextStr = `解放済み (Set with 1-${TOTAL_SKILL_SLOTS})`;
+                    statusTextStr = `セット: [1-${TOTAL_SKILL_SLOTS}]`;
                     statusColor = '#00ff00';
                 } else if (canUnlock) {
                     statusTextStr = `Unlock [Enter]: ${cost} Job Exp`;
@@ -302,10 +302,10 @@ export default class SkillManagerUI extends BaseWindowUI {
 
                 // レベルアップボタン (解放済みの場合)
                 if (isUnlocked && skillLevel < 10) {
-                    const lvUpBtn = this.scene.add.rectangle(80, 0, 80, 30, 0x00aa00).setInteractive({ useHandCursor: true });
-                    const lvUpTxt = this.scene.add.text(80, 0, 'Level UP', { fontSize: '10px', color: '#ffffff', fontFamily: '"Press Start 2P"' }).setOrigin(0.5);
-
                     const upCost = (skillLevel + 1) * 100;
+                    // 次回コストをボタン内に表示し、右側のセット案内とは別領域に置く。
+                    const lvUpBtn = this.scene.add.rectangle(110, 0, 130, 30, 0x00aa00).setInteractive({ useHandCursor: true });
+                    const lvUpTxt = this.scene.add.text(110, 0, `Lv.UP: ${upCost} EXP`, { fontSize: '9px', color: '#ffffff', fontFamily: '"Press Start 2P"' }).setOrigin(0.5);
                     lvUpBtn.on('pointerover', () => lvUpBtn.setFillStyle(0x00ff00));
                     lvUpBtn.on('pointerout', () => lvUpBtn.setFillStyle(0x00aa00));
                     lvUpBtn.on('pointerdown', (pointer, x, y, event) => {
