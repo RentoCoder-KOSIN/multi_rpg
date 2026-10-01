@@ -67,8 +67,11 @@ export default class ReincarnationUI extends BaseWindowUI {
             `Lv${cfg.REQUIRED_LEVEL}に到達すると輪廻転生できます。`,
             'レベルが1に戻り、職業を選び直せますが、',
             '習得済みスキルはすべて持ち越せます。',
-            `STR/INT/VIT/MEN/DEXが各+${cfg.BASE_STAT_BONUS}、`,
-            `ステータスポイントが+${cfg.BONUS_STAT_POINTS}されます。`,
+            '装備は全て外れます（アイテムは持ち物に残ります）。',
+            '割り振り済みのステータスポイントは全て返還され、',
+            `レベルアップの自然成長分は合計の${Math.round(cfg.NATURAL_GROWTH_REFUND_RATE * 100)}%がポイントに換算されます(残りは消えます)。`,
+            `基礎ステータスは初期値+${cfg.BASE_STAT_BONUS}×転生回数になります。`,
+            `さらにステータスポイントが+${cfg.BONUS_STAT_POINTS}されます。`,
         ];
         this.infoText.setText(lines.join('\n'));
 

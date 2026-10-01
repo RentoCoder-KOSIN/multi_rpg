@@ -9,6 +9,7 @@ import {
     getWeaponElementBonus, resolveElement, resistKey, damageKey, collectElementStats,
 } from "../data/elements.js";
 import { showDamageNumber } from "../utils/damagePopup.js";
+import { isAdminFlag } from "../ui/AdminUI.js";
 
 // 状態異常の基本持続時間（ms）。武器の属性付与などから発生する。
 const STATUS_DURATIONS = {
@@ -108,6 +109,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             job: saved.job || 'none',
             // 輪廻転生した回数。転生ごとの基礎ステータス強化に使う。
             reincarnationCount: saved.reincarnationCount || 0,
+            // 輪廻転生直後の「次の職業選択ではスキルを持ち越す」フラグ。
+            // ここで復元しないと、転生後にマップ移動・再読み込みでPlayerが作り直された時点でフラグが消え、
+            // 職業を選んだ瞬間に習得済みスキルが全て消えてしまう（以前の不具合）。
+            _skipSkillResetOnNextJob: !!saved._skipSkillResetOnNextJob,
             inventory: saved.inventory || [],
             // 鍛冶屋で武器/防具(アイテムID)に付与した属性。 { itemId: 'fire' | 'water' | ... }
             // 存在しない属性の付与（属性定義の変更前のデータなど）は破棄する
@@ -237,6 +242,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             return false;
         }
 
+        // 割り振り済みポイントの返還量は、レベル・転生回数を変える前の状態で求める
+        const alloc = this.stats.allocatedStats || this.estimateAllocatedStats();
+
+        // 自然成長分（レベルアップで自動的に増えた分）の合計を求める。
+        //   自然成長 = 現在値 - 初期値 - これまでの転生ボーナス - ポイントで割り振った分
+        // 合計の NATURAL_GROWTH_REFUND_RATE（10分の1）をポイントに換算し、残りは捨てる。
+        const prevReinBonus = (this.stats.reincarnationCount || 0) * REINCARNATION_CONFIG.BASE_STAT_BONUS;
+        const naturalTotal = RESET_CONFIG.STAT_KEYS.reduce((sum, k) => {
+            const base = (k === 'agi') ? AGI_CONFIG.BASE_AGI : RESET_CONFIG.BASE_VALUE;
+            return sum + Math.max(0, (this.stats[k] || 0) - base - prevReinBonus - (alloc[k] || 0));
+        }, 0);
+        const naturalRefund = Math.floor(naturalTotal * REINCARNATION_CONFIG.NATURAL_GROWTH_REFUND_RATE);
+
         this.stats.reincarnationCount = (this.stats.reincarnationCount || 0) + 1;
 
         // レベル・経験値をリセット
@@ -252,15 +270,24 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.skillCooldowns = {};
         // unlockedSkills / skillLevels はそのまま維持する（通常の転職との最大の違い）
 
-        // 基礎ステータスを永続的に大幅強化
-        const bonus = REINCARNATION_CONFIG.BASE_STAT_BONUS;
-        this.stats.str += bonus;
-        this.stats.int += bonus;
-        this.stats.vit += bonus;
-        this.stats.men += bonus;
-        this.stats.dex += bonus;
-        this.stats.agi = (this.stats.agi || AGI_CONFIG.BASE_AGI) + bonus;
-        this.stats.statPoints += REINCARNATION_CONFIG.BONUS_STAT_POINTS;
+        // 装備を全て外す（アイテムはインベントリに残る）。
+        // 以前は装備したままLv1に戻るため、Lv制限のある装備をLv1で着けたままになっていた。
+        this.stats.equipment = { weapon: null, armor: null, relic: null };
+
+        // ステータスのリセットとポイント換算:
+        //  1. ポイントで割り振っていた分は、ステータスポイントとして全額返還する
+        //  2. 基礎ステータスは「初期値 + 転生ボーナス × 転生回数」に作り直す
+        //     （Lv100までの自然成長分は、合計の10分の1だけポイントに換算し、残りは捨てる）
+        //  3. そのうえで、転生1回ごとのボーナスポイントを加算する
+        // 未使用のステータスポイントや、種アイテムの永続加算（bonusAtk/bonusDef）はそのまま残る。
+        const refunded = RESET_CONFIG.STAT_KEYS.reduce((sum, k) => sum + Math.max(0, alloc[k] || 0), 0);
+        const reinBonus = this.stats.reincarnationCount * REINCARNATION_CONFIG.BASE_STAT_BONUS;
+        RESET_CONFIG.STAT_KEYS.forEach(k => {
+            const base = (k === 'agi') ? AGI_CONFIG.BASE_AGI : RESET_CONFIG.BASE_VALUE;
+            this.stats[k] = base + reinBonus;
+        });
+        this.stats.allocatedStats = this.sanitizeAllocatedStats({});
+        this.stats.statPoints += refunded + naturalRefund + REINCARNATION_CONFIG.BONUS_STAT_POINTS;
 
         this.applyEquipmentStats();
         this.stats.hp = this.stats.maxHp;
@@ -269,7 +296,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         if (this.scene.notificationUI) {
             this.scene.notificationUI.show(
-                `輪廻転生した！(${this.stats.reincarnationCount}回目) 基礎ステータスが大幅に上昇し、Lv1から再スタート！`,
+                `輪廻転生した！(${this.stats.reincarnationCount}回目) 装備を外し、割り振り済み${refunded}pt+自然成長分${naturalRefund}ptを返還。基礎ステータスが強化され、Lv1から再スタート！`,
                 'warning'
             );
         }
@@ -871,7 +898,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
-    levelUp() {
+    // silent=true なら通知とエフェクトを出さない（adminLevelUpTo で何十回も呼ぶとき用）
+    levelUp(silent = false) {
         this.stats.level++;
 
         const jobDef = JOBS[this.stats.job];
@@ -914,7 +942,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.stats.maxExp = calcMaxExp(this.stats.level);
         this.saveStats();
 
-        if (this.scene.notificationUI) {
+        if (!silent && this.scene.notificationUI) {
             this.scene.notificationUI.show(`レベルアップ！ Level ${this.stats.level} (${statMsg}, Pt+5)`, 'warning');
         }
 
@@ -926,6 +954,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.scene.playerNameUI.updateLevel(this.stats.level);
         }
 
+        if (silent) return;
+
         // レベルアップエフェクト（簡易）
         const circle = this.scene.add.circle(this.x, this.y, 10, 0xffff00, 0.5);
         this.scene.tweens.add({
@@ -935,6 +965,31 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             duration: 500,
             onComplete: () => circle.destroy()
         });
+    }
+
+    /**
+     * adminモード用: 通常のレベルアップ処理（ステータス成長・ポイント付与）を、目標レベルまで通知なしで繰り返す。
+     * レベルを下げることはできない。
+     * @returns {number} 上がったレベル数
+     */
+    adminLevelUpTo(target) {
+        if (!this.isLocal) return 0;
+        const goal = Math.min(100, Math.floor(target));
+        let gained = 0;
+        while (this.stats.level < goal) {
+            this.levelUp(true);
+            gained++;
+        }
+        if (gained > 0) {
+            this.stats.exp = 0;
+            this.saveStats();
+            if (this.scene.notificationUI) {
+                this.scene.notificationUI.show(`Lv.${this.stats.level} になった！(+${gained})`, 'warning');
+            }
+            if (this.scene.playerStatsUI) this.scene.playerStatsUI.update();
+            if (this.scene.playerNameUI) this.scene.playerNameUI.updateLevel(this.stats.level);
+        }
+        return gained;
     }
 
     /**
@@ -1061,6 +1116,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     takeDamage(amount, attacker, effects = null) {
+        // adminモードの無敵（敵の攻撃・接触ダメージを無効化）
+        if (isAdminFlag('god')) return;
+
         // AGIによる回避。Player.takeDamage は敵の攻撃・接触ダメージからしか呼ばれない
         // （毒の継続ダメージは stats.hp を直接減らすので、この判定は通らず避けられない）
         if (this.tryDodge()) {
@@ -1178,6 +1236,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     die() {
+        // adminモードの無敵中は、毒などで0になっても死なない
+        if (isAdminFlag('god')) {
+            this.stats.hp = this.stats.maxHp;
+            return;
+        }
+
         // 復活の秘巻物などのチャージがあれば、ペナルティなしでその場復活する
         if (this.stats.reviveCharges > 0) {
             this.stats.reviveCharges -= 1;

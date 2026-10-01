@@ -17,6 +17,7 @@ import MinimapUI from '../../ui/MinimapUI.js';
 import ReincarnationUI from '../../ui/ReincarnationUI.js';
 import ObjectiveIndicatorUI from '../../ui/ObjectiveIndicatorUI.js';
 import TutorialGuideUI from '../../ui/TutorialGuideUI.js';
+import { bindAdminScene } from '../../ui/AdminUI.js';
 import { getUILayout } from '../../ui/UILayoutManager.js';
 import { createEnemyDebugUI } from '../../utils/enemyDebug.js';
 
@@ -45,6 +46,9 @@ export function createGameUI(scene, config) {
     scene.questLogUI.createUI();
 
     startTutorialQuest(scene);
+
+    // adminモード（Shift+@）が今のシーンのプレイヤーを操作できるように登録する
+    bindAdminScene(scene);
 
     scene.mapNameUI = new MapNameUI(scene, scene.currentMapKey.toUpperCase());
     scene.notificationUI = new NotificationUI(scene);

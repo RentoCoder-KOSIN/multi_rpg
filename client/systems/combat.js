@@ -8,6 +8,7 @@ import { spawnSummon, destroySummon, isSummonSkill } from './summons.js';
 import { areEffectsEnabled } from '../utils/effectsSettings.js';
 import { getElementColor } from '../data/elements.js';
 import { JOBS } from '../data/jobs.js';
+import { isAdminFlag } from '../ui/AdminUI.js';
 
 // 職業が未設定（none）などのときに使う通常攻撃の既定値。職業ごとの値は data/jobs.js の attackRange / attackHit
 const DEFAULT_BASIC_ATTACK_RANGE = 80;
@@ -200,6 +201,7 @@ export function performBasicAttack(scene) {
 
 // Holy weapon: half cooldown, zero MP cost。パッシブのcooldownMult/mpCostMultも重ねて掛ける
 export function getSkillCooldownMs(player, skill) {
+    if (isAdminFlag('free')) return 0; // adminモード: クールダウンなし
     const hasHolyWeapon = player.stats.equipment?.weapon === 'holy_weapon';
     let cdTime = (skill.cd || 2000) * (player.stats.cooldownMult ?? 1);
     if (hasHolyWeapon) cdTime = Math.floor(cdTime * 0.5);
@@ -207,6 +209,7 @@ export function getSkillCooldownMs(player, skill) {
 }
 
 export function getSkillMpCost(player, skill) {
+    if (isAdminFlag('free')) return 0; // adminモード: MP消費なし
     const hasHolyWeapon = player.stats.equipment?.weapon === 'holy_weapon';
     return hasHolyWeapon ? 0 : Math.ceil((skill.mpCost || 0) * (player.stats.mpCostMult ?? 1));
 }

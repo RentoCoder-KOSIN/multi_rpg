@@ -38,23 +38,33 @@ export const GROWTH_CONFIG = {
 
 // 戦闘・経済まわりの調整値
 export const COMBAT_CONFIG = {
-    CRIT_MULTIPLIER: 1.5,     // 会心時のダメージ倍率
+    CRIT_MULTIPLIER: 1.5, // 会心時のダメージ倍率
 };
 export const ECONOMY_CONFIG = {
-    SELL_RATE: 0.6,           // 売却額 = 購入価格 × この割合
+    SELL_RATE: 0.6, // 売却額 = 購入価格 × この割合
 };
 
 // クエストUIの表示件数
 export const QUEST_UI_CONFIG = {
-    TRACKER_MAX_VISIBLE: 3,   // 画面右上のトラッカーに同時表示する最大件数
-    LOG_PER_PAGE: 4,          // クエストウィンドウの1ページあたり件数
+    TRACKER_MAX_VISIBLE: 3, // 画面右上のトラッカーに同時表示する最大件数
+    LOG_PER_PAGE: 4, // クエストウィンドウの1ページあたり件数
 };
 
 // 輪廻転生まわりの調整値
 export const REINCARNATION_CONFIG = {
-    REQUIRED_LEVEL: 100,      // 輪廻転生に必要なレベル
-    BASE_STAT_BONUS: 15,      // 転生1回ごとにSTR/INT/VIT/MEN/DEXそれぞれへ永続加算される値
-    BONUS_STAT_POINTS: 30,    // 転生1回ごとに追加で貰える自由配分ステータスポイント
+    REQUIRED_LEVEL: 100, // 輪廻転生に必要なレベル
+    BASE_STAT_BONUS: 15, // 転生1回ごとにSTR/INT/VIT/MEN/DEXそれぞれへ永続加算される値
+    BONUS_STAT_POINTS: 30, // 転生1回ごとに追加で貰える自由配分ステータスポイント
+    // レベルアップの自然成長分（割り振り以外で増えた分）の合計に掛けてポイントへ換算する割合。
+    // 残りは転生で捨てられる。0.1 = 合計の10分の1。
+    NATURAL_GROWTH_REFUND_RATE: 0.1,
+};
+
+// adminモード（開発・動作確認用。ui/AdminUI.js 参照）
+// Shift+@（または Ctrl+Alt+A）でパスワード入力 → 正しければ操作パネルが開く。
+// ※ このパスワードはクライアントのJSに載るので、本格的な防御ではない。他の人に配るときは必ず変えること。
+export const ADMIN_CONFIG = {
+    PASSWORD: "mrpg-070208",
 };
 
 // AGI（敏捷性）: 敵の攻撃を一定確率で回避する。
@@ -63,14 +73,13 @@ export const REINCARNATION_CONFIG = {
 //   AGI 5 -> 約0.6%   AGI 100 -> 約10%   AGI 250 -> 約19%   AGI 500 -> 約27%   AGI 1000 -> 約33%（実測: test で確認済み）
 // 上限そのものを変えたいときは MAX_DODGE_CHANCE だけ、伸び方（上限への近づきやすさ）は HALF_POINT を変える。
 export const AGI_CONFIG = {
-    BASE_AGI: 5,              // 初期値（他の基本ステータスと同じ）
-    MAX_DODGE_CHANCE: 0.45,   // 回避率の絶対上限（ゲームバランスが崩れないよう、40〜50%を目安に）
-    HALF_POINT: 350,          // 回避率が上限の半分に達するAGI値
+    BASE_AGI: 5, // 初期値（他の基本ステータスと同じ）
+    MAX_DODGE_CHANCE: 0.45, // 回避率の絶対上限（ゲームバランスが崩れないよう、40〜50%を目安に）
+    HALF_POINT: 350, // 回避率が上限の半分に達するAGI値
 };
 
 // ステータス/職業リセットアイテムの設定
 export const RESET_CONFIG = {
-    STAT_KEYS: ['str', 'int', 'vit', 'men', 'dex', 'agi'], // 割り振り対象の基本ステータス
-    BASE_VALUE: 5,            // 各ステータスの初期値
+    STAT_KEYS: ["str", "int", "vit", "men", "dex", "agi"], // 割り振り対象の基本ステータス
+    BASE_VALUE: 5, // 各ステータスの初期値
 };
-
