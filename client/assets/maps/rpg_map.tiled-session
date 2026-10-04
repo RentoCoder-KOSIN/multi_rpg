@@ -1,5 +1,5 @@
 {
-    "activeFile": "snow_city.json",
+    "activeFile": "city.json",
     "expandedProjectPaths": [
         "."
     ],
@@ -27,11 +27,11 @@
                 37
             ],
             "expandedObjectLayers": [
-                42,
-                41
+                41,
+                42
             ],
             "scale": 0.33,
-            "selectedLayer": 15,
+            "selectedLayer": 14,
             "viewCenter": {
                 "x": 2209.090909090909,
                 "y": 199.9999999999999
@@ -47,8 +47,8 @@
             "scale": 1.6090625,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 159.72033404544572,
-                "y": 159.72033404544572
+                "x": 480.0932219848514,
+                "y": 351.7576228393863
             }
         },
         "desert_city.json#tiles": {
@@ -94,8 +94,8 @@
             "scale": 1.6090625,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 159.72033404544572,
-                "y": 159.72033404544572
+                "x": 480.0932219848514,
+                "y": 351.7576228393863
             }
         },
         "port_city.json#tiles": {
@@ -182,16 +182,16 @@
     "project": "rpg_map.tiled-project",
     "recentFiles": [
         "battle.json",
-        "city.json",
-        "guild1f.json",
-        "guild2f.json",
-        "forest.json",
-        "tutorial.json",
-        "volcano.json",
-        "wetland.json",
-        "port_city.json",
         "desert_city.json",
         "snow_city.json",
+        "port_city.json",
+        "wetland.json",
+        "volcano.json",
+        "tutorial.json",
+        "forest.json",
+        "guild2f.json",
+        "guild1f.json",
+        "city.json",
         "starter_town.json"
     ]
 }

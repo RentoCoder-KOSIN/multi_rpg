@@ -19006,7 +19006,7 @@
       "episodeCount": 485,
       "updateCount": 58683
     },
-    "timestamp": 1791086116236
+    "timestamp": 1791086980020
   },
   "forest_slime": {
     "qTableData": {
@@ -31253,7 +31253,7 @@
       "episodeCount": 265,
       "updateCount": 79327
     },
-    "timestamp": 1791086116236
+    "timestamp": 1791086980020
   },
   "skeleton": {
     "qTableData": {
@@ -41554,7 +41554,7 @@
       "episodeCount": 363,
       "updateCount": 130248
     },
-    "timestamp": 1791086116237
+    "timestamp": 1791086980021
   },
   "dragon_boss": {
     "qTableData": {
@@ -41929,7 +41929,7 @@
       "episodeCount": 0,
       "updateCount": 3178
     },
-    "timestamp": 1791086116237
+    "timestamp": 1791086980021
   },
   "goblin": {
     "qTableData": {
@@ -47050,7 +47050,7 @@
       "episodeCount": 360,
       "updateCount": 25431
     },
-    "timestamp": 1791086116237
+    "timestamp": 1791086980021
   },
   "bat": {
     "qTableData": {
@@ -48895,7 +48895,7 @@
       "episodeCount": 93,
       "updateCount": 19251
     },
-    "timestamp": 1791086116237
+    "timestamp": 1791086980021
   },
   "red_slime": {
     "qTableData": {
@@ -51020,7 +51020,7 @@
       "episodeCount": 69,
       "updateCount": 31128
     },
-    "timestamp": 1791086116237
+    "timestamp": 1791086980021
   },
   "ghost": {
     "qTableData": {
@@ -59711,7 +59711,7 @@
       "episodeCount": 100,
       "updateCount": 31626
     },
-    "timestamp": 1791086116237
+    "timestamp": 1791086980021
   },
   "orc": {
     "qTableData": {
@@ -69368,7 +69368,7 @@
       "episodeCount": 77,
       "updateCount": 28430
     },
-    "timestamp": 1791086116237
+    "timestamp": 1791086980021
   },
   "dire_wolf": {
     "qTableData": {
@@ -74335,7 +74335,7 @@
       "episodeCount": 19,
       "updateCount": 20219
     },
-    "timestamp": 1791086116243
+    "timestamp": 1791086980021
   },
   "marsh_bat": {
     "qTableData": {
@@ -75088,6 +75088,6 @@
       "episodeCount": 10,
       "updateCount": 2444
     },
-    "timestamp": 1791086116243
+    "timestamp": 1791086980021
   }
 }
