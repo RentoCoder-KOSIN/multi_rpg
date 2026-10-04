@@ -2,12 +2,13 @@ import { QUESTS } from "../data/quests.js";
 import { isAreaUnlocked } from "../utils/questGate.js";
 import { isTeleportUnlocked } from '../utils/questGate.js';
 import { getMapDisplayName } from '../data/maps.js';
+import { getSaved, setSaved } from '../utils/saveStore.js';
 
 export default class QuestManager {
     constructor(scene) {
         this.scene = scene;
         // localStorage または registry から読み込み
-        this.quests = JSON.parse(localStorage.getItem('playerQuests')) || this.scene.registry.get('playerQuests') || {};
+        this.quests = getSaved('playerQuests') || this.scene.registry.get('playerQuests') || {};
         this.listeners = [];
         console.log('[QuestManager] Initialized with quests:', this.quests);
     }
@@ -18,7 +19,7 @@ export default class QuestManager {
 
     saveQuests() {
         this.scene.registry.set('playerQuests', this.quests);
-        localStorage.setItem('playerQuests', JSON.stringify(this.quests));
+        setSaved('playerQuests', this.quests);
     }
 
     // ownerScene を渡すと、そのシーンが shutdown/destroy された時点でリスナーを自動解除する。

@@ -46,8 +46,9 @@ export const FIGHTER_SKILLS = {
         rangeType: "circle",
         color: 0xff0000,
         icon: "🗡️",
-        description: "渾身の一撃。",
+        description: "渾身の一撃。30%で敵を麻痺させる。",
         hitType: "single",
+        effect: { statusEffect: 'paralyze', statusChance: 0.3, statusDuration: 2500 },
     }),
     sonic_wave: defineSkill({
         id: "sonic_wave", vfx: 'projectile',

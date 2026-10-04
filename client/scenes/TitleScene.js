@@ -1,5 +1,7 @@
 import NetworkManager from '../managers/NetworkManager.js';
 import LobbyUI from '../ui/LobbyUI.js';
+import LoginUI from '../ui/LoginUI.js';
+import { restoreSession } from '../utils/saveStore.js';
 
 export default class TitleScene extends Phaser.Scene {
     constructor() {
@@ -22,6 +24,24 @@ export default class TitleScene extends Phaser.Scene {
             strokeThickness: 4
         }).setOrigin(0.5);
 
+        // ログイン済み（保存されたトークンが有効）ならそのままロビーへ。
+        // そうでなければログイン / 新規登録画面を出す。
+        // セーブデータはサーバーのアカウントに紐づくので、別のPCでも同じユーザーでログインすれば続きから遊べる。
+        const statusText = this.add.text(gameWidth / 2, gameHeight * 0.5, 'ログイン確認中...', {
+            fontSize: '14px', color: '#8aa4c8', fontFamily: 'Press Start 2P'
+        }).setOrigin(0.5);
+
+        restoreSession().then(session => {
+            statusText.destroy();
+            if (session) {
+                this.startLobby(gameWidth, gameHeight);
+            } else {
+                this.loginUI = new LoginUI({ onSuccess: () => this.startLobby(gameWidth, gameHeight) });
+            }
+        });
+    }
+
+    startLobby(gameWidth, gameHeight) {
         // NetworkManagerを初期化（ロビー用）
         // レジストリに保存して、ゲームシーンでも再利用できるようにする
         this.networkManager = new NetworkManager(this);
@@ -54,6 +74,9 @@ export default class TitleScene extends Phaser.Scene {
     }
 
     shutdown() {
+        if (this.loginUI) {
+            this.loginUI.destroy();
+        }
         if (this.lobbyUI) {
             this.lobbyUI.destroy();
         }

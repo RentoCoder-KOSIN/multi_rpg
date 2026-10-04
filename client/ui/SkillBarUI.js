@@ -4,6 +4,7 @@ import { TOTAL_SKILL_SLOTS } from "../gameConstants.js";
 import { pinToScreen } from "../utils/screenFixed.js";
 import { UI_LAYOUT } from "./uiLayout.js";
 import { getUILayout } from "./UILayoutManager.js";
+import { ITEMS } from "../data/items.js";
 
 const SLOT_SIZE = 60;
 // The skill slots sit on a real circle (the dial). The container origin is the dial center,
@@ -20,7 +21,10 @@ export default class SkillBarUI {
         this.player = player;
         this.slots = [];
         // 現在ホイールがどれだけ回転しているか（度）。0の時はスロット0が中央。
-        this.rotationState = { angle: 0 };
+        // 表示方式と回転位置はプレイヤーのセーブに持たせる。マップ切替でUIは作り直されるが、
+        // ここを読むことで「回転式にしたのに2段表示へ戻る」ことがない。
+        this.rotationState = { angle: Number(player.stats.skillBarRotation) || 0 };
+        this.layoutMode = player.stats.skillBarLayout === 'grid' ? 'grid' : 'dial';
         this.createUI();
     }
 
@@ -105,6 +109,8 @@ export default class SkillBarUI {
         }
 
         this.createRotateButtons();
+        // 画面外へ切れない右上に、表示方式を切り替えるボタンを置く。
+        this.layoutButton = this.createArrowButton(DIAL_RADIUS + 28, -DIAL_RADIUS - 25, '▦', () => this.toggleLayout());
     }
 
     // Arrows sit on both sides of the dial center, inside the round background
@@ -146,8 +152,22 @@ export default class SkillBarUI {
             targets: this.rotationState,
             angle: this.rotationState.angle + dir * ANGLE_STEP,
             duration: 220,
-            ease: 'Cubic.easeOut'
+            ease: 'Cubic.easeOut',
+            onComplete: () => this.saveLayoutState(),
         });
+    }
+
+    saveLayoutState() {
+        this.player.stats.skillBarLayout = this.layoutMode;
+        // 何周回しても同じ状態として復元できるよう、角度を1周分に正規化して保存する。
+        this.player.stats.skillBarRotation = this.normalizeAngle(this.rotationState.angle);
+        this.player.saveStats();
+    }
+
+    toggleLayout() {
+        this.layoutMode = this.layoutMode === 'grid' ? 'dial' : 'grid';
+        this.saveLayoutState();
+        this.scene.notificationUI?.show(this.layoutMode === 'grid' ? 'スキルバー: 全表示（2段）' : 'スキルバー: 回転式', 'info');
     }
 
     drawSlot(gfx, bgColor, bgAlpha, strokeColor, strokeAlpha) {
@@ -181,27 +201,32 @@ export default class SkillBarUI {
         const activeSkills = this.player.stats.activeSkills || [];
         const wheelAngle = this.rotationState.angle;
 
+        if (this.leftArrow) this.leftArrow.setVisible(this.layoutMode === 'dial');
+        if (this.rightArrow) this.rightArrow.setVisible(this.layoutMode === 'dial');
+
         this.slots.forEach((slot, i) => {
             const relativeAngle = this.normalizeAngle(slot.baseAngle - wheelAngle);
             const absAngle = Math.abs(relativeAngle);
 
-            // 円の裏側まで回ったスロットは非表示にして負荷を抑える
-            if (absAngle > VISIBLE_ANGLE_LIMIT) {
+            // 回転式では円の裏側を隠す。全表示モードでは4列x2段に並べる。
+            if (this.layoutMode === 'dial' && absAngle > VISIBLE_ANGLE_LIMIT) {
                 slot.slotContainer.setVisible(false);
                 return;
             }
             slot.slotContainer.setVisible(true);
 
-            // Position on the circle (angle 0 = top of the dial)
-            const rad = Phaser.Math.DegToRad(relativeAngle);
-            const px = DIAL_RADIUS * Math.sin(rad);
-            const py = -DIAL_RADIUS * Math.cos(rad);
-
-            // 中央から離れるほど縮小・フェードして「回転して奥に隠れる」見た目にする
-            const fade = Phaser.Math.Clamp(
-                1 - Math.max(0, absAngle - FADE_START_ANGLE) / (VISIBLE_ANGLE_LIMIT - FADE_START_ANGLE),
-                0.15, 1
-            );
+            let px, py, fade;
+            if (this.layoutMode === 'grid') {
+                px = (i % 4 - 1.5) * 70;
+                // skillDial は下端に少し沈む配置なので、2段とも画面内に収める。
+                py = Math.floor(i / 4) === 0 ? -90 : -12;
+                fade = 1;
+            } else {
+                const rad = Phaser.Math.DegToRad(relativeAngle);
+                px = DIAL_RADIUS * Math.sin(rad);
+                py = -DIAL_RADIUS * Math.cos(rad);
+                fade = Phaser.Math.Clamp(1 - Math.max(0, absAngle - FADE_START_ANGLE) / (VISIBLE_ANGLE_LIMIT - FADE_START_ANGLE), 0.15, 1);
+            }
 
             slot.slotContainer.setPosition(px, py);
             slot.slotContainer.setScale(fade);
@@ -210,13 +235,21 @@ export default class SkillBarUI {
             const skillId = activeSkills[i];
 
             if (skillId) {
-                const skillDef = SKILLS[skillId];
+                const quickItemId = typeof skillId === 'string' && skillId.startsWith('item:') ? skillId.slice(5) : null;
+                const quickItem = quickItemId ? ITEMS[quickItemId] : null;
+                const skillDef = quickItem ? null : SKILLS[skillId];
 
                 slot.iconText.setVisible(true);
                 slot.skillNameText.setVisible(true);
                 slot.mpCostText.setVisible(true);
 
-                if (skillDef) {
+                if (quickItem) {
+                    const count = (this.player.stats.inventory || []).reduce((n, e) => n + ((typeof e === 'string' ? e : e.id) === quickItemId ? (typeof e === 'string' ? 1 : e.count || 1) : 0), 0);
+                    slot.skillNameText.setText(`${quickItem.name} x${count}`);
+                    slot.iconText.setText(quickItem.stats?.healMp ? '🔷' : '🧪');
+                    slot.mpCostText.setText('ITEM');
+                    slot.mpCostText.setColor(count > 0 ? '#8dffb3' : '#ff5555');
+                } else if (skillDef) {
                     slot.skillNameText.setText(skillDef.name);
                     slot.iconText.setText(skillDef.icon || '❓');
 
@@ -234,7 +267,7 @@ export default class SkillBarUI {
                 slot.skillNameText.setAlpha(1);
 
                 const lastUse = this.player.skillCooldowns[skillId] || 0;
-                let cdTime = skillDef ? (skillDef.cd || 2000) : 2000;
+                let cdTime = quickItem ? 700 : (skillDef ? (skillDef.cd || 2000) : 2000);
 
                 // 聖なる武器装備時はクールダウン半減
                 if (this.player.stats.equipment && this.player.stats.equipment.weapon === 'holy_weapon') {

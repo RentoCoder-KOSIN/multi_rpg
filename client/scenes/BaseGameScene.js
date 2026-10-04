@@ -255,7 +255,9 @@ export default class BaseGameScene extends Phaser.Scene {
     beginSkillAim(index, owner, keyObj = null) {
         if (!this.player || !this.player.active) return;
         const skillId = this.player.stats.activeSkills?.[index];
-        if (skillId) beginSkillAim(this, skillId, owner, keyObj);
+        if (typeof skillId === 'string' && skillId.startsWith('item:')) {
+            this.player.useQuickItem(skillId.slice(5));
+        } else if (skillId) beginSkillAim(this, skillId, owner, keyObj);
     }
     releaseAim(owner) { releaseAim(this, owner); }
     cancelAim(owner = null) { cancelAim(this, owner); }

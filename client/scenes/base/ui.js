@@ -17,6 +17,7 @@ import MinimapUI from '../../ui/MinimapUI.js';
 import ReincarnationUI from '../../ui/ReincarnationUI.js';
 import ObjectiveIndicatorUI from '../../ui/ObjectiveIndicatorUI.js';
 import TutorialGuideUI from '../../ui/TutorialGuideUI.js';
+import GachaUI from '../../ui/GachaUI.js';
 import { bindAdminScene } from '../../ui/AdminUI.js';
 import { getUILayout } from '../../ui/UILayoutManager.js';
 import { createEnemyDebugUI } from '../../utils/enemyDebug.js';
@@ -62,6 +63,8 @@ export function createGameUI(scene, config) {
     scene.statAllocationUI.createUI();
     scene.skillManagerUI = new SkillManagerUI(scene);
     scene.skillManagerUI.createUI();
+    scene.gachaUI = new GachaUI(scene);
+    scene.gachaUI.createUI();
     scene.settingsUI = new SettingsUI(scene);
     scene.settingsUI.createUI();
     scene.sideMenuUI = new SideMenuUI(scene);

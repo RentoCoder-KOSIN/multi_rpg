@@ -25,7 +25,8 @@ export const RANGER_SKILLS = {
         cd: 3000, damageMult: 13, mpCost: 15, unlockCost: 80,
         range: 260, rangeType: 'line',
         color: 0xc0c0c0, icon: '🎯',
-        description: '直線状の敵を貫く強弓。'
+        description: '直線状の敵を貫く強弓。25%で敵を麻痺させる。',
+        effect: { statusEffect: 'paralyze', statusChance: 0.25, statusDuration: 1800 },
     }),
     multi_shot: defineSkill({
         id: 'multi_shot', name: 'マルチショット', type: 'active',

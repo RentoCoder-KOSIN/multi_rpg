@@ -15,7 +15,7 @@ module.exports = function registerLobbyHandlers(socket, { io }) {
         players[playerId] = { x: 0, y: 0, map: "lobby", hp: 100, maxHp: 100, level: 1, summon: null };
 
         lobbyPlayers[playerId] = {
-            name: playerId.slice(0, 5),
+            name: socket.data.username || playerId.slice(0, 5),
             ready: false
         };
         playerNames[playerId] = lobbyPlayers[playerId].name;

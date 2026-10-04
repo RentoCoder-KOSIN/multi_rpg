@@ -66,6 +66,22 @@ export function updateTeleports(scene, player, npcs, teleports) {
             }
 
             scene._isTeleporting = true;
+            // シーン切替の直前に、スキル枠を含む現在の状態を必ずスナップショットする。
+            // 通信保存のデバウンス中でも registry から次マップへ即座に引き継げる。
+            player.stats.activeSkills = player.padActiveSkills(player.stats.activeSkills);
+            scene.registry.set('playerStats', player.stats);
+            player.saveStats();
+            // 最後のチュートリアル手順は「戦場へ転移」で達成。初回だけ経験値2倍の宝具を渡す。
+            if (scene.currentMapKey === 'tutorial' && !player.stats.tutorialFlags?.leftTutorial) {
+                player.stats.tutorialFlags = { ...(player.stats.tutorialFlags || {}), leftTutorial: true };
+                if (!player.stats.tutorialCompletionRewardClaimed) {
+                    player.stats.tutorialCompletionRewardClaimed = true;
+                    player.addItem('tutorial_expedition_charm');
+                    player.addItem('magic_stone', 10);
+                    scene.notificationUI?.show('チュートリアル完全達成！「修練者の護符」・魔石 x10を獲得！', 'success', 5000);
+                }
+                player.saveStats();
+            }
             console.log(`[Teleport] Transitioning to '${targetSceneKey}' (Map: ${tp.targetMap})`);
 
             // マップ変更をサーバーに通知（シーン再起動前に送信）

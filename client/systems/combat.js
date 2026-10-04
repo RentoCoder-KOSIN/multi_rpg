@@ -9,6 +9,7 @@ import { areEffectsEnabled } from '../utils/effectsSettings.js';
 import { getElementColor } from '../data/elements.js';
 import { JOBS } from '../data/jobs.js';
 import { isAdminFlag } from '../ui/AdminUI.js';
+import { COMBAT_CONFIG } from '../gameConstants.js';
 
 // 職業が未設定（none）などのときに使う通常攻撃の既定値。職業ごとの値は data/jobs.js の attackRange / attackHit
 const DEFAULT_BASIC_ATTACK_RANGE = 80;
@@ -121,6 +122,37 @@ function applyHitEffects(scene, enemy, player, damageData) {
     if (damageData.isPoison) applyPoisonDot(scene, enemy, player, damageData.poisonTick);
 }
 
+// スキル固有の状態異常。装備由来の状態異常とは独立して抽選し、両方が発生した場合も
+// 最も長い行動不能時間・最も高い毒ダメージを使う。
+function getSkillStatusEffects(skill, player) {
+    const effect = skill.effect || {};
+    const type = effect.statusEffect;
+    if (!['freeze', 'paralyze', 'poison'].includes(type)) return {};
+    const chance = Phaser.Math.Clamp(Number(effect.statusChance ?? 1), 0, 1);
+    if (Math.random() >= chance) return {};
+
+    const duration = Math.max(0, Number(effect.statusDuration) || (
+        type === 'freeze' ? FREEZE_DURATION_MS : type === 'paralyze' ? PARALYZE_DURATION_MS : POISON_TICK_MS * POISON_TICKS
+    ));
+    if (type === 'freeze') return { freezeMs: duration };
+    if (type === 'paralyze') return { paralyzeMs: duration };
+
+    const ratio = Number(effect.poisonAtkRatio) || 0;
+    const tickDamage = Math.max(1, Number(effect.poisonTickDamage) || Math.ceil((player.stats.atk || 1) * ratio));
+    return { poisonMs: duration, poisonTick: tickDamage };
+}
+
+function mergeStatusEffects(damageData, skillEffects) {
+    const effects = {};
+    if (damageData.isFreeze || skillEffects.freezeMs) effects.freezeMs = Math.max(skillEffects.freezeMs || 0, damageData.isFreeze ? FREEZE_DURATION_MS : 0);
+    if (!effects.freezeMs && (damageData.isParalyze || skillEffects.paralyzeMs)) effects.paralyzeMs = Math.max(skillEffects.paralyzeMs || 0, damageData.isParalyze ? PARALYZE_DURATION_MS : 0);
+    if (damageData.isPoison || skillEffects.poisonMs) {
+        effects.poisonMs = Math.max(skillEffects.poisonMs || 0, damageData.isPoison ? POISON_TICK_MS * POISON_TICKS : 0);
+        effects.poisonTick = Math.max(skillEffects.poisonTick || 0, damageData.isPoison ? damageData.poisonTick || 0 : 0);
+    }
+    return effects;
+}
+
 /**
  * 通常攻撃の対象を決める（実際の攻撃と、SPACE押下中の範囲プレビューの両方で使う）。
  * @returns {{range:number, hit:string, cooldown:number, inRange:Array, nearest:object|null, targets:Array}}
@@ -180,7 +212,7 @@ export function performBasicAttack(scene) {
     enemies.forEach(enemy => {
         if (!enemy || !enemy.active) return;
 
-        const damageData = player.getDamage(1, enemy);
+        const damageData = player.getDamage(COMBAT_CONFIG.BASIC_ATTACK_MULT, enemy);
         const damage = damageData.amount;
 
         const effects = {};
@@ -369,12 +401,13 @@ export function usePlayerSkill(scene, skillId) {
         return;
     }
 
-    // Skill level scaling: +15% effect (damage) and +10% range per level
+    // Skill level scaling: damage +SKILL_LEVEL_BONUS per level (gameConstants.js), range +10% per level
     const skillLevel = player.stats.skillLevels?.[skillId] || 1;
-    const levelBonus = 1 + (skillLevel - 1) * 0.15;
+    const levelBonus = 1 + (skillLevel - 1) * COMBAT_CONFIG.SKILL_LEVEL_BONUS;
 
     const { range, rangeType } = getSkillAimSpec(player, skillId);
-    const damageMultiplier = (skill.damageMult || 1) * levelBonus;
+    // SKILL_DAMAGE_SCALE: 全スキルの威力をまとめて調整するつまみ
+    const damageMultiplier = (skill.damageMult || 1) * levelBonus * COMBAT_CONFIG.SKILL_DAMAGE_SCALE;
     const enemies = getSkillEnemyPool(scene);
 
     // Auto-face the nearest enemy for fan / line skills
@@ -479,18 +512,22 @@ function applyDamageSkill(scene, skill, { enemies, range, rangeType, direction, 
     targets.forEach(enemy => {
         const damageData = player.getDamage(damageMultiplier, enemy, skill.element || null);
         let damage = damageData.amount;
+        const statusEffects = mergeStatusEffects(damageData, getSkillStatusEffects(skill, player));
 
         // アンデッド特効（エクソシズムなど effect.vsUndead を持つスキル）
         if (skill.effect?.vsUndead && UNDEAD_ENEMY_TYPES.includes(enemy.type)) {
             damage = Math.ceil(damage * skill.effect.vsUndead);
         }
 
-        const effects = {};
-        if (damageData.isFreeze) effects.freezeMs = FREEZE_DURATION_MS;
-        else if (damageData.isParalyze) effects.paralyzeMs = PARALYZE_DURATION_MS;
-        enemy.takeDamage(damage, player, Object.keys(effects).length ? effects : null, buildHitInfo(damageData));
+        enemy.takeDamage(damage, player, Object.keys(statusEffects).length ? statusEffects : null, buildHitInfo(damageData));
 
-        applyHitEffects(scene, enemy, player, damageData);
+        applyHitEffects(scene, enemy, player, {
+            ...damageData,
+            isFreeze: !!statusEffects.freezeMs,
+            isParalyze: !!statusEffects.paralyzeMs,
+            isPoison: !!statusEffects.poisonMs,
+            poisonTick: statusEffects.poisonTick || damageData.poisonTick,
+        });
 
         // Lifesteal
         if (player.stats.lifesteal > 0) {

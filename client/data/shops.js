@@ -19,7 +19,10 @@ const allShopItems = [
     "titan_armor", "celestial_mail", "void_aegis",
     // 宝具（accessory）
     "ring_of_swiftness", "vampiric_amulet", "guardian_charm",
-    "philosophers_stone", "dragonfang_pendant"
+    "philosophers_stone", "dragonfang_pendant",
+    // 追加分（谷間を埋める装備）。竜の心臓・銀河の刃は最終ボス限定なので並べない
+    "hunter_longbow", "steel_claymore", "crystal_staff", "mithril_mail", "orichalcum_plate",
+    "lucky_clover", "windstep_anklet", "seekers_monocle"
 ];
 
 // -----------------------------
@@ -41,7 +44,7 @@ export const SHOP_LOADOUTS = {
     city_food: {
         title: "街の雑貨屋",
         items: [
-            "potion", "high_potion", "menno_kayaku", "eatable_negi",
+            "potion", "high_potion", "great_potion", "great_mp_potion", "elixir", "menno_kayaku", "eatable_negi",
             "heal_potion_small", "heal_potion_large", "heal_izumi",
             "power_seed", "shield_seed", "magic_seed",
             "stat_reset_book", "job_reset_book"
@@ -54,7 +57,7 @@ export const SHOP_LOADOUTS = {
     // ギルド限定ショップ: allShopItemsに含めていないため、他のどの店にも並ばない。
     guild_shop: {
         title: "ギルドショップ",
-        items: ["guild_captain_blade", "guild_emblem", "mp_potion", "high_mp_potion"]
+        items: ["guild_captain_blade", "guild_emblem", "mp_potion", "high_mp_potion", "limit_break_license"]
     },
     // デフォルト（見つからない場合用）
     default: {

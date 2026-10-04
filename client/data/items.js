@@ -30,6 +30,7 @@ export const ITEMS = {
         id: "holy_weapon",
         name: "聖なる武器",
         type: "weapon",
+        level: 60,
         price: 999999,
         stats: {
             attack: 105,
@@ -84,13 +85,23 @@ export const ITEMS = {
             "獲得経験値がx2になる初心者に優しい武器。効果はLv25まで（それ以降は無効）。",
     }),
 
+    tutorial_expedition_charm: defineItem({
+        id: "tutorial_expedition_charm",
+        name: "修練者の護符",
+        type: "accessory",
+        level: 1,
+        price: 0,
+        stats: { expMultiplier: 2 },
+        description: "チュートリアル完全達成の証。獲得経験値がx2になる（Lv25まで）。",
+    }),
+
     hero_sword: defineItem({
         id: "hero_sword",
         name: "勇者の剣",
         type: "weapon",
         level: 50,
-        price: 2500,
-        stats: { attack: 50, critChance: 0.1 },
+        price: 25000,
+        stats: { attack: 280, critChance: 0.1 },
         description: "伝説の輝きを放つ聖剣。会心率+10%",
     }),
 
@@ -162,6 +173,33 @@ export const ITEMS = {
         description: "竜の牙を削り出した宝具。攻防両方を底上げする。",
     }),
 
+    // --- 魔石ガチャ限定装備 ---
+    starlight_blade: defineItem({
+        id: "starlight_blade", name: "星光の剣", type: "weapon", level: 30, price: 0,
+        stats: { attack: 125, critChance: 0.06, lightDamage: 35, paralyzeChance: 0.12 },
+        description: "星の欠片を鍛えた片手剣。光ダメージ+35、12%で麻痺を付与。魔石ガチャ限定。",
+    }),
+    tempest_staff: defineItem({
+        id: "tempest_staff", name: "嵐の杖", type: "weapon", level: 45, price: 0,
+        stats: { attack: 20, matk: 240, speedBonus: 8, thunderDamage: 55, paralyzeChance: 0.2 },
+        description: "風雷をまとった杖。雷ダメージ+55、20%で麻痺を付与。魔石ガチャ限定。",
+    }),
+    moon_guard: defineItem({
+        id: "moon_guard", name: "月影の鎧", type: "armor", level: 40, price: 0,
+        stats: { defense: 55, dodgeChance: 0.08, waterResist: 20, darkResist: 20 },
+        description: "月光を編み込んだ軽鎧。回避+8%、水・闇耐性+20%。魔石ガチャ限定。",
+    }),
+    aurora_mail: defineItem({
+        id: "aurora_mail", name: "極光の鎧", type: "armor", level: 60, price: 0,
+        stats: { defense: 95, fireResist: 18, waterResist: 18, thunderResist: 18, windResist: 18, earthResist: 18, lightResist: 18, darkResist: 18 },
+        description: "七色に揺らめく重鎧。全属性耐性+18%。魔石ガチャ限定。",
+    }),
+    comet_talisman: defineItem({
+        id: "comet_talisman", name: "彗星の護符", type: "accessory", level: 35, price: 0,
+        stats: { attack: 35, critChance: 0.07, speedBonus: 10, lifesteal: 0.06, fireDamage: 25 },
+        description: "流星の軌跡を封じた宝具。与ダメージの6%を吸収、火ダメージ+25。魔石ガチャ限定。",
+    }),
+
     // --- 消耗品 ---
     potion: defineItem({
         id: "potion",
@@ -194,6 +232,39 @@ export const ITEMS = {
         price: 250,
         stats: { healMp: 200 },
         description: "MPを200回復する強力な薬。",
+    }),
+
+    limit_break_license: defineItem({
+        id: "limit_break_license",
+        name: "制限解除の証・I",
+        type: "consumable",
+        price: 500000,
+        stats: { unlockEquipmentCapLevel: 30 },
+        description: "使用すると必要Lv30までの装備を、レベルに関係なく本来の性能で扱える。",
+    }),
+    limit_break_license_2: defineItem({
+        id: "limit_break_license_2",
+        name: "制限解除の証・II",
+        type: "consumable",
+        price: 0,
+        stats: { unlockEquipmentCapLevel: 60 },
+        description: "必要Lv60までの装備制限を解除する貴重な証。ガチャ限定。",
+    }),
+    limit_break_license_3: defineItem({
+        id: "limit_break_license_3",
+        name: "制限解除の証・III",
+        type: "consumable",
+        price: 0,
+        stats: { unlockEquipmentCapLevel: 100 },
+        description: "必要Lv100までの装備制限を解除する伝説級の証。ガチャ限定。",
+    }),
+    magic_stone: defineItem({
+        id: "magic_stone",
+        name: "魔石",
+        type: "material",
+        price: 0,
+        stats: {},
+        description: "魔石ガチャを1回引くための触媒。入手方法は今後追加予定。",
     }),
 
     wood_sword: defineItem({
@@ -300,10 +371,10 @@ export const ITEMS = {
         id: "negi_sword",
         name: "真・ネギ丸",
         description: "鋭利な野菜。移動速度+20",
-        price: 2000,
+        price: 8000,
         type: "weapon",
         level: 40,
-        stats: { attack: 85, speedBonus: 20 },
+        stats: { attack: 190, speedBonus: 20 },
     }),
     wood_stick: defineItem({
         id: "wood_stick",
@@ -318,11 +389,11 @@ export const ITEMS = {
         id: "ice_wings",
         name: "氷の翼",
         description: "絶対零度の魔力を秘めた翼。移動速度+40",
-        price: 15000,
+        price: 24000,
         type: "weapon",
         level: 65,
         stats: {
-            attack: 280,
+            attack: 420,
             iceDamage: 50,
             freezeChance: 0.1,
             speedBonus: 40,
@@ -332,10 +403,10 @@ export const ITEMS = {
         id: "fire_sword",
         name: "炎の剣・プロメテウス",
         description: "獄炎の剣。会心率+15%",
-        price: 25000,
+        price: 30000,
         type: "weapon",
         level: 75,
-        stats: { attack: 450, fireDamage: 30, critChance: 0.15 },
+        stats: { attack: 480, fireDamage: 30, critChance: 0.15 },
     }),
     cheat_sword: defineItem({
         id: "cheat_sword",
@@ -390,28 +461,28 @@ export const ITEMS = {
         id: "arcane_rod",
         name: "秘術の杖",
         description: "魔力を増幅する杖。魔法職向け。",
-        price: 3200,
+        price: 6000,
         type: "weapon",
         level: 35,
-        stats: { attack: 20, matk: 160 },
+        stats: { attack: 20, matk: 210 },
     }),
     thunder_spear: defineItem({
         id: "thunder_spear",
         name: "雷鳴の槍",
         description: "雷を纏う槍。突きの速さが増す。",
-        price: 8000,
+        price: 12000,
         type: "weapon",
         level: 55,
-        stats: { attack: 200, speedBonus: 10 },
+        stats: { attack: 320, speedBonus: 10 },
     }),
     moonlight_rapier: defineItem({
         id: "moonlight_rapier",
         name: "月光のレイピア",
         description: "月明かりを刃に映す細剣。会心の一撃を誘う。",
-        price: 10000,
+        price: 16000,
         type: "weapon",
         level: 60,
-        stats: { attack: 240, critChance: 0.12 },
+        stats: { attack: 360, critChance: 0.12 },
     }),
     abyssal_blade: defineItem({
         id: "abyssal_blade",
@@ -510,7 +581,7 @@ export const ITEMS = {
         price: 12000,
         type: "armor",
         level: 60,
-        stats: { defense: 35, fireResist: 10, iceResist: 10 },
+        stats: { defense: 75, fireResist: 10, iceResist: 10 },
     }),
     titan_armor: defineItem({
         id: "titan_armor",
@@ -519,7 +590,7 @@ export const ITEMS = {
         price: 20000,
         type: "armor",
         level: 70,
-        stats: { defense: 70 },
+        stats: { defense: 105 },
     }),
     celestial_mail: defineItem({
         id: "celestial_mail",
@@ -528,7 +599,7 @@ export const ITEMS = {
         price: 40000,
         type: "armor",
         level: 80,
-        stats: { defense: 90, fireResist: 15, iceResist: 15 },
+        stats: { defense: 125, fireResist: 15, iceResist: 15 },
     }),
     void_aegis: defineItem({
         id: "void_aegis",
@@ -537,7 +608,7 @@ export const ITEMS = {
         price: 80000,
         type: "armor",
         level: 95,
-        stats: { defense: 120 },
+        stats: { defense: 170 },
     }),
     dragon_scale_armor: defineItem({
         id: "dragon_scale_armor",
@@ -565,6 +636,74 @@ export const ITEMS = {
             const multiplier = 1 + (1 - hpRatio);
             return Math.ceil(baseAtk * multiplier);
         },
+    }),
+    // --- 追加装備（Lv40〜60の装備の谷間を埋める / ボス・最終ボスの限定ドロップ） ---
+    hunter_longbow: defineItem({
+        id: "hunter_longbow", name: "狩人の長弓", type: "weapon", level: 40, price: 8000,
+        stats: { attack: 200, critChance: 0.05 },
+        description: "狩人が使い込んだ長弓。会心率+5%。沼のボスが稀に落とす。",
+    }),
+    steel_claymore: defineItem({
+        id: "steel_claymore", name: "鋼のクレイモア", type: "weapon", level: 45, price: 9000,
+        stats: { attack: 240 },
+        description: "重い一撃を叩き込む大剣。森のボスが稀に落とす。",
+    }),
+    crystal_staff: defineItem({
+        id: "crystal_staff", name: "水晶の杖", type: "weapon", level: 50, price: 16000,
+        stats: { attack: 20, matk: 300 },
+        description: "魔力を増幅する水晶の杖。魔法職向け。沼のボスが稀に落とす。",
+    }),
+    galaxy_blade: defineItem({
+        id: "galaxy_blade", name: "銀河の刃", type: "weapon", level: 100, price: 150000,
+        stats: { attack: 1000, matk: 1000, critChance: 0.1, speedBonus: 20 },
+        description: "最終ボスだけが持つ、星々を斬る刃。会心率+10%。",
+    }),
+    mithril_mail: defineItem({
+        id: "mithril_mail", name: "ミスリルメイル", type: "armor", level: 50, price: 9000,
+        stats: { defense: 62, fireResist: 10, iceResist: 10 },
+        description: "軽くて硬い銀の鎧。",
+    }),
+    orichalcum_plate: defineItem({
+        id: "orichalcum_plate", name: "オリハルコンプレート", type: "armor", level: 65, price: 22000,
+        stats: { defense: 90, fireResist: 15, iceResist: 15 },
+        description: "伝説の金属で作られた重装鎧。",
+    }),
+    lucky_clover: defineItem({
+        id: "lucky_clover", name: "幸運のクローバー", type: "accessory", level: 15, price: 1800,
+        stats: { dodgeChance: 0.04, critChance: 0.02 },
+        description: "幸運を呼ぶお守り。回避率+4%、会心率+2%。",
+    }),
+    windstep_anklet: defineItem({
+        id: "windstep_anklet", name: "風足の足環", type: "accessory", level: 30, price: 7000,
+        stats: { dodgeChance: 0.05, speedBonus: 15 },
+        description: "足取りが軽くなる足環。回避率+5%、速度+15。",
+    }),
+    seekers_monocle: defineItem({
+        id: "seekers_monocle", name: "探求者の片眼鏡", type: "accessory", level: 40, price: 9000,
+        stats: { critChance: 0.08, attack: 30 },
+        description: "弱点を見抜く片眼鏡。会心率+8%。森のボスが稀に落とす。",
+    }),
+    dragon_heart: defineItem({
+        id: "dragon_heart", name: "竜の心臓", type: "accessory", level: 85, price: 90000,
+        stats: { attack: 120, defense: 60, lifesteal: 0.03, critChance: 0.05 },
+        description: "最終ボスの力が宿る宝具。攻防と吸収を兼ね備える。",
+    }),
+
+    // --- 割合回復アイテム（レベルが上がってHPが増えても、回復量が追いつくように） ---
+    great_potion: defineItem({
+        id: "great_potion", name: "グレートポーション", type: "consumable", price: 1200,
+        stats: { healPct: 0.3 },
+        description: "最大HPの30%を回復する。高レベルでも役に立つ回復薬。",
+    }),
+    great_mp_potion: defineItem({
+        id: "great_mp_potion", name: "グレートMPポーション", type: "consumable", price: 1200,
+        stats: { healMpPct: 0.3 },
+        description: "最大MPの30%を回復する。",
+    }),
+    elixir: defineItem({
+        id: "elixir", name: "エリクサー", type: "consumable", price: 6000,
+        stats: { healPct: 0.6, healMpPct: 0.6 },
+        description: "最大HPとMPの60%を回復する秘薬。ボスが稀に落とす。",
     }),
     // --- リセットアイテム（使用処理は InventoryUI.useItem。1回の使用で1個だけ消費する） ---
     stat_reset_book: defineItem({

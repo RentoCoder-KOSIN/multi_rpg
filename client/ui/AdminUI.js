@@ -500,6 +500,10 @@ function buildPanel() {
                     }),
                     btn("ジョブEXP追加", actionJobExp),
                 ),
+                row(
+                    el("input", { type: "number", id: "adm-magic-stone", value: "10", min: "1" }),
+                    btn("魔石追加", actionMagicStone),
+                ),
                 row(btn("HP/MP全回復", actionHeal)),
             ),
 
@@ -629,6 +633,15 @@ function actionJobExp() {
     c.player.stats.jobExp = Math.max(0, (c.player.stats.jobExp || 0) + n);
     refreshUI(c.player);
     log(`ジョブEXP ${n >= 0 ? "+" : ""}${n}`);
+}
+
+function actionMagicStone() {
+    const c = ctx();
+    if (!c) return;
+    const n = Math.max(1, num("adm-magic-stone", 1));
+    c.player.addItem('magic_stone', n);
+    refreshUI(c.player);
+    log(`魔石 x${n} を付与しました`);
 }
 
 function actionHeal() {

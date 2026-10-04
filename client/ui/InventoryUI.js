@@ -1,4 +1,5 @@
 import { ITEMS } from "../data/items.js";
+import { SEED_CONFIG } from "../gameConstants.js";
 import BaseWindowUI from "./BaseWindowUI.js";
 import { entryId, entryCount, removableCount, removeFromInventory } from "../utils/inventoryOps.js";
 
@@ -234,7 +235,8 @@ export default class InventoryUI extends BaseWindowUI {
                     let reqText = '';
                     if (slot.item.lvlReq) {
                         const isOk = this.scene.player.stats.level >= slot.item.lvlReq;
-                        reqText = `\n必要Lv: ${slot.item.lvlReq} ${isOk ? '✔' : '❌'}`;
+                        const power = this.scene.player.getEquipmentPowerMultiplier?.(slot.item) ?? 1;
+                        reqText = isOk ? `\n必要Lv: ${slot.item.lvlReq} ✔` : `\n必要Lv: ${slot.item.lvlReq}（装備可・性能${Math.round(power * 100)}%）`;
                     }
                     this.detailText.setText(`${typeStr} ${slot.item.name}${reqText}\n${slot.item.description}`);
 
@@ -290,6 +292,22 @@ export default class InventoryUI extends BaseWindowUI {
         const stackCount = entryCount(invItem);
         const s = item.stats || {};
 
+        // 制限解除の証: 一度使うとキャラクター単位で恒久的に有効。
+        if (s.unlockEquipmentCapLevel) {
+            const cap = s.unlockEquipmentCapLevel;
+            if ((player.stats.equipmentCapLevel || 0) >= cap) {
+                this.scene.notificationUI?.show(`必要Lv${cap}までの装備制限はすでに解除済みです`, 'info');
+                return;
+            }
+            player.stats.equipmentCapLevel = cap;
+            removeFromInventory(player, index, 1);
+            player.applyEquipmentStats();
+            player.saveStats();
+            this.scene.notificationUI?.show(`装備制限を解除！ 必要Lv${cap}までの装備を本来の性能で扱えます`, 'success', 5000);
+            this.refreshList();
+            return;
+        }
+
         // リセットの書は「まとめて使う」ことに意味が無いので、常に1個だけ使う。
         // 効果が無い状況（割り振りが無い・職業が無い）では、確認も消費もしない。
         if (s.resetStats || s.resetJob) {
@@ -298,15 +316,31 @@ export default class InventoryUI extends BaseWindowUI {
         }
 
         // useCountOverride: 個数ダイアログで指定された個数。useAll=trueなら所持数ぶん全部
-        const useCount = Math.max(1, Math.min(stackCount, useCountOverride ?? (useAll ? stackCount : 1)));
+        let useCount = Math.max(1, Math.min(stackCount, useCountOverride ?? (useAll ? stackCount : 1)));
 
-        const heal = (item.heal || s.heal || 0) * useCount;
+        // 「種」の永続強化には上限がある（無限に強くなるのを防ぐ。gameConstants.js の SEED_CONFIG）。
+        // 上限までしか使わず、上限に達していたら消費もしない。
+        if (s.attackBoost > 0 || s.defenseBoost > 0) {
+            const roomAtk = s.attackBoost > 0
+                ? Math.floor((SEED_CONFIG.MAX_BONUS_ATK - (player.stats.bonusAtk || 0)) / s.attackBoost) : Infinity;
+            const roomDef = s.defenseBoost > 0
+                ? Math.floor((SEED_CONFIG.MAX_BONUS_DEF - (player.stats.bonusDef || 0)) / s.defenseBoost) : Infinity;
+            const room = Math.min(roomAtk, roomDef);
+            if (room <= 0) {
+                const which = roomAtk <= 0 ? `攻撃力(上限+${SEED_CONFIG.MAX_BONUS_ATK})` : `防御力(上限+${SEED_CONFIG.MAX_BONUS_DEF})`;
+                if (this.scene.notificationUI) this.scene.notificationUI.show(`${which}は、これ以上アップしない！`, 'error');
+                return;
+            }
+            useCount = Math.min(useCount, room);
+        }
+
+        const heal = ((item.heal || s.heal || 0) + Math.floor(player.stats.maxHp * (s.healPct || 0))) * useCount;
         if (heal > 0) {
             player.stats.hp = Math.min(player.stats.maxHp, player.stats.hp + heal);
             if (this.scene.notificationUI) this.scene.notificationUI.show(`HPが ${heal} 回復した！${useCount > 1 ? ` (x${useCount})` : ''}`, "success");
         }
 
-        const healMp = (item.healMp || s.healMp || 0) * useCount;
+        const healMp = ((item.healMp || s.healMp || 0) + Math.floor(player.stats.maxMp * (s.healMpPct || 0))) * useCount;
         if (healMp > 0) {
             player.stats.mp = Math.min(player.stats.maxMp, player.stats.mp + healMp);
             if (this.scene.notificationUI) this.scene.notificationUI.show(`MPが ${healMp} 回復した！${useCount > 1 ? ` (x${useCount})` : ''}`, "success");

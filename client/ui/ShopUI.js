@@ -64,6 +64,8 @@ function summarizeItemStats(item) {
         if (heal) parts.push(`HP+${heal}`);
         if (item.healMp) parts.push(`MP+${item.healMp}`);
         if (s.healMp) parts.push(`MP+${s.healMp}`);
+        if (s.healPct) parts.push(`HP+${Math.round(s.healPct * 100)}%`);
+        if (s.healMpPct) parts.push(`MP+${Math.round(s.healMpPct * 100)}%`);
         if (s.healAll) parts.push(`味方全員HP+${s.healAll}`);
         if (s.attackBoost) parts.push(`ATK永久+${s.attackBoost}`);
         if (s.defenseBoost) parts.push(`DEF永久+${s.defenseBoost}`);
@@ -317,9 +319,9 @@ export default class ShopUI extends BaseWindowUI {
         this.drawItemBox(boxBg, 540, 64, 0x0f3460, 0.5, 0x4a90e2, 0.3);
         box.add(boxBg);
 
-        // 必要レベルを満たしているかで色を変える（満たしていない場合は赤）
+        // レベル不足でも購入・装備は可能（性能は装備時にレベル差で低下する）。
         const meetsLevel = !item.lvlReq || playerLevel >= item.lvlReq;
-        const nameColor = meetsLevel ? '#ffffff' : '#ff6666';
+        const nameColor = meetsLevel ? '#ffffff' : '#ffd27a';
 
         const namePrefix = item.lvlReq ? `[Lv.${item.lvlReq}] ` : '';
         const name = this.scene.add.text(-250, -16, `${namePrefix}${item.name}${nameSuffix}`, {

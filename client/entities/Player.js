@@ -3,13 +3,14 @@ import { ITEMS } from "../data/items.js";
 import { SKILLS } from "../data/skills.js";
 import { getEnemyStats } from "../data/enemyStats.js";
 import { getLevelDiffMultiplier, getExpLevelMultiplier } from "../utils/levelScaling.js";
-import { TOTAL_SKILL_SLOTS, GROWTH_CONFIG, COMBAT_CONFIG, REINCARNATION_CONFIG, AGI_CONFIG, RESET_CONFIG } from "../gameConstants.js";
+import { TOTAL_SKILL_SLOTS, GROWTH_CONFIG, COMBAT_CONFIG, REINCARNATION_CONFIG, AGI_CONFIG, RESET_CONFIG, getRebirthDamageTakenMult, getRebirthRewardMult } from "../gameConstants.js";
 import {
     ELEMENTS, getElementMultiplier, getBlendedElementMultiplier, getElementColor,
     getWeaponElementBonus, resolveElement, resistKey, damageKey, collectElementStats,
 } from "../data/elements.js";
 import { showDamageNumber } from "../utils/damagePopup.js";
 import { isAdminFlag } from "../ui/AdminUI.js";
+import { getSaved, setSaved } from "../utils/saveStore.js";
 
 // 状態異常の基本持続時間（ms）。武器の属性付与などから発生する。
 const STATUS_DURATIONS = {
@@ -77,7 +78,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     initializeStats() {
         // localStorage または registry から読み込み
-        const saved = JSON.parse(localStorage.getItem('playerStats')) || this.scene.registry.get('playerStats') || {};
+        const saved = getSaved('playerStats') || this.scene.registry.get('playerStats') || {};
         this.stats = {
             level: saved.level || 1,
             hp: saved.hp !== undefined ? saved.hp : 100,
@@ -113,6 +114,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             // ここで復元しないと、転生後にマップ移動・再読み込みでPlayerが作り直された時点でフラグが消え、
             // 職業を選んだ瞬間に習得済みスキルが全て消えてしまう（以前の不具合）。
             _skipSkillResetOnNextJob: !!saved._skipSkillResetOnNextJob,
+            // チュートリアルの進行記録。ここで復元しないと、マップ移動・再ログインのたびに消えてしまう
+            // （以前は tutorialStarterRewardClaimed が復元されず、初期報酬が再配布される状態だった）。
+            tutorialStarterRewardClaimed: !!saved.tutorialStarterRewardClaimed,
+            tutorialCompletionRewardClaimed: !!saved.tutorialCompletionRewardClaimed,
+            // 制限解除は段階制。旧「全解除」セーブはLv100解除済みとして移行する。
+            equipmentCapLevel: saved.equipmentCapUnlocked ? 100 : (saved.equipmentCapLevel || 0),
+            tutorialFlags: (saved.tutorialFlags && typeof saved.tutorialFlags === 'object') ? { ...saved.tutorialFlags } : {},
             inventory: saved.inventory || [],
             // 鍛冶屋で武器/防具(アイテムID)に付与した属性。 { itemId: 'fire' | 'water' | ... }
             // 存在しない属性の付与（属性定義の変更前のデータなど）は破棄する
@@ -347,7 +355,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     saveStats() {
         if (!this.isLocal) return;
         this.scene.registry.set('playerStats', this.stats);
-        localStorage.setItem('playerStats', JSON.stringify(this.stats));
+        setSaved('playerStats', this.stats); // サーバーのアカウントへ保存（まとめて送信される）
 
         if (this.scene.networkManager) {
             this.scene.networkManager.sendPlayerStats(this.stats.hp, this.stats.maxHp, this.stats.level, this.stats.mp, this.stats.maxMp);
@@ -365,7 +373,21 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         // 狩ったときは経験値を減らす。敵の方が格上の場合は補正しない。
         const levelPenalty = (enemyLevel != null) ? getExpLevelMultiplier(this.stats.level, enemyLevel) : 1.0;
 
-        const finalAmount = Math.ceil(amount * expMult * levelPenalty);
+        // 周回ボーナス: 転生を重ねるほど経験値が増える（その分、敵から受けるダメージも増える。gameConstants.js 参照）
+        const rebirthMult = getRebirthRewardMult(this.stats.reincarnationCount || 0);
+        const sourceMult = enemyLevel != null ? GROWTH_CONFIG.ENEMY_EXP_MULTIPLIER : 1;
+        const finalAmount = Math.ceil(amount * sourceMult * expMult * levelPenalty * rebirthMult);
+
+        if (this.stats.level >= 100) {
+            // レベルキャップ到達後も、敵を倒せば Job EXP は貯まる。
+            // （以前は何も増えず、スキルレベル上げ・スキル解放の育成が止まって「やることが無い」状態だった）
+            const jobGain = Math.ceil(finalAmount * GROWTH_CONFIG.JOB_EXP_RATE);
+            this.stats.jobExp = (this.stats.jobExp || 0) + jobGain;
+            this.saveStats();
+            if (this.scene.playerStatsUI) this.scene.playerStatsUI.update();
+            if (this.scene.notificationUI) this.scene.notificationUI.show(`JOB EXP +${jobGain}`, 'info');
+            return;
+        }
 
         if (this.stats.level < 100) { // レベルキャップ
             this.stats.exp += finalAmount;
@@ -397,6 +419,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     gainGold(amount) {
         if (!this.isLocal) return;
+        amount = Math.ceil(amount * getRebirthRewardMult(this.stats.reincarnationCount || 0)); // 周回ボーナス
         this.stats.gold += amount;
         this.saveStats();
         if (this.scene.notificationUI) {
@@ -505,8 +528,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         if (!this.isLocal) return;
         if (slotIndex < 0 || slotIndex >= TOTAL_SKILL_SLOTS) return;
 
-        // スキル解放済みチェック
-        if (skillId && !this.stats.unlockedSkills.includes(skillId)) return;
+        // 回復アイテムは `item:<itemId>` として同じクイックスロットに登録できる。
+        const quickItemId = typeof skillId === 'string' && skillId.startsWith('item:') ? skillId.slice(5) : null;
+        if (quickItemId) {
+            const item = ITEMS[quickItemId];
+            const owned = this.stats.inventory.some(e => (typeof e === 'string' ? e : e.id) === quickItemId);
+            if (!item || item.type !== 'consumable' || !owned) return;
+        } else if (skillId && !this.stats.unlockedSkills.includes(skillId)) return;
 
         this.stats.activeSkills[slotIndex] = skillId;
         this.saveStats();
@@ -646,9 +674,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         [weapon, armor, relic].forEach(item => {
             if (!item) return;
             const s = item.stats || {};
+            const power = this.getEquipmentPowerMultiplier(item);
 
             // 攻撃力・防御力 (関数なら実行、そうでなければ加算)
-            const getVal = (val) => (typeof val === 'function' ? val(this) : (val || 0));
+            const getVal = (val) => (typeof val === 'function' ? val(this) : (val || 0)) * power;
 
             // 魔法職は matk (魔法攻撃力) を優先して攻撃力に反映する
             const atkSource = isMagical ? (item.matk ?? s.matk ?? item.atk ?? s.attack) : (item.atk ?? s.attack);
@@ -675,7 +704,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.stats.paralyzeChance += getVal(s.paralyzeChance);
             this.stats.poisonChance += getVal(s.poisonChance);
             this.stats.poisonDamage += getVal(s.poisonDamage);
-            if (s.attackMultiplier) this.stats.atkMultiplier *= s.attackMultiplier;
+            if (s.attackMultiplier) this.stats.atkMultiplier *= 1 + ((s.attackMultiplier - 1) * power);
             if (s.poison) this.stats.poisonEquipped = true;
 
             // 経験値倍率は加算方式
@@ -714,6 +743,45 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     /**
+     * 必要Lv未満の装備は、Lv差に応じて20%〜100%の性能で使える。
+     * 制限解除の証を使ったキャラクターは常に本来の性能になる。
+     */
+    getEquipmentPowerMultiplier(item) {
+        const required = Number(item?.lvlReq || 0);
+        if (!required || (this.stats.equipmentCapLevel || 0) >= required || this.stats.level >= required) return 1;
+        const ratio = Math.max(0, this.stats.level || 1) / required;
+        return GROWTH_CONFIG.UNDERLEVEL_EQUIPMENT_MIN_POWER
+            + (1 - GROWTH_CONFIG.UNDERLEVEL_EQUIPMENT_MIN_POWER) * ratio;
+    }
+
+    /** クイックスロット用の消耗品を1個使用する。 */
+    useQuickItem(itemId) {
+        if (!this.isLocal) return false;
+        const item = ITEMS[itemId];
+        const entry = this.stats.inventory.find(e => (typeof e === 'string' ? e : e.id) === itemId);
+        if (!item || item.type !== 'consumable' || !entry) {
+            this.scene.notificationUI?.show('このアイテムはもう持っていません', 'error');
+            return false;
+        }
+        const now = Date.now();
+        const key = `item:${itemId}`;
+        if (now - (this.skillCooldowns[key] || 0) < 700) return false;
+        const s = item.stats || {};
+        const heal = (item.heal || s.heal || 0) + Math.floor(this.stats.maxHp * (s.healPct || 0));
+        const healMp = (item.healMp || s.healMp || 0) + Math.floor(this.stats.maxMp * (s.healMpPct || 0));
+        if (!heal && !healMp) return false;
+        if (heal) this.stats.hp = Math.min(this.stats.maxHp, this.stats.hp + heal);
+        if (healMp) this.stats.mp = Math.min(this.stats.maxMp, this.stats.mp + healMp);
+        if (typeof entry === 'string' || (entry.count || 1) <= 1) this.stats.inventory.splice(this.stats.inventory.indexOf(entry), 1);
+        else entry.count -= 1;
+        this.skillCooldowns[key] = now;
+        this.saveStats();
+        this.scene.notificationUI?.show(`${item.name}を使用した！`, 'success');
+        this.scene.inventoryUI?.refreshList();
+        return true;
+    }
+
+    /**
      * 最終的なダメージ計算
      * 武器の特殊効果などを反映可能にする
      */
@@ -747,7 +815,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const elementalBonus = Object.values(this.stats.elementDamage || {}).reduce((sum, v) => sum + v, 0);
 
         // クリティカル判定
-        const isCrit = Math.random() < (this.stats.critChance || 0);
+        const isCrit = Math.random() < Math.min(this.stats.critChance || 0, COMBAT_CONFIG.CRIT_CHANCE_CAP);
         if (isCrit) {
             amount = Math.ceil(amount * COMBAT_CONFIG.CRIT_MULTIPLIER);
         }
@@ -845,13 +913,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         if (!this.isLocal || !ITEMS[itemId]) return;
         const item = ITEMS[itemId];
 
-        // レベル制限チェック
-        if (item.lvlReq && this.stats.level < item.lvlReq) {
-            if (this.scene.notificationUI) {
-                this.scene.notificationUI.show(`レベルが足りません！ (必要Lv.${item.lvlReq})`, 'error');
-            }
-            return;
-        }
+        // レベル不足でも装備は可能。ただし制限解除の証がない限り、性能はレベル差に応じて低下する。
 
         if (item.type === 'weapon') {
             this.stats.equipment.weapon = itemId;
@@ -864,7 +926,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.applyEquipmentStats(); // すべてのステータスを再計算
 
         if (this.scene.notificationUI) {
-            this.scene.notificationUI.show(`${item.name} を装備しました！`, 'info');
+            const power = this.getEquipmentPowerMultiplier(item);
+            const suffix = power < 1 ? `（性能 ${Math.round(power * 100)}%）` : '';
+            this.scene.notificationUI.show(`${item.name} を装備しました！${suffix}`, 'info');
 
             // 経験値倍率つきの装備は、実際に効いているかどうかが分かりにくいという声が
             // あったため、装備した瞬間に「x◯発動中/Lv上限で無効」をはっきり表示する。
@@ -889,7 +953,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     addReward(reward) {
         if (!this.isLocal || !reward) return;
 
-        if (reward.exp) this.gainExp(reward.exp);
+        if (reward.exp) this.gainExp(reward.exp * GROWTH_CONFIG.QUEST_EXP_MULTIPLIER);
         if (reward.gold) this.gainGold(reward.gold);
 
         // 将来的にアイテムなどもここに追加可能
@@ -1151,6 +1215,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             finalAmount *= affinityMult;
         }
 
+        // 周回による難易度上昇: 転生回数に応じて敵から受けるダメージが増える（gameConstants.js 参照）
+        finalAmount *= getRebirthDamageTakenMult(this.stats.reincarnationCount || 0);
+
         finalAmount = Math.max(1, Math.round(finalAmount));
 
         this.stats.hp = Math.max(0, this.stats.hp - finalAmount);
@@ -1307,6 +1374,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     update(cursors) {
+        // Y座標で前後関係を決めることで、木・建物・他プレイヤーの前後を自然に見せる。
+        this.setDepth(this.y);
         if (this.isLocal && cursors) { // Keep cursors check here
             const now = this.scene.time.now;
             const body = this.body;
@@ -1383,7 +1452,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
                     // MP回復 (召喚獣が1体でもいる場合は回復しない)
                     const hasSummon = (this.scene.activeSummons || []).some(s => s && s.active);
                     if (!hasSummon && this.stats.mp < this.stats.maxMp) {
-                        this.stats.mp = Math.min(this.stats.mp + 2, this.stats.maxMp);
+                        // MP自然回復は最大MPの1%（最低2）。固定2だと、高レベルでMPが数百あっても全く回復しなかった
+                        this.stats.mp = Math.min(this.stats.mp + Math.max(2, Math.ceil(this.stats.maxMp * 0.01)), this.stats.maxMp);
                     }
 
                     this.lastRegenTime = now;

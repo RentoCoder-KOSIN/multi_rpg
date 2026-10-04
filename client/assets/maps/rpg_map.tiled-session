@@ -1,13 +1,19 @@
 {
-    "activeFile": "starter_town.json",
+    "activeFile": "snow_city.json",
     "expandedProjectPaths": [
         "."
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
+        "": {
+            "scaleInDock": 1
+        },
         "battle.json": {
+            "expandedObjectLayers": [
+                7
+            ],
             "scale": 0.6568359375,
-            "selectedLayer": 0,
+            "selectedLayer": 2,
             "viewCenter": {
                 "x": 383.657448706512,
                 "y": 319.71454058876003
@@ -24,17 +30,28 @@
                 42,
                 41
             ],
-            "scale": 1,
-            "selectedLayer": 17,
+            "scale": 0.33,
+            "selectedLayer": 15,
             "viewCenter": {
-                "x": 1600.5,
-                "y": 1600
+                "x": 2209.090909090909,
+                "y": 199.9999999999999
             }
         },
         "city.json#tiles": {
             "scaleInDock": 1
         },
         "city.json#water": {
+            "scaleInDock": 1
+        },
+        "desert_city.json": {
+            "scale": 1.6090625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 159.72033404544572,
+                "y": 159.72033404544572
+            }
+        },
+        "desert_city.json#tiles": {
             "scaleInDock": 1
         },
         "forest.json": {
@@ -55,7 +72,7 @@
             "scale": 0.5254687499999999,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 479.57181088314013,
+                "x": 480.52334225394003,
                 "y": 479.5718108831401
             }
         },
@@ -73,9 +90,31 @@
         "guild2f.json#tiles": {
             "scaleInDock": 1
         },
+        "port_city.json": {
+            "scale": 1.6090625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 159.72033404544572,
+                "y": 159.72033404544572
+            }
+        },
+        "port_city.json#tiles": {
+            "scaleInDock": 1
+        },
+        "snow_city.json": {
+            "scale": 0.33,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 160.60606060606062,
+                "y": 160.6060606060605
+            }
+        },
+        "snow_city.json#tiles": {
+            "scaleInDock": 1
+        },
         "starter_town.json": {
             "scale": 0.80453125,
-            "selectedLayer": 0,
+            "selectedLayer": 3,
             "viewCenter": {
                 "x": 319.44066809089145,
                 "y": 239.89124101767334
@@ -89,9 +128,9 @@
                 25
             ],
             "scale": 0.42007812499999997,
-            "selectedLayer": 8,
+            "selectedLayer": 4,
             "viewCenter": {
-                "x": 480.86293472196394,
+                "x": 479.6726799330482,
                 "y": 640.3570764366748
             }
         },
@@ -136,7 +175,9 @@
         "tutorial.json",
         "volcano.json",
         "wetland.json",
-        "starter_town.json"
+        "port_city.json",
+        "snow_city.json",
+        "desert_city.json"
     ],
     "project": "rpg_map.tiled-project",
     "recentFiles": [
@@ -148,6 +189,9 @@
         "tutorial.json",
         "volcano.json",
         "wetland.json",
+        "port_city.json",
+        "desert_city.json",
+        "snow_city.json",
         "starter_town.json"
     ]
 }

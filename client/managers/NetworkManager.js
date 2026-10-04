@@ -2,6 +2,7 @@
 import { SERVER_CONFIG } from '../config.js';
 import Player from '../entities/Player.js';
 import { areEffectsEnabled } from '../utils/effectsSettings.js';
+import { getSession, disableSaving, logout } from '../utils/saveStore.js';
 
 export default class NetworkManager {
     constructor(scene) {
@@ -26,13 +27,11 @@ export default class NetworkManager {
         };
         this.partyData = null; // { partyId, leader, members: [] }
 
-        // 永続的なプレイヤーIDを取得または生成
-        this.playerId = localStorage.getItem('game_player_id');
-        if (!this.playerId) {
-            this.playerId = 'p-' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-            localStorage.setItem('game_player_id', this.playerId);
-        }
-        console.log('[NetworkManager] Persistent Player ID:', this.playerId);
+        // プレイヤーIDはアカウントID（ログイン時にサーバーが発行）。
+        // 端末ごとのランダムIDをやめたので、どのPCから入っても同じプレイヤーになる。
+        this.session = getSession();
+        this.playerId = this.session?.playerId || null;
+        console.log('[NetworkManager] Player ID (account):', this.playerId);
     }
 
     connect(mapKey = 'tutorial', onConnected = null) {
@@ -93,7 +92,7 @@ export default class NetworkManager {
             reconnectionAttempts: SERVER_CONFIG.reconnectAttempts,
             reconnectionDelay: SERVER_CONFIG.reconnectDelay,
             auth: {
-                playerId: this.playerId
+                token: this.session?.token
             }
         });
 
@@ -115,7 +114,22 @@ export default class NetworkManager {
         });
 
         this.socket.on('disconnect', () => console.log('Disconnected'));
-        this.socket.on('connect_error', (err) => console.error('Connect error:', err));
+        this.socket.on('connect_error', (err) => {
+            console.error('Connect error:', err);
+            // トークンが無効（期限切れ・アカウント不明）ならログインし直す
+            if (err && err.message === 'unauthorized') {
+                logout();
+                alert('ログインの有効期限が切れました。もう一度ログインしてください。');
+                window.location.reload();
+            }
+        });
+
+        // 別の端末・タブで同じアカウントがログインした。こちらの保存を止めて、データの上書き事故を防ぐ
+        this.socket.on('duplicateLogin', () => {
+            disableSaving();
+            alert('別の場所で同じアカウントがログインしました。この画面は終了します。');
+            window.location.reload();
+        });
 
         this.setupEventHandlers();
     }

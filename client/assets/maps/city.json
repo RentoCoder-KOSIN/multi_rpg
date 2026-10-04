@@ -1628,6 +1628,93 @@
      "width": 32,
      "x": 126.666666666667,
      "y": 2242
+    },
+    {
+     "height": 32,
+     "id": 112,
+     "name": "雪原都市へ",
+     "opacity": 1,
+     "properties": [
+      {
+       "name": "targetMap",
+       "type": "string",
+       "value": "snow_city"
+      },
+      {
+       "name": "targetSpawn",
+       "type": "string",
+       "value": "default"
+      },
+      {
+       "name": "unlocked",
+       "type": "bool",
+       "value": true
+      }
+     ],
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "width": 32,
+     "x": 1680,
+     "y": 500
+    },
+    {
+     "height": 32,
+     "id": 113,
+     "name": "砂漠都市へ",
+     "opacity": 1,
+     "properties": [
+      {
+       "name": "targetMap",
+       "type": "string",
+       "value": "desert_city"
+      },
+      {
+       "name": "targetSpawn",
+       "type": "string",
+       "value": "default"
+      },
+      {
+       "name": "unlocked",
+       "type": "bool",
+       "value": true
+      }
+     ],
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "width": 32,
+     "x": 1800,
+     "y": 500
+    },
+    {
+     "height": 32,
+     "id": 114,
+     "name": "港都市へ",
+     "opacity": 1,
+     "properties": [
+      {
+       "name": "targetMap",
+       "type": "string",
+       "value": "port_city"
+      },
+      {
+       "name": "targetSpawn",
+       "type": "string",
+       "value": "default"
+      },
+      {
+       "name": "unlocked",
+       "type": "bool",
+       "value": true
+      }
+     ],
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "width": 32,
+     "x": 1920,
+     "y": 500
     }
    ],
    "opacity": 1,

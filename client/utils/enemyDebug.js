@@ -128,7 +128,8 @@ export function drawEnemyAttackRanges(scene) {
 
     if (!scene._enemyRangeGraphics) {
         scene._enemyRangeGraphics = scene.add.graphics();
-        scene._enemyRangeGraphics.setDepth(4); // 地面より上、敵やHPバーより下
+        // マップのオブジェクトレイヤーより確実に前。HPバー(10/11)より後ろに置く。
+        scene._enemyRangeGraphics.setDepth(8);
     }
     const g = scene._enemyRangeGraphics;
     g.clear();
@@ -141,7 +142,10 @@ export function drawEnemyAttackRanges(scene) {
 
         const range = child.isServerManaged ? ENEMY_ATTACK_RANGE : (child.attackRange || 60);
 
-        g.lineStyle(1, 0xff3333, 0.35);
+        // 常時見える、薄い赤の危険エリア。敵の足元を中心に描く。
+        g.fillStyle(0xff2222, 0.08);
+        g.fillCircle(child.x, child.y, range);
+        g.lineStyle(2, 0xff5555, 0.75);
         g.strokeCircle(child.x, child.y, range);
     });
 }

@@ -24,6 +24,23 @@ module.exports = {
     CLIENT_DIR,
     MAPS_DIR,
     AI_DATA_PATH: path.join(__dirname, "data", "sharedAI.json"),
+    // アカウントとセーブデータ（パスワードはハッシュ化済み。Gitには含めないこと）
+    ACCOUNTS_PATH: process.env.ACCOUNTS_PATH || path.join(__dirname, "data", "accounts.json"),
+    // トークン署名用の秘密鍵（初回起動で自動生成。環境変数 AUTH_SECRET でも指定可）
+    SECRET_PATH: path.join(__dirname, "data", "auth.secret"),
+
+    // --- アカウント ---
+    AUTH: {
+        USERNAME_PATTERN: /^[A-Za-z0-9_-]{3,16}$/,
+        USERNAME_MIN: 3,
+        USERNAME_MAX: 16,
+        PASSWORD_MIN: 6,
+        PASSWORD_MAX: 64,
+        TOKEN_TTL_MS: 30 * 24 * 60 * 60 * 1000, // ログイン状態を保つ期間（30日）
+        MAX_FAILED_ATTEMPTS: 5, // この回数連続で失敗したら一定時間ロック
+        LOCK_MS: 60 * 1000,
+        MAX_SAVE_BYTES: 512 * 1024, // セーブデータ1件の上限
+    },
 
     // --- マップ ---
     // assets/maps/ に置いたTiledのJSONを自動で検出する（マップ追加時にここを編集する必要は無い）

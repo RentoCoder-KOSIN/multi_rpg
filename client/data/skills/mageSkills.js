@@ -32,8 +32,9 @@ export const MAGE_SKILLS = {
         rangeType: "fan",
         color: 0xadd8e6,
         icon: "❄️",
-        description: "氷の針を扇状に放つ。",
+        description: "氷の針を扇状に放つ。35%で敵を凍結させる。",
         hitType: "single",
+        effect: { statusEffect: 'freeze', statusChance: 0.35, statusDuration: 3000 },
     }),
     big_fireball: defineSkill({
         id: "big_fireball", vfx: 'blast', vfxOptions: { shake: true }, element: 'fire',
@@ -61,7 +62,8 @@ export const MAGE_SKILLS = {
         rangeType: "circle",
         color: 0x4b0082,
         icon: "🌑",
-        description: "闇の爆発を周囲に引き起こす。",
+        description: "闇の爆発を周囲に引き起こす。45%で毒を付与する。",
+        effect: { statusEffect: 'poison', statusChance: 0.45, statusDuration: 5000, poisonAtkRatio: 0.12 },
     }),
     meteor_swarm: defineSkill({
         id: "meteor_swarm", vfx: 'blast', vfxOptions: { particleCount: 30, shake: true }, element: 'fire',

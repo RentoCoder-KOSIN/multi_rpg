@@ -1,2 +1,4 @@
 node_modules/
-server/data/sharedAI.json
+server/data/accounts.json
+server/data/accounts.json.*
+server/data/auth.secret

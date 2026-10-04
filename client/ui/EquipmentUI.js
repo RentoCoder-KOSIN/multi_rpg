@@ -105,7 +105,9 @@ export default class EquipmentUI extends BaseWindowUI {
         slot.add(nameTxt);
 
         if (item) {
-            const statTxt = this.scene.add.text(145, 5, this.summarizeStats(item), {
+            const power = this.scene.player?.getEquipmentPowerMultiplier?.(item) ?? 1;
+            const powerTag = power < 1 ? ` ${Math.round(power * 100)}%` : '';
+            const statTxt = this.scene.add.text(145, 5, `${this.summarizeStats(item)}${powerTag}`, {
                 fontSize: '10px', fontFamily: '"Press Start 2P"', color: '#00ff00'
             }).setOrigin(1, 0);
             slot.add(statTxt);

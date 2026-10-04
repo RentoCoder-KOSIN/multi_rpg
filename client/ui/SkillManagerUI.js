@@ -3,6 +3,7 @@ import { JOBS } from "../data/jobs.js";
 import BaseWindowUI from "./BaseWindowUI.js";
 import { TOTAL_SKILL_SLOTS } from "../gameConstants.js";
 import { ELEMENT_INFO } from "../data/elements.js";
+import { ITEMS } from "../data/items.js";
 
 const DIGIT_CODES = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8'].slice(0, TOTAL_SKILL_SLOTS);
 
@@ -107,14 +108,20 @@ export default class SkillManagerUI extends BaseWindowUI {
             const x = startX + (col * spacingX);
             const y = row * spacingY;
             const skillId = activeSkills[i];
-            const skillDef = SKILLS[skillId];
+            const quickItemId = typeof skillId === 'string' && skillId.startsWith('item:') ? skillId.slice(5) : null;
+            const quickItem = quickItemId ? ITEMS[quickItemId] : null;
+            const skillDef = quickItem ? null : SKILLS[skillId];
 
             const bg = this.scene.add.rectangle(x, y, 62, 62, 0x222233).setStrokeStyle(2, 0x4a90e2);
             const label = this.scene.add.text(x - 26, y - 26, `${i + 1}`, { fontSize: '10px', color: '#888888' });
 
             this.activeSkillsContainer.add([bg, label]);
 
-            if (skillDef) {
+            if (quickItem) {
+                const icon = this.scene.add.text(x, y - 6, quickItem.stats?.healMp ? '🔷' : '🧪', { fontSize: '24px' }).setOrigin(0.5);
+                const name = this.scene.add.text(x, y + 20, quickItem.name, { fontSize: '8px', color: '#8dffb3', align: 'center' }).setOrigin(0.5);
+                this.activeSkillsContainer.add([icon, name]);
+            } else if (skillDef) {
                 const icon = this.scene.add.text(x, y - 6, skillDef.icon, { fontSize: '24px' }).setOrigin(0.5);
                 const name = this.scene.add.text(x, y + 20, skillDef.name, { fontSize: '8px', color: '#ffffff', align: 'center' }).setOrigin(0.5);
                 this.activeSkillsContainer.add([icon, name]);
@@ -195,6 +202,15 @@ export default class SkillManagerUI extends BaseWindowUI {
             }
         });
 
+        // 所持中の回復アイテムも、スキルと同じ1〜8枠へ登録できる。
+        const quickItems = [...new Set((player.stats.inventory || [])
+            .map(entry => typeof entry === 'string' ? entry : entry.id)
+            .filter(id => {
+                const item = ITEMS[id];
+                return item?.type === 'consumable' && ((item.stats?.heal || item.stats?.healMp || item.stats?.healPct || item.stats?.healMpPct));
+            }))];
+        quickItems.forEach(itemId => allSkills.push({ isQuickItem: true, itemId }));
+
         // ソート（転職情報を上、それ以外を必要レベル順。系譜外は基本下に）
         allSkills.sort((a, b) => {
             if (a.isPromotion && b.isPromotion) return 0; // 上位職候補どうしは定義順のまま
@@ -241,6 +257,16 @@ export default class SkillManagerUI extends BaseWindowUI {
                 container.add(statusText);
 
                 this.listItems.push({ isPromotion: true, nextJobId: skillInfo.nextJobId, canPromote, bg, container });
+            } else if (skillInfo.isQuickItem) {
+                const quickItem = ITEMS[skillInfo.itemId];
+                const count = (player.stats.inventory || []).reduce((n, e) => n + ((typeof e === 'string' ? e : e.id) === quickItem.id ? (typeof e === 'string' ? 1 : e.count || 1) : 0), 0);
+                const icon = this.scene.add.text(-270, 0, quickItem.stats?.healMp ? '🔷' : '🧪', { fontSize: '26px' }).setOrigin(0.5);
+                const name = this.scene.add.text(-220, -10, `クイック: ${quickItem.name} x${count}`, {
+                    fontSize: '14px', fontFamily: '"Press Start 2P"', color: '#8dffb3'
+                });
+                const desc = this.scene.add.text(-220, 15, `${quickItem.description} 数字キーでスロットにセット`, { fontSize: '9px', color: '#aaaaaa' });
+                container.add([icon, name, desc]);
+                this.listItems.push({ isQuickItem: true, itemId: quickItem.id, isUnlocked: true, bg, container });
             } else {
                 const skillDef = SKILLS[skillInfo.id];
                 if (!skillDef) return;
@@ -410,7 +436,7 @@ export default class SkillManagerUI extends BaseWindowUI {
         if (!item) return;
 
         if (item.isUnlocked) {
-            this.scene.player.setActiveSkill(slot, item.skillId);
+            this.scene.player.setActiveSkill(slot, item.isQuickItem ? `item:${item.itemId}` : item.skillId);
             this.refreshActiveSkillsDisplay();
             if (this.scene.notificationUI) {
                 this.scene.notificationUI.show(`スロット${slot + 1}にセットしました`, 'success');

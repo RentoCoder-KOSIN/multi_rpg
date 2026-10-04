@@ -1,6 +1,7 @@
 import Enemy from "./Enemy.js";
 import { getLevelDiffMultiplier } from "../utils/levelScaling.js";
 import { areEffectsEnabled } from "../utils/effectsSettings.js";
+import { COMBAT_CONFIG } from "../gameConstants.js";
 
 export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, owner, type = "normal", skillLevel = 1) {
@@ -72,13 +73,14 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
         }
 
         // スキルレベルによる倍率 (レベル1で1.0倍、レベル10で2.25倍程度)
-        const levelMult = 1 + (skillLevel - 1) * 0.15;
+        const levelMult = 1 + (skillLevel - 1) * COMBAT_CONFIG.SKILL_LEVEL_BONUS;
 
         this.maxHp = Math.ceil(baseHp * levelMult);
         this.hp = this.maxHp;
+        // 召喚獣の攻撃力も、スキルと同じ「全体の火力つまみ」に合わせる（召喚職だけ強くなりすぎないように）
         this.atk = Math.ceil(
             (owner.stats.int * atkBaseMult + owner.stats.atk * atkMultiplier) *
-                levelMult,
+                levelMult * COMBAT_CONFIG.SKILL_DAMAGE_SCALE,
         );
         this.speed = 120 + owner.stats.dex * 2 + speedBonus + skillLevel * 5;
         this.searchRange =

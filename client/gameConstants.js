@@ -13,6 +13,11 @@ export const GROWTH_CONFIG = {
     EXP_MULTIPLIER_LEVEL_CAP: 25,
     // ジョブ経験値は、通常の経験値のこの割合だけ獲得する（1.0=同量、簡単に貯まりすぎるため抑制）
     JOB_EXP_RATE: 0.15,
+    // 敵を倒した時のEXPは控えめにし、成長の主な報酬をクエストに寄せる。
+    ENEMY_EXP_MULTIPLIER: 0.35,
+    QUEST_EXP_MULTIPLIER: 10,
+    // レベル不足の装備でも最低限は性能を発揮する割合。
+    UNDERLEVEL_EQUIPMENT_MIN_POWER: 0.20,
 
     // プレイヤーの最大HPの伸び方（Player.js の applyEquipmentStats で使用）。
     //
@@ -39,6 +44,25 @@ export const GROWTH_CONFIG = {
 // 戦闘・経済まわりの調整値
 export const COMBAT_CONFIG = {
     CRIT_MULTIPLIER: 1.5, // 会心時のダメージ倍率
+
+    // --- 火力バランスのつまみ（全職業・全スキルにまとめて効く） ---
+    // 通常攻撃に比べてスキルが強すぎた（約5倍）ため、スキル全体を少し下げ、通常攻撃を少し上げている。
+    // 1.0 = 各スキルの damageMult どおり。バランスを見て 0.5〜1.2 くらいの範囲で調整する。
+    SKILL_DAMAGE_SCALE: 0.8,
+    // 通常攻撃（Space）のダメージ倍率。MPを使わない攻撃にも「使う価値」を残すため。
+    BASIC_ATTACK_MULT: 1.3,
+    // スキルレベル1つごとの威力アップ割合（以前は 0.15。Lv10で2.35倍→1.9倍）。召喚獣のレベル補正も同じ値を使う。
+    SKILL_LEVEL_BONUS: 0.10,
+    // 会心率の上限。DEXは自然成長でも増えるため、上限が無いとLv60台で会心率が常時100%近くになる。
+    CRIT_CHANCE_CAP: 0.75,
+};
+
+// 「種」による永続ステータスアップの上限。
+// 上限が無いと、ゴールドを稼ぐほど無限に強くなって、終盤のバランスが成り立たない。
+// 上限に達すると、それ以上は使えない（消費もしない）。
+export const SEED_CONFIG = {
+    MAX_BONUS_ATK: 300,
+    MAX_BONUS_DEF: 150,
 };
 export const ECONOMY_CONFIG = {
     SELL_RATE: 0.6, // 売却額 = 購入価格 × この割合
@@ -58,7 +82,22 @@ export const REINCARNATION_CONFIG = {
     // レベルアップの自然成長分（割り振り以外で増えた分）の合計に掛けてポイントへ換算する割合。
     // 残りは転生で捨てられる。0.1 = 合計の10分の1。
     NATURAL_GROWTH_REFUND_RATE: 0.1,
+
+    // --- 周回（転生を重ねるほど、敵が強く・報酬が豊かに）---
+    // 転生すると基礎ステータスが大幅に上がるので、そのままだと2周目以降は簡単すぎて飽きてしまう。
+    // そのため転生回数に応じて「敵から受けるダメージ」を増やし、代わりに「経験値・ゴールド」を増やす。
+    ENEMY_DAMAGE_PER_COUNT: 0.10, // 1回転生するごとに、被ダメージ +10%
+    REWARD_BONUS_PER_COUNT: 0.20, // 1回転生するごとに、経験値・ゴールド +20%
+    MAX_SCALED_COUNT: 20,         // この回数を超えた分は上乗せしない（際限なく強くなりすぎないように）
 };
+
+// 転生回数に応じた倍率（Player.js から使う）
+export function getRebirthDamageTakenMult(count = 0) {
+    return 1 + Math.min(count, REINCARNATION_CONFIG.MAX_SCALED_COUNT) * REINCARNATION_CONFIG.ENEMY_DAMAGE_PER_COUNT;
+}
+export function getRebirthRewardMult(count = 0) {
+    return 1 + Math.min(count, REINCARNATION_CONFIG.MAX_SCALED_COUNT) * REINCARNATION_CONFIG.REWARD_BONUS_PER_COUNT;
+}
 
 // adminモード（開発・動作確認用。ui/AdminUI.js 参照）
 // Shift+@（または Ctrl+Alt+A）でパスワード入力 → 正しければ操作パネルが開く。

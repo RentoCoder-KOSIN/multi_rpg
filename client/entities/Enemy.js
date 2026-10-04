@@ -177,6 +177,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
         this.hpBarBg.setPosition(x, y);
         this.hpBar.setPosition(x, y);
+        this.hpBarBg.setDepth(this.y + 10);
+        this.hpBar.setDepth(this.y + 11);
+        if (this.nameText) this.nameText.setDepth(this.y + 12);
 
         if (this.nameText) {
             this.nameText.setPosition(x, y - 12);
@@ -230,6 +233,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
 
     update(time = this.scene.time.now) {
+        this.setDepth(this.y);
         this.updateHealthBar();
 
         // サーバー管理の敵の場合は、位置補間を更新

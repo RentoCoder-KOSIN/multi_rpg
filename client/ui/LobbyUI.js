@@ -1,3 +1,5 @@
+import { getSaved, removeSaved, getSession, logout, flushSave } from '../utils/saveStore.js';
+
 export default class LobbyUI {
     constructor(scene, networkManager) {
         this.scene = scene;
@@ -5,10 +7,11 @@ export default class LobbyUI {
         this.playerNames = {}; // playerId -> name
         this.readyPlayers = new Set(); // 準備完了したプレイヤーのID
         this.maxPlayers = 4;
-        this.myPlayerName = '';
+        // 名前の初期値はアカウントのユーザー名
+        this.myPlayerName = getSession()?.username || '';
         this.isReady = false;
         this.gameSessionActive = false;
-        this.useSaveData = !!localStorage.getItem('playerStats');
+        this.useSaveData = !!getSaved('playerStats');
 
         this.createUI();
         this.setupNetworkEvents();
@@ -89,7 +92,7 @@ export default class LobbyUI {
             .setOrigin(0.5).setStrokeStyle(2, 0x4a90e2, 1);
         this.mainContainer.add(this.nameInputBg);
 
-        this.nameInputText = this.scene.add.text(0, startY + 35, 'Player', {
+        this.nameInputText = this.scene.add.text(0, startY + 35, this.myPlayerName || 'Player', {
             fontSize: '16px', color: '#ffffff', fontFamily: '"Press Start 2P"'
         }).setOrigin(0.5);
         this.mainContainer.add(this.nameInputText);
@@ -114,7 +117,22 @@ export default class LobbyUI {
         this.saveToggleButton.add([saveToggleBg, this.saveToggleText]);
         this.mainContainer.add(this.saveToggleButton);
 
-        if (!localStorage.getItem('playerStats')) this.saveToggleButton.setVisible(false);
+        if (!getSaved('playerStats')) this.saveToggleButton.setVisible(false);
+
+        // ログイン中のアカウント表示とログアウト
+        const accountName = getSession()?.username || '';
+        this.accountText = this.scene.add.text(-panelWidth / 2 + 24, -panelHeight / 2 + 18, `👤 ${accountName}`, {
+            fontSize: '10px', color: '#9ec5ff', fontFamily: '"Press Start 2P"'
+        }).setOrigin(0, 0.5);
+        this.logoutText = this.scene.add.text(panelWidth / 2 - 24, -panelHeight / 2 + 18, '[ログアウト]', {
+            fontSize: '10px', color: '#ff8b7b', fontFamily: '"Press Start 2P"'
+        }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
+        this.logoutText.on('pointerdown', () => {
+            flushSave(true);
+            logout();
+            window.location.reload();
+        });
+        this.mainContainer.add([this.accountText, this.logoutText]);
 
         // 開始ボタン (ホストのみ)
         this.startButton = this.scene.add.rectangle(0, startY + 215, 300, 60, 0x2ecc40, 1)
@@ -131,8 +149,8 @@ export default class LobbyUI {
     setupHTMLInput(w, h, yOff) {
         const input = document.createElement('input');
         input.type = 'text';
-        input.value = 'Player';
-        input.maxLength = 10;
+        input.value = this.myPlayerName || 'Player';
+        input.maxLength = 16;
         input.style.position = 'fixed';
         input.style.textAlign = 'center';
         input.style.backgroundColor = 'transparent';
@@ -225,11 +243,14 @@ export default class LobbyUI {
         });
         socket.on('lobbyKicked', () => { alert('ロビーからキックされました。'); window.location.reload(); });
         socket.on('lobbyGameStarted', () => {
-            if (!this.useSaveData) { localStorage.removeItem('playerStats'); localStorage.removeItem('playerQuests'); }
+            if (!this.useSaveData) { removeSaved('playerStats'); removeSaved('playerQuests'); }
             if (this.playerNames) this.scene.registry.set('playerNames', this.playerNames);
             this.destroy();
-            this.networkManager.changeMap('tutorial', 0, 0);
-            this.scene.time.delayedCall(200, () => this.scene.scene.start('GameScene'));
+            const stats = getSaved('playerStats');
+            const completedTutorial = !!stats?.tutorialFlags?.leftTutorial;
+            const startMap = completedTutorial ? 'city' : 'tutorial';
+            this.networkManager.changeMap(startMap, 0, 0);
+            this.scene.time.delayedCall(200, () => this.scene.scene.start(completedTutorial ? 'city' : 'GameScene'));
         });
     }
 

@@ -1,4 +1,5 @@
 import { pinToScreen } from '../utils/screenFixed.js';
+import { getSession, logout, flushSave } from '../utils/saveStore.js';
 export default class SettingsUI {
     constructor(scene) {
         this.scene = scene;
@@ -132,6 +133,16 @@ export default class SettingsUI {
             }
         });
         this.container.add(resetBtn);
+
+        // 5. ログアウト（セーブはサーバーのアカウントに保存済み。別のPCで同じユーザーでログインすれば続きから遊べる）
+        const accountName = getSession()?.username || '';
+        const logoutBtn = this.createButton(0, 135, `LOGOUT (${accountName.slice(0, 8)})`, 0x2c5aa0, () => {
+            if (!confirm('ログアウトしますか？\nセーブは保存されます。')) return;
+            flushSave(true);
+            logout();
+            window.location.reload();
+        });
+        this.container.add(logoutBtn);
     }
 
     createCheckbox(x, y, label, initialValue, onChange) {

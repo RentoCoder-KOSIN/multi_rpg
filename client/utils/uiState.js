@@ -12,6 +12,7 @@ export function isAnyWindowOpen(scene) {
         scene.guildQuestBoardUI?.isOpen ||
         scene.blacksmithUI?.isOpen ||
         scene.questLogUI?.isOpen ||
+        scene.gachaUI?.isOpen ||
         (scene.settingsUI && scene.settingsUI.visible)
     );
 }
