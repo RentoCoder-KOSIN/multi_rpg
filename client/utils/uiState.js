@@ -13,6 +13,8 @@ export function isAnyWindowOpen(scene) {
         scene.blacksmithUI?.isOpen ||
         scene.questLogUI?.isOpen ||
         scene.gachaUI?.isOpen ||
+        scene.partyUI?.isOpen ||
+        scene.chatUI?.isOpen ||
         (scene.settingsUI && scene.settingsUI.visible)
     );
 }

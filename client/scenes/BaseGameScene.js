@@ -21,6 +21,7 @@ import { isTeleportUnlocked } from '../utils/questGate.js';
 import InventoryUI from '../ui/InventoryUI.js';
 import PartyUI from '../ui/PartyUI.js';
 import PartyHUDUI from '../ui/PartyHUDUI.js';
+import ChatUI from '../ui/ChatUI.js';
 import PlayerNameUI from '../ui/PlayerNameUI.js';
 
 import { preloadCommonAssets } from './base/assets.js';
@@ -118,6 +119,8 @@ export default class BaseGameScene extends Phaser.Scene {
         this.partyUI = new PartyUI(this);
         this.partyUI.createUI();
         this.partyHUD = new PartyHUDUI(this);
+        this.chatUI = new ChatUI(this);
+        this.chatUI.createUI();
 
         registerNetworkCallbacks(this);
 

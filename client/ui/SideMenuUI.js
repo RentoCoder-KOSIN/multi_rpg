@@ -10,7 +10,8 @@ const MENU_ITEMS = [
     { icon: '📊', label: 'Sta', key: 'P', color: '#ffd700', ui: 'statAllocationUI' },
     { icon: '📜', label: 'Qst', key: 'Q', color: '#00ccaa', ui: 'questLogUI' },
     { icon: '🔮', label: 'Skl', key: 'K', color: '#533483', ui: 'skillManagerUI' },
-    { icon: '👥', label: 'Pty', key: 'Y', color: '#00ff00', ui: 'partyUI' },
+    { icon: '👥', label: 'Pty', key: 'V', color: '#00ff00', ui: 'partyUI' },
+    { icon: '💬', label: 'Chat', key: 'T', color: '#c080ff', ui: 'chatUI' },
     { icon: '⚙️', label: 'Set', key: 'O', color: '#aaaaaa', ui: 'settingsUI' }
 ];
 

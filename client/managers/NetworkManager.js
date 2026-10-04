@@ -23,9 +23,16 @@ export default class NetworkManager {
             onSummonUpdate: null,
             onPartyUpdate: null,
             onPartyInvited: null,
-            onHealed: null
+            onPartyList: null,
+            onPartyError: null,
+            onChatMessage: null,
+            onHealed: null,
+            onBuffApplied: null,
+            onAdminAction: null
         };
         this.partyData = null; // { partyId, leader, members: [] }
+        this.partyList = [];
+        this.chatMessages = [];
 
         // プレイヤーIDはアカウントID（ログイン時にサーバーが発行）。
         // 端末ごとのランダムIDをやめたので、どのPCから入っても同じプレイヤーになる。
@@ -234,10 +241,29 @@ export default class NetworkManager {
 
         // ===== パーティー関連 =====
         this.socket.on("partyUpdate", (data) => {
-            this.partyData = data;
+            this.partyData = data || null;
             if (this.callbacks.onPartyUpdate) {
                 this.callbacks.onPartyUpdate(data);
             }
+        });
+
+        this.socket.on("partyList", (data) => {
+            this.partyList = Array.isArray(data) ? data : [];
+            if (this.callbacks.onPartyList) this.callbacks.onPartyList(this.partyList);
+        });
+
+        this.socket.on("partyError", (message) => {
+            if (this.callbacks.onPartyError) this.callbacks.onPartyError(message);
+        });
+
+        this.socket.on("partyActionResult", (data) => {
+            if (!data?.ok && this.callbacks.onPartyError) this.callbacks.onPartyError(data.error || "パーティー操作に失敗しました");
+        });
+
+        this.socket.on("chatMessage", (data) => {
+            this.chatMessages.push(data);
+            if (this.chatMessages.length > 100) this.chatMessages.shift();
+            if (this.callbacks.onChatMessage) this.callbacks.onChatMessage(data);
         });
 
         this.socket.on("partyInvited", (data) => {
@@ -255,6 +281,12 @@ export default class NetworkManager {
         this.socket.on("playerBuffApplied", (data) => {
             if (this.callbacks.onBuffApplied) {
                 this.callbacks.onBuffApplied(data);
+            }
+        });
+
+        this.socket.on("adminAction", (data) => {
+            if (this.callbacks.onAdminAction) {
+                this.callbacks.onAdminAction(data);
             }
         });
 
@@ -498,17 +530,25 @@ export default class NetworkManager {
         console.log('[NetworkManager] inviteToParty:', targetId);
         if (this.socket && this.socket.connected) this.socket.emit('partyInvite', { targetId });
     }
-    joinParty(partyId) {
+    createParty(name, password = '') {
+        if (this.socket && this.socket.connected) this.socket.emit('partyCreate', { name, password });
+    }
+    requestPartyList() {
+        if (this.socket && this.socket.connected) this.socket.emit('partyListRequest');
+    }
+    joinParty(partyId, password = '') {
         console.log('[NetworkManager] joinParty:', partyId);
-        if (this.socket && this.socket.connected) this.socket.emit('partyJoin', { partyId });
+        if (this.socket && this.socket.connected) this.socket.emit('partyJoin', { partyId, password });
     }
     leaveParty() {
         console.log('[NetworkManager] leaveParty');
         if (this.socket && this.socket.connected) this.socket.emit('partyLeave');
     }
-    healPlayer(targetId, amount) { if (this.socket && this.socket.connected) this.socket.emit('playerHeal', { targetId, amount }); }
+    kickFromParty(targetId) { if (this.socket && this.socket.connected) this.socket.emit('partyKick', { targetId }); }
+    sendChat(channel, text) { if (this.socket && this.socket.connected) this.socket.emit('chatMessage', { channel, text }); }
     healPlayer(targetId, amount) { if (this.socket && this.socket.connected) this.socket.emit('playerHeal', { targetId, amount }); }
     sendBuff(targetId, type, value, duration) { if (this.socket && this.socket.connected) this.socket.emit('playerBuff', { targetId, type, value, duration }); }
+    sendAdminAction(targetId, action, payload = {}, password = '') { if (this.socket && this.socket.connected) this.socket.emit('adminAction', { targetId, action, payload, password }); }
     sendSkillUse(skillId, x, y, direction) { if (this.socket && this.socket.connected) this.socket.emit('playerSkill', { skillId, x, y, direction }); }
 
     setCallback(name, callback) { if (this.callbacks.hasOwnProperty(name)) this.callbacks[name] = callback; }

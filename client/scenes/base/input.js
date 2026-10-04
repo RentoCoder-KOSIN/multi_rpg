@@ -18,6 +18,7 @@ export function createGameKeys(scene, config) {
         .slice(0, TOTAL_SKILL_SLOTS)
         .map(code => scene.input.keyboard.addKey(code));
     scene.partyKey = scene.input.keyboard.addKey(KeyCodes.V);
+    scene.chatKey = scene.input.keyboard.addKey(KeyCodes.T);
     if (config.showDebugKey) scene.debugKey = scene.input.keyboard.addKey(KeyCodes.D);
 }
 
@@ -51,6 +52,7 @@ export function registerInputHandlers(scene) {
             scene.skillManagerUI.toggle();
         }
     });
+    scene.chatKey.on('down', () => scene.chatUI?.toggle());
 
     // R: 輪廻転生ウィンドウ
     scene.input.keyboard.on('keydown-R', () => {
@@ -103,6 +105,10 @@ function closeTopWindow(scene) {
         scene.blacksmithUI.toggle();
     } else if (scene.reincarnationUI && scene.reincarnationUI.isOpen) {
         scene.reincarnationUI.toggle();
+    } else if (scene.chatUI && scene.chatUI.isOpen) {
+        scene.chatUI.toggle();
+    } else if (scene.partyUI && scene.partyUI.isOpen) {
+        scene.partyUI.toggle();
     } else if (scene.settingsUI && scene.settingsUI.visible) { // SettingsUI exposes `visible`, not `isOpen`
         scene.settingsUI.toggle();
     }

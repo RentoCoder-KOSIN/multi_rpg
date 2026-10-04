@@ -1,116 +1,100 @@
 import BaseWindowUI from "./BaseWindowUI.js";
 
+function button(scene, x, y, label, color, onClick, width = 110) {
+    const box = scene.add.rectangle(x, y, width, 28, color).setStrokeStyle(1, 0xffffff).setInteractive({ useHandCursor: true });
+    const text = scene.add.text(x, y, label, { fontSize: "10px", color: "#ffffff", fontFamily: '"Press Start 2P"' }).setOrigin(0.5);
+    box.on("pointerdown", onClick);
+    return [box, text];
+}
+
 export default class PartyUI extends BaseWindowUI {
     constructor(scene) {
-        super(scene, {
-            title: 'Party',
-            width: 500,
-            height: 400
-        });
+        super(scene, { title: "PARTY FINDER  [V]", width: 620, height: 520 });
         this.partyData = null;
+        this.partyList = [];
     }
 
     createUI() {
         if (this.container) return;
         this.createWindow();
+        this.currentContainer = this.scene.add.container(0, 0);
         this.listContainer = this.scene.add.container(0, 0);
-        this.container.add(this.listContainer);
-
-        // 招待入力エリア
-        const inviteLabel = this.scene.add.text(-220, 140, 'Invite Player ID:', {
-            fontSize: '14px', color: '#ffffff', fontFamily: '"Press Start 2P"'
-        });
-        this.container.add(inviteLabel);
-
-        // 簡易的なID表示（自分）
-        this.myIdText = this.scene.add.text(-220, 170, `Your ID: ${this.scene.networkManager.getPlayerId()}`, {
-            fontSize: '10px', color: '#aaaaaa', fontFamily: '"Press Start 2P"'
-        });
-        this.container.add(this.myIdText);
-
-        // 招待ボタン
-        this.inviteBtn = this.scene.add.container(100, 150);
-        const btnBg = this.scene.add.rectangle(0, 0, 140, 35, 0x4a90e2).setInteractive({ useHandCursor: true });
-        const btnText = this.scene.add.text(0, 0, 'INVITE', {
-            fontSize: '14px', color: '#ffffff', fontFamily: '"Press Start 2P"'
-        }).setOrigin(0.5);
-        this.inviteBtn.add([btnBg, btnText]);
-        this.container.add(this.inviteBtn);
-
-        btnBg.on('pointerdown', () => {
-            const id = prompt("Enter Player ID to Invite:");
-            if (id && id.trim()) {
-                this.scene.networkManager.inviteToParty(id.trim());
-                if (this.scene.notificationUI) this.scene.notificationUI.show(`Inviting ${id}...`, 'info');
-            }
-        });
-
-        // 脱退ボタン
-        this.leaveBtn = this.scene.add.container(100, 110);
-        const leaveBg = this.scene.add.rectangle(0, 0, 140, 35, 0xe94560).setInteractive({ useHandCursor: true });
-        const leaveText = this.scene.add.text(0, 0, 'LEAVE', {
-            fontSize: '14px', color: '#ffffff', fontFamily: '"Press Start 2P"'
-        }).setOrigin(0.5);
-        this.leaveBtn.add([leaveBg, leaveText]);
-        this.container.add(this.leaveBtn);
-
-        leaveBg.on('pointerdown', () => {
-            this.scene.networkManager.leaveParty();
-            this.partyData = null;
-            this.refreshList();
-        });
-
-        this.refreshList();
+        this.container.add([this.currentContainer, this.listContainer]);
+        this.container.add(button(this.scene, -205, -205, "CREATE", 0x258a50, () => this.createParty()));
+        this.container.add(button(this.scene, -75, -205, "REFRESH", 0x4a90e2, () => this.scene.networkManager.requestPartyList()));
+        this.container.add(button(this.scene, 65, -205, "LEAVE", 0xe94560, () => this.scene.networkManager.leaveParty()));
+        this.container.add(this.scene.add.text(155, -205, "パーティー一覧", { fontSize: "12px", color: "#ffd700", fontFamily: '"Press Start 2P"' }).setOrigin(0.5));
+        this.refresh();
     }
 
-    updatePartyData(data) {
-        this.partyData = data;
-        this.refreshList();
+    updatePartyData(data) { this.partyData = data; this.refresh(); }
+    updatePartyList(list) { this.partyList = list || []; this.refresh(); }
+
+    createParty() {
+        const name = prompt("パーティー名（空欄なら自動設定）:", "");
+        if (name === null) return;
+        const password = prompt("パスワード（空欄なら誰でも参加可能）:", "");
+        if (password === null) return;
+        this.scene.networkManager.createParty(name, password);
     }
 
-    refreshList() {
+    joinParty(entry) {
+        const password = entry.hasPassword ? prompt("このパーティーのパスワード:", "") : "";
+        if (password === null) return;
+        this.scene.networkManager.joinParty(entry.partyId, password);
+    }
+
+    invite() {
+        const id = prompt("招待するプレイヤーID:", "");
+        if (id?.trim()) this.scene.networkManager.inviteToParty(id.trim());
+    }
+
+    refresh() {
+        if (!this.currentContainer || !this.listContainer) return;
+        this.currentContainer.removeAll(true);
         this.listContainer.removeAll(true);
+        const myId = this.scene.networkManager.getPlayerId();
+        const current = this.partyData;
+        const isLeader = current?.leader === myId;
 
-        if (!this.partyData || !this.partyData.members || this.partyData.members.length === 0) {
-            const emptyText = this.scene.add.text(0, 0, 'No Party', {
-                fontSize: '18px', color: '#888888', fontFamily: '"Press Start 2P"'
-            }).setOrigin(0.5);
-            this.listContainer.add(emptyText);
+        this.currentContainer.add(this.scene.add.text(-275, -165, current ? `現在: ${current.name || "Party"}${isLeader ? "（リーダー）" : ""}` : "現在: パーティー未所属", {
+            fontSize: "12px", color: "#00ffff", fontFamily: '"Press Start 2P"'
+        }));
+        if (current) {
+            if (isLeader) this.currentContainer.add(button(this.scene, 205, -165, "INVITE", 0x4a90e2, () => this.invite()));
+            current.members.forEach((member, index) => {
+                const y = -135 + index * 32;
+                this.currentContainer.add(this.scene.add.text(-275, y, `${member.id === current.leader ? "👑 " : ""}${member.name}  Lv.${member.level}  ${member.map}`, {
+                    fontSize: "10px", color: "#ffffff", fontFamily: '"Press Start 2P"'
+                }));
+                if (isLeader && member.id !== myId) {
+                    this.currentContainer.add(button(this.scene, 215, y + 5, "KICK", 0xb03040, () => this.scene.networkManager.kickFromParty(member.id), 70));
+                }
+            });
+        }
+
+        this.listContainer.add(this.scene.add.text(-275, 110, "参加できるパーティー", {
+            fontSize: "12px", color: "#ffd700", fontFamily: '"Press Start 2P"'
+        }));
+        if (this.partyList.length === 0) {
+            this.listContainer.add(this.scene.add.text(-275, 140, "公開中のパーティーはありません。CREATEで作成できます。", {
+                fontSize: "9px", color: "#aaaaaa", fontFamily: '"Press Start 2P"'
+            }));
             return;
         }
-
-        const startY = -120;
-        const itemSpacing = 60;
-
-        this.partyData.members.forEach((member, index) => {
-            const y = startY + (index * itemSpacing);
-            const item = this.scene.add.container(0, y);
-
-            const bg = this.scene.add.rectangle(0, 0, 440, 50, 0x1a1a2e, 0.8).setStrokeStyle(2, 0x4a90e2);
-
-            const nameText = this.scene.add.text(-200, -10, `${member.name} (Lv.${member.level})`, {
-                fontSize: '14px', color: '#ffffff', fontFamily: '"Press Start 2P"'
-            });
-
-            const statusText = this.scene.add.text(-200, 10, `HP:${member.hp}/${member.maxHp} MP:${member.mp ?? 0}/${member.maxMp ?? 0} ${member.map}`, {
-                fontSize: '10px', color: '#00ff00', fontFamily: '"Press Start 2P"'
-            });
-
-            const leaderIcon = member.id === this.partyData.leader ? '👑' : '';
-            if (leaderIcon) {
-                const icon = this.scene.add.text(180, 0, leaderIcon, { fontSize: '20px' }).setOrigin(0.5);
-                item.add(icon);
-            }
-
-            item.add([bg, nameText, statusText]);
-            this.listContainer.add(item);
+        this.partyList.slice(0, 6).forEach((entry, index) => {
+            const y = 140 + index * 32;
+            const locked = entry.hasPassword ? "🔒" : "OPEN";
+            this.listContainer.add(this.scene.add.text(-275, y, `${locked} ${entry.name}  ${entry.memberCount}/${entry.maxMembers}  leader:${entry.leaderName}`, {
+                fontSize: "9px", color: "#ffffff", fontFamily: '"Press Start 2P"'
+            }));
+            this.listContainer.add(button(this.scene, 230, y + 4, "JOIN", 0x258a50, () => this.joinParty(entry), 75));
         });
     }
 
-    toggle() {
-        super.toggle();
-        if (this.isOpen) {
-            this.refreshList();
-        }
+    open() {
+        super.open();
+        this.scene.networkManager.requestPartyList();
+        this.refresh();
     }
 }

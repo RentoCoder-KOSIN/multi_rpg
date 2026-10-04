@@ -25,6 +25,9 @@ import { ADMIN_CONFIG } from "../gameConstants.js";
 
 const SESSION_KEY = "mrpgAdminMode";
 const flags = { god: false, free: false };
+// 他端末から管理操作を受けたときだけ有効になるフラグ。対象プレイヤーは
+// 管理パネルにログインしていなくても、管理者の指定どおり効果を受ける。
+const remoteFlags = { god: false, free: false };
 const MIN_KEY = "mrpgAdminMinimized";
 
 let enabled = false;
@@ -51,7 +54,7 @@ export function isAdminMode() {
 
 /** adminモード中かつそのフラグがONか（'god' = 無敵 / 'free' = MP消費・クールダウンなし） */
 export function isAdminFlag(name) {
-    return enabled && !!flags[name];
+    return (enabled && !!flags[name]) || !!remoteFlags[name];
 }
 
 /** 現在のゲームシーンを登録する。シーンが作られるたびに呼ぶ（createGameUI から） */
@@ -326,6 +329,46 @@ function refreshUI(player) {
     if (s.skillBarUI && s.skillBarUI.update) s.skillBarUI.update();
 }
 
+function selectedTargetId() {
+    return panel?.querySelector("#adm-target")?.value || currentScene?.networkManager?.getPlayerId();
+}
+
+// 選択対象が自分以外なら、同じ操作を対象クライアントへ依頼する。
+// true のときは送信済みなので、呼び出し側はローカル処理を続けない。
+function sendToSelectedTarget(action, payload = {}) {
+    const c = ctx();
+    if (!c) return true;
+    const targetId = selectedTargetId();
+    const myId = c.scene.networkManager?.getPlayerId();
+    if (!targetId || targetId === myId) return false;
+    c.scene.networkManager?.sendAdminAction(targetId, action, payload, ADMIN_CONFIG.PASSWORD);
+    log(`対象プレイヤーへ「${action}」を実行しました`);
+    return true;
+}
+
+function setCombatFlag(name, value) {
+    if (sendToSelectedTarget("flag", { name, value })) return;
+    flags[name] = value;
+}
+
+function refreshTargetOptions(scene) {
+    const select = panel?.querySelector("#adm-target");
+    const net = scene?.networkManager;
+    const myId = net?.getPlayerId();
+    if (!select || !myId) return;
+
+    const previous = select.value || myId;
+    const names = scene.registry.get("playerNames") || {};
+    const ids = new Set([myId]);
+    (net.partyData?.members || []).forEach(member => ids.add(member.id));
+    Object.keys(net.getOtherPlayers?.() || {}).forEach(id => ids.add(id));
+    select.replaceChildren(...[...ids].map(id => el("option", {
+        value: id,
+        text: id === myId ? "自分" : `${names[id] || id.slice(0, 8)} (${id.slice(0, 8)})`,
+    })));
+    select.value = ids.has(previous) ? previous : myId;
+}
+
 function num(id, fallback = 0) {
     const v = Number(panel.querySelector(`#${id}`).value);
     return Number.isFinite(v) ? Math.floor(v) : fallback;
@@ -347,6 +390,7 @@ function updateStatus() {
         if (mini) mini.textContent = "";
         return;
     }
+    refreshTargetOptions(c);
     const s = c.player.stats;
     if (mini)
         mini.textContent = `Lv.${s.level} HP ${s.hp}/${s.maxHp} MP ${s.mp}/${s.maxMp}`;
@@ -461,6 +505,13 @@ function buildPanel() {
             el("div", { class: "adm-status" }),
 
             fieldset(
+                "操作対象",
+                row(el("select", { id: "adm-target", class: "grow" }, [
+                    el("option", { value: "", text: "自分" }),
+                ])),
+            ),
+
+            fieldset(
                 "レベル / 数値",
                 row(
                     el("input", {
@@ -548,7 +599,7 @@ function buildPanel() {
                             type: "checkbox",
                             id: "adm-god",
                             onchange: (e) => {
-                                flags.god = e.target.checked;
+                                setCombatFlag("god", e.target.checked);
                             },
                         }),
                         document.createTextNode(" 無敵（敵のダメージ無効）"),
@@ -560,7 +611,7 @@ function buildPanel() {
                             type: "checkbox",
                             id: "adm-free",
                             onchange: (e) => {
-                                flags.free = e.target.checked;
+                                setCombatFlag("free", e.target.checked);
                             },
                         }),
                         document.createTextNode(" MP消費0・クールダウン0"),
@@ -596,6 +647,7 @@ function actionLevel() {
     const c = ctx();
     if (!c) return;
     const target = Math.max(1, Math.min(100, num("adm-level", 1)));
+    if (sendToSelectedTarget("level", { target })) return;
     if (target <= c.player.stats.level) {
         log(`すでに Lv.${c.player.stats.level} です（レベルは上げるだけ）`);
         return;
@@ -609,6 +661,7 @@ function actionGold() {
     if (!c) return;
     const n = num("adm-gold");
     if (n === 0) return;
+    if (sendToSelectedTarget("gold", { amount: n })) return;
     c.player.gainGold(n);
     refreshUI(c.player);
     log(`ゴールド ${n >= 0 ? "+" : ""}${n}`);
@@ -618,6 +671,7 @@ function actionPoints() {
     const c = ctx();
     if (!c) return;
     const n = num("adm-points");
+    if (sendToSelectedTarget("points", { amount: n })) return;
     c.player.stats.statPoints = Math.max(
         0,
         (c.player.stats.statPoints || 0) + n,
@@ -630,6 +684,7 @@ function actionJobExp() {
     const c = ctx();
     if (!c) return;
     const n = num("adm-jobexp");
+    if (sendToSelectedTarget("jobExp", { amount: n })) return;
     c.player.stats.jobExp = Math.max(0, (c.player.stats.jobExp || 0) + n);
     refreshUI(c.player);
     log(`ジョブEXP ${n >= 0 ? "+" : ""}${n}`);
@@ -639,6 +694,7 @@ function actionMagicStone() {
     const c = ctx();
     if (!c) return;
     const n = Math.max(1, num("adm-magic-stone", 1));
+    if (sendToSelectedTarget("magicStone", { amount: n })) return;
     c.player.addItem('magic_stone', n);
     refreshUI(c.player);
     log(`魔石 x${n} を付与しました`);
@@ -647,6 +703,7 @@ function actionMagicStone() {
 function actionHeal() {
     const c = ctx();
     if (!c) return;
+    if (sendToSelectedTarget("heal")) return;
     c.player.stats.hp = c.player.stats.maxHp;
     c.player.stats.mp = c.player.stats.maxMp;
     refreshUI(c.player);
@@ -661,6 +718,7 @@ function actionJob() {
         log("職業が見つかりません");
         return;
     }
+    if (sendToSelectedTarget("job", { id })) return;
     const p = c.player;
     // 通常の転職(setJob)と違い、習得済みスキルは消さない。スキルバーだけ空にする。
     p.stats.job = id;
@@ -678,6 +736,7 @@ function actionJob() {
 function actionUnlockAllSkills() {
     const c = ctx();
     if (!c) return;
+    if (sendToSelectedTarget("unlockSkills")) return;
     const p = c.player;
     const job = p.stats.job;
     if (!JOBS[job]) {
@@ -719,6 +778,7 @@ function actionUnlockAllSkills() {
 function actionMaxSkillLevels() {
     const c = ctx();
     if (!c) return;
+    if (sendToSelectedTarget("maxSkillLevels")) return;
     const p = c.player;
     p.stats.unlockedSkills.forEach((id) => {
         p.stats.skillLevels[id] = 10;
@@ -738,6 +798,7 @@ function actionItem() {
         return;
     }
     const count = Math.max(1, num("adm-item-count", 1));
+    if (sendToSelectedTarget("item", { id, count })) return;
     c.player.addItem(id, count);
     refreshUI(c.player);
     log(`${ITEMS[id].name || id} x${count} を付与しました`);
@@ -746,6 +807,7 @@ function actionItem() {
 function actionUnequip() {
     const c = ctx();
     if (!c) return;
+    if (sendToSelectedTarget("unequip")) return;
     c.player.stats.equipment = { weapon: null, armor: null, relic: null };
     c.player.applyEquipmentStats();
     refreshUI(c.player);
@@ -761,6 +823,7 @@ function actionTeleport() {
         log("移動先のシーンが見つかりません");
         return;
     }
+    if (sendToSelectedTarget("teleport", { mapKey: key })) return;
     if (c.scene._isTeleporting) return;
     c.scene._isTeleporting = true;
     if (c.scene.networkManager)
@@ -781,6 +844,7 @@ function actionTeleport() {
 function actionCompleteActive() {
     const c = ctx();
     if (!c) return;
+    if (sendToSelectedTarget("completeActive")) return;
     const qm = c.scene.questManager;
     if (!qm) return;
     const active = Object.values(qm.quests).filter(
@@ -801,6 +865,7 @@ function actionFinishAll() {
         )
     )
         return;
+    if (sendToSelectedTarget("finishAll")) return;
     Object.values(QUESTS).forEach((def) => {
         qm.quests[def.id] = {
             ...def,
@@ -820,8 +885,124 @@ function actionResetQuests() {
     if (!qm) return;
     if (!window.confirm("全クエストの進行状況を消去します。よろしいですか？"))
         return;
+    if (sendToSelectedTarget("resetQuests")) return;
     qm.quests = {};
     qm.saveQuests();
     qm.emitUpdate();
     log("クエストを全てリセットしました");
+}
+
+/**
+ * 他プレイヤーの管理パネルから届いた操作を、この端末のプレイヤーへ適用する。
+ * サーバーは中継だけを行い、セーブ処理は通常の Player API を経由する。
+ */
+export function applyAdminAction(scene, { action, payload = {} }) {
+    const p = scene?.player;
+    if (!p?.active || !p.stats) return;
+    const amount = Number(payload.amount) || 0;
+
+    switch (action) {
+        case "level": {
+            const target = Math.max(1, Math.min(100, Math.floor(Number(payload.target) || 1)));
+            if (target > p.stats.level) p.adminLevelUpTo(target);
+            break;
+        }
+        case "gold": p.gainGold(amount); break;
+        case "points":
+            p.stats.statPoints = Math.max(0, (p.stats.statPoints || 0) + amount);
+            refreshUI(p);
+            break;
+        case "jobExp":
+            p.stats.jobExp = Math.max(0, (p.stats.jobExp || 0) + amount);
+            refreshUI(p);
+            break;
+        case "magicStone":
+            if (amount > 0) { p.addItem("magic_stone", Math.floor(amount)); refreshUI(p); }
+            break;
+        case "heal":
+            p.stats.hp = p.stats.maxHp;
+            p.stats.mp = p.stats.maxMp;
+            refreshUI(p);
+            break;
+        case "job": {
+            const id = payload.id;
+            if (id !== "none" && !JOBS[id]) break;
+            p.stats.job = id;
+            p.stats.activeSkills = p.padActiveSkills([]);
+            p.skillCooldowns = {};
+            p.applyEquipmentStats();
+            p.stats.hp = p.stats.maxHp;
+            p.stats.mp = p.stats.maxMp;
+            refreshUI(p);
+            break;
+        }
+        case "unlockSkills": {
+            const lineage = [p.stats.job];
+            for (let check = p.stats.job;;) {
+                const parent = Object.values(JOBS).find(job => (job.nextJobs || []).includes(check));
+                if (!parent) break;
+                lineage.push(parent.id);
+                check = parent.id;
+            }
+            lineage.forEach(jobId => Object.values(JOBS[jobId]?.skills || {}).flat().forEach(skillId => {
+                if (!SKILLS[skillId]) return;
+                if (!p.stats.unlockedSkills.includes(skillId)) p.stats.unlockedSkills.push(skillId);
+                if (!p.stats.skillLevels[skillId]) p.stats.skillLevels[skillId] = 1;
+            }));
+            p.applyEquipmentStats();
+            refreshUI(p);
+            break;
+        }
+        case "maxSkillLevels":
+            p.stats.unlockedSkills.forEach(id => { p.stats.skillLevels[id] = 10; });
+            p.applyEquipmentStats();
+            refreshUI(p);
+            break;
+        case "item":
+            if (ITEMS[payload.id] && Number(payload.count) > 0) {
+                p.addItem(payload.id, Math.floor(Number(payload.count)));
+                refreshUI(p);
+            }
+            break;
+        case "unequip":
+            p.stats.equipment = { weapon: null, armor: null, relic: null };
+            p.applyEquipmentStats();
+            refreshUI(p);
+            break;
+        case "teleport": {
+            const def = getMapList().find(map => map.key === payload.mapKey);
+            if (!def || !scene.scene.get(def.sceneKey) || scene._isTeleporting) break;
+            scene._isTeleporting = true;
+            scene.networkManager?.changeMap(def.key, p.x, p.y);
+            scene.cameras.main.fadeOut(250, 0, 0, 0);
+            scene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+                scene.scene.start(def.sceneKey, { mapKey: def.key, spawn: "default" });
+            });
+            break;
+        }
+        case "completeActive":
+            Object.values(scene.questManager?.quests || {}).filter(q => q.status === "active").forEach(q => scene.questManager.completeQuest(q.id));
+            break;
+        case "finishAll":
+            if (!scene.questManager) break;
+            Object.values(QUESTS).forEach(def => {
+                scene.questManager.quests[def.id] = { ...def, progress: def.required || 1, status: "finished" };
+            });
+            scene.questManager.saveQuests();
+            scene.questManager.emitUpdate();
+            break;
+        case "resetQuests":
+            if (!scene.questManager) break;
+            scene.questManager.quests = {};
+            scene.questManager.saveQuests();
+            scene.questManager.emitUpdate();
+            break;
+        case "flag":
+            if (payload.name === "god" || payload.name === "free") remoteFlags[payload.name] = !!payload.value;
+            break;
+        default:
+            return;
+    }
+
+    scene.notificationUI?.show("[ADMIN] 管理者操作が適用されました", "info");
 }
