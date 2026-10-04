@@ -19,6 +19,8 @@ module.exports = {
     PORT: process.env.PORT || 3000,
     // 0.0.0.0 = accept connections from other PCs on the LAN (use HOST=127.0.0.1 for local-only)
     HOST: process.env.HOST || "0.0.0.0",
+    // 開発用admin操作を他プレイヤーへ中継するときの認証。公開運用では環境変数で必ず変更する。
+    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || "mrpg-070208",
 
     // --- パス ---
     CLIENT_DIR,
@@ -51,8 +53,6 @@ module.exports = {
     DEFAULT_LEVEL: 1,
 
     // --- パーティー ---
-    DEFAULT_PARTY_ID: "party-1",
-    PARTY_BROADCAST_DELAY: 500, // ms
 
     // --- 敵AI更新ループ ---
     AI_UPDATE_INTERVAL: 150, // ms

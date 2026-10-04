@@ -4,6 +4,7 @@ import { addOtherPlayer, spawnEnemyFromServer } from '../../systems/entitySetup.
 import { applySkillEffect, showHitEffect } from '../../systems/skillEffects.js';
 import { handleSummonUpdate } from '../../systems/summons.js';
 import { applyBuffVisual } from '../../systems/buffVisuals.js';
+import { applyAdminAction } from '../../ui/AdminUI.js';
 
 /**
  * Register every NetworkManager callback the game scene reacts to.
@@ -22,14 +23,22 @@ export function registerNetworkCallbacks(scene) {
         if (scene.partyHUD) scene.partyHUD.updatePartyData(data);
     });
     net.setCallback('onPartyInvited', (data) => {
-        const accept = confirm(`${data.fromName} からパーティーに招待されました。参加しますか？`);
+        const accept = confirm(`${data.fromName} から「${data.partyName || "Party"}」へ招待されました。参加しますか？`);
         if (accept) {
-            net.joinParty(data.partyId);
+            const password = data.hasPassword ? prompt("パスワード:", "") : "";
+            if (password !== null) net.joinParty(data.partyId, password);
         }
+    });
+    net.setCallback('onPartyList', (list) => scene.partyUI?.updatePartyList(list));
+    net.setCallback('onPartyError', (message) => scene.notificationUI?.show(message, 'error'));
+    net.setCallback('onChatMessage', (data) => {
+        scene.chatUI?.addMessage(data);
+        if (!scene.chatUI?.isOpen) scene.notificationUI?.show(`[${data.channel === 'party' ? 'TEAM' : 'ALL'}] ${data.fromName}: ${data.text}`, 'info');
     });
 
     net.setCallback('onHealed', (data) => handleHealed(scene, data));
     net.setCallback('onBuffApplied', (data) => handleBuffApplied(scene, data));
+    net.setCallback('onAdminAction', (data) => applyAdminAction(scene, data));
 
     net.setCallback('onSkillUsed', (data) => {
         const { id, skillId } = data;
@@ -77,26 +86,6 @@ function handleHealed(scene, data) {
     showHitEffect(scene, player.x, player.y, 0x00ff00);
 }
 
-// Timed stat buffs: how to apply and revert each one on the local player
-const STAT_BUFFS = {
-    attack_buff: {
-        label: 'ATK UP!', color: '#ff4500',
-        apply: (p, v) => { p.stats.atk += v; p.saveStats(); },
-        revert: (p, v) => { p.stats.atk -= v; p.saveStats(); }
-    },
-    defense_buff: {
-        label: 'DEF UP!', color: '#4169e1',
-        apply: (p, v) => { p.stats.def += v; p.saveStats(); },
-        revert: (p, v) => { p.stats.def -= v; p.saveStats(); }
-    },
-    speed_buff: {
-        label: 'SPEED UP!', color: '#00ffff',
-        // Speed is a temporary value on the sprite, not saved in stats
-        apply: (p, v) => { p.speed += v; },
-        revert: (p, v) => { p.speed -= v; }
-    }
-};
-
 function handleBuffApplied(scene, data) {
     const { type, value, duration, fromId } = data;
     console.log(`[Buff] Applied ${type} +${value} for ${duration}ms from ${fromId}`);
@@ -112,13 +101,12 @@ function handleBuffApplied(scene, data) {
     const myId = scene.networkManager.getPlayerId();
     if (fromId === myId) return;
 
-    const statBuff = STAT_BUFFS[type];
-    if (statBuff) {
-        statBuff.apply(player, value);
-        floatText(scene, player, statBuff.label, statBuff.color);
-        scene.time.delayedCall(duration, () => statBuff.revert(player, value));
-    } else if (type === 'summon_power_up') {
+    if (type === 'summon_power_up') {
         applySummonPowerUp(scene, value, duration);
+    } else {
+        // applyBuff / updateBuffs が効果時間と解除を一元管理する。
+        // stats を直接書き換えると、装備再計算時や重ね掛けで値がずれる。
+        player.applyBuff(type, value, duration);
     }
 
     // バフをかけた側の画面には giveBuff() 経由でアイコンが出ていたが、

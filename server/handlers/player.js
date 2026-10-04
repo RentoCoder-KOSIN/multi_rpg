@@ -1,5 +1,6 @@
 const { players, playerToParty } = require("../state");
 const { findSocketByPlayerId } = require("../utils/socketUtils");
+const { ADMIN_PASSWORD } = require("../config");
 
 module.exports = function registerPlayerHandlers(socket, { io, partyService }) {
     const playerId = socket.data.playerId;
@@ -73,6 +74,15 @@ module.exports = function registerPlayerHandlers(socket, { io, partyService }) {
         if (targetSocket) {
             targetSocket.emit("playerBuffApplied", { type, value, duration, fromId: playerId });
         }
+    });
+
+    // 管理者パネルから対象プレイヤーのクライアントへ操作を転送する。
+    // 管理者認証は現状クライアント側の開発用機能なので、ここでは接続中の対象だけを許可する。
+    socket.on("adminAction", ({ targetId, action, payload, password }) => {
+        if (typeof targetId !== "string" || typeof action !== "string") return;
+        if (password !== ADMIN_PASSWORD) return;
+        const targetSocket = findSocketByPlayerId(io, targetId);
+        if (targetSocket) targetSocket.emit("adminAction", { action, payload, fromId: playerId });
     });
 
     // 同じマップにいる他のプレイヤーにスキル使用を通知
