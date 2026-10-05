@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { ITEMS } from "../data/items.js";
 import BaseWindowUI from "./BaseWindowUI.js";
 import { ELEMENT_INFO } from "../data/elements.js";
@@ -47,14 +48,14 @@ export default class EquipmentUI extends BaseWindowUI {
         this.createSlot(0, 90, 'RELIC', equipment.relic);
 
         const hint = this.scene.add.text(0, 130, '⚒ 街の鍛冶屋で武器/防具に属性を付与できる', {
-            fontSize: '8px', fontFamily: '"Press Start 2P"', color: '#888888'
+            fontSize: '11px', fontFamily: UI_FONT, color: '#888888'
         }).setOrigin(0.5);
         this.slotContainer.add(hint);
 
         // ステータス表示
         const statsText = `ATK: ${player.stats.atk}  DEF: ${player.stats.def}`;
         const statsDisplay = this.scene.add.text(0, 155, statsText, {
-            fontSize: '12px', fontFamily: '"Press Start 2P"', color: '#ffd700'
+            fontSize: '12px', fontFamily: UI_FONT, color: '#ffd700'
         }).setOrigin(0.5);
         this.slotContainer.add(statsDisplay);
     }
@@ -88,7 +89,7 @@ export default class EquipmentUI extends BaseWindowUI {
         slot.add(bg);
 
         const labelTxt = this.scene.add.text(-145, -20, label, {
-            fontSize: '9px', fontFamily: '"Press Start 2P"', color: '#4a90e2'
+            fontSize: '11px', fontFamily: UI_FONT, color: '#4a90e2'
         });
         slot.add(labelTxt);
 
@@ -102,7 +103,7 @@ export default class EquipmentUI extends BaseWindowUI {
         const weaponClassLabels = { oneHandSword: '片手剣', twoHandSword: '両手剣', spear: '槍', staff: '杖', wand: 'ワンド', tome: '魔導書', bow: '弓', mace: 'メイス' };
         const classTag = item?.weaponClass ? ` [${weaponClassLabels[item.weaponClass] || item.weaponClass}]` : '';
         const nameTxt = this.scene.add.text(-145, 5, `${itemName}${classTag}${elementTag}`, {
-            fontSize: '14px', fontFamily: '"Press Start 2P"', color: itemColor
+            fontSize: '14px', fontFamily: UI_FONT, color: itemColor
         });
         slot.add(nameTxt);
 
@@ -110,7 +111,7 @@ export default class EquipmentUI extends BaseWindowUI {
             const power = this.scene.player?.getEquipmentPowerMultiplier?.(item) ?? 1;
             const powerTag = power < 1 ? ` ${Math.round(power * 100)}%` : '';
             const statTxt = this.scene.add.text(145, 5, `${this.summarizeStats(item)}${powerTag}`, {
-                fontSize: '10px', fontFamily: '"Press Start 2P"', color: '#00ff00'
+                fontSize: '11px', fontFamily: UI_FONT, color: '#00ff00'
             }).setOrigin(1, 0);
             slot.add(statTxt);
         }

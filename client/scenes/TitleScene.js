@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import NetworkManager from '../managers/NetworkManager.js';
 import LobbyUI from '../ui/LobbyUI.js';
 import LoginUI from '../ui/LoginUI.js';
@@ -28,7 +29,7 @@ export default class TitleScene extends Phaser.Scene {
         // そうでなければログイン / 新規登録画面を出す。
         // セーブデータはサーバーのアカウントに紐づくので、別のPCでも同じユーザーでログインすれば続きから遊べる。
         const statusText = this.add.text(gameWidth / 2, gameHeight * 0.5, 'ログイン確認中...', {
-            fontSize: '14px', color: '#8aa4c8', fontFamily: 'Press Start 2P'
+            fontSize: '14px', color: '#8aa4c8', fontFamily: UI_FONT
         }).setOrigin(0.5);
 
         restoreSession().then(session => {
@@ -64,7 +65,7 @@ export default class TitleScene extends Phaser.Scene {
                     'サーバーに接続できませんでした\nページをリロードしてください', {
                     fontSize: '16px',
                     color: '#e74c3c',
-                    fontFamily: 'Press Start 2P',
+                    fontFamily: UI_FONT,
                     stroke: '#000000',
                     strokeThickness: 2,
                     align: 'center'

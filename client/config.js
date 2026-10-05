@@ -1,4 +1,5 @@
 import TitleScene from "./scenes/TitleScene.js";
+import { computeGameSize } from "./utils/gameSize.js";
 
 // サーバー設定
 export const SERVER_CONFIG = {
@@ -46,9 +47,8 @@ console.log("[Config] Peer Learning Settings:", PEER_LEARNING_CONFIG);
 
 const config = {
     type: Phaser.AUTO,
-    // The game canvas sits beside a DOM-based status/log column.
-    width: 1000,
-    height: 720,
+    // 解像度は表示領域の縦横比に合わせる（utils/gameSize.js）。実行中の変化は main.js が追従する。
+    ...computeGameSize(document.getElementById('game-root')),
     parent: 'game-root',
     pixelArt: true,
     physics: {

@@ -1,3 +1,4 @@
+import { UI_FONT } from '../../fontConfig.js';
 // Server-event handlers for game scenes. Registered once per scene in create().
 import { SKILLS } from '../../data/skills.js';
 import { addOtherPlayer, spawnEnemyFromServer } from '../../systems/entitySetup.js';
@@ -141,7 +142,7 @@ function applySummonPowerUp(scene, value, duration) {
 // Text that floats up from a game object and fades out
 function floatText(scene, target, message, color, { fontSize = '10px', offsetY = -50, riseTo = -80, duration = 1000 } = {}) {
     const text = scene.add.text(target.x, target.y + offsetY, message, {
-        fontSize, color, fontFamily: '"Press Start 2P"'
+        fontSize, color, fontFamily: UI_FONT
     }).setOrigin(0.5);
     scene.tweens.add({ targets: text, y: target.y + riseTo, alpha: 0, duration, onComplete: () => text.destroy() });
 }

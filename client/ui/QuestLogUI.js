@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import BaseWindowUI from "./BaseWindowUI.js";
 import { QUEST_UI_CONFIG } from "../gameConstants.js";
 
@@ -54,7 +55,7 @@ export default class QuestLogUI extends BaseWindowUI {
         if (!this.bodyContainer?.active) return;
         this.bodyContainer.removeAll(true);
 
-        const font = '"Press Start 2P"';
+        const font = UI_FONT;
         const w = this.config.width;
         const h = this.config.height;
         const quests = this.questManager.getActiveQuests();
@@ -86,7 +87,7 @@ export default class QuestLogUI extends BaseWindowUI {
                 fontSize: '11px', fontFamily: font, color: done ? '#00ffcc' : '#ffffff'
             }));
             this.bodyContainer.add(this.scene.add.text(-w / 2 + 45, y + 34, q.description || '', {
-                fontSize: '9px', fontFamily: font, color: '#cccccc',
+                fontSize: '11px', fontFamily: font, color: '#cccccc',
                 wordWrap: { width: w - 120 }, lineSpacing: 4
             }));
 
@@ -96,7 +97,7 @@ export default class QuestLogUI extends BaseWindowUI {
             this.bodyContainer.add(this.scene.add.rectangle(-w / 2 + 45, y + itemH - 18, barW * ratio, 6, accent).setOrigin(0, 0));
             this.bodyContainer.add(this.scene.add.text(w / 2 - 45, y + itemH - 22,
                 done ? '報告待ち' : `${q.progress || 0}/${q.required}`, {
-                    fontSize: '9px', fontFamily: font, color: done ? '#00ffcc' : '#aaaaaa'
+                    fontSize: '11px', fontFamily: font, color: done ? '#00ffcc' : '#aaaaaa'
                 }).setOrigin(1, 0));
         });
 

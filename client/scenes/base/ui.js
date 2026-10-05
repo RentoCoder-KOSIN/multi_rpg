@@ -1,3 +1,4 @@
+import { UI_FONT } from '../../fontConfig.js';
 // Creates the HUD and windows of a game scene.
 import QuestTrackerUI from '../../ui/QuestTrackerUI.js';
 import QuestLogUI from '../../ui/QuestLogUI.js';
@@ -5,6 +6,8 @@ import MapNameUI from '../../ui/MapNameUI.js';
 import NotificationUI from '../../ui/NotificationUI.js';
 import DeathUI from '../../ui/DeathUI.js';
 import PlayerStatsUI from '../../ui/PlayerStatsUI.js';
+import PlayerHudUI from '../../ui/PlayerHudUI.js';
+import PartyLocatorUI from '../../ui/PartyLocatorUI.js';
 import SkillBarUI from '../../ui/SkillBarUI.js';
 import EquipmentUI from '../../ui/EquipmentUI.js';
 import BlacksmithUI from '../../ui/BlacksmithUI.js';
@@ -30,7 +33,7 @@ export function createGameUI(scene, config) {
     scene.interactText = scene.add.text(
         0, 0,
         '[C] 会話',
-        { fontSize: '16px', color: '#ffff00', fontFamily: 'Press Start 2P', stroke: '#000', strokeThickness: 3 }
+        { fontSize: '16px', color: '#ffff00', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 3 }
     ).setOrigin(0.5).setScrollFactor(0).setVisible(false);
 
     scene.interactBg = scene.add.rectangle(
@@ -55,6 +58,7 @@ export function createGameUI(scene, config) {
     scene.notificationUI = new NotificationUI(scene);
     scene.deathUI = new DeathUI(scene);
     scene.playerStatsUI = new PlayerStatsUI(scene, scene.player);
+    scene.playerHudUI = new PlayerHudUI(scene, scene.player);
     scene.skillBarUI = new SkillBarUI(scene, scene.player);
     scene.equipmentUI = new EquipmentUI(scene);
     scene.equipmentUI.createUI();
@@ -74,6 +78,7 @@ export function createGameUI(scene, config) {
     scene.aiTrainingEnabled = true; // global reinforcement-learning switch
     scene.aiStatsUI = new AIStatsUI(scene);
     scene.minimapUI = new MinimapUI(scene);
+    scene.partyLocatorUI = new PartyLocatorUI(scene);
     scene.reincarnationUI = new ReincarnationUI(scene);
     scene.reincarnationUI.createUI();
     // 「次に何をすればいいか/どこに行けばいいか」を常時示すインジケーター（レベル不問）

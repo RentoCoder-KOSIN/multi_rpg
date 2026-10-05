@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { ITEMS } from "../data/items.js";
 import { getShopLoadout, resolveShopItems } from "../data/shops.js";
 import BaseWindowUI from "./BaseWindowUI.js";
@@ -113,7 +114,7 @@ export default class ShopUI extends BaseWindowUI {
         this.container.add(goldPanel);
 
         this.goldText = this.scene.add.text(-panelWidth / 2 + 30, panelHeight / 2 - 30, '🪙 0', {
-            fontSize: '14px', fontFamily: '"Press Start 2P"', color: '#ffd700', stroke: '#000', strokeThickness: 2
+            fontSize: '14px', fontFamily: UI_FONT, color: '#ffd700', stroke: '#000', strokeThickness: 2
         }).setOrigin(0, 0.5);
         this.container.add(this.goldText);
 
@@ -124,7 +125,7 @@ export default class ShopUI extends BaseWindowUI {
         this.container.add(descPanel);
 
         this.descText = this.scene.add.text(0, panelHeight / 2 - 80, '', {
-            fontSize: '10px', fontFamily: '"Press Start 2P"', color: '#aaaaaa',
+            fontSize: '11px', fontFamily: UI_FONT, color: '#aaaaaa',
             wordWrap: { width: panelWidth - 60 }, align: 'center'
         }).setOrigin(0.5);
         this.container.add(this.descText);
@@ -133,7 +134,7 @@ export default class ShopUI extends BaseWindowUI {
         this.modeToggleBg = this.scene.add.rectangle(-panelWidth / 2 + 85, -panelHeight / 2 + 35, 130, 30, 0x2a6f97, 0.9)
             .setStrokeStyle(2, 0xffffff, 0.7).setInteractive({ useHandCursor: true }).setVisible(false);
         this.modeToggleText = this.scene.add.text(-panelWidth / 2 + 85, -panelHeight / 2 + 35, '', {
-            fontSize: '10px', fontFamily: '"Press Start 2P"', color: '#ffffff'
+            fontSize: '11px', fontFamily: UI_FONT, color: '#ffffff'
         }).setOrigin(0.5).setVisible(false);
         this.modeToggleBg.on('pointerdown', (p, lx, ly, ev) => {
             if (ev) ev.stopPropagation();
@@ -209,7 +210,7 @@ export default class ShopUI extends BaseWindowUI {
     createModeSelectPanel() {
         this.modePanel = this.scene.add.container(0, 0).setVisible(false);
         const label = this.scene.add.text(0, -80, '何をしますか？', {
-            fontSize: '16px', fontFamily: '"Press Start 2P"', color: '#ffffff', stroke: '#000', strokeThickness: 3
+            fontSize: '16px', fontFamily: UI_FONT, color: '#ffffff', stroke: '#000', strokeThickness: 3
         }).setOrigin(0.5);
         this.modePanel.add(label);
 
@@ -221,10 +222,10 @@ export default class ShopUI extends BaseWindowUI {
             const bg = this.scene.add.rectangle(def.x, 20, 210, 120, def.color, 0.85)
                 .setStrokeStyle(3, 0xffffff, 0.6).setInteractive({ useHandCursor: true });
             const t = this.scene.add.text(def.x, 5, def.text, {
-                fontSize: '20px', fontFamily: '"Press Start 2P"', color: '#ffffff', stroke: '#000', strokeThickness: 3
+                fontSize: '20px', fontFamily: UI_FONT, color: '#ffffff', stroke: '#000', strokeThickness: 3
             }).setOrigin(0.5);
             const k = this.scene.add.text(def.x, 50, def.key, {
-                fontSize: '12px', fontFamily: '"Press Start 2P"', color: '#dddddd'
+                fontSize: '12px', fontFamily: UI_FONT, color: '#dddddd'
             }).setOrigin(0.5);
             bg.on('pointerdown', (p, lx, ly, ev) => { if (ev) ev.stopPropagation(); this.setMode(def.mode); });
             bg.on('pointerover', () => { this.modeChoice = i; this.updateModeChoice(); });
@@ -233,7 +234,7 @@ export default class ShopUI extends BaseWindowUI {
         });
 
         const hint = this.scene.add.text(0, 110, '←→で選択、Enterで決定（開いた後は Tab で切替）', {
-            fontSize: '9px', fontFamily: '"Press Start 2P"', color: '#aaaaaa'
+            fontSize: '11px', fontFamily: UI_FONT, color: '#aaaaaa'
         }).setOrigin(0.5);
         this.modePanel.add(hint);
         this.container.add(this.modePanel);
@@ -325,23 +326,23 @@ export default class ShopUI extends BaseWindowUI {
 
         const namePrefix = item.lvlReq ? `[Lv.${item.lvlReq}] ` : '';
         const name = this.scene.add.text(-250, -16, `${namePrefix}${item.name}${nameSuffix}`, {
-            fontSize: '13px', fontFamily: '"Press Start 2P"', color: nameColor
+            fontSize: '13px', fontFamily: UI_FONT, color: nameColor
         }).setOrigin(0, 0.5);
         box.add(name);
 
         // ステータス要約（攻撃力・防御力・会心率など）を1行で表示
         const statsLine = this.scene.add.text(-250, 15, summarizeItemStats(item), {
-            fontSize: '9px', fontFamily: '"Press Start 2P"', color: '#8fd3ff'
+            fontSize: '11px', fontFamily: UI_FONT, color: '#8fd3ff'
         }).setOrigin(0, 0.5);
         box.add(statsLine);
 
         const priceText = this.scene.add.text(180, -16, `${price} G`, {
-            fontSize: '13px', fontFamily: '"Press Start 2P"', color: '#ffd700'
+            fontSize: '13px', fontFamily: UI_FONT, color: '#ffd700'
         }).setOrigin(1, 0.5);
         box.add(priceText);
 
         const hint = this.scene.add.text(230, 15, action, {
-            fontSize: '9px', fontFamily: '"Press Start 2P"', color: '#ffffff'
+            fontSize: '11px', fontFamily: UI_FONT, color: '#ffffff'
         }).setOrigin(0.5);
         box.add(hint);
 
@@ -391,7 +392,7 @@ export default class ShopUI extends BaseWindowUI {
 
         if (this.items.length === 0) {
             const empty = this.scene.add.text(0, 0, '売れるアイテムがありません', {
-                fontSize: '14px', fontFamily: '"Press Start 2P"', color: '#666666'
+                fontSize: '14px', fontFamily: UI_FONT, color: '#666666'
             }).setOrigin(0.5);
             this.itemListContainer.add(empty);
             return;

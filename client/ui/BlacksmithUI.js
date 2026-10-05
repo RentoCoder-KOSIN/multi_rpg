@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { ITEMS } from "../data/items.js";
 import BaseWindowUI from "./BaseWindowUI.js";
 import {
@@ -40,7 +41,7 @@ export default class BlacksmithUI extends BaseWindowUI {
         this.container.add(goldPanel);
 
         this.goldText = this.scene.add.text(-panelWidth / 2 + 30, -panelHeight / 2 + 65, '🪙 0', {
-            fontSize: '14px', fontFamily: '"Press Start 2P"', color: '#ffd700', stroke: '#000', strokeThickness: 2
+            fontSize: '14px', fontFamily: UI_FONT, color: '#ffd700', stroke: '#000', strokeThickness: 2
         }).setOrigin(0, 0.5);
         this.container.add(this.goldText);
 
@@ -85,7 +86,7 @@ export default class BlacksmithUI extends BaseWindowUI {
     createHelpOverlay() {
         const w = this.config.width;
         const h = this.config.height;
-        const font = '"Press Start 2P"';
+        const font = UI_FONT;
         const hc = this.scene.add.container(0, 0);
         hc.setVisible(false);
         this.helpContainer = hc;
@@ -142,14 +143,14 @@ export default class BlacksmithUI extends BaseWindowUI {
             hc.add(this.scene.add.circle(x, y, nodeR, 0x1a1a2e, 1).setStrokeStyle(3, info.color));
             hc.add(this.scene.add.text(x, y - 5, info.icon, { fontSize: '18px' }).setOrigin(0.5));
             hc.add(this.scene.add.text(x, y + 14, info.name, {
-                fontSize: '9px', fontFamily: font, color: '#ffffff', stroke: '#000', strokeThickness: 2
+                fontSize: '11px', fontFamily: font, color: '#ffffff', stroke: '#000', strokeThickness: 2
             }).setOrigin(0.5));
         });
 
         // 輪になっているグループの中心に凡例
         (this._groupCenters || []).forEach(({ x, y }) => {
             hc.add(this.scene.add.text(x, y, '矢印は\n「強い」向き', {
-                fontSize: '9px', fontFamily: font, color: '#ffaa44', align: 'center', lineSpacing: 6
+                fontSize: '11px', fontFamily: font, color: '#ffaa44', align: 'center', lineSpacing: 6
             }).setOrigin(0.5));
         });
 
@@ -177,17 +178,17 @@ export default class BlacksmithUI extends BaseWindowUI {
         ly += 8;
         const { advantageMultiplier, disadvantageMultiplier } = ELEMENT_RULES;
         hc.add(this.scene.add.text(lx, ly, `強い相手へ ${advantageMultiplier}倍 / 普通 1.0倍 / 弱い相手へ ${disadvantageMultiplier}倍`, {
-            fontSize: '10px', fontFamily: font, color: '#ffffff'
+            fontSize: '11px', fontFamily: font, color: '#ffffff'
         }).setOrigin(0, 0.5));
         hc.add(this.scene.add.text(lx, ly + 22, '（武器=与ダメージ / 防具=被ダメージに適用）', {
-            fontSize: '9px', fontFamily: font, color: '#8899aa'
+            fontSize: '11px', fontFamily: font, color: '#8899aa'
         }).setOrigin(0, 0.5));
 
         // --- 状態異常のヒント（属性の weaponBonus 定義から自動生成） ---
         const bonusSummary = getWeaponBonusSummary();
         if (bonusSummary.length) {
             hc.add(this.scene.add.text(0, h / 2 - 60, '武器に付与すると状態異常が出やすくなる', {
-                fontSize: '10px', fontFamily: font, color: '#ffffff'
+                fontSize: '11px', fontFamily: font, color: '#ffffff'
             }).setOrigin(0.5));
             hc.add(this.scene.add.text(0, h / 2 - 38,
                 bonusSummary.map(({ element, label }) => `${ELEMENT_INFO[element].icon}${ELEMENT_INFO[element].name}=${label}`).join('   '), {
@@ -297,7 +298,7 @@ export default class BlacksmithUI extends BaseWindowUI {
 
         // --- セクション1: 玉を購入 ---
         const buyTitle = this.scene.add.text(-panelWidth / 2 + 30, -panelHeight / 2 + 100, '🔮 属性の玉を購入', {
-            fontSize: '13px', fontFamily: '"Press Start 2P"', color: '#ff8844'
+            fontSize: '13px', fontFamily: UI_FONT, color: '#ff8844'
         }).setOrigin(0, 0.5);
         this.bodyContainer.add(buyTitle);
 
@@ -328,13 +329,13 @@ export default class BlacksmithUI extends BaseWindowUI {
             box.add(icon);
 
             const name = this.scene.add.text(-orbBoxW / 2 + 45, -14, `${info.name}の玉`, {
-                fontSize: '10px', fontFamily: '"Press Start 2P"', color: '#ffffff'
+                fontSize: '11px', fontFamily: UI_FONT, color: '#ffffff'
             }).setOrigin(0, 0.5);
             box.add(name);
 
             const owned = this.getOwnedOrbCount(element);
             const priceText = this.scene.add.text(-orbBoxW / 2 + 45, 10, `${orbItem.price}G (所持:${owned})`, {
-                fontSize: '8px', fontFamily: '"Press Start 2P"', color: '#aaddff'
+                fontSize: '11px', fontFamily: UI_FONT, color: '#aaddff'
             }).setOrigin(0, 0.5);
             box.add(priceText);
 
@@ -352,7 +353,7 @@ export default class BlacksmithUI extends BaseWindowUI {
         // --- セクション2: 属性を付与 ---
         const craftY = startY + Math.ceil(ELEMENTS.length / cols) * (orbBoxH + 10) + 20;
         const craftTitle = this.scene.add.text(-panelWidth / 2 + 30, craftY, '⚒ 装備に属性を付与する', {
-            fontSize: '13px', fontFamily: '"Press Start 2P"', color: '#ff8844'
+            fontSize: '13px', fontFamily: UI_FONT, color: '#ff8844'
         }).setOrigin(0, 0.5);
         this.bodyContainer.add(craftTitle);
 
@@ -373,14 +374,14 @@ export default class BlacksmithUI extends BaseWindowUI {
         this.bodyContainer.add(rowBg);
 
         const labelTxt = this.scene.add.text(-panelWidth / 2 + 35, y - 18, label, {
-            fontSize: '10px', fontFamily: '"Press Start 2P"', color: '#8899aa'
+            fontSize: '11px', fontFamily: UI_FONT, color: '#8899aa'
         }).setOrigin(0, 0.5);
         this.bodyContainer.add(labelTxt);
 
         const itemName = item ? item.name : '--- 未装備 ---';
         const elLabel = currentElement ? ` [${ELEMENT_INFO[currentElement].icon}${ELEMENT_INFO[currentElement].name}]` : '';
         const nameTxt = this.scene.add.text(-panelWidth / 2 + 35, y + 4, `${itemName}${elLabel}`, {
-            fontSize: '11px', fontFamily: '"Press Start 2P"', color: item ? '#ffffff' : '#666666'
+            fontSize: '11px', fontFamily: UI_FONT, color: item ? '#ffffff' : '#666666'
         }).setOrigin(0, 0.5);
         this.bodyContainer.add(nameTxt);
 

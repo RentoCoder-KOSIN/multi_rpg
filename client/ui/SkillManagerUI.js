@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { SKILLS } from "../data/skills.js";
 import { JOBS } from "../data/jobs.js";
 import BaseWindowUI from "./BaseWindowUI.js";
@@ -31,7 +32,7 @@ export default class SkillManagerUI extends BaseWindowUI {
 
         // Job Exp Display
         this.jobExpText = this.scene.add.text(-panelWidth / 2 + 40, -panelHeight / 2 + 72, '', {
-            fontSize: '14px', fontFamily: '"Press Start 2P"', color: '#ffd700'
+            fontSize: '14px', fontFamily: UI_FONT, color: '#ffd700'
         });
         this.container.add(this.jobExpText);
 
@@ -54,7 +55,7 @@ export default class SkillManagerUI extends BaseWindowUI {
 
         // Guidance Text
         this.guidanceText = this.scene.add.text(0, panelHeight / 2 - 30, `Arrows: Move | Enter: Unlock | 1-${TOTAL_SKILL_SLOTS}: Set | L: Level UP`, {
-            fontSize: '12px', fontFamily: '"Press Start 2P"', color: '#ffffff', align: 'center', stroke: '#000', strokeThickness: 2
+            fontSize: '12px', fontFamily: UI_FONT, color: '#ffffff', align: 'center', stroke: '#000', strokeThickness: 2
         }).setOrigin(0.5);
         this.container.add(this.guidanceText);
 
@@ -113,20 +114,20 @@ export default class SkillManagerUI extends BaseWindowUI {
             const skillDef = quickItem ? null : SKILLS[skillId];
 
             const bg = this.scene.add.rectangle(x, y, 62, 62, 0x222233).setStrokeStyle(2, 0x4a90e2);
-            const label = this.scene.add.text(x - 26, y - 26, `${i + 1}`, { fontSize: '10px', color: '#888888' });
+            const label = this.scene.add.text(x - 26, y - 26, `${i + 1}`, { fontSize: '11px', color: '#888888' });
 
             this.activeSkillsContainer.add([bg, label]);
 
             if (quickItem) {
                 const icon = this.scene.add.text(x, y - 6, quickItem.stats?.healMp ? '🔷' : '🧪', { fontSize: '24px' }).setOrigin(0.5);
-                const name = this.scene.add.text(x, y + 20, quickItem.name, { fontSize: '8px', color: '#8dffb3', align: 'center' }).setOrigin(0.5);
+                const name = this.scene.add.text(x, y + 20, quickItem.name, { fontSize: '11px', color: '#8dffb3', align: 'center' }).setOrigin(0.5);
                 this.activeSkillsContainer.add([icon, name]);
             } else if (skillDef) {
                 const icon = this.scene.add.text(x, y - 6, skillDef.icon, { fontSize: '24px' }).setOrigin(0.5);
-                const name = this.scene.add.text(x, y + 20, skillDef.name, { fontSize: '8px', color: '#ffffff', align: 'center' }).setOrigin(0.5);
+                const name = this.scene.add.text(x, y + 20, skillDef.name, { fontSize: '11px', color: '#ffffff', align: 'center' }).setOrigin(0.5);
                 this.activeSkillsContainer.add([icon, name]);
             } else {
-                const empty = this.scene.add.text(x, y, 'Empty', { fontSize: '10px', color: '#444455' }).setOrigin(0.5);
+                const empty = this.scene.add.text(x, y, 'Empty', { fontSize: '11px', color: '#444455' }).setOrigin(0.5);
                 this.activeSkillsContainer.add(empty);
             }
         }
@@ -241,10 +242,10 @@ export default class SkillManagerUI extends BaseWindowUI {
 
                 const icon = this.scene.add.text(-270, 0, '⭐', { fontSize: '28px' }).setOrigin(0.5);
                 const name = this.scene.add.text(-220, -10, `上位職：${nextJob.name}`, {
-                    fontSize: '16px', fontFamily: '"Press Start 2P"', color: '#ffd700'
+                    fontSize: '16px', fontFamily: UI_FONT, color: '#ffd700'
                 });
                 const desc = this.scene.add.text(-220, 15, nextJob.description, {
-                    fontSize: '10px', color: '#ffffff'
+                    fontSize: '11px', color: '#ffffff'
                 });
                 container.add([icon, name, desc]);
 
@@ -252,7 +253,7 @@ export default class SkillManagerUI extends BaseWindowUI {
                 const statusStr = canPromote ? 'READY TO UPGRADE!' : `Req. Lv.${skillInfo.reqLevel}`;
                 const statusColor = canPromote ? '#00ff00' : '#ff5555';
                 const statusText = this.scene.add.text(280, 0, statusStr, {
-                    fontSize: '10px', fontFamily: '"Press Start 2P"', color: statusColor
+                    fontSize: '11px', fontFamily: UI_FONT, color: statusColor
                 }).setOrigin(1, 0.5);
                 container.add(statusText);
 
@@ -262,9 +263,9 @@ export default class SkillManagerUI extends BaseWindowUI {
                 const count = (player.stats.inventory || []).reduce((n, e) => n + ((typeof e === 'string' ? e : e.id) === quickItem.id ? (typeof e === 'string' ? 1 : e.count || 1) : 0), 0);
                 const icon = this.scene.add.text(-270, 0, quickItem.stats?.healMp ? '🔷' : '🧪', { fontSize: '26px' }).setOrigin(0.5);
                 const name = this.scene.add.text(-220, -10, `クイック: ${quickItem.name} x${count}`, {
-                    fontSize: '14px', fontFamily: '"Press Start 2P"', color: '#8dffb3'
+                    fontSize: '14px', fontFamily: UI_FONT, color: '#8dffb3'
                 });
-                const desc = this.scene.add.text(-220, 15, `${quickItem.description} 数字キーでスロットにセット`, { fontSize: '9px', color: '#aaaaaa' });
+                const desc = this.scene.add.text(-220, 15, `${quickItem.description} 数字キーでスロットにセット`, { fontSize: '11px', color: '#aaaaaa' });
                 container.add([icon, name, desc]);
                 this.listItems.push({ isQuickItem: true, itemId: quickItem.id, isUnlocked: true, bg, container });
             } else {
@@ -283,11 +284,11 @@ export default class SkillManagerUI extends BaseWindowUI {
                 // Info
                 const nameColor = isUnlocked ? '#ffffff' : (canUnlock ? '#ffffaa' : '#888888');
                 const name = this.scene.add.text(-220, -10, skillDef.name, {
-                    fontSize: '16px', fontFamily: '"Press Start 2P"', color: nameColor
+                    fontSize: '16px', fontFamily: UI_FONT, color: nameColor
                 });
                 const skillLevel = player.stats.skillLevels[skillInfo.id] || 1;
                 const levelText = this.scene.add.text(name.x + name.width + 10, -10, `Lv.${skillLevel}`, {
-                    fontSize: '12px', color: '#00ff00', fontFamily: '"Press Start 2P"'
+                    fontSize: '12px', color: '#00ff00', fontFamily: UI_FONT
                 });
                 // MP消費量がひと目でわかるように説明文の頭に付ける
                 // （「MP消費量がわからない」への対応）
@@ -302,7 +303,7 @@ export default class SkillManagerUI extends BaseWindowUI {
                 }
                 const descStr = `MP:${mpCost}  ${hitTag}${elTag}${skillDef.description}`;
                 const desc = this.scene.add.text(-220, 15, descStr, {
-                    fontSize: '10px', color: '#aaaaaa'
+                    fontSize: '11px', color: '#aaaaaa'
                 });
                 container.add([name, levelText, desc]);
 
@@ -322,7 +323,7 @@ export default class SkillManagerUI extends BaseWindowUI {
                 }
 
                 const statusText = this.scene.add.text(280, 0, statusTextStr, {
-                    fontSize: '10px', fontFamily: '"Press Start 2P"', color: statusColor
+                    fontSize: '11px', fontFamily: UI_FONT, color: statusColor
                 }).setOrigin(1, 0.5);
                 container.add(statusText);
 
@@ -331,7 +332,7 @@ export default class SkillManagerUI extends BaseWindowUI {
                     const upCost = (skillLevel + 1) * 100;
                     // 次回コストをボタン内に表示し、右側のセット案内とは別領域に置く。
                     const lvUpBtn = this.scene.add.rectangle(110, 0, 130, 30, 0x00aa00).setInteractive({ useHandCursor: true });
-                    const lvUpTxt = this.scene.add.text(110, 0, `Lv.UP: ${upCost} EXP`, { fontSize: '9px', color: '#ffffff', fontFamily: '"Press Start 2P"' }).setOrigin(0.5);
+                    const lvUpTxt = this.scene.add.text(110, 0, `Lv.UP: ${upCost} EXP`, { fontSize: '11px', color: '#ffffff', fontFamily: UI_FONT }).setOrigin(0.5);
                     lvUpBtn.on('pointerover', () => lvUpBtn.setFillStyle(0x00ff00));
                     lvUpBtn.on('pointerout', () => lvUpBtn.setFillStyle(0x00aa00));
                     lvUpBtn.on('pointerdown', (pointer, x, y, event) => {

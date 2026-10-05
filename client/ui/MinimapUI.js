@@ -153,12 +153,15 @@ export default class MinimapUI {
             });
         }
 
-        // 2. 他のプレイヤー (Blue)
+        // 2. 他のプレイヤー (Blue)。パーティーメンバーは別色で目立たせるので後で描く
+        const partyIds = new Set(
+            (this.scene.networkManager?.partyData?.members || []).map(m => m.id)
+        );
         g.fillStyle(0x00ccff, 1);
         if (this.scene.networkManager) {
             const others = this.scene.networkManager.getOtherPlayers();
-            Object.values(others).forEach(p => {
-                if (p.active) this.drawDot(p.x, p.y, player, 2);
+            Object.entries(others).forEach(([id, p]) => {
+                if (p.active && !partyIds.has(id)) this.drawDot(p.x, p.y, player, 2);
             });
         }
 
@@ -172,6 +175,25 @@ export default class MinimapUI {
         }
         if (this.scene.boss && this.scene.boss.active) {
             this.drawDot(this.scene.boss.x, this.scene.boss.y, player, 4);
+        }
+
+        // 3.5 パーティーメンバー (Orange + white ring)。ミニマップの範囲外にいる場合は
+        // 円の縁に寄せて表示し、おおよその方角がわかるようにする
+        if (this.scene.networkManager && partyIds.size > 1) {
+            const others = this.scene.networkManager.getOtherPlayers();
+            const rim = this.radius - 5;
+            partyIds.forEach(id => {
+                const p = others[id];
+                if (!p || !p.active) return;
+                let dx = (p.x - player.x) * this.zoom;
+                let dy = (p.y - player.y) * this.zoom;
+                const len = Math.hypot(dx, dy);
+                if (len > rim) { dx = dx / len * rim; dy = dy / len * rim; }
+                g.fillStyle(0xffa500, 1);
+                g.fillCircle(this.radius + dx, this.radius + dy, 3.5);
+                g.lineStyle(1.5, 0xffffff, 1);
+                g.strokeCircle(this.radius + dx, this.radius + dy, 3.5);
+            });
         }
 
         // 4. 自分 (Center Green)

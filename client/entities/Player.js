@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { JOBS } from "../data/jobs.js";
 import { ITEMS } from "../data/items.js";
 import { SKILLS } from "../data/skills.js";
@@ -1204,7 +1205,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         if (Math.random() >= this.getDodgeChance()) return false;
 
         const miss = this.scene.add.text(this.x, this.y - 30, 'MISS', {
-            fontSize: '14px', fontFamily: '"Press Start 2P"', color: '#8be9fd', stroke: '#000', strokeThickness: 3
+            fontSize: '14px', fontFamily: UI_FONT, color: '#8be9fd', stroke: '#000', strokeThickness: 3
         }).setOrigin(0.5).setDepth(20);
         this.scene.tweens.add({
             targets: miss, y: miss.y - 45, alpha: 0, duration: 700,
@@ -1329,7 +1330,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.saveStats();
 
             const text = this.scene.add.text(this.x, this.y - 20, `-${poison.tickDamage}`, {
-                fontSize: '14px', color: '#aa66ff', fontFamily: 'Press Start 2P', stroke: '#000', strokeThickness: 2
+                fontSize: '14px', color: '#aa66ff', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 2
             }).setOrigin(0.5);
             this.scene.tweens.add({ targets: text, y: this.y - 55, alpha: 0, duration: 700, onComplete: () => text.destroy() });
 

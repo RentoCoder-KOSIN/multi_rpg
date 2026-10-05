@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { pinToScreen } from '../utils/screenFixed.js';
 
 export default class DeathUI {
@@ -20,15 +21,15 @@ export default class DeathUI {
         panel.lineStyle(3, 0xe94560, 0.95);
         panel.strokeRoundedRect(-220, -125, 440, 250, 16);
         const title = this.scene.add.text(0, -60, 'YOU DIED', {
-            fontSize: '30px', fontFamily: '"Press Start 2P"', color: '#ff6b7a', stroke: '#000', strokeThickness: 5
+            fontSize: '30px', fontFamily: UI_FONT, color: '#ff6b7a', stroke: '#000', strokeThickness: 5
         }).setOrigin(0.5);
         const message = this.scene.add.text(0, -10, '力尽きました\nリスポーンして冒険を再開します', {
-            fontSize: '12px', fontFamily: '"Press Start 2P"', color: '#ffffff', align: 'center', lineSpacing: 10
+            fontSize: '12px', fontFamily: UI_FONT, color: '#ffffff', align: 'center', lineSpacing: 10
         }).setOrigin(0.5);
         const button = this.scene.add.rectangle(0, 70, 250, 52, 0x4a90e2, 1)
             .setStrokeStyle(2, 0xffffff, 0.8).setInteractive({ useHandCursor: true });
         const label = this.scene.add.text(0, 70, 'リスポーン', {
-            fontSize: '16px', fontFamily: '"Press Start 2P"', color: '#ffffff'
+            fontSize: '16px', fontFamily: UI_FONT, color: '#ffffff'
         }).setOrigin(0.5);
         button.on('pointerdown', () => this.scene.player?.respawn());
         button.on('pointerover', () => button.setFillStyle(0x5ba4f4));

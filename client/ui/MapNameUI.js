@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 export default class MapNameUI {
     constructor(scene, mapName) {
         if (!scene || !scene.add) {
@@ -22,7 +23,7 @@ export default class MapNameUI {
         this.text = scene.add.text(0, 0, mapName, {
             fontSize: '20px',
             color: '#ffffff',
-            fontFamily: '"Press Start 2P"',
+            fontFamily: UI_FONT,
             stroke: '#4a90e2',
             strokeThickness: 5
         }).setOrigin(0.5);

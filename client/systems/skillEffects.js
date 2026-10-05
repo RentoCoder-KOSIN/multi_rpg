@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 // Visual effects for skills and hits. Pure presentation: no damage or state changes here.
 import { SKILLS } from '../data/skills.js';
 import { areEffectsEnabled } from '../utils/effectsSettings.js';
@@ -28,7 +29,7 @@ export function showCriticalEffect(scene, enemy) {
     if (!areEffectsEnabled(scene)) return;
     showHitEffect(scene, enemy.x, enemy.y - 20, 0xffff00);
     const critText = scene.add.text(enemy.x, enemy.y - 40, 'CRITICAL!', {
-        fontSize: '16px', color: '#ffff00', fontFamily: '"Press Start 2P"', stroke: '#000', strokeThickness: 4
+        fontSize: '16px', color: '#ffff00', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 4
     }).setOrigin(0.5);
     scene.tweens.add({ targets: critText, y: enemy.y - 80, alpha: 0, duration: 800, onComplete: () => critText.destroy() });
 }
@@ -55,7 +56,7 @@ export function applySkillEffect(scene, skillId, sourceUser, isRemote = false) {
     const text = scene.add.text(sourceUser.x, sourceUser.y + textYOffset, skill.name, {
         fontSize: fontSize,
         color: '#fffff0',
-        fontFamily: '"Press Start 2P"',
+        fontFamily: UI_FONT,
         stroke: '#000',
         strokeThickness: 3
     }).setOrigin(0.5);

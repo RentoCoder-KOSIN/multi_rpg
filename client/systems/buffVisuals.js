@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 // Buff icon + particles shown above a buffed player.
 import { areEffectsEnabled } from '../utils/effectsSettings.js';
 
@@ -76,7 +77,7 @@ export function applyBuffVisual(scene, target, buffType, buffValue, duration) {
     const buffText = scene.add.text(target.x, target.y - 50, `${buffInfo.name}`, {
         fontSize: '12px',
         color: '#ffff00',
-        fontFamily: '"Press Start 2P"',
+        fontFamily: UI_FONT,
         stroke: '#000',
         strokeThickness: 3
     }).setOrigin(0.5);

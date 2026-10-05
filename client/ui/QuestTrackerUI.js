@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { pinToScreen } from '../utils/screenFixed.js';
 import { QUEST_UI_CONFIG } from '../gameConstants.js';
 import { UI_LAYOUT } from './uiLayout.js';
@@ -32,7 +33,7 @@ export default class QuestTrackerUI {
         this.title = scene.add.text(15, 12, '📜 QUESTS', {
             fontSize: '14px',
             color: '#ffffff',
-            fontFamily: '"Press Start 2P"',
+            fontFamily: UI_FONT,
             stroke: '#000000',
             strokeThickness: 3
         });
@@ -135,7 +136,7 @@ export default class QuestTrackerUI {
         const hidden = total - shown.length;
         if (hidden > 0) {
             const more = this.scene.add.text(140, yOffset - 2, `他${hidden}件… [Q]で一覧`, {
-                fontSize: '8px', color: '#aaaaaa', fontFamily: '"Press Start 2P"'
+                fontSize: '11px', color: '#aaaaaa', fontFamily: UI_FONT
             }).setOrigin(0.5, 0);
             this.questContainer.add(more);
             yOffset += 20;
@@ -166,9 +167,9 @@ export default class QuestTrackerUI {
 
         // タイトル
         const title = this.scene.add.text(32, 12, quest.title, {
-            fontSize: '9px',
+            fontSize: '11px',
             color: isCompleted ? '#00ffcc' : '#ffffff',
-            fontFamily: '"Press Start 2P"'
+            fontFamily: UI_FONT
         });
         container.add(title);
 
@@ -183,9 +184,9 @@ export default class QuestTrackerUI {
 
         // 数値テキスト
         const progressText = this.scene.add.text(width - 12, 42, `${quest.progress}/${quest.required}`, {
-            fontSize: '8px',
+            fontSize: '11px',
             color: '#aaaaaa',
-            fontFamily: '"Press Start 2P"'
+            fontFamily: UI_FONT
         }).setOrigin(1, 0);
         container.add(progressText);
 

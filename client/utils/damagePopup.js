@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 /**
  * ダメージ数値のポップアップ表示。
  *
@@ -68,7 +69,7 @@ export function showDamageNumber(scene, x, y, amount, options = {}) {
 
     const text = scene.add.text(x, y - 20, `-${amount}`, {
         fontSize: isSuper ? '19px' : '14px',
-        fontFamily: '"Press Start 2P"',
+        fontFamily: UI_FONT,
         color: textColor,
         stroke: '#000',
         strokeThickness: isSuper ? 4 : 2,

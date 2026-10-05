@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { getSaved, removeSaved, getSession, logout, flushSave } from '../utils/saveStore.js';
 
 export default class LobbyUI {
@@ -60,24 +61,24 @@ export default class LobbyUI {
 
         // --- ヘッダー ---
         this.titleText = this.scene.add.text(0, -panelHeight / 2 + 40, '⚔️ マルチプレイヤー ロビー', {
-            fontSize: '24px', color: '#ffffff', fontFamily: '"Press Start 2P"', stroke: '#4a90e2', strokeThickness: 5
+            fontSize: '24px', color: '#ffffff', fontFamily: UI_FONT, stroke: '#4a90e2', strokeThickness: 5
         }).setOrigin(0.5);
         this.mainContainer.add(this.titleText);
 
         this.connectionStatusText = this.scene.add.text(0, -panelHeight / 2 + 80, '接続済み', {
-            fontSize: '11px', color: '#2ecc40', fontFamily: '"Press Start 2P"'
+            fontSize: '11px', color: '#2ecc40', fontFamily: UI_FONT
         }).setOrigin(0.5);
         this.mainContainer.add(this.connectionStatusText);
 
         this.playerCountText = this.scene.add.text(0, -panelHeight / 2 + 110, '待機人数: 0 / 4', {
-            fontSize: '14px', color: '#ffffff', fontFamily: '"Press Start 2P"'
+            fontSize: '14px', color: '#ffffff', fontFamily: UI_FONT
         }).setOrigin(0.5);
         this.mainContainer.add(this.playerCountText);
 
         // 操作説明 (重なり防止のため上部に配置)
         this.instructionText = this.scene.add.text(0, -panelHeight / 2 + 140,
             '名前を入力して準備完了！全員の準備ができると開始できます。', {
-            fontSize: '10px', color: '#888888', fontFamily: '"Press Start 2P"'
+            fontSize: '11px', color: '#888888', fontFamily: UI_FONT
         }).setOrigin(0.5);
         this.mainContainer.add(this.instructionText);
 
@@ -95,7 +96,7 @@ export default class LobbyUI {
 
         // 名前入力
         this.nameLabel = this.scene.add.text(0, startY, 'プレイヤー名:', {
-            fontSize: '12px', color: '#aaaaaa', fontFamily: '"Press Start 2P"'
+            fontSize: '12px', color: '#aaaaaa', fontFamily: UI_FONT
         }).setOrigin(0.5);
         this.mainContainer.add(this.nameLabel);
 
@@ -104,7 +105,7 @@ export default class LobbyUI {
         this.mainContainer.add(this.nameInputBg);
 
         this.nameInputText = this.scene.add.text(0, startY + 35, this.myPlayerName || 'Player', {
-            fontSize: '16px', color: '#ffffff', fontFamily: '"Press Start 2P"'
+            fontSize: '16px', color: '#ffffff', fontFamily: UI_FONT
         }).setOrigin(0.5);
         this.mainContainer.add(this.nameInputText);
 
@@ -114,7 +115,7 @@ export default class LobbyUI {
         this.mainContainer.add(this.readyButton);
 
         this.readyButtonText = this.scene.add.text(0, startY + 105, '準備完了', {
-            fontSize: '18px', color: '#ffffff', fontFamily: '"Press Start 2P"'
+            fontSize: '18px', color: '#ffffff', fontFamily: UI_FONT
         }).setOrigin(0.5);
         this.mainContainer.add(this.readyButtonText);
 
@@ -123,7 +124,7 @@ export default class LobbyUI {
         const saveToggleBg = this.scene.add.rectangle(0, 0, 240, 32, 0x4a90e2, 0.3)
             .setStrokeStyle(1, 0xffffff, 0.2).setInteractive({ useHandCursor: true });
         this.saveToggleText = this.scene.add.text(0, 0, 'つづきから', {
-            fontSize: '10px', color: '#ffffff', fontFamily: '"Press Start 2P"'
+            fontSize: '11px', color: '#ffffff', fontFamily: UI_FONT
         }).setOrigin(0.5);
         this.saveToggleButton.add([saveToggleBg, this.saveToggleText]);
         this.mainContainer.add(this.saveToggleButton);
@@ -133,10 +134,10 @@ export default class LobbyUI {
         // ログイン中のアカウント表示とログアウト
         const accountName = getSession()?.username || '';
         this.accountText = this.scene.add.text(-panelWidth / 2 + 24, -panelHeight / 2 + 18, `👤 ${accountName}`, {
-            fontSize: '10px', color: '#9ec5ff', fontFamily: '"Press Start 2P"'
+            fontSize: '11px', color: '#9ec5ff', fontFamily: UI_FONT
         }).setOrigin(0, 0.5);
         this.logoutText = this.scene.add.text(panelWidth / 2 - 24, -panelHeight / 2 + 18, '[ログアウト]', {
-            fontSize: '10px', color: '#ff8b7b', fontFamily: '"Press Start 2P"'
+            fontSize: '11px', color: '#ff8b7b', fontFamily: UI_FONT
         }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
         this.logoutText.on('pointerdown', () => {
             flushSave(true);
@@ -153,7 +154,7 @@ export default class LobbyUI {
         this.startButton = this.scene.add.rectangle(0, startY + 215, 300, 60, 0x2ecc40, 1)
             .setOrigin(0.5).setStrokeStyle(3, 0xffffff, 1).setInteractive({ useHandCursor: true }).setVisible(false);
         this.startButtonText = this.scene.add.text(0, startY + 215, 'ゲーム開始', {
-            fontSize: '22px', color: '#ffffff', fontFamily: '"Press Start 2P"', stroke: '#000', strokeThickness: 3
+            fontSize: '22px', color: '#ffffff', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 3
         }).setOrigin(0.5).setVisible(false);
         this.mainContainer.add([this.startButton, this.startButtonText]);
 
@@ -174,26 +175,26 @@ export default class LobbyUI {
         gfx.fillRoundedRect(left, top, width, 54, { tl: 18, tr: 18, bl: 0, br: 0 });
 
         const title = this.scene.add.text(left + 20, top + 20, 'ルーム情報', {
-            fontSize: '15px', color: '#ffffff', fontFamily: '"Press Start 2P"'
+            fontSize: '15px', color: '#ffffff', fontFamily: UI_FONT
         });
         this.infoConnectionText = this.scene.add.text(left + 20, top + 72, '● 接続済み', {
-            fontSize: '11px', color: '#2ecc40', fontFamily: '"Press Start 2P"'
+            fontSize: '11px', color: '#2ecc40', fontFamily: UI_FONT
         });
         this.infoRoomText = this.scene.add.text(left + 20, top + 102, '参加者: 0 / 4', {
-            fontSize: '11px', color: '#9ec5ff', fontFamily: '"Press Start 2P"'
+            fontSize: '11px', color: '#9ec5ff', fontFamily: UI_FONT
         });
         this.infoAccountText = this.scene.add.text(left + 20, top + 132, `アカウント: ${getSession()?.username || '-'}`, {
-            fontSize: '10px', color: '#cccccc', fontFamily: '"Press Start 2P"', wordWrap: { width: width - 40 }
+            fontSize: '11px', color: '#cccccc', fontFamily: UI_FONT, wordWrap: { width: width - 40 }
         });
 
         const logTop = top + 182;
         gfx.lineStyle(1, 0x4a90e2, 0.45);
         gfx.lineBetween(left + 18, logTop - 16, -left - 18, logTop - 16);
         const logTitle = this.scene.add.text(left + 20, logTop, 'ACTIVITY LOG', {
-            fontSize: '11px', color: '#ffd700', fontFamily: '"Press Start 2P"'
+            fontSize: '11px', color: '#ffd700', fontFamily: UI_FONT
         });
         this.lobbyLogText = this.scene.add.text(left + 20, logTop + 30, '', {
-            fontSize: '10px', color: '#d7e6ff', fontFamily: 'monospace', lineSpacing: 7,
+            fontSize: '11px', color: '#d7e6ff', fontFamily: 'monospace', lineSpacing: 7,
             wordWrap: { width: width - 40 }
         });
         this.infoContainer.add([gfx, title, this.infoConnectionText, this.infoRoomText, this.infoAccountText, logTitle, this.lobbyLogText]);
@@ -357,12 +358,12 @@ export default class LobbyUI {
             box.add(bGfx);
 
             const nTxt = this.scene.add.text(-230, 0, (isMe ? '▶ ' : '') + name + (sortedIds[0] === id ? ' (ホスト)' : ''), {
-                fontSize: '11px', color: '#ffffff', fontFamily: '"Press Start 2P"'
+                fontSize: '11px', color: '#ffffff', fontFamily: UI_FONT
             }).setOrigin(0, 0.5);
             box.add(nTxt);
 
             if (isHost && !isMe) {
-                const kBtn = this.scene.add.text(120, 0, '[キック]', { fontSize: '9px', color: '#ff4b2b', fontFamily: '"Press Start 2P"' })
+                const kBtn = this.scene.add.text(120, 0, '[キック]', { fontSize: '11px', color: '#ff4b2b', fontFamily: UI_FONT })
                     .setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
                 kBtn.on('pointerdown', () => this.networkManager.getSocket()?.emit('lobbyKick', { targetId: id }));
                 kBtn.on('pointerover', () => kBtn.setColor('#ff0000'));
@@ -371,7 +372,7 @@ export default class LobbyUI {
             }
 
             const sTxt = this.scene.add.text(230, 0, isReady ? '準備完了' : '待機中', {
-                fontSize: '10px', color: isReady ? '#2ecc40' : '#888888', fontFamily: '"Press Start 2P"'
+                fontSize: '11px', color: isReady ? '#2ecc40' : '#888888', fontFamily: UI_FONT
             }).setOrigin(1, 0.5);
             box.add(sTxt);
 

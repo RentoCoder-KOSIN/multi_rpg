@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 export default class PlayerNameUI {
     constructor(scene, player, playerName = 'Player', playerId = '') {
         this.scene = scene;
@@ -8,9 +9,9 @@ export default class PlayerNameUI {
 
         // プレイヤー名表示（頭上）
         this.nameText = scene.add.text(0, 0, `Lv.${this.level} ${playerName}`, {
-            fontSize: '10px',
+            fontSize: '11px',
             color: '#ffffff',
-            fontFamily: 'Press Start 2P',
+            fontFamily: UI_FONT,
             stroke: '#000000',
             strokeThickness: 2,
             align: 'center'
@@ -53,8 +54,13 @@ export default class PlayerNameUI {
         const worldX = this.player.x;
         const worldY = this.player.y - (this.player.height || 48) / 2 - 15;
 
-        const screenX = worldX - camera.scrollX;
-        const screenY = worldY - camera.scrollY;
+        // ワールド座標→画面座標。カメラがズームしている(小さいマップで画面を埋める)場合は
+        // 画面中心を基準に拡大されるので、その分を反映する（ズーム1なら worldX - scrollX と同じ）
+        const zoom = camera.zoom || 1;
+        const halfW = camera.width / 2;
+        const halfH = camera.height / 2;
+        const screenX = halfW + (worldX - (camera.scrollX + halfW)) * zoom;
+        const screenY = halfH + (worldY - (camera.scrollY + halfH)) * zoom;
 
         if (screenX < -100 || screenX > this.scene.scale.width + 100 ||
             screenY < -100 || screenY > this.scene.scale.height + 100) {

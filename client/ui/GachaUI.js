@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import BaseWindowUI from './BaseWindowUI.js';
 import { ITEMS } from '../data/items.js';
 import { entryId, entryCount, removeFromInventory, totalOwned } from '../utils/inventoryOps.js';
@@ -30,9 +31,9 @@ export default class GachaUI extends BaseWindowUI {
     createUI() {
         if (this.container) return;
         this.createWindow();
-        this.stoneText = this.scene.add.text(0, -125, '', { fontSize: '15px', fontFamily: '"Press Start 2P"', color: '#7ee7ff' }).setOrigin(0.5);
-        this.resultText = this.scene.add.text(0, -5, '魔石を使って限定装備を手に入れよう', { fontSize: '14px', fontFamily: '"Press Start 2P"', color: '#ffffff', align: 'center', wordWrap: { width: 460 } }).setOrigin(0.5);
-        this.hint = this.scene.add.text(0, 125, '魔石の入手方法は今後追加予定', { fontSize: '9px', fontFamily: '"Press Start 2P"', color: '#9da7b3' }).setOrigin(0.5);
+        this.stoneText = this.scene.add.text(0, -125, '', { fontSize: '15px', fontFamily: UI_FONT, color: '#7ee7ff' }).setOrigin(0.5);
+        this.resultText = this.scene.add.text(0, -5, '魔石を使って限定装備を手に入れよう', { fontSize: '14px', fontFamily: UI_FONT, color: '#ffffff', align: 'center', wordWrap: { width: 460 } }).setOrigin(0.5);
+        this.hint = this.scene.add.text(0, 125, '魔石の入手方法は今後追加予定', { fontSize: '11px', fontFamily: UI_FONT, color: '#9da7b3' }).setOrigin(0.5);
         this.container.add([this.stoneText, this.resultText, this.hint]);
         this.createDrawButton(-115, '1回\n魔石 x1', 1);
         this.createDrawButton(115, '10回\n魔石 x10', 10);
@@ -41,7 +42,7 @@ export default class GachaUI extends BaseWindowUI {
 
     createDrawButton(x, label, count) {
         const bg = this.scene.add.rectangle(x, 75, 190, 75, 0x522b7a, 0.95).setStrokeStyle(2, 0xd8b4fe).setInteractive({ useHandCursor: true });
-        const text = this.scene.add.text(x, 75, label, { fontSize: '13px', fontFamily: '"Press Start 2P"', color: '#ffffff', align: 'center', lineSpacing: 7 }).setOrigin(0.5);
+        const text = this.scene.add.text(x, 75, label, { fontSize: '13px', fontFamily: UI_FONT, color: '#ffffff', align: 'center', lineSpacing: 7 }).setOrigin(0.5);
         bg.on('pointerdown', () => this.draw(count));
         this.container.add([bg, text]);
     }

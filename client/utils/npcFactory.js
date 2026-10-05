@@ -1,4 +1,5 @@
 import NPC from '../entities/NPC.js';
+import { ensureNpcTexture } from './npcPlaceholder.js';
 
 export function createNPCsFromMap(scene, map, layerName = 'NPCs') {
     const npcs = [];
@@ -19,6 +20,7 @@ export function createNPCsFromMap(scene, map, layerName = 'NPCs') {
         try { dialogue = typeof dialogue === 'string' ? JSON.parse(dialogue) : dialogue; }
         catch { dialogue = [dialogue]; }
 
+        ensureNpcTexture(scene, texture);
         const npc = new NPC(scene, obj.x, obj.y, texture);
         npc.name = name;
         npc.dialogue = dialogue;

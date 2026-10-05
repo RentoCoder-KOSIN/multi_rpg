@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { getUILayout } from './UILayoutManager.js';
 import { getJobLabel } from '../utils/jobLabel.js';
 
@@ -27,7 +28,7 @@ export default class PartyHUDUI {
 
         // タイトル
         const title = this.scene.add.text(0, -20, 'PARTY MEMBERS', {
-            fontSize: '10px', color: '#4a90e2', fontFamily: '"Press Start 2P"',
+            fontSize: '11px', color: '#4a90e2', fontFamily: UI_FONT,
             stroke: '#000', strokeThickness: 2
         });
         this.container.add(title);
@@ -48,7 +49,7 @@ export default class PartyHUDUI {
             let displayName = member.name;
             if (displayName.length > 10) displayName = displayName.substring(0, 8) + '..';
             const nameText = this.scene.add.text(8, 6, `${displayName} Lv.${member.level}`, {
-                fontSize: '9px', color: '#ffffff', fontFamily: '"Press Start 2P"'
+                fontSize: '11px', color: '#ffffff', fontFamily: UI_FONT
             });
             memberContainer.add(nameText);
 
@@ -72,13 +73,13 @@ export default class PartyHUDUI {
 
             // 職業
             const jobText = this.scene.add.text(10, 45, getJobLabel(member.job), {
-                fontSize: '8px', color: '#ffd700', fontFamily: '"Press Start 2P"'
+                fontSize: '11px', color: '#ffd700', fontFamily: UI_FONT
             });
             memberContainer.add(jobText);
 
             // 位置情報 (MAP)
             const mapText = this.scene.add.text(195, 6, member.map, {
-                fontSize: '7px', color: '#aaaaaa', fontFamily: '"Press Start 2P"'
+                fontSize: '11px', color: '#aaaaaa', fontFamily: UI_FONT
             }).setOrigin(1, 0);
             memberContainer.add(mapText);
 

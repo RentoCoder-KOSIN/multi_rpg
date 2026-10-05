@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { getUILayout } from './UILayoutManager.js';
 
 /**
@@ -29,15 +30,15 @@ export default class AIStatsUI {
         this.titleText = this.scene.add.text(10, 10, 'AI Learning Stats', {
             fontSize: '12px',
             color: '#00ff00',
-            fontFamily: 'Press Start 2P'
+            fontFamily: UI_FONT
         });
         this.container.add(this.titleText);
 
         // 統計テキスト
         this.statsText = this.scene.add.text(10, 35, '', {
-            fontSize: '9px',
+            fontSize: '11px',
             color: '#ffffff',
-            fontFamily: 'Press Start 2P',
+            fontFamily: UI_FONT,
             lineSpacing: 5
         });
         this.container.add(this.statsText);

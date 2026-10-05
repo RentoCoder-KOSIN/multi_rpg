@@ -128,7 +128,11 @@ export function drawEnemyAttackRanges(scene) {
     // enemy danger zones must stay visible behind the respawn screen.
     if (!scene.player) return;
 
-    if (!scene._enemyRangeGraphics) {
+    // scene.restart()（死亡後のリスポーン等）では同じシーンインスタンスが再利用され、
+    // プロパティだけ残って実体のGraphicsは破棄済みになる。存在チェックだけだと
+    // 破棄済みのGraphicsに描き続けて何も見えなくなるため、破棄されていたら作り直す。
+    const existing = scene._enemyRangeGraphics;
+    if (!existing || !existing.scene || !existing.active) {
         scene._enemyRangeGraphics = scene.add.graphics();
         // マップのオブジェクトレイヤーより確実に前。HPバー(10/11)より後ろに置く。
         scene._enemyRangeGraphics.setDepth(8);

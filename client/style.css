@@ -10,11 +10,10 @@ html, body, canvas {
     -ms-interpolation-mode: nearest-neighbor;
 }
 
-/* キャンバスをフルサイズにして中央揃え */
+/* キャンバスをブラウザいっぱいに広げる（背景の青い余白を残さない） */
 body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
+    width: 100vw;
     height: 100vh;
     background-color: rgb(16, 9, 56);
     overflow: hidden;
@@ -22,25 +21,32 @@ body {
 
 #game-shell {
     display: flex;
-    align-items: center;
-    gap: 14px;
+    align-items: stretch;
+    gap: 0;
+    width: 100vw;
     height: 100vh;
+    margin: 0;
 }
 
 #game-root {
     display: flex;
-    width: min(1000px, calc(100vw - 340px));
-    height: min(720px, calc(100vh - 24px));
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    margin: 0;
 }
 
 #game-sidebar {
     display: none;
-    width: 300px;
-    height: min(720px, calc(100vh - 24px));
+    flex: none;
+    width: 280px;
+    height: calc(100% - 12px);
+    margin: 6px 6px 6px 0;
     flex-direction: column;
-    justify-content: space-between;
-    gap: 14px;
-    font-family: "Press Start 2P", monospace;
+    justify-content: flex-start;
+    gap: 10px;
+    min-height: 0;
+    font-family: "Meiryo UI", "Yu Gothic UI", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", sans-serif;
     color: #d7e6ff;
 }
 
@@ -56,18 +62,43 @@ body {
 }
 
 #player-status-panel {
-    height: 405px;
+    flex: 1 1 0;      /* 余った高さを全部使い、足りなければ内部スクロール */
     min-height: 0;
     overflow-y: auto;
-    font-size: 10px;
-    line-height: 1.5;
+    font-size: 13px;
+    line-height: 1.6;
 }
-.status-title, .activity-panel h2 { margin: 0 0 12px; font-size: 13px; color: #fff; }
-.status-bars { font-size: 10px; line-height: 1.75; color: #e5efff; }
-.status-detail { margin-top: 9px; padding-top: 8px; border-top: 1px solid rgba(74, 144, 226, .45); white-space: pre-line; }
-.activity-panel { height: 150px; min-height: 0; font: 11px/1.65 monospace; overflow: hidden; }
-.activity-panel h2 { color: #ffe07a; }
-#activity-log { white-space: pre-line; overflow-wrap: anywhere; }
+.status-title, .activity-panel h2 { margin: 0 0 12px; font-size: 17px; color: #fff; }
+/* プレイヤー詳細（PlayerStatsUI） */
+.ss { margin-top: 10px; padding-top: 6px; border-top: 1px solid rgba(74, 144, 226, .45); }
+.ss h3 { margin: 0 0 4px; font-size: 13px; color: #ffe07a; }
+.sr { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; line-height: 1.55; color: #cfe0ff; }
+.sr span { flex: none; color: #9fb4d6; }
+.sr b { font-weight: normal; color: #fff; text-align: right; overflow-wrap: anywhere; }
+.sl { font-size: 12px; line-height: 1.5; color: #e5efff; padding-left: 8px; overflow-wrap: anywhere; }
+#player-status-panel::-webkit-scrollbar { width: 6px; }
+#player-status-panel::-webkit-scrollbar-thumb { background: rgba(74, 144, 226, .6); border-radius: 3px; }
+.activity-panel {
+    flex: 0 0 clamp(150px, 30%, 260px);   /* 縮まない高さ */
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow: hidden;
+}
+.activity-panel h2 { color: #ffe07a; flex: none; }
+#activity-log {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;          /* ログはスクロール式 */
+    overflow-wrap: anywhere;
+    padding-right: 4px;
+}
+.log-entry { padding: 1px 0; border-bottom: 1px solid rgba(74, 144, 226, .15); }
+.log-empty { color: #7f93b5; }
+#activity-log::-webkit-scrollbar { width: 6px; }
+#activity-log::-webkit-scrollbar-thumb { background: rgba(74, 144, 226, .6); border-radius: 3px; }
 
 canvas {
     display: block;

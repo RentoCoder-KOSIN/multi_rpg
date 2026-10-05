@@ -32,6 +32,13 @@ export const UI_LAYOUT = {
         size: { w: 320, h: 320 }
     },
 
+    // In-game player HUD (name / Lv / HP / MP / EXP): top-left corner.
+    playerHud: {
+        anchor: 'top-left',
+        margin: { x: 15, y: 15 },
+        size: { w: 232, h: 76 }
+    },
+
     // Quest tracker: left edge, vertically centered (height is dynamic -> setSize)
     quest: {
         anchor: 'middle-left',
@@ -39,9 +46,9 @@ export const UI_LAYOUT = {
         size: { w: 280, h: 50 }
     },
 
-    // Minimap moves to the left now that the right edge is the status area.
+    // Minimap: bottom-left corner (the player HUD takes the top-left).
     minimap: {
-        anchor: 'top-left',
+        anchor: 'bottom-left',
         margin: { x: 15, y: 15 },
         size: { w: 140, h: 140 }
     },
@@ -81,11 +88,12 @@ export const UI_LAYOUT = {
         relative: { to: 'skillDial', side: 'above', gap: 10 }
     },
 
-    // Enemy AI debug panel (hidden by default), bottom-left
+    // Enemy AI debug panel (hidden by default): bottom-left, to the right of the minimap
     aiStats: {
         anchor: 'bottom-left',
         margin: { x: 10, y: 10 },
-        size: { w: 250, h: 140 }
+        size: { w: 250, h: 140 },
+        relative: { to: 'minimap', side: 'right', gap: 10 }
     },
 
     // "[C] talk" prompt: center of the prompt is 120px above the bottom edge

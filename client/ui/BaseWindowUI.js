@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { pinToScreen } from '../utils/screenFixed.js';
 export default class BaseWindowUI {
     constructor(scene, config = {}) {
@@ -36,6 +37,16 @@ export default class BaseWindowUI {
         this.container.setScrollFactor(0).setDepth(depth).setVisible(false);
         pinToScreen(this.container); // keep child hit areas fixed to the screen
 
+        // ゲーム解像度が変わった（ウィンドウのリサイズ等）時に、オーバーレイと中央位置を合わせ直す
+        this._onGameResize = (gameSize) => {
+            if (!this.overlay?.active || !this.container?.active) return;
+            this.overlay.setSize(gameSize.width, gameSize.height);
+            if (this.overlay.input?.hitArea) this.overlay.input.hitArea.setSize(gameSize.width, gameSize.height);
+            this.container.setPosition(gameSize.width / 2, gameSize.height / 2);
+        };
+        this.scene.scale.on('resize', this._onGameResize);
+        this.scene.events.once('shutdown', () => this.scene.scale.off('resize', this._onGameResize));
+
         // 3. Background
         this.bgGfx = this.scene.add.graphics();
         this.drawBackground(width, height);
@@ -54,7 +65,7 @@ export default class BaseWindowUI {
 
         // 4. Header / Title
         const titleText = this.scene.add.text(0, -height / 2 + 35, title, {
-            fontSize: '22px', fontFamily: '"Press Start 2P"', color: titleColor,
+            fontSize: '22px', fontFamily: UI_FONT, color: titleColor,
             stroke: '#' + titleStroke.toString(16).padStart(6, '0'), strokeThickness: 4
         }).setOrigin(0.5);
         this.container.add(titleText);

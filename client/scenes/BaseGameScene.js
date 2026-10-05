@@ -67,6 +67,11 @@ export default class BaseGameScene extends Phaser.Scene {
     }
 
     create(data) {
+        // サイドパネルを出すと表示領域の幅が変わる。UI（ウィンドウの中央位置やオーバーレイ）は
+        // 作成時のゲームサイズで作られるため、UIを作る前に同期的に解像度を合わせておく。
+        document.getElementById('game-sidebar')?.classList.add('is-active');
+        window.__refitGame?.();
+
         this._isTeleporting = false;
         this.events.on('wake', () => {
             this._isTeleporting = false;
@@ -226,7 +231,9 @@ export default class BaseGameScene extends Phaser.Scene {
         updateNPCInteraction(this, { player: this.player, npcs: this.npcs, dialogue: this.dialogue, interactKey: this.interactKey, interactText: this.interactText, interactBg: this.interactBg });
         if (this.playerNameUI) this.playerNameUI.updatePosition();
         if (this.playerStatsUI) this.playerStatsUI.update();
+        if (this.playerHudUI) this.playerHudUI.update();
         if (this.minimapUI) this.minimapUI.update();
+        if (this.partyLocatorUI) this.partyLocatorUI.update();
         if (this.objectiveIndicatorUI) this.objectiveIndicatorUI.update(time);
 
         updateEnemyContactDamage(this);

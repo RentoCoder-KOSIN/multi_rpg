@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 export default class NPC extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, texture = 'npc') {
         super(scene, x, y, texture);
@@ -13,7 +14,7 @@ export default class NPC extends Phaser.Physics.Arcade.Sprite {
             this.y - 32,
             '',
             {
-                fontFamily: 'Press Start 2P',
+                fontFamily: UI_FONT,
                 fontSize: '16px',
                 color: '#ffff00'
             }

@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { QUESTS } from "../data/quests.js";
 import BaseWindowUI from "./BaseWindowUI.js";
 
@@ -37,7 +38,7 @@ export default class GuildQuestBoardUI extends BaseWindowUI {
         const panelHeight = this.config.height;
 
         this.descText = this.scene.add.text(0, panelHeight / 2 - 30, '↑↓で選択 / Enterで受注・報告', {
-            fontSize: '10px', fontFamily: '"Press Start 2P"', color: '#aaaaaa'
+            fontSize: '11px', fontFamily: UI_FONT, color: '#aaaaaa'
         }).setOrigin(0.5);
         this.container.add(this.descText);
 
@@ -130,12 +131,12 @@ export default class GuildQuestBoardUI extends BaseWindowUI {
         const modeColor = { turnin: '#ffd700', active: '#66ccff', available: '#ffffff' }[mode];
 
         const title = this.scene.add.text(-270, -22, `${modeLabel} ${def.title}`, {
-            fontSize: '12px', fontFamily: '"Press Start 2P"', color: modeColor
+            fontSize: '12px', fontFamily: UI_FONT, color: modeColor
         }).setOrigin(0, 0.5);
         box.add(title);
 
         const desc = this.scene.add.text(-270, 2, def.description, {
-            fontSize: '9px', fontFamily: '"Press Start 2P"', color: '#8fd3ff',
+            fontSize: '11px', fontFamily: UI_FONT, color: '#8fd3ff',
             wordWrap: { width: 400 }
         }).setOrigin(0, 0.5);
         box.add(desc);
@@ -150,12 +151,12 @@ export default class GuildQuestBoardUI extends BaseWindowUI {
         const rewardStr = `報酬: EXP${def.reward?.exp || 0} / ${def.reward?.gold || 0}G${def.reward?.item ? ' + アイテム' : ''}`;
 
         const info = this.scene.add.text(260, -10, progressStr, {
-            fontSize: '9px', fontFamily: '"Press Start 2P"', color: '#ffff00'
+            fontSize: '11px', fontFamily: UI_FONT, color: '#ffff00'
         }).setOrigin(1, 0.5);
         box.add(info);
 
         const reward = this.scene.add.text(260, 14, rewardStr, {
-            fontSize: '8px', fontFamily: '"Press Start 2P"', color: '#aaaaaa'
+            fontSize: '11px', fontFamily: UI_FONT, color: '#aaaaaa'
         }).setOrigin(1, 0.5);
         box.add(reward);
 

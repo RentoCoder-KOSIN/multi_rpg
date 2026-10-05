@@ -1,5 +1,6 @@
 // Asset loading shared by every game scene.
 import { getAllEnemyStats } from '../../data/enemyStats.js';
+import { NPC_TEXTURES } from '../../data/npcTextures.js';
 
 /**
  * @param {Phaser.Scene} scene
@@ -14,6 +15,9 @@ export function preloadCommonAssets(scene, config) {
     Object.entries(getAllEnemyStats()).forEach(([type, stats]) => {
         if (stats.sprite) scene.load.image(type, `assets/enemy/${stats.sprite}`);
     });
+
+    // NPC images (texture key = the Tiled "texture" property). Registered in data/npcTextures.js
+    Object.entries(NPC_TEXTURES).forEach(([key, path]) => scene.load.image(key, path));
 
     scene.load.image('water', 'assets/tiles/water.png');
     scene.load.image('lava', 'assets/tiles/lava.png');

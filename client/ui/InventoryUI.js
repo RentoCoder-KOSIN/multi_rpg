@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { ITEMS } from "../data/items.js";
 import { SEED_CONFIG } from "../gameConstants.js";
 import BaseWindowUI from "./BaseWindowUI.js";
@@ -34,7 +35,7 @@ export default class InventoryUI extends BaseWindowUI {
         this.container.add(detailBg);
 
         this.detailText = this.scene.add.text(0, panelHeight / 2 - 50, '十字キーで選択、Enterで装備/使用（Shift+Enterでまとめて使用）\nUで個数を指定して使用、Deleteで捨てる（売るのはショップで）', {
-            fontSize: '11px', fontFamily: '"Press Start 2P"', color: '#e0e0e0',
+            fontSize: '11px', fontFamily: UI_FONT, color: '#e0e0e0',
             wordWrap: { width: panelWidth - 60 }, align: 'center'
         }).setOrigin(0.5);
         this.container.add(this.detailText);
@@ -143,7 +144,7 @@ export default class InventoryUI extends BaseWindowUI {
 
         if (this.inventory.length === 0) {
             const emptyText = this.scene.add.text(0, 0, 'アイテムがありません', {
-                fontSize: '14px', fontFamily: '"Press Start 2P"', color: '#666666'
+                fontSize: '14px', fontFamily: UI_FONT, color: '#666666'
             }).setOrigin(0.5);
             this.listContainer.add(emptyText);
             return;
@@ -171,14 +172,14 @@ export default class InventoryUI extends BaseWindowUI {
 
             // 名前
             const nameText = this.scene.add.text(0, 25, item.name.substring(0, 6), {
-                fontSize: '9px', fontFamily: '"Press Start 2P"', color: '#ffffff'
+                fontSize: '11px', fontFamily: UI_FONT, color: '#ffffff'
             }).setOrigin(0.5);
 
             // 個数表示 (スタック可能な場合)
             let countText = null;
             if (count > 1) {
                 countText = this.scene.add.text(35, 35, `x${count}`, {
-                    fontSize: '10px', fontFamily: '"Press Start 2P"', color: '#ffffff', stroke: '#000', strokeThickness: 2
+                    fontSize: '11px', fontFamily: UI_FONT, color: '#ffffff', stroke: '#000', strokeThickness: 2
                 }).setOrigin(1, 1);
             }
 

@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import BaseWindowUI from "./BaseWindowUI.js";
 import { REINCARNATION_CONFIG } from "../gameConstants.js";
 
@@ -22,7 +23,7 @@ export default class ReincarnationUI extends BaseWindowUI {
 
         this.infoText = this.scene.add.text(0, -100, '', {
             fontSize: '11px',
-            fontFamily: 'Press Start 2P',
+            fontFamily: UI_FONT,
             color: '#ffffff',
             align: 'center',
             wordWrap: { width: width - 60 },
@@ -34,7 +35,7 @@ export default class ReincarnationUI extends BaseWindowUI {
             .setStrokeStyle(3, 0xffd700)
             .setInteractive({ useHandCursor: true });
         this.confirmText = this.scene.add.text(0, 90, '輪廻転生する', {
-            fontSize: '14px', fontFamily: 'Press Start 2P', color: '#ffffff'
+            fontSize: '14px', fontFamily: UI_FONT, color: '#ffffff'
         }).setOrigin(0.5);
 
         this.confirmBtn.on('pointerover', () => this.confirmBtn.setFillStyle(0xff0000));

@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { JOBS } from "../data/jobs.js";
 import { QUESTS } from "../data/quests.js";
 
@@ -23,16 +24,16 @@ export default class DialogueManager {
         this.nameBox = scene.add.rectangle(centerX - width / 2 + 80, centerY - height / 2 + 15, 160, 30, 0x4a90e2, 1)
             .setOrigin(0, 0).setVisible(false).setStrokeStyle(2, 0xffffff, 1);
         this.nameText = scene.add.text(centerX - width / 2 + 90, centerY - height / 2 + 20, '', {
-            fontFamily: 'Press Start 2P', fontSize: '12px', color: '#ffffff', stroke: '#000000', strokeThickness: 2
+            fontFamily: UI_FONT, fontSize: '12px', color: '#ffffff', stroke: '#000000', strokeThickness: 2
         }).setVisible(false);
         this.chatText = scene.add.text(centerX - width / 2 + 30, centerY - height / 2 + 55, '', {
-            fontFamily: 'Press Start 2P', fontSize: '14px', color: '#ffffff', wordWrap: { width: width - 60 }, lineSpacing: 8
+            fontFamily: UI_FONT, fontSize: '14px', color: '#ffffff', wordWrap: { width: width - 60 }, lineSpacing: 8
         }).setVisible(false);
         this.continueText = scene.add.text(centerX + width / 2 - 100, centerY + height / 2 - 35, 'SPACE で続ける', {
-            fontFamily: 'Press Start 2P', fontSize: '10px', color: '#4a90e2'
+            fontFamily: UI_FONT, fontSize: '11px', color: '#4a90e2'
         }).setOrigin(0.5).setVisible(false);
         this.choiceText = scene.add.text(centerX, centerY + height / 2 - 40, '[Y] はい  /  [N] いいえ', {
-            fontFamily: 'Press Start 2P', fontSize: '14px', color: '#ffff00', stroke: '#000000', strokeThickness: 3
+            fontFamily: UI_FONT, fontSize: '14px', color: '#ffff00', stroke: '#000000', strokeThickness: 3
         }).setOrigin(0.5).setVisible(false);
 
         // スクロール固定

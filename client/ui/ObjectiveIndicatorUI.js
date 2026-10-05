@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { QUESTS } from '../data/quests.js';
 import { isTeleportUnlocked } from '../utils/questGate.js';
 import { getMapDisplayName } from '../data/maps.js';
@@ -37,8 +38,8 @@ export default class ObjectiveIndicatorUI {
             .setDepth(13)
             .setVisible(false);
         const label = scene.add.text(0, 0, '', {
-            fontSize: '8px',
-            fontFamily: '"Press Start 2P"',
+            fontSize: '11px',
+            fontFamily: UI_FONT,
             color: textColor,
             stroke: '#000000',
             strokeThickness: 3,

@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { pinToScreen } from '../utils/screenFixed.js';
 import { UI_LAYOUT } from './uiLayout.js';
 import { getUILayout } from './UILayoutManager.js';
@@ -44,7 +45,7 @@ export default class SideMenuUI {
             fontSize: '40px', color: '#ffffff', fontFamily: 'Arial'
         }).setOrigin(0.5);
         const toggleLabel = this.scene.add.text(0, 22, '[M]', {
-            fontSize: '12px', color: '#ffffff', fontFamily: '"Press Start 2P"'
+            fontSize: '12px', color: '#ffffff', fontFamily: UI_FONT
         }).setOrigin(0.5);
 
         this.toggleBtn.add([toggleBg, toggleIcon, toggleLabel]);
@@ -84,7 +85,7 @@ export default class SideMenuUI {
         const bg = this.scene.add.circle(0, 0, ITEM_RADIUS, 0x1a1a2e, 0.9).setStrokeStyle(2, color);
         const icon = this.scene.add.text(0, -5, item.icon, { fontSize: '28px' }).setOrigin(0.5);
         const keyLabel = this.scene.add.text(0, 20, `[${item.key}]`, {
-            fontSize: '10px', fontFamily: '"Press Start 2P"', color: '#ffffff'
+            fontSize: '11px', fontFamily: UI_FONT, color: '#ffffff'
         }).setOrigin(0.5);
 
         btn.add([bg, icon, keyLabel]);

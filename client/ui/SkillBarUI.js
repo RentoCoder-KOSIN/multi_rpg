@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { SKILLS } from "../data/skills.js";
 import { JOBS } from "../data/jobs.js";
 import { TOTAL_SKILL_SLOTS } from "../gameConstants.js";
@@ -14,6 +15,21 @@ const DIAL_BG_RADIUS = DIAL_RADIUS + UI_LAYOUT.skillDial.bgPadding; // = half of
 const ANGLE_STEP = 360 / TOTAL_SKILL_SLOTS; // スロット1個あたりの角度
 const FADE_START_ANGLE = 40;   // これを超えた角度から縮小・フェードを開始
 const VISIBLE_ANGLE_LIMIT = 85;  // beyond this angle the slot is hidden (keeps the arrow buttons clear)
+
+
+// Grid mode: all slots at once, 4 columns x 2 rows. Coordinates are relative to the dial center.
+const GRID_COLS = 4;
+const GRID_STEP_X = 78;            // distance between column centers (slot 60px + 18px gap)
+const GRID_RIGHT_X = 84;           // x of the right-most column
+const GRID_ROW_Y = [-160, -55];    // y of each row's slot center
+const GRID_PAD = 8;                // padding between the slots and the background edge
+const GRID_TEXT_BELOW = 64;        // name + MP text reach this far below a slot's center
+const GRID_NAME_CHARS = 6;         // full-width chars of a skill name that fit in one column
+// Background rectangle derived from the values above, so it stays in sync when they change.
+const GRID_LEFT = GRID_RIGHT_X - (GRID_COLS - 1) * GRID_STEP_X - SLOT_SIZE / 2 - GRID_PAD;
+const GRID_RIGHT = GRID_RIGHT_X + SLOT_SIZE / 2 + GRID_PAD;
+const GRID_TOP = GRID_ROW_Y[0] - SLOT_SIZE / 2 - GRID_PAD;
+const GRID_BOTTOM = GRID_ROW_Y[1] + GRID_TEXT_BELOW + GRID_PAD;
 
 export default class SkillBarUI {
     constructor(scene, player) {
@@ -43,6 +59,17 @@ export default class SkillBarUI {
         mainBg.lineStyle(2, 0xffffff, 0.12);
         mainBg.strokeCircle(0, 0, DIAL_BG_RADIUS);
         this.container.add(mainBg);
+        this.dialBg = mainBg;
+
+        // Rounded rectangle background for grid mode (hidden until update() shows it)
+        const gridBg = this.scene.add.graphics();
+        gridBg.fillStyle(0x000000, 0.35);
+        gridBg.fillRoundedRect(GRID_LEFT, GRID_TOP, GRID_RIGHT - GRID_LEFT, GRID_BOTTOM - GRID_TOP, 16);
+        gridBg.lineStyle(2, 0xffffff, 0.12);
+        gridBg.strokeRoundedRect(GRID_LEFT, GRID_TOP, GRID_RIGHT - GRID_LEFT, GRID_BOTTOM - GRID_TOP, 16);
+        gridBg.setVisible(false);
+        this.container.add(gridBg);
+        this.gridBg = gridBg;
 
         // スロットをTOTAL_SKILL_SLOTS個、仮想の円周上に均等配置する。
         // 中央付近の3〜4個だけがはっきり見え、外側は縮小・フェードして隠れる。
@@ -67,7 +94,7 @@ export default class SkillBarUI {
 
             // キーラベル (左上)
             const keyLabel = this.scene.add.text(-SLOT_SIZE / 2 + 6, -SLOT_SIZE / 2 + 6, `${i + 1}`, {
-                fontSize: '10px', color: '#ffffff', fontFamily: '"Press Start 2P"', stroke: '#000', strokeThickness: 2
+                fontSize: '11px', color: '#ffffff', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 2
             });
             slotContainer.add(keyLabel);
 
@@ -77,19 +104,19 @@ export default class SkillBarUI {
 
             // スキル名 (下部)
             const skillNameText = this.scene.add.text(0, SLOT_SIZE / 2 + 8, '', {
-                fontSize: '8px', color: '#ffffff', fontFamily: '"Press Start 2P"', align: 'center', stroke: '#000', strokeThickness: 2
+                fontSize: '11px', color: '#ffffff', fontFamily: UI_FONT, align: 'center', stroke: '#000', strokeThickness: 2
             }).setOrigin(0.5, 0);
             slotContainer.add(skillNameText);
 
             // MP消費量
             const mpCostText = this.scene.add.text(0, SLOT_SIZE / 2 + 20, '', {
-                fontSize: '8px', color: '#66ccff', fontFamily: '"Press Start 2P"', align: 'center', stroke: '#000', strokeThickness: 2
+                fontSize: '11px', color: '#66ccff', fontFamily: UI_FONT, align: 'center', stroke: '#000', strokeThickness: 2
             }).setOrigin(0.5, 0);
             slotContainer.add(mpCostText);
 
             // ロック表示用テキスト
             const lockText = this.scene.add.text(0, 0, '', {
-                fontSize: '10px', color: '#ff5555', fontFamily: '"Press Start 2P"', align: 'center', stroke: '#000', strokeThickness: 3
+                fontSize: '11px', color: '#ff5555', fontFamily: UI_FONT, align: 'center', stroke: '#000', strokeThickness: 3
             }).setOrigin(0.5).setVisible(false);
             slotContainer.add(lockText);
 
@@ -170,6 +197,14 @@ export default class SkillBarUI {
         this.scene.notificationUI?.show(this.layoutMode === 'grid' ? 'スキルバー: 全表示（2段）' : 'スキルバー: 回転式', 'info');
     }
 
+    // In grid mode neighbouring columns are only 78px apart, so long names must be shortened.
+    fitName(name, suffix = '') {
+        if (this.layoutMode !== 'grid') return name + suffix;
+        const max = Math.floor(GRID_NAME_CHARS - suffix.length / 2); // half-width chars take about half the space
+        const body = name.length > max ? name.slice(0, max - 1) + '…' : name;
+        return body + suffix;
+    }
+
     drawSlot(gfx, bgColor, bgAlpha, strokeColor, strokeAlpha) {
         gfx.clear();
         gfx.fillStyle(bgColor, bgAlpha);
@@ -200,6 +235,15 @@ export default class SkillBarUI {
         const now = Date.now();
         const activeSkills = this.player.stats.activeSkills || [];
         const wheelAngle = this.rotationState.angle;
+        const isGrid = this.layoutMode === 'grid';
+        this.dialBg?.setVisible(!isGrid);
+        this.gridBg?.setVisible(isGrid);
+
+        // The dial-mode spot (top-right) sits on the labels of the top-right slot in grid mode.
+        if (this.layoutButton) {
+            if (isGrid) this.layoutButton.setPosition(GRID_LEFT - 22, GRID_TOP + 22);
+            else this.layoutButton.setPosition(DIAL_RADIUS + 28, -DIAL_RADIUS - 25);
+        }
 
         if (this.leftArrow) this.leftArrow.setVisible(this.layoutMode === 'dial');
         if (this.rightArrow) this.rightArrow.setVisible(this.layoutMode === 'dial');
@@ -217,9 +261,9 @@ export default class SkillBarUI {
 
             let px, py, fade;
             if (this.layoutMode === 'grid') {
-                px = (i % 4 - 1.5) * 70;
-                // skillDial は下端に少し沈む配置なので、2段とも画面内に収める。
-                py = Math.floor(i / 4) === 0 ? -90 : -12;
+                const col = i % GRID_COLS;
+                px = GRID_RIGHT_X - (GRID_COLS - 1 - col) * GRID_STEP_X;
+                py = GRID_ROW_Y[Math.floor(i / GRID_COLS)];
                 fade = 1;
             } else {
                 const rad = Phaser.Math.DegToRad(relativeAngle);
@@ -245,12 +289,12 @@ export default class SkillBarUI {
 
                 if (quickItem) {
                     const count = (this.player.stats.inventory || []).reduce((n, e) => n + ((typeof e === 'string' ? e : e.id) === quickItemId ? (typeof e === 'string' ? 1 : e.count || 1) : 0), 0);
-                    slot.skillNameText.setText(`${quickItem.name} x${count}`);
+                    slot.skillNameText.setText(this.fitName(quickItem.name, ` x${count}`));
                     slot.iconText.setText(quickItem.stats?.healMp ? '🔷' : '🧪');
                     slot.mpCostText.setText('ITEM');
                     slot.mpCostText.setColor(count > 0 ? '#8dffb3' : '#ff5555');
                 } else if (skillDef) {
-                    slot.skillNameText.setText(skillDef.name);
+                    slot.skillNameText.setText(this.fitName(skillDef.name));
                     slot.iconText.setText(skillDef.icon || '❓');
 
                     // MPが足りない時は赤字で警告表示

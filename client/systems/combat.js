@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 // Player combat: basic attack and active skills.
 import Enemy from '../entities/Enemy.js';
 import { SKILLS } from '../data/skills.js';
@@ -46,14 +47,14 @@ const UNDEAD_ENEMY_TYPES = ['skeleton', 'ghost'];
 function showExecuteEffect(scene, enemy, player) {
     if (scene.notificationUI) scene.notificationUI.show('即死効果発動！', 'warning');
     const text = scene.add.text(enemy.x, enemy.y - 40, '即死！', {
-        fontSize: '14px', color: '#ff00ff', fontFamily: '"Press Start 2P"', stroke: '#000', strokeThickness: 3
+        fontSize: '14px', color: '#ff00ff', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 3
     }).setOrigin(0.5);
     scene.tweens.add({ targets: text, y: enemy.y - 80, alpha: 0, duration: 900, onComplete: () => text.destroy() });
 }
 
 function showFreezeEffect(scene, enemy) {
     const text = scene.add.text(enemy.x, enemy.y - 20, '❄️凍結', {
-        fontSize: '12px', color: '#66ccff', fontFamily: '"Press Start 2P"', stroke: '#000', strokeThickness: 2
+        fontSize: '12px', color: '#66ccff', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 2
     }).setOrigin(0.5);
     scene.tweens.add({ targets: text, y: enemy.y - 60, alpha: 0, duration: 800, onComplete: () => text.destroy() });
     if (enemy.setTint) {
@@ -64,7 +65,7 @@ function showFreezeEffect(scene, enemy) {
 
 function showParalyzeEffect(scene, enemy) {
     const text = scene.add.text(enemy.x, enemy.y - 20, '⚡麻痺', {
-        fontSize: '12px', color: '#ffee55', fontFamily: '"Press Start 2P"', stroke: '#000', strokeThickness: 2
+        fontSize: '12px', color: '#ffee55', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 2
     }).setOrigin(0.5);
     scene.tweens.add({ targets: text, y: enemy.y - 60, alpha: 0, duration: 800, onComplete: () => text.destroy() });
     if (enemy.setTint) {
@@ -75,7 +76,7 @@ function showParalyzeEffect(scene, enemy) {
 
 function showPoisonEffect(scene, enemy) {
     const text = scene.add.text(enemy.x, enemy.y - 20, '☠️毒', {
-        fontSize: '12px', color: '#aa66ff', fontFamily: '"Press Start 2P"', stroke: '#000', strokeThickness: 2
+        fontSize: '12px', color: '#aa66ff', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 2
     }).setOrigin(0.5);
     scene.tweens.add({ targets: text, y: enemy.y - 60, alpha: 0, duration: 800, onComplete: () => text.destroy() });
 }
@@ -464,7 +465,7 @@ function applyPartySkill(scene, skillId, skill, range) {
 
             target.stats.hp = Math.min(target.stats.maxHp, target.stats.hp + healAmount);
             const healText = scene.add.text(target.x, target.y - 40, `+${healAmount}`, {
-                fontSize: '16px', color: '#00ff00', fontFamily: '"Press Start 2P"', stroke: '#000', strokeThickness: 3
+                fontSize: '16px', color: '#00ff00', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 3
             }).setOrigin(0.5);
             scene.tweens.add({ targets: healText, y: target.y - 80, alpha: 0, duration: 800, onComplete: () => healText.destroy() });
             showHitEffect(scene, target.x, target.y, 0x00ff00);
@@ -532,7 +533,7 @@ function applyDamageSkill(scene, skill, { enemies, range, rangeType, direction, 
             const heal = Math.ceil(damage * player.stats.lifesteal);
             player.stats.hp = Math.min(player.stats.maxHp, player.stats.hp + heal);
             const healText = scene.add.text(player.x, player.y - 40, `+${heal}`, {
-                fontSize: '12px', color: '#00ff00', fontFamily: '"Press Start 2P"'
+                fontSize: '12px', color: '#00ff00', fontFamily: UI_FONT
             }).setOrigin(0.5);
             scene.tweens.add({ targets: healText, y: player.y - 80, alpha: 0, duration: 800, onComplete: () => healText.destroy() });
         }

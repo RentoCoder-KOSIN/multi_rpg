@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import BaseWindowUI from "./BaseWindowUI.js";
 
 /**
@@ -50,14 +51,14 @@ export default class QuantityDialogUI extends BaseWindowUI {
         this.titleText = this.container.list.find(o => o instanceof Phaser.GameObjects.Text && o.y < -H / 2 + 50);
 
         this.itemText = this.scene.add.text(0, -H / 2 + 95, '', {
-            fontSize: '14px', fontFamily: '"Press Start 2P"', color: '#ffffff', align: 'center',
+            fontSize: '14px', fontFamily: UI_FONT, color: '#ffffff', align: 'center',
             wordWrap: { width: W - 60 }
         }).setOrigin(0.5);
         this.qtyText = this.scene.add.text(0, -H / 2 + 145, '1', {
-            fontSize: '32px', fontFamily: '"Press Start 2P"', color: '#ffd700', stroke: '#000', strokeThickness: 4
+            fontSize: '32px', fontFamily: UI_FONT, color: '#ffd700', stroke: '#000', strokeThickness: 4
         }).setOrigin(0.5);
         this.subText = this.scene.add.text(0, -H / 2 + 185, '', {
-            fontSize: '11px', fontFamily: '"Press Start 2P"', color: '#8fd3ff', align: 'center'
+            fontSize: '11px', fontFamily: UI_FONT, color: '#8fd3ff', align: 'center'
         }).setOrigin(0.5);
         this.container.add([this.itemText, this.qtyText, this.subText]);
 
@@ -65,7 +66,7 @@ export default class QuantityDialogUI extends BaseWindowUI {
             const bg = this.scene.add.rectangle(x, y, w, 36, color, 0.9).setStrokeStyle(2, 0xffffff, 0.8)
                 .setInteractive({ useHandCursor: true });
             const tx = this.scene.add.text(x, y, label, {
-                fontSize: '12px', fontFamily: '"Press Start 2P"', color: '#ffffff'
+                fontSize: '12px', fontFamily: UI_FONT, color: '#ffffff'
             }).setOrigin(0.5);
             bg.on('pointerdown', (p, lx, ly, ev) => { if (ev) ev.stopPropagation(); onClick(); });
             bg.on('pointerover', () => bg.setAlpha(1));

@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import Enemy from "./Enemy.js";
 import { getLevelDiffMultiplier } from "../utils/levelScaling.js";
 import { areEffectsEnabled } from "../utils/effectsSettings.js";
@@ -272,7 +273,7 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
                                 {
                                     fontSize: "12px",
                                     color: "#ffff00",
-                                    fontFamily: '"Press Start 2P"',
+                                    fontFamily: UI_FONT,
                                     stroke: "#000",
                                     strokeThickness: 3,
                                 },
@@ -346,9 +347,9 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
         // ダメージ表示
         const damageText = this.scene.add
             .text(this.x, this.y - 30, `-${amount}`, {
-                fontSize: "10px",
+                fontSize: "11px",
                 color: "#9370db",
-                fontFamily: "Press Start 2P",
+                fontFamily: UI_FONT,
                 stroke: "#000",
                 strokeThickness: 2,
             })
@@ -409,7 +410,7 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
                     {
                         fontSize: "12px",
                         color: "#ff3333",
-                        fontFamily: '"Press Start 2P"',
+                        fontFamily: UI_FONT,
                         stroke: "#000",
                         strokeThickness: 3,
                     },
@@ -438,7 +439,7 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
                 .text(this.x, this.y - 40, "突撃！", {
                     fontSize: "12px",
                     color: "#ff0000",
-                    fontFamily: '"Press Start 2P"',
+                    fontFamily: UI_FONT,
                     stroke: "#000",
                     strokeThickness: 3,
                 })

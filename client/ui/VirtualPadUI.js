@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { pinToScreen } from '../utils/screenFixed.js';
 import { getUILayout } from './UILayoutManager.js';
 export default class VirtualPadUI {
@@ -37,7 +38,7 @@ export default class VirtualPadUI {
         const btn = this.scene.add.container(x, y);
         const bg = this.scene.add.circle(0, 0, 35, 0x1a1a2e, 0.6).setStrokeStyle(3, color);
         const txt = this.scene.add.text(0, 0, label, {
-            fontSize: '24px', color: '#ffffff', fontFamily: '"Press Start 2P"'
+            fontSize: '24px', color: '#ffffff', fontFamily: UI_FONT
         }).setOrigin(0.5);
 
         btn.add([bg, txt]);

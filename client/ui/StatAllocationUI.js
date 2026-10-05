@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import BaseWindowUI from "./BaseWindowUI.js";
 import { AGI_CONFIG } from "../gameConstants.js";
 
@@ -22,7 +23,7 @@ export default class StatAllocationUI extends BaseWindowUI {
         // 残りポイント表示
         this.pointsText = this.scene.add.text(0, -height / 2 + 60, '残りポイント: 0', {
             fontSize: '14px',
-            fontFamily: 'Press Start 2P',
+            fontFamily: UI_FONT,
             color: '#ffffff'
         }).setOrigin(0.5);
         this.container.add(this.pointsText);
@@ -44,22 +45,22 @@ export default class StatAllocationUI extends BaseWindowUI {
             // ステータス名と現在値
             const statText = this.scene.add.text(-width / 2 + 40, stat.y, `${stat.label}: 5`, {
                 fontSize: '12px',
-                fontFamily: 'Press Start 2P',
+                fontFamily: UI_FONT,
                 color: '#ffffff'
             });
             this.statTexts[stat.key] = statText;
 
             // 説明テキスト
             const descText = this.scene.add.text(-width / 2 + 120, stat.y, stat.desc, {
-                fontSize: '9px',
-                fontFamily: 'Press Start 2P',
+                fontSize: '11px',
+                fontFamily: UI_FONT,
                 color: '#aaaaaa'
             });
 
             // 効果表示（実際の数値・装備補正込みの値は refresh() で更新する）
             const effectText = this.scene.add.text(-width / 2 + 40, stat.y + 12, stat.effect, {
-                fontSize: '8px',
-                fontFamily: 'Press Start 2P',
+                fontSize: '11px',
+                fontFamily: UI_FONT,
                 color: '#00ff00'
             });
             this.effectTexts[stat.key] = effectText;
@@ -71,7 +72,7 @@ export default class StatAllocationUI extends BaseWindowUI {
 
             const plusText = this.scene.add.text(width / 2 - 120, stat.y, '+', {
                 fontSize: '28px',
-                fontFamily: 'Press Start 2P',
+                fontFamily: UI_FONT,
                 color: '#ffffff'
             }).setOrigin(0.5);
 
@@ -91,7 +92,7 @@ export default class StatAllocationUI extends BaseWindowUI {
 
             const plus5Text = this.scene.add.text(width / 2 - 50, stat.y, '+5', {
                 fontSize: '18px',
-                fontFamily: 'Press Start 2P',
+                fontFamily: UI_FONT,
                 color: '#ffffff'
             }).setOrigin(0.5);
 

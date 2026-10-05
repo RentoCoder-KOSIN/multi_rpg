@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { pinToScreen } from '../utils/screenFixed.js';
 import { getSession, logout, flushSave } from '../utils/saveStore.js';
 export default class SettingsUI {
@@ -56,7 +57,7 @@ export default class SettingsUI {
         // タイトル
         const title = this.scene.add.text(0, -height / 2 + 20, 'SETTINGS', {
             fontSize: '18px',
-            fontFamily: '"Press Start 2P"',
+            fontFamily: UI_FONT,
             color: '#ffffff'
         }).setOrigin(0.5);
         this.container.add(title);
@@ -65,7 +66,7 @@ export default class SettingsUI {
         const closeBtn = this.scene.add.text(width / 2 - 20, -height / 2 + 20, 'X', {
             fontSize: '18px',
             color: '#ff0000',
-            fontFamily: '"Press Start 2P"'
+            fontFamily: UI_FONT
         }).setOrigin(0.5).setInteractive();
         closeBtn.on('pointerdown', (pointer, localX, localY, event) => {
             if (event) event.stopPropagation();
@@ -146,7 +147,7 @@ export default class SettingsUI {
 
         const text = this.scene.add.text(-40, 0, label, {
             fontSize: '14px',
-            fontFamily: '"Press Start 2P"',
+            fontFamily: UI_FONT,
             color: '#ffffff'
         }).setOrigin(0, 0.5);
 
@@ -174,7 +175,7 @@ export default class SettingsUI {
 
         const text = this.scene.add.text(0, 0, label, {
             fontSize: '12px',
-            fontFamily: '"Press Start 2P"',
+            fontFamily: UI_FONT,
             color: '#ffffff'
         }).setOrigin(0.5);
 

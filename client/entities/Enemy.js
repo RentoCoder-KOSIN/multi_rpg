@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { getEnemyStats, getEnemyDisplayName } from '../data/enemyStats.js';
 import { getEnemySizeConfig } from '../data/enemySize.js';
 import EnemyAI from '../ai/EnemyAI.js';
@@ -119,9 +120,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         const label = `Lv.${this.level} ${displayName}${elTag}`;
 
         this.nameText = this.scene.add.text(0, 0, label, {
-            fontSize: '10px',
+            fontSize: '11px',
             color: '#ffffff',
-            fontFamily: '"Press Start 2P"',
+            fontFamily: UI_FONT,
             stroke: '#000',
             strokeThickness: 2
         }).setOrigin(0.5).setDepth(12);

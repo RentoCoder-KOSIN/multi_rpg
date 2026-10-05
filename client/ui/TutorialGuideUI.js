@@ -1,3 +1,4 @@
+import { UI_FONT } from '../fontConfig.js';
 import { TUTORIAL_STEPS } from '../data/tutorialSteps.js';
 import { isAnyWindowOpen } from '../utils/uiState.js';
 
@@ -37,18 +38,18 @@ export default class TutorialGuideUI {
             .setDepth(290000);
 
         this.bg = scene.add.graphics();
-        const font = '"Press Start 2P"';
+        const font = UI_FONT;
         const wrap = { width: this.panelWidth - PAD * 2, useAdvancedWrap: true };
 
-        this.header = scene.add.text(0, 0, '', { fontSize: '9px', fontFamily: font, color: '#ffd700' });
-        this.toggleHint = scene.add.text(0, 0, '[H] 小さく', { fontSize: '7px', fontFamily: font, color: '#8aa4c8' })
+        this.header = scene.add.text(0, 0, '', { fontSize: '11px', fontFamily: font, color: '#ffd700' });
+        this.toggleHint = scene.add.text(0, 0, '[H] 小さく', { fontSize: '11px', fontFamily: font, color: '#8aa4c8' })
             .setOrigin(1, 0);
-        this.stepTitle = scene.add.text(0, 0, '', { fontSize: '10px', fontFamily: font, color: '#ffffff', wordWrap: wrap });
+        this.stepTitle = scene.add.text(0, 0, '', { fontSize: '11px', fontFamily: font, color: '#ffffff', wordWrap: wrap });
         this.body = scene.add.text(0, 0, '', {
-            fontSize: '8px', fontFamily: font, color: '#cfe3ff', lineSpacing: 6, wordWrap: wrap,
+            fontSize: '11px', fontFamily: font, color: '#cfe3ff', lineSpacing: 6, wordWrap: wrap,
         });
         this.checklist = scene.add.text(0, 0, '', {
-            fontSize: '7px', fontFamily: font, color: '#8aa4c8', lineSpacing: 5, wordWrap: wrap,
+            fontSize: '11px', fontFamily: font, color: '#8aa4c8', lineSpacing: 5, wordWrap: wrap,
         });
         this.container.add([this.bg, this.header, this.toggleHint, this.stepTitle, this.body, this.checklist]);
 
