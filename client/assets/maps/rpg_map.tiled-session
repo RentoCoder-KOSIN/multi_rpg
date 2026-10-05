@@ -1,5 +1,5 @@
 {
-    "activeFile": "city.json",
+    "activeFile": "tutorial.json",
     "expandedProjectPaths": [
         "."
     ],
@@ -125,7 +125,8 @@
         },
         "tutorial.json": {
             "expandedObjectLayers": [
-                25
+                25,
+                9
             ],
             "scale": 0.42007812499999997,
             "selectedLayer": 7,
@@ -152,6 +153,9 @@
             "scaleInDock": 1
         },
         "wetland.json": {
+            "expandedObjectLayers": [
+                11
+            ],
             "scale": 0.75,
             "selectedLayer": 6,
             "viewCenter": {
@@ -182,16 +186,16 @@
     "project": "rpg_map.tiled-project",
     "recentFiles": [
         "battle.json",
+        "city.json",
+        "guild1f.json",
+        "guild2f.json",
+        "forest.json",
         "desert_city.json",
         "snow_city.json",
         "port_city.json",
         "wetland.json",
         "volcano.json",
         "tutorial.json",
-        "forest.json",
-        "guild2f.json",
-        "guild1f.json",
-        "city.json",
         "starter_town.json"
     ]
 }

@@ -3,69 +3,48 @@
 // - パスワードは scrypt + ソルトでハッシュ化して保存する（平文は保存しない）。
 // - ログイン後に発行するトークンは、サーバーの秘密鍵(HMAC)で署名した自己完結型。
 //   サーバーを再起動してもログイン状態が続き、セッション表は持たない。
-// - アカウントもセーブデータも data/accounts.json 1ファイルに保存する（小規模・LAN/少人数向け）。
-//   書き込みは「一時ファイルに書いてからrename」で、途中で落ちてもファイルが壊れない。
+// - 保存先は環境変数 DATABASE_URL があれば PostgreSQL、無ければ data/accounts.json。
+//   （Renderのディスクは再デプロイで消えるため、公開時は必ずPostgreSQLを使う）
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const { ACCOUNTS_PATH, SECRET_PATH, AUTH } = require("../config");
+const { promisify } = require("util");
+const { SECRET_PATH, AUTH } = require("../config");
+const db = require("./db");
 
-let db = { accounts: {} }; // usernameLower -> { id, username, salt, hash, createdAt, save }
+const scrypt = promisify(crypto.scrypt);
+const repo = db.enabled() ? require("./accountRepoPg") : require("./accountRepoFile");
+
 let secret = null;
-let saveTimer = null;
 
-// ---------- 永続化 ----------
-function load() {
+// ---------- 初期化 ----------
+async function loadSecret() {
+    // 1) 環境変数  2) PostgreSQL(kv)  3) ファイル の順
+    if (process.env.AUTH_SECRET) return process.env.AUTH_SECRET;
+
+    if (db.enabled()) {
+        // 再デプロイしても同じ鍵を使えるようDBに置く（鍵が変わると全員ログアウトになる）
+        const stored = await db.kvSetIfAbsent("auth_secret", crypto.randomBytes(32).toString("hex"));
+        return String(stored);
+    }
+
     try {
-        if (fs.existsSync(ACCOUNTS_PATH)) {
-            const parsed = JSON.parse(fs.readFileSync(ACCOUNTS_PATH, "utf8"));
-            if (parsed && parsed.accounts) db = parsed;
-        }
-    } catch (err) {
-        // 壊れたファイルを上書きして全アカウントを失わないよう、退避してから空で開始する
-        console.error("[accounts] load failed:", err.message);
-        try { fs.copyFileSync(ACCOUNTS_PATH, ACCOUNTS_PATH + ".broken-" + Date.now()); } catch (_) { /* ignore */ }
-    }
-
-    if (process.env.AUTH_SECRET) {
-        secret = process.env.AUTH_SECRET;
-    } else {
-        try {
-            secret = fs.readFileSync(SECRET_PATH, "utf8").trim();
-        } catch (_) {
-            secret = crypto.randomBytes(32).toString("hex");
-            fs.mkdirSync(path.dirname(SECRET_PATH), { recursive: true });
-            fs.writeFileSync(SECRET_PATH, secret, { mode: 0o600 });
-        }
-    }
-    console.log(`[accounts] loaded ${Object.keys(db.accounts).length} account(s)`);
-}
-
-function writeNow() {
-    saveTimer = null;
-    const tmp = ACCOUNTS_PATH + ".tmp";
-    try {
-        fs.mkdirSync(path.dirname(ACCOUNTS_PATH), { recursive: true });
-        fs.writeFileSync(tmp, JSON.stringify(db));
-        fs.renameSync(tmp, ACCOUNTS_PATH);
-    } catch (err) {
-        console.error("[accounts] write failed:", err.message);
+        return fs.readFileSync(SECRET_PATH, "utf8").trim();
+    } catch (_) {
+        const s = crypto.randomBytes(32).toString("hex");
+        fs.mkdirSync(path.dirname(SECRET_PATH), { recursive: true });
+        fs.writeFileSync(SECRET_PATH, s, { mode: 0o600 });
+        return s;
     }
 }
 
-// セーブは頻繁に来るので、少しまとめてから書く
-function scheduleWrite(immediate = false) {
-    if (immediate) {
-        if (saveTimer) clearTimeout(saveTimer);
-        writeNow();
-        return;
-    }
-    if (!saveTimer) saveTimer = setTimeout(writeNow, 1500);
+async function load() {
+    const count = await repo.init();
+    secret = await loadSecret();
+    console.log(`[accounts] storage=${repo.name}, ${count} account(s)`);
 }
 
-function flush() {
-    if (saveTimer) { clearTimeout(saveTimer); writeNow(); }
-}
+async function flush() { await repo.flush(); }
 
 // ---------- 検証 ----------
 function validateUsername(username) {
@@ -84,13 +63,14 @@ function validatePassword(password) {
     return null;
 }
 
-function hashPassword(password, salt) {
-    return crypto.scryptSync(password, salt, 64).toString("hex");
+// scrypt は重い計算なので、非同期版を使ってゲームの処理(敵AIなど)を止めないようにする
+async function hashPassword(password, salt) {
+    return (await scrypt(password, salt, 64)).toString("hex");
 }
 
-function verifyPassword(account, password) {
+async function verifyPassword(account, password) {
     const expected = Buffer.from(account.hash, "hex");
-    const actual = Buffer.from(hashPassword(password, account.salt), "hex");
+    const actual = Buffer.from(await hashPassword(password, account.salt), "hex");
     return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
 }
 
@@ -108,7 +88,7 @@ function issueToken(account) {
 }
 
 // トークンから { id, username } を返す。無効・期限切れ・存在しないアカウントは null
-function verifyToken(token) {
+async function verifyToken(token) {
     if (typeof token !== "string" || token.length > 600) return null;
     const [payload, sig] = token.split(".");
     if (!payload || !sig) return null;
@@ -121,12 +101,8 @@ function verifyToken(token) {
     try { data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")); } catch (_) { return null; }
     if (!data || !data.id || !(data.exp > Date.now())) return null;
 
-    const account = findById(data.id);
+    const account = await repo.getById(data.id);
     return account ? { id: account.id, username: account.username } : null;
-}
-
-function findById(id) {
-    return Object.values(db.accounts).find(a => a.id === id) || null;
 }
 
 // ---------- ログイン試行の制限（総当たり対策） ----------
@@ -150,6 +126,12 @@ function recordFailure(key) {
     failures.set(key, f);
 }
 
+// 古い記録がメモリに溜まり続けないよう、定期的に掃除する
+setInterval(() => {
+    const now = Date.now();
+    for (const [k, f] of failures) if (f.lockedUntil < now && f.count === 0) failures.delete(k);
+}, 10 * 60 * 1000).unref();
+
 // ---------- 公開API ----------
 function publicSession(account) {
     return {
@@ -160,46 +142,55 @@ function publicSession(account) {
     };
 }
 
+// セーブデータとして受け付ける形かを確認する。サイズ上限もここで見る。
+function sanitizeSave(save) {
+    if (!save || typeof save !== "object") return null;
+    const stats = save.stats && typeof save.stats === "object" ? save.stats : null;
+    const quests = save.quests && typeof save.quests === "object" ? save.quests : {};
+    if (!stats) return null;
+    const json = JSON.stringify({ stats, quests });
+    if (json.length > AUTH.MAX_SAVE_BYTES) return null;
+    // PostgreSQL の jsonb は \u0000 を保存できないので弾く
+    if (json.includes("\\u0000")) return null;
+    return { stats, quests };
+}
+
 // legacySave: 以前この端末のlocalStorageに保存していたデータの引き継ぎ用（新規登録時のみ）
-function register(username, password, legacySave = null) {
+async function register(username, password, legacySave = null) {
     const uErr = validateUsername(username);
     if (uErr) return { error: uErr };
     const pErr = validatePassword(password);
     if (pErr) return { error: pErr };
-
-    const key = username.toLowerCase();
-    if (db.accounts[key]) return { error: "そのユーザー名は既に使われています" };
 
     const salt = crypto.randomBytes(16).toString("hex");
     const account = {
         id: "u-" + crypto.randomBytes(8).toString("hex"),
         username,
         salt,
-        hash: hashPassword(password, salt),
+        hash: await hashPassword(password, salt),
         createdAt: Date.now(),
         save: null,
     };
 
-    if (legacySave && sanitizeSave(legacySave)) {
-        account.save = { ...sanitizeSave(legacySave), updatedAt: Date.now() };
-    }
+    const clean = legacySave ? sanitizeSave(legacySave) : null;
+    if (clean) account.save = { ...clean, updatedAt: Date.now() };
 
-    db.accounts[key] = account;
-    scheduleWrite(true);
+    const inserted = await repo.insert(account);
+    if (!inserted) return { error: "そのユーザー名は既に使われています" };
     return { session: publicSession(account) };
 }
 
-function login(username, password, ip = "") {
+async function login(username, password, ip = "") {
     const key = String(username || "").toLowerCase();
     const lockKey = `${ip}|${key}`;
     const wait = checkLock(lockKey);
     if (wait) return { error: `ログインに連続で失敗しました。${wait}秒後にもう一度お試しください` };
 
-    const account = db.accounts[key];
+    const account = await repo.getByName(key);
     // アカウントが無い場合もハッシュ計算を行い、応答時間でユーザーの存在が分からないようにする
     const ok = account
-        ? verifyPassword(account, String(password || ""))
-        : (hashPassword(String(password || ""), "0".repeat(32)), false);
+        ? await verifyPassword(account, String(password || ""))
+        : (await hashPassword(String(password || ""), "0".repeat(32)), false);
 
     if (!ok) {
         recordFailure(lockKey);
@@ -209,54 +200,43 @@ function login(username, password, ip = "") {
     return { session: publicSession(account) };
 }
 
-function restore(token) {
-    const who = verifyToken(token);
+async function restore(token) {
+    const who = await verifyToken(token);
     if (!who) return { error: "セッションの有効期限が切れました。もう一度ログインしてください" };
-    const account = findById(who.id);
+    const account = await repo.getById(who.id);
+    if (!account) return { error: "セッションの有効期限が切れました。もう一度ログインしてください" };
     return { session: publicSession(account) };
 }
 
-function changePassword(token, oldPassword, newPassword) {
-    const who = verifyToken(token);
+async function changePassword(token, oldPassword, newPassword) {
+    const who = await verifyToken(token);
     if (!who) return { error: "ログインが必要です" };
     const pErr = validatePassword(newPassword);
     if (pErr) return { error: pErr };
 
-    const account = findById(who.id);
-    if (!verifyPassword(account, String(oldPassword || ""))) return { error: "現在のパスワードが違います" };
+    const account = await repo.getById(who.id);
+    if (!account) return { error: "アカウントが見つかりません" };
+    if (!(await verifyPassword(account, String(oldPassword || "")))) return { error: "現在のパスワードが違います" };
 
     account.salt = crypto.randomBytes(16).toString("hex");
-    account.hash = hashPassword(newPassword, account.salt);
-    scheduleWrite(true);
+    account.hash = await hashPassword(newPassword, account.salt);
+    await repo.updateCredentials(account.id, account.salt, account.hash);
     return { session: publicSession(account) };
 }
 
-// セーブデータとして受け付ける形かを確認する。サイズ上限もここで見る。
-function sanitizeSave(save) {
-    if (!save || typeof save !== "object") return null;
-    const stats = save.stats && typeof save.stats === "object" ? save.stats : null;
-    const quests = save.quests && typeof save.quests === "object" ? save.quests : {};
-    if (!stats) return null;
-    if (JSON.stringify({ stats, quests }).length > AUTH.MAX_SAVE_BYTES) return null;
-    return { stats, quests };
-}
-
-function setSave(id, save) {
-    const account = findById(id);
-    if (!account) return { error: "アカウントが見つかりません" };
+async function setSave(id, save) {
     const clean = sanitizeSave(save);
     if (!clean) return { error: "セーブデータが不正、または大きすぎます" };
-    account.save = { ...clean, updatedAt: Date.now() };
-    scheduleWrite();
-    return { ok: true, updatedAt: account.save.updatedAt };
+    const updatedAt = Date.now();
+    const found = await repo.setSave(id, { ...clean, updatedAt });
+    if (!found) return { error: "アカウントが見つかりません" };
+    return { ok: true, updatedAt };
 }
 
 // 「最初から」を選んだとき用
-function clearSave(id) {
-    const account = findById(id);
-    if (!account) return { error: "アカウントが見つかりません" };
-    account.save = null;
-    scheduleWrite(true);
+async function clearSave(id) {
+    const found = await repo.setSave(id, null);
+    if (!found) return { error: "アカウントが見つかりません" };
     return { ok: true };
 }
 

@@ -1,11 +1,16 @@
 {
   "scripts": {
     "start": "node server.js",
-    "check": "node tools/checkContent.js"
+    "check": "node tools/checkContent.js",
+    "import-accounts": "node tools/importAccounts.js"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "dependencies": {
     "cors": "^2.8.6",
     "express": "^5.2.1",
+    "pg": "^8.23.1",
     "socket.io": "^4.8.3"
   }
 }

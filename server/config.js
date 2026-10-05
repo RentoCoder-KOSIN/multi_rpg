@@ -27,6 +27,7 @@ module.exports = {
     MAPS_DIR,
     AI_DATA_PATH: path.join(__dirname, "data", "sharedAI.json"),
     // アカウントとセーブデータ（パスワードはハッシュ化済み。Gitには含めないこと）
+    // 環境変数 DATABASE_URL があるときは PostgreSQL に保存し、このファイルは使わない（services/db.js）。
     ACCOUNTS_PATH: process.env.ACCOUNTS_PATH || path.join(__dirname, "data", "accounts.json"),
     // トークン署名用の秘密鍵（初回起動で自動生成。環境変数 AUTH_SECRET でも指定可）
     SECRET_PATH: path.join(__dirname, "data", "auth.secret"),

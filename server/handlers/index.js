@@ -15,8 +15,14 @@ function registerConnectionHandler(ctx) {
 
     // 接続時にトークンを検証する。無効なら接続を拒否（クライアントはログイン画面へ戻る）。
     // playerId はアカウントIDになるので、別のPCからでも同じキャラクターとして扱われる。
-    io.use((socket, next) => {
-        const who = accounts.verifyToken(socket.handshake.auth?.token);
+    io.use(async (socket, next) => {
+        let who = null;
+        try {
+            who = await accounts.verifyToken(socket.handshake.auth?.token);
+        } catch (err) {
+            console.error("[auth] verifyToken failed:", err.message);
+            return next(new Error("server_error"));
+        }
         if (!who) return next(new Error("unauthorized"));
 
         // 同じアカウントの多重ログインは、古い方を切断する（セーブの上書き事故を防ぐ）

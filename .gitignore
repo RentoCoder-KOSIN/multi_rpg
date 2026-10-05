@@ -1,4 +1,8 @@
 node_modules/
+.env
+
+# アカウント情報・秘密鍵・学習データ（ローカル用。公開リポジトリに入れない）
 server/data/accounts.json
 server/data/accounts.json.*
 server/data/auth.secret
+server/data/sharedAI.json
