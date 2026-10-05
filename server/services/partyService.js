@@ -52,6 +52,7 @@ function createPartyService({ io }) {
                 mp: p?.mp || 0,
                 maxMp: p?.maxMp || 0,
                 level: p?.level || 1,
+                job: p?.job || "none",
                 map: p?.map || "unknown"
             };
         });

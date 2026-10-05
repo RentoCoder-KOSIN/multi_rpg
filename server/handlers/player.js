@@ -1,6 +1,7 @@
 const { players, playerToParty } = require("../state");
 const { findSocketByPlayerId } = require("../utils/socketUtils");
 const { ADMIN_PASSWORD } = require("../config");
+const { cleanJobId } = require("../utils/sanitize");
 
 module.exports = function registerPlayerHandlers(socket, { io, partyService }) {
     const playerId = socket.data.playerId;
@@ -18,7 +19,7 @@ module.exports = function registerPlayerHandlers(socket, { io, partyService }) {
         toOthersOnMap().emit("playerMoved", { id: playerId, pos: { x, y } });
     });
 
-    socket.on("playerStatsUpdate", ({ hp, maxHp, level, mp, maxMp }) => {
+    socket.on("playerStatsUpdate", ({ hp, maxHp, level, mp, maxMp, job }) => {
         const player = players[playerId];
         if (!player) return;
 
@@ -27,6 +28,8 @@ module.exports = function registerPlayerHandlers(socket, { io, partyService }) {
         if (level !== undefined) player.level = level;
         if (mp !== undefined) player.mp = mp;
         if (maxMp !== undefined) player.maxMp = maxMp;
+        const cleanJob = cleanJobId(job);
+        if (cleanJob) player.job = cleanJob;
 
         toOthersOnMap().emit("playerStatUpdate", {
             id: playerId,

@@ -1,4 +1,5 @@
 import { getUILayout } from './UILayoutManager.js';
+import { getJobLabel } from '../utils/jobLabel.js';
 
 export default class PartyHUDUI {
     constructor(scene) {
@@ -32,15 +33,15 @@ export default class PartyHUDUI {
         this.container.add(title);
 
         otherMembers.forEach((member, index) => {
-            const y = index * 55;
+            const y = index * 65;
             const memberContainer = this.scene.add.container(0, y);
 
             // 背景
             const bg = this.scene.add.graphics();
             bg.fillStyle(0x1a1a2e, 0.6);
-            bg.fillRoundedRect(0, 0, 200, 50, 5);
+            bg.fillRoundedRect(0, 0, 200, 60, 5);
             bg.lineStyle(2, 0x4a90e2, 0.4);
-            bg.strokeRoundedRect(0, 0, 200, 50, 5);
+            bg.strokeRoundedRect(0, 0, 200, 60, 5);
             memberContainer.add(bg);
 
             // 名前
@@ -68,6 +69,12 @@ export default class PartyHUDUI {
             const mpBg = this.scene.add.rectangle(mpX, mpY, mpWidth, 4, 0x222222).setOrigin(0, 0);
             const mpBar = this.scene.add.rectangle(mpX, mpY, mpWidth * mpRatio, 4, 0x5e5eff).setOrigin(0, 0);
             memberContainer.add([mpBg, mpBar]);
+
+            // 職業
+            const jobText = this.scene.add.text(10, 45, getJobLabel(member.job), {
+                fontSize: '8px', color: '#ffd700', fontFamily: '"Press Start 2P"'
+            });
+            memberContainer.add(jobText);
 
             // 位置情報 (MAP)
             const mapText = this.scene.add.text(195, 6, member.map, {

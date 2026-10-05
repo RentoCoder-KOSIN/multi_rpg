@@ -477,10 +477,10 @@ export default class NetworkManager {
     }
 
     sendPlayerPosition(x, y) { if (this.socket && this.socket.connected) this.socket.emit('playerMove', { x, y }); }
-    sendPlayerStats(hp, maxHp, level, mp, maxMp) {
+    sendPlayerStats(hp, maxHp, level, mp, maxMp, job) {
         if (this.socket && this.socket.connected) {
-            this._lastSentStatsKey = [hp, maxHp, level, mp, maxMp].join('|');
-            this.socket.emit('playerStatsUpdate', { hp, maxHp, level, mp, maxMp });
+            this._lastSentStatsKey = [hp, maxHp, level, mp, maxMp, job].join('|');
+            this.socket.emit('playerStatsUpdate', { hp, maxHp, level, mp, maxMp, job });
         }
     }
 
@@ -491,7 +491,7 @@ export default class NetworkManager {
     getLocalStatsPayload() {
         const s = this.scene.player?.stats;
         if (!s) return {};
-        return { hp: s.hp, maxHp: s.maxHp, level: s.level, mp: s.mp, maxMp: s.maxMp };
+        return { hp: s.hp, maxHp: s.maxHp, level: s.level, mp: s.mp, maxMp: s.maxMp, job: s.job };
     }
 
     /**
@@ -501,9 +501,9 @@ export default class NetworkManager {
     syncLocalPlayerStats() {
         const p = this.getLocalStatsPayload();
         if (p.hp === undefined) return;
-        const key = [p.hp, p.maxHp, p.level, p.mp, p.maxMp].join('|');
+        const key = [p.hp, p.maxHp, p.level, p.mp, p.maxMp, p.job].join('|');
         if (key !== this._lastSentStatsKey) {
-            this.sendPlayerStats(p.hp, p.maxHp, p.level, p.mp, p.maxMp);
+            this.sendPlayerStats(p.hp, p.maxHp, p.level, p.mp, p.maxMp, p.job);
         }
     }
     sendSummonUpdate(data) { if (this.socket && this.socket.connected) this.socket.emit('summonUpdate', data); }

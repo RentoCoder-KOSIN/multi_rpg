@@ -358,7 +358,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         setSaved('playerStats', this.stats); // サーバーのアカウントへ保存（まとめて送信される）
 
         if (this.scene.networkManager) {
-            this.scene.networkManager.sendPlayerStats(this.stats.hp, this.stats.maxHp, this.stats.level, this.stats.mp, this.stats.maxMp);
+            this.scene.networkManager.sendPlayerStats(this.stats.hp, this.stats.maxHp, this.stats.level, this.stats.mp, this.stats.maxMp, this.stats.job);
         }
     }
 
@@ -677,34 +677,44 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             const power = this.getEquipmentPowerMultiplier(item);
 
             // 攻撃力・防御力 (関数なら実行、そうでなければ加算)
-            const getVal = (val) => (typeof val === 'function' ? val(this) : (val || 0)) * power;
+            const rawVal = (val) => (typeof val === 'function' ? val(this) : (val || 0));
+            // レベル不足で性能が落ちたときに小数が出ないよう、四捨五入で管理する。
+            //  - getInt : 攻撃力・防御力・速度・固定ダメージ・属性耐性(%)など「整数で扱う値」→ 整数に四捨五入
+            //  - getRate: 会心率・回避率・状態異常の確率など 0〜1 の割合 → 1%刻み(小数第2位)に四捨五入
+            // 性能100%(レベル足りている/制限解除済み)のときは、元の値をそのまま使う。
+            const getInt = (val) => (power < 1 ? Math.round(rawVal(val) * power) : rawVal(val));
+            const getRate = (val) => (power < 1 ? Math.round(rawVal(val) * power * 100) / 100 : rawVal(val));
+            const getVal = (val) => rawVal(val) * power; // 経験値倍率など、丸めない値用
 
             // 魔法職は matk (魔法攻撃力) を優先して攻撃力に反映する
             const atkSource = isMagical ? (item.matk ?? s.matk ?? item.atk ?? s.attack) : (item.atk ?? s.attack);
-            this.stats.atk += getVal(atkSource);
-            this.stats.def += getVal(item.def || s.defense);
+            this.stats.atk += getInt(atkSource);
+            this.stats.def += getInt(item.def || s.defense);
 
             // 特殊ステータス
-            this.stats.critChance += getVal(item.critChance || s.critChance);
-            this.stats.lifesteal += getVal(item.lifesteal || s.lifesteal);
-            this.stats.speedBonus += getVal(item.speedBonus || s.speedBonus);
-            this.stats.dodgeChanceFlat += getVal(item.dodgeChance || s.dodgeChance);
+            this.stats.critChance += getRate(item.critChance || s.critChance);
+            this.stats.lifesteal += getRate(item.lifesteal || s.lifesteal);
+            this.stats.speedBonus += getInt(item.speedBonus || s.speedBonus);
+            this.stats.dodgeChanceFlat += getRate(item.dodgeChance || s.dodgeChance);
 
             // 属性・特殊効果
             // xxxResist / xxxDamage（xxxは属性id。旧名 ice も水として集計）。値が関数の項目にも対応
             [[resistKey, this.stats.elementResist], [damageKey, this.stats.elementDamage]].forEach(([keyFn, target]) => {
                 const resolved = {};
-                Object.keys(s).forEach((k) => { resolved[k] = getVal(s[k]); });
+                Object.keys(s).forEach((k) => { resolved[k] = getInt(s[k]); });
                 Object.entries(collectElementStats(resolved, keyFn)).forEach(([el, v]) => {
                     target[el] = (target[el] || 0) + v;
                 });
             });
-            this.stats.freezeChance += getVal(s.freezeChance);
-            this.stats.deathChance += getVal(s.deathChance);
-            this.stats.paralyzeChance += getVal(s.paralyzeChance);
-            this.stats.poisonChance += getVal(s.poisonChance);
-            this.stats.poisonDamage += getVal(s.poisonDamage);
-            if (s.attackMultiplier) this.stats.atkMultiplier *= 1 + ((s.attackMultiplier - 1) * power);
+            this.stats.freezeChance += getRate(s.freezeChance);
+            this.stats.deathChance += getRate(s.deathChance);
+            this.stats.paralyzeChance += getRate(s.paralyzeChance);
+            this.stats.poisonChance += getRate(s.poisonChance);
+            this.stats.poisonDamage += getInt(s.poisonDamage);
+            if (s.attackMultiplier) {
+                const m = 1 + ((s.attackMultiplier - 1) * power);
+                this.stats.atkMultiplier *= (power < 1 ? Math.round(m * 100) / 100 : m);
+            }
             if (s.poison) this.stats.poisonEquipped = true;
 
             // 経験値倍率は加算方式

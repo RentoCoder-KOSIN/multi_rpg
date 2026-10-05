@@ -1,12 +1,13 @@
 const { DEFAULT_HP, DEFAULT_LEVEL } = require("../config");
 const { players, playerToParty } = require("../state");
 const { getPlayersOnMap } = require("../utils/socketUtils");
+const { cleanJobId } = require("../utils/sanitize");
 
 module.exports = function registerMapHandlers(socket, { enemyService, partyService }) {
     const playerId = socket.data.playerId;
 
     // プレイヤーを指定マップに参加させ、現在の状況を本人に、参加を他の人に通知する
-    function enterMap({ mapKey, x, y, hp, maxHp, level, mp, maxMp }) {
+    function enterMap({ mapKey, x, y, hp, maxHp, level, mp, maxMp, job }) {
         // Values the client did not send fall back to what we already know, then to defaults
         const prev = players[playerId];
         const stats = {
@@ -14,7 +15,8 @@ module.exports = function registerMapHandlers(socket, { enemyService, partyServi
             maxHp: maxHp || prev?.maxHp || DEFAULT_HP,
             level: level || prev?.level || DEFAULT_LEVEL,
             mp: mp ?? prev?.mp ?? 0,
-            maxMp: maxMp ?? prev?.maxMp ?? 0
+            maxMp: maxMp ?? prev?.maxMp ?? 0,
+            job: cleanJobId(job) || prev?.job || "none"
         };
 
         socket.data.map = mapKey;

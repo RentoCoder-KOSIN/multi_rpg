@@ -1,4 +1,5 @@
 import BaseWindowUI from "./BaseWindowUI.js";
+import { getJobLabel } from "../utils/jobLabel.js";
 
 function button(scene, x, y, label, color, onClick, width = 110) {
     const box = scene.add.rectangle(x, y, width, 28, color).setStrokeStyle(1, 0xffffff).setInteractive({ useHandCursor: true });
@@ -64,8 +65,8 @@ export default class PartyUI extends BaseWindowUI {
             if (isLeader) this.currentContainer.add(button(this.scene, 205, -165, "INVITE", 0x4a90e2, () => this.invite()));
             current.members.forEach((member, index) => {
                 const y = -135 + index * 32;
-                this.currentContainer.add(this.scene.add.text(-275, y, `${member.id === current.leader ? "👑 " : ""}${member.name}  Lv.${member.level}  ${member.map}`, {
-                    fontSize: "10px", color: "#ffffff", fontFamily: '"Press Start 2P"'
+                this.currentContainer.add(this.scene.add.text(-275, y, `${member.id === current.leader ? "👑 " : ""}${member.name}  Lv.${member.level}  [${getJobLabel(member.job)}]  ${member.map}`, {
+                    fontSize: "9px", color: "#ffffff", fontFamily: '"Press Start 2P"'
                 }));
                 if (isLeader && member.id !== myId) {
                     this.currentContainer.add(button(this.scene, 215, y + 5, "KICK", 0xb03040, () => this.scene.networkManager.kickFromParty(member.id), 70));
