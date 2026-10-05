@@ -25,20 +25,11 @@ const SKILL_DIAL_BOTTOM_CLIP = 28; // dial center is this far above the bottom e
 const SKILL_DIAL_BG_RADIUS = SKILL_DIAL_RADIUS + SKILL_DIAL_PADDING;
 
 export const UI_LAYOUT = {
-    // Menu toggle button (round, 90px). Origin = its center.
-    menu: {
-        anchor: 'top-left',
-        margin: { x: 7, y: 7 },
-        size: { w: 90, h: 90 },
-        origin: { x: 0.5, y: 0.5 }
-    },
-
-    // HP / MP / EXP panel: sits to the right of the menu button
+    // HP / MP / EXP panel: fixed in the dedicated right-hand information area.
     stats: {
-        anchor: 'top-left',
-        margin: { x: 0, y: 15 },
-        size: { w: 250, h: 155 },
-        relative: { to: 'menu', side: 'right', gap: 13 }
+        anchor: 'top-right',
+        margin: { x: 15, y: 15 },
+        size: { w: 320, h: 320 }
     },
 
     // Quest tracker: left edge, vertically centered (height is dynamic -> setSize)
@@ -48,19 +39,26 @@ export const UI_LAYOUT = {
         size: { w: 280, h: 50 }
     },
 
-    // Minimap
+    // Minimap moves to the left now that the right edge is the status area.
     minimap: {
-        anchor: 'top-right',
+        anchor: 'top-left',
         margin: { x: 15, y: 15 },
         size: { w: 140, h: 140 }
     },
 
-    // Party member list: under the minimap (height is dynamic)
+    // Party member list: under the status panel in the right-hand information area.
     party: {
         anchor: 'top-right',
         margin: { x: 15, y: 0 },
         size: { w: 200, h: 55 },
-        relative: { to: 'minimap', side: 'below', gap: 30 }
+        relative: { to: 'stats', side: 'below', gap: 15 }
+    },
+
+    // Persistent gameplay messages (EXP, quest progress, loot, etc.).
+    activityLog: {
+        anchor: 'bottom-right',
+        margin: { x: 15, y: 15 },
+        size: { w: 320, h: 165 }
     },
 
     // Skill dial: round, origin = center

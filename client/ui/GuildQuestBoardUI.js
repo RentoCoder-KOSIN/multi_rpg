@@ -23,7 +23,14 @@ export default class GuildQuestBoardUI extends BaseWindowUI {
     }
 
     createUI() {
-        if (this.container) return;
+        if (this.container?.active) return;
+        // A shutdown scene may leave a destroyed container reference behind.
+        // Rebuild it instead of trying to attach a new mask/tween to it.
+        if (this.container && !this.container.active) {
+            this.container = null;
+            this.overlay = null;
+            this.maskShape = null;
+        }
         this.createWindow();
 
         const panelWidth = this.config.width;
@@ -65,7 +72,9 @@ export default class GuildQuestBoardUI extends BaseWindowUI {
     }
 
     open() {
+        if (!this.scene?.sys?.isActive()) return;
         if (!this.container) this.createUI();
+        if (!this.listContainer?.active) return;
         this.scene.tweens.killTweensOf(this.listContainer);
         super.open();
         this.selectedIndex = 0;
@@ -214,5 +223,8 @@ export default class GuildQuestBoardUI extends BaseWindowUI {
         this.maskShape = null;
         this.rows = [];
         super.destroy();
+        this.container = null;
+        this.overlay = null;
+        this.listContainer = null;
     }
 }

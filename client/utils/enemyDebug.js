@@ -124,7 +124,9 @@ export function drawEnemyDetectionRanges(scene, graphics) {
  * networkManager 経由では見えないローカルのボスもここで正しく拾える。
  */
 export function drawEnemyAttackRanges(scene) {
-    if (!scene.player || !scene.player.active) return;
+    // Death leaves the player object inactive for input purposes, but the
+    // enemy danger zones must stay visible behind the respawn screen.
+    if (!scene.player) return;
 
     if (!scene._enemyRangeGraphics) {
         scene._enemyRangeGraphics = scene.add.graphics();

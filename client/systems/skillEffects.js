@@ -45,10 +45,8 @@ export function applySkillEffect(scene, skillId, sourceUser, isRemote = false) {
     if (!skill) return;
     if (!areEffectsEnabled(scene)) return; // パーティクル演出をまるごとスキップして負荷を下げる
 
-    // Effect size scales with the (level-boosted) skill range; base range 80 = scale 1.0
-    const skillLevel = sourceUser.stats?.skillLevels?.[skillId] || 1;
-    const rangeBonus = 1 + (skillLevel - 1) * 0.1;
-    const actualRange = (skill.range || 80) * rangeBonus;
+    // Effect size follows the fixed skill range; skill level does not extend it.
+    const actualRange = skill.range || 80;
     const effectScale = actualRange / 80;
 
     // Skill name popup

@@ -39,12 +39,9 @@ export function registerInputHandlers(scene) {
         key.on('up', () => releaseAim(scene, owner));
     });
 
-    // O: settings, M: side menu, K: skill manager
+    // O: settings, K: skill manager
     scene.input.keyboard.on('keydown-O', () => {
         if (scene.settingsUI) scene.settingsUI.toggle();
-    });
-    scene.input.keyboard.on('keydown-M', () => {
-        if (scene.sideMenuUI) scene.sideMenuUI.toggle();
     });
     scene.input.keyboard.on('keydown-K', () => {
         if (!scene.shopUI.isOpen && !scene.inventoryUI.isOpen && !scene.equipmentUI.isOpen &&
@@ -75,7 +72,6 @@ export function registerInputHandlers(scene) {
 
     // Tap / click to move (mobile only)
     scene.input.on('pointerdown', (pointer, currentlyOver) => {
-        if (pointer.x < 100) return;                                    // menu button area
         if (currentlyOver && currentlyOver.length > 0) return;          // clicked on UI
         if (scene.dialogue && scene.dialogue.isTalking) return;         // no moving while talking
         if (isAnyWindowOpen(scene)) return;                             // no moving while a window is open

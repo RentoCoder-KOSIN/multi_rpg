@@ -12,7 +12,6 @@ export default class SettingsUI {
         // 設定をロード (なければデフォルト)
         const saved = JSON.parse(localStorage.getItem('gameSettings')) || {};
         this.settings = {
-            showLog: saved.showLog !== undefined ? saved.showLog : true,
             bgmVolume: saved.bgmVolume || 0.5,
             seVolume: saved.seVolume || 0.5,
             // パーティクル/カメラシェイクなどの視覚エフェクト。重い場合はOFFでラグを軽減できる
@@ -39,7 +38,7 @@ export default class SettingsUI {
 
     createUI() {
         const width = 300;
-        const height = 360;
+        const height = 300;
         const x = this.scene.scale.width / 2;
         const y = this.scene.scale.height / 2;
 
@@ -76,22 +75,15 @@ export default class SettingsUI {
 
         // --- 設定項目 ---
 
-        // 1. Log UI Toggle
-        this.logCheckbox = this.createCheckbox(0, -100, 'Show Log UI', this.settings.showLog, (val) => {
-            this.settings.showLog = val;
-            this.applySettings();
-        });
-        this.container.add(this.logCheckbox.container);
-
-        // 2. Effects Toggle (パーティクル/画面シェイクなどが重い場合のラグ対策)
-        this.effectsCheckbox = this.createCheckbox(0, -60, 'Effects', this.settings.effectsEnabled, (val) => {
+        // 1. Effects Toggle (パーティクル/画面シェイクなどが重い場合のラグ対策)
+        this.effectsCheckbox = this.createCheckbox(0, -75, 'Effects', this.settings.effectsEnabled, (val) => {
             this.settings.effectsEnabled = val;
             this.applySettings();
         });
         this.container.add(this.effectsCheckbox.container);
 
-        // 3. AI Training Toggle
-        this.aiCheckbox = this.createCheckbox(0, -20, 'AI Training', this.scene.aiTrainingEnabled, (val) => {
+        // 2. AI Training Toggle
+        this.aiCheckbox = this.createCheckbox(0, -35, 'AI Training', this.scene.aiTrainingEnabled, (val) => {
             this.scene.aiTrainingEnabled = val;
             const mode = val ? 'ON' : 'OFF';
             const enemies = this.scene.networkManager?.getEnemies() || {};
@@ -104,8 +96,8 @@ export default class SettingsUI {
         });
         this.container.add(this.aiCheckbox.container);
 
-        // 4. Reset AI Button
-        const resetBtn = this.createButton(0, 90, 'RESET AI DATA', 0xcc0000, () => {
+        // 3. Reset AI Button
+        const resetBtn = this.createButton(0, 65, 'RESET AI DATA', 0xcc0000, () => {
             const confirmReset = confirm('全モンスターの学習記録をリセットしますか？\nAIが初期状態に戻ります。');
             if (confirmReset) {
                 // localStorageの削除
@@ -134,9 +126,9 @@ export default class SettingsUI {
         });
         this.container.add(resetBtn);
 
-        // 5. ログアウト（セーブはサーバーのアカウントに保存済み。別のPCで同じユーザーでログインすれば続きから遊べる）
+        // 4. ログアウト（セーブはサーバーのアカウントに保存済み。別のPCで同じユーザーでログインすれば続きから遊べる）
         const accountName = getSession()?.username || '';
-        const logoutBtn = this.createButton(0, 135, `LOGOUT (${accountName.slice(0, 8)})`, 0x2c5aa0, () => {
+        const logoutBtn = this.createButton(0, 110, `LOGOUT (${accountName.slice(0, 8)})`, 0x2c5aa0, () => {
             if (!confirm('ログアウトしますか？\nセーブは保存されます。')) return;
             flushSave(true);
             logout();
@@ -199,7 +191,6 @@ export default class SettingsUI {
 
     show() {
         this.container.setVisible(true);
-        this.logCheckbox.setChecked(this.settings.showLog);
         if (this.effectsCheckbox) this.effectsCheckbox.setChecked(this.settings.effectsEnabled);
         if (this.aiCheckbox) this.aiCheckbox.setChecked(this.scene.aiTrainingEnabled);
     }

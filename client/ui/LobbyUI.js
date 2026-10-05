@@ -30,10 +30,21 @@ export default class LobbyUI {
 
     createUI() {
         const { width, height } = this.scene.scale;
-        const panelWidth = Math.min(width * 0.9, 700);
-        const panelHeight = Math.min(height * 0.9, 580);
+        // Keep a dedicated information column on wide screens.  The lobby itself
+        // lives in the remaining space instead of being a small centered modal.
+        this.hasInfoPanel = width >= 1000;
+        const infoWidth = this.hasInfoPanel ? 310 : 0;
+        const outerMargin = 32;
+        const columnGap = 24;
+        const panelWidth = this.hasInfoPanel
+            ? Math.min(760, width - infoWidth - outerMargin * 2 - columnGap)
+            : Math.min(width * 0.9, 700);
+        const panelHeight = Math.min(height - 48, 620);
+        const mainX = this.hasInfoPanel
+            ? outerMargin + panelWidth / 2
+            : width / 2;
 
-        this.mainContainer = this.scene.add.container(width / 2, height / 2).setScrollFactor(0).setDepth(1000);
+        this.mainContainer = this.scene.add.container(mainX, height / 2).setScrollFactor(0).setDepth(1000);
 
         // --- 背景パネル ---
         this.bgGfx = this.scene.add.graphics();
@@ -134,6 +145,10 @@ export default class LobbyUI {
         });
         this.mainContainer.add([this.accountText, this.logoutText]);
 
+        if (this.hasInfoPanel) {
+            this.createInfoPanel(width - outerMargin - infoWidth / 2, height / 2, infoWidth, panelHeight);
+        }
+
         // 開始ボタン (ホストのみ)
         this.startButton = this.scene.add.rectangle(0, startY + 215, 300, 60, 0x2ecc40, 1)
             .setOrigin(0.5).setStrokeStyle(3, 0xffffff, 1).setInteractive({ useHandCursor: true }).setVisible(false);
@@ -144,6 +159,54 @@ export default class LobbyUI {
 
         this.setupHTMLInput(width, height, startY + 35);
         this.setupInteractions();
+    }
+
+    createInfoPanel(x, y, width, height) {
+        this.infoContainer = this.scene.add.container(x, y).setScrollFactor(0).setDepth(1000);
+        const left = -width / 2;
+        const top = -height / 2;
+        const gfx = this.scene.add.graphics();
+        gfx.fillStyle(0x0a0a1a, 0.92);
+        gfx.fillRoundedRect(left, top, width, height, 18);
+        gfx.lineStyle(2, 0x4a90e2, 0.75);
+        gfx.strokeRoundedRect(left, top, width, height, 18);
+        gfx.fillStyle(0x4a90e2, 0.12);
+        gfx.fillRoundedRect(left, top, width, 54, { tl: 18, tr: 18, bl: 0, br: 0 });
+
+        const title = this.scene.add.text(left + 20, top + 20, 'ルーム情報', {
+            fontSize: '15px', color: '#ffffff', fontFamily: '"Press Start 2P"'
+        });
+        this.infoConnectionText = this.scene.add.text(left + 20, top + 72, '● 接続済み', {
+            fontSize: '11px', color: '#2ecc40', fontFamily: '"Press Start 2P"'
+        });
+        this.infoRoomText = this.scene.add.text(left + 20, top + 102, '参加者: 0 / 4', {
+            fontSize: '11px', color: '#9ec5ff', fontFamily: '"Press Start 2P"'
+        });
+        this.infoAccountText = this.scene.add.text(left + 20, top + 132, `アカウント: ${getSession()?.username || '-'}`, {
+            fontSize: '10px', color: '#cccccc', fontFamily: '"Press Start 2P"', wordWrap: { width: width - 40 }
+        });
+
+        const logTop = top + 182;
+        gfx.lineStyle(1, 0x4a90e2, 0.45);
+        gfx.lineBetween(left + 18, logTop - 16, -left - 18, logTop - 16);
+        const logTitle = this.scene.add.text(left + 20, logTop, 'ACTIVITY LOG', {
+            fontSize: '11px', color: '#ffd700', fontFamily: '"Press Start 2P"'
+        });
+        this.lobbyLogText = this.scene.add.text(left + 20, logTop + 30, '', {
+            fontSize: '10px', color: '#d7e6ff', fontFamily: 'monospace', lineSpacing: 7,
+            wordWrap: { width: width - 40 }
+        });
+        this.infoContainer.add([gfx, title, this.infoConnectionText, this.infoRoomText, this.infoAccountText, logTitle, this.lobbyLogText]);
+        this.lobbyLogs = [];
+        this.addLobbyLog('ロビーに接続しました');
+    }
+
+    addLobbyLog(message) {
+        if (!this.lobbyLogText) return;
+        const stamp = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+        this.lobbyLogs.unshift(`[${stamp}] ${message}`);
+        this.lobbyLogs = this.lobbyLogs.slice(0, 10);
+        this.lobbyLogText.setText(this.lobbyLogs.join('\n'));
     }
 
     setupHTMLInput(w, h, yOff) {
@@ -225,16 +288,27 @@ export default class LobbyUI {
         const socket = this.networkManager.getSocket();
         if (!socket) return;
 
-        socket.on('lobbyPlayerJoined', (d) => { if (d.playerNames) this.playerNames = { ...this.playerNames, ...d.playerNames }; this.updatePlayerList(d.players); });
+        socket.on('lobbyPlayerJoined', (d) => {
+            if (d.playerNames) this.playerNames = { ...this.playerNames, ...d.playerNames };
+            this.addLobbyLog('プレイヤーが参加しました');
+            this.updatePlayerList(d.players);
+        });
         socket.on('lobbyPlayerLeft', (d) => {
             if (d.players) {
                 const ids = Object.keys(d.players);
                 Object.keys(this.playerNames).forEach(id => { if (!ids.includes(id)) delete this.playerNames[id]; });
             }
+            this.addLobbyLog('プレイヤーが退出しました');
             this.updatePlayerList(d.players);
         });
         socket.on('lobbyPlayerNameUpdate', (d) => { if (d.socketId) { this.playerNames[d.socketId] = d.name; this.updatePlayerList(); } });
-        socket.on('lobbyPlayerReady', (d) => { if (d.socketId) { if (d.ready) this.readyPlayers.add(d.socketId); else this.readyPlayers.delete(d.socketId); this.updatePlayerList(); } });
+        socket.on('lobbyPlayerReady', (d) => {
+            if (d.socketId) {
+                if (d.ready) this.readyPlayers.add(d.socketId); else this.readyPlayers.delete(d.socketId);
+                this.addLobbyLog(`${this.playerNames[d.socketId] || 'プレイヤー'}: ${d.ready ? '準備完了' : '準備解除'}`);
+                this.updatePlayerList();
+            }
+        });
         socket.on('lobbyInfo', (d) => {
             if (d.playerNames) this.playerNames = { ...d.playerNames };
             if (d.readyPlayers) this.readyPlayers = new Set(d.readyPlayers);
@@ -262,6 +336,7 @@ export default class LobbyUI {
         const ids = Object.keys(players);
         const count = ids.length;
         this.playerCountText.setText(`待機人数: ${count} / ${this.maxPlayers}`);
+        this.infoRoomText?.setText(`参加者: ${count} / ${this.maxPlayers}`);
 
         const myId = this.networkManager.getPlayerId();
         const sortedIds = Object.keys(this.playerNames).sort();
@@ -315,6 +390,7 @@ export default class LobbyUI {
             this.readyButton.setFillStyle(0x4a90e2).setStrokeStyle(2, 0xffffff, 0.5);
             this.readyButtonText.setText('準備完了');
         }
+        this.addLobbyLog(this.isReady ? 'あなたは準備完了です' : 'あなたは準備を解除しました');
     }
 
     updateStartButton() {
@@ -342,5 +418,6 @@ export default class LobbyUI {
     destroy() {
         if (this.htmlInput?.parentNode) this.htmlInput.parentNode.removeChild(this.htmlInput);
         if (this.mainContainer) this.mainContainer.destroy();
+        if (this.infoContainer) this.infoContainer.destroy();
     }
 }

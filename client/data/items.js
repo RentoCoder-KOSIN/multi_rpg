@@ -52,6 +52,7 @@ export const ITEMS = {
         type: "weapon",
         level: 1,
         price: 150,
+        weaponClass: 'oneHandSword',
         stats: { attack: 5 },
         description: "駆け出しの冒険者が使う剣。",
     }),
@@ -61,6 +62,7 @@ export const ITEMS = {
         type: "weapon",
         level: 1,
         price: 200,
+        weaponClass: 'staff',
         stats: { attack: 3, matk: 5 },
         description: "魔法の初歩を学ぶための杖。",
     }),
@@ -70,6 +72,7 @@ export const ITEMS = {
         type: "weapon",
         level: 1,
         price: 180,
+        weaponClass: 'bow',
         stats: { attack: 4 },
         description: "狩猟用のシンプルな弓。",
     }),
@@ -101,6 +104,7 @@ export const ITEMS = {
         type: "weapon",
         level: 50,
         price: 25000,
+        weaponClass: 'oneHandSword',
         stats: { attack: 280, critChance: 0.1 },
         description: "伝説の輝きを放つ聖剣。会心率+10%",
     }),
@@ -175,12 +179,12 @@ export const ITEMS = {
 
     // --- 魔石ガチャ限定装備 ---
     starlight_blade: defineItem({
-        id: "starlight_blade", name: "星光の剣", type: "weapon", level: 30, price: 0,
+        id: "starlight_blade", name: "星光の剣", type: "weapon", weaponClass: 'oneHandSword', level: 30, price: 0,
         stats: { attack: 125, critChance: 0.06, lightDamage: 35, paralyzeChance: 0.12 },
         description: "星の欠片を鍛えた片手剣。光ダメージ+35、12%で麻痺を付与。魔石ガチャ限定。",
     }),
     tempest_staff: defineItem({
-        id: "tempest_staff", name: "嵐の杖", type: "weapon", level: 45, price: 0,
+        id: "tempest_staff", name: "嵐の杖", type: "weapon", weaponClass: 'staff', level: 45, price: 0,
         stats: { attack: 20, matk: 240, speedBonus: 8, thunderDamage: 55, paralyzeChance: 0.2 },
         description: "風雷をまとった杖。雷ダメージ+55、20%で麻痺を付与。魔石ガチャ限定。",
     }),
@@ -639,17 +643,17 @@ export const ITEMS = {
     }),
     // --- 追加装備（Lv40〜60の装備の谷間を埋める / ボス・最終ボスの限定ドロップ） ---
     hunter_longbow: defineItem({
-        id: "hunter_longbow", name: "狩人の長弓", type: "weapon", level: 40, price: 8000,
+        id: "hunter_longbow", name: "狩人の長弓", type: "weapon", weaponClass: 'bow', level: 40, price: 8000,
         stats: { attack: 200, critChance: 0.05 },
         description: "狩人が使い込んだ長弓。会心率+5%。沼のボスが稀に落とす。",
     }),
     steel_claymore: defineItem({
-        id: "steel_claymore", name: "鋼のクレイモア", type: "weapon", level: 45, price: 9000,
+        id: "steel_claymore", name: "鋼のクレイモア", type: "weapon", weaponClass: 'twoHandSword', level: 45, price: 9000,
         stats: { attack: 240 },
         description: "重い一撃を叩き込む大剣。森のボスが稀に落とす。",
     }),
     crystal_staff: defineItem({
-        id: "crystal_staff", name: "水晶の杖", type: "weapon", level: 50, price: 16000,
+        id: "crystal_staff", name: "水晶の杖", type: "weapon", weaponClass: 'staff', level: 50, price: 16000,
         stats: { attack: 20, matk: 300 },
         description: "魔力を増幅する水晶の杖。魔法職向け。沼のボスが稀に落とす。",
     }),

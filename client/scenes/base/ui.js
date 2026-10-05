@@ -3,6 +3,7 @@ import QuestTrackerUI from '../../ui/QuestTrackerUI.js';
 import QuestLogUI from '../../ui/QuestLogUI.js';
 import MapNameUI from '../../ui/MapNameUI.js';
 import NotificationUI from '../../ui/NotificationUI.js';
+import DeathUI from '../../ui/DeathUI.js';
 import PlayerStatsUI from '../../ui/PlayerStatsUI.js';
 import SkillBarUI from '../../ui/SkillBarUI.js';
 import EquipmentUI from '../../ui/EquipmentUI.js';
@@ -10,7 +11,6 @@ import BlacksmithUI from '../../ui/BlacksmithUI.js';
 import StatAllocationUI from '../../ui/StatAllocationUI.js';
 import SkillManagerUI from '../../ui/SkillManagerUI.js';
 import SettingsUI from '../../ui/SettingsUI.js';
-import SideMenuUI from '../../ui/SideMenuUI.js';
 import VirtualPadUI from '../../ui/VirtualPadUI.js';
 import AIStatsUI from '../../ui/AIStatsUI.js';
 import MinimapUI from '../../ui/MinimapUI.js';
@@ -53,6 +53,7 @@ export function createGameUI(scene, config) {
 
     scene.mapNameUI = new MapNameUI(scene, scene.currentMapKey.toUpperCase());
     scene.notificationUI = new NotificationUI(scene);
+    scene.deathUI = new DeathUI(scene);
     scene.playerStatsUI = new PlayerStatsUI(scene, scene.player);
     scene.skillBarUI = new SkillBarUI(scene, scene.player);
     scene.equipmentUI = new EquipmentUI(scene);
@@ -67,7 +68,8 @@ export function createGameUI(scene, config) {
     scene.gachaUI.createUI();
     scene.settingsUI = new SettingsUI(scene);
     scene.settingsUI.createUI();
-    scene.sideMenuUI = new SideMenuUI(scene);
+    // The old expandable side menu consumed the left edge of the play field.
+    // Window shortcuts remain available (I/S/P/Q/K/V/T/O), so keep the game view clear.
     scene.virtualPadUI = new VirtualPadUI(scene);
     scene.aiTrainingEnabled = true; // global reinforcement-learning switch
     scene.aiStatsUI = new AIStatsUI(scene);

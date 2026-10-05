@@ -1,5 +1,6 @@
 import { resolveSceneKey, getMapKeyForScene } from '../data/maps.js';
 import { isTeleportUnlocked, describeMissingQuests } from './questGate.js';
+import { flushSave } from './saveStore.js';
 
 export function setupTeleportsFromMap(scene, map) {
     const tpLayer = map.getObjectLayer('Teleports');
@@ -71,6 +72,10 @@ export function updateTeleports(scene, player, npcs, teleports) {
             player.stats.activeSkills = player.padActiveSkills(player.stats.activeSkills);
             scene.registry.set('playerStats', player.stats);
             player.saveStats();
+            // Keep hosted deployments (including Render) in sync before the
+            // old scene is torn down. The in-memory cache remains immediate,
+            // and this also sends the latest snapshot to the account server.
+            flushSave(true);
             // 最後のチュートリアル手順は「戦場へ転移」で達成。初回だけ経験値2倍の宝具を渡す。
             if (scene.currentMapKey === 'tutorial' && !player.stats.tutorialFlags?.leftTutorial) {
                 player.stats.tutorialFlags = { ...(player.stats.tutorialFlags || {}), leftTutorial: true };

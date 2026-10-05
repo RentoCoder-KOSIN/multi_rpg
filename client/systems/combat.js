@@ -264,15 +264,13 @@ export function skillNeedsAim(skillId) {
     return !isSummonSkill(skillId) && skillId !== 'command_attack';
 }
 
-/** スキルレベルによる範囲補正(+10%/Lv)を含めた、実際の射程と範囲タイプ */
+/** スキル射程はスキル定義値で固定。レベルは威力だけを上げる。 */
 export function getSkillAimSpec(player, skillId) {
     const skill = SKILLS[skillId];
     if (!skill) return null;
-    const skillLevel = player.stats.skillLevels?.[skillId] || 1;
-    const rangeBonus = 1 + (skillLevel - 1) * 0.1;
     return {
         skill,
-        range: (skill.range || 80) * rangeBonus,
+        range: skill.range || 80,
         rangeType: skill.rangeType || 'circle',
         isParty: skill.targetType === 'party'
     };
@@ -401,7 +399,7 @@ export function usePlayerSkill(scene, skillId) {
         return;
     }
 
-    // Skill level scaling: damage +SKILL_LEVEL_BONUS per level (gameConstants.js), range +10% per level
+    // Skill level scaling: damage only. Range remains the skill definition's base range.
     const skillLevel = player.stats.skillLevels?.[skillId] || 1;
     const levelBonus = 1 + (skillLevel - 1) * COMBAT_CONFIG.SKILL_LEVEL_BONUS;
 

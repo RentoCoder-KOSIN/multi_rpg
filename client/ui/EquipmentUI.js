@@ -99,7 +99,9 @@ export default class EquipmentUI extends BaseWindowUI {
         const attachedElement = item ? this.scene.player?.stats?.itemElements?.[itemId] : null;
         const elementTag = attachedElement ? ` ${ELEMENT_INFO[attachedElement].icon}` : '';
 
-        const nameTxt = this.scene.add.text(-145, 5, `${itemName}${elementTag}`, {
+        const weaponClassLabels = { oneHandSword: '片手剣', twoHandSword: '両手剣', spear: '槍', staff: '杖', wand: 'ワンド', tome: '魔導書', bow: '弓', mace: 'メイス' };
+        const classTag = item?.weaponClass ? ` [${weaponClassLabels[item.weaponClass] || item.weaponClass}]` : '';
+        const nameTxt = this.scene.add.text(-145, 5, `${itemName}${classTag}${elementTag}`, {
             fontSize: '14px', fontFamily: '"Press Start 2P"', color: itemColor
         });
         slot.add(nameTxt);

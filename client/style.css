@@ -16,8 +16,58 @@ body {
     align-items: center;
     justify-content: center;
     height: 100vh;
-    background-color: rgb(16, 9, 56)
+    background-color: rgb(16, 9, 56);
+    overflow: hidden;
 }
+
+#game-shell {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    height: 100vh;
+}
+
+#game-root {
+    display: flex;
+    width: min(1000px, calc(100vw - 340px));
+    height: min(720px, calc(100vh - 24px));
+}
+
+#game-sidebar {
+    display: none;
+    width: 300px;
+    height: min(720px, calc(100vh - 24px));
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 14px;
+    font-family: "Press Start 2P", monospace;
+    color: #d7e6ff;
+}
+
+#game-sidebar.is-active { display: flex; }
+
+.game-side-panel {
+    box-sizing: border-box;
+    background: rgba(8, 13, 29, .94);
+    border: 2px solid rgba(74, 144, 226, .8);
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 0 14px rgba(74, 144, 226, .2);
+}
+
+#player-status-panel {
+    height: 405px;
+    min-height: 0;
+    overflow-y: auto;
+    font-size: 10px;
+    line-height: 1.5;
+}
+.status-title, .activity-panel h2 { margin: 0 0 12px; font-size: 13px; color: #fff; }
+.status-bars { font-size: 10px; line-height: 1.75; color: #e5efff; }
+.status-detail { margin-top: 9px; padding-top: 8px; border-top: 1px solid rgba(74, 144, 226, .45); white-space: pre-line; }
+.activity-panel { height: 150px; min-height: 0; font: 11px/1.65 monospace; overflow: hidden; }
+.activity-panel h2 { color: #ffe07a; }
+#activity-log { white-space: pre-line; overflow-wrap: anywhere; }
 
 canvas {
     display: block;

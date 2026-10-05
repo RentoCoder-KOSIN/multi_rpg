@@ -10,7 +10,7 @@ import {
 } from "../data/elements.js";
 import { showDamageNumber } from "../utils/damagePopup.js";
 import { isAdminFlag } from "../ui/AdminUI.js";
-import { getSaved, setSaved } from "../utils/saveStore.js";
+import { getSaved, setSaved, flushSave } from "../utils/saveStore.js";
 
 // 状態異常の基本持続時間（ms）。武器の属性付与などから発生する。
 const STATUS_DURATIONS = {
@@ -18,6 +18,15 @@ const STATUS_DURATIONS = {
     paralyze: 2500,
 };
 const POISON_TICK_INTERVAL_MS = 1000;
+
+const WEAPON_CLASS_LABELS = {
+    oneHandSword: '片手剣', twoHandSword: '両手剣', spear: '槍',
+    staff: '杖', wand: 'ワンド', tome: '魔導書', bow: '弓', mace: 'メイス'
+};
+
+function getJobWeaponLabel(jobId) {
+    return JOBS[jobId]?.name || 'この職業';
+}
 
 // レベルアップに必要な経験値を計算する。
 // 以前は maxExp *= 1.5 という「複利」計算だったため、
@@ -923,6 +932,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         if (!this.isLocal || !ITEMS[itemId]) return;
         const item = ITEMS[itemId];
 
+        if (item.type === 'weapon' && item.weaponClass && !this.canEquipWeapon(item.weaponClass)) {
+            const label = WEAPON_CLASS_LABELS[item.weaponClass] || item.weaponClass;
+            this.scene.notificationUI?.show(`${getJobWeaponLabel(this.stats.job)}は${label}を装備できません`, 'error');
+            return false;
+        }
+
         // レベル不足でも装備は可能。ただし制限解除の証がない限り、性能はレベル差に応じて低下する。
 
         if (item.type === 'weapon') {
@@ -954,6 +969,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         this.saveStats();
+        return true;
+    }
+
+    canEquipWeapon(weaponClass) {
+        const job = this.stats.job || '';
+        if (['ranger', 'sniper', 'wind_archer'].includes(job)) return weaponClass === 'bow';
+        if (['tank', 'paladin', 'warden', 'juggernaut'].includes(job)) return ['oneHandSword', 'mace'].includes(weaponClass);
+        if (JOBS[job]?.type === 'magical') return ['staff', 'wand', 'tome'].includes(weaponClass);
+        return ['oneHandSword', 'twoHandSword', 'spear'].includes(weaponClass);
     }
 
     /**
@@ -1190,6 +1214,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     takeDamage(amount, attacker, effects = null) {
+        if (this.isDead) return;
         // adminモードの無敵（敵の攻撃・接触ダメージを無効化）
         if (isAdminFlag('god')) return;
 
@@ -1313,6 +1338,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     die() {
+        if (this.isDead) return;
         // adminモードの無敵中は、毒などで0になっても死なない
         if (isAdminFlag('god')) {
             this.stats.hp = this.stats.maxHp;
@@ -1344,12 +1370,25 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             }
         }
 
-        // とりあえず初期位置にリセット
-        this.stats.hp = this.stats.maxHp;
+        this.isDead = true;
+        this.body?.setVelocity(0, 0);
         this.saveStats();
+        flushSave(true);
+        this.scene.deathUI?.show();
+    }
 
-        // マップの初期位置へ
-        this.scene.scene.restart();
+    respawn() {
+        if (!this.isDead) return;
+        this.isDead = false;
+        this.stats.hp = this.stats.maxHp;
+        this.stats.mp = this.stats.maxMp;
+        this.statusEffects = {};
+        this.clearTint?.();
+        this.saveStats();
+        flushSave(true);
+        this.scene.deathUI?.hide();
+        // Use the map's normal spawn path so respawn never places the player inside terrain.
+        this.scene.scene.restart({ mapKey: this.scene.currentMapKey });
     }
 
     setStats(hp, maxHp, level, mp, maxMp) {
@@ -1386,6 +1425,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     update(cursors) {
         // Y座標で前後関係を決めることで、木・建物・他プレイヤーの前後を自然に見せる。
         this.setDepth(this.y);
+        if (this.isDead) {
+            this.body?.setVelocity(0, 0);
+            return;
+        }
         if (this.isLocal && cursors) { // Keep cursors check here
             const now = this.scene.time.now;
             const body = this.body;

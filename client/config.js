@@ -46,8 +46,10 @@ console.log("[Config] Peer Learning Settings:", PEER_LEARNING_CONFIG);
 
 const config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
+    // The game canvas sits beside a DOM-based status/log column.
+    width: 1000,
+    height: 720,
+    parent: 'game-root',
     pixelArt: true,
     physics: {
         default: "arcade",

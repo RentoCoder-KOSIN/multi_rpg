@@ -78,13 +78,21 @@ export function setupFacilities(scene) {
         const facility = { id: props.facility, props, zone, lastOverlapAt: -Infinity, lastPromptAt: -Infinity };
 
         const trigger = () => {
+            if (!scene.sys?.isActive()) return;
             const ui = scene[type.ui];
             if (!ui) return;
             const method = type.method || 'toggle';
             const ownOpen = !!ui.isOpen;
             // 他のウィンドウが開いている間は無視。toggle型は自分のウィンドウをもう一度押して閉じられる
             if (isAnyWindowOpen(scene) && !(ownOpen && method === 'toggle')) return;
-            ui[method](...resolve(type.args, props) || []);
+            try {
+                ui[method](...resolve(type.args, props) || []);
+            } catch (error) {
+                // A stale UI left by a map transition must never halt the
+                // scene update loop. The next interaction can build it again.
+                console.error(`[facilities] ${props.facility} を開けませんでした:`, error);
+                scene.notificationUI?.show('施設を開けませんでした。もう一度お試しください。', 'error');
+            }
         };
 
         const area = scene.add.rectangle(cx, cy, zone.width, zone.height, 0x000000, 0);
