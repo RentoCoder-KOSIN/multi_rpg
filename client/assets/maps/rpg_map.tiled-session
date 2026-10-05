@@ -27,8 +27,8 @@
                 37
             ],
             "expandedObjectLayers": [
-                42,
-                41
+                41,
+                42
             ],
             "scale": 0.33,
             "selectedLayer": 14,
@@ -47,7 +47,7 @@
             "scale": 1.6090625,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 480.0932219848514,
+                "x": 480.4039619343562,
                 "y": 351.7576228393863
             }
         },
@@ -55,10 +55,13 @@
             "scaleInDock": 1
         },
         "forest.json": {
+            "expandedObjectLayers": [
+                9
+            ],
             "scale": 0.16090625,
-            "selectedLayer": 0,
+            "selectedLayer": 4,
             "viewCenter": {
-                "x": 1600.3107399495048,
+                "x": 1597.2033404544572,
                 "y": 1597.203340454457
             }
         },
@@ -72,7 +75,7 @@
             "scale": 0.5254687499999999,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 480.52334225394003,
+                "x": 481.47487362473987,
                 "y": 479.5718108831401
             }
         },
@@ -83,7 +86,7 @@
             "scale": 0.5254687499999999,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 480.52334225394003,
+                "x": 481.47487362473987,
                 "y": 479.5718108831401
             }
         },
@@ -94,7 +97,7 @@
             "scale": 1.6090625,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 480.0932219848514,
+                "x": 480.4039619343562,
                 "y": 351.7576228393863
             }
         },
@@ -105,7 +108,7 @@
             "scale": 0.33,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 480.3030303030303,
+                "x": 478.7878787878788,
                 "y": 351.51515151515144
             }
         },
@@ -139,10 +142,13 @@
             "scaleInDock": 1
         },
         "volcano.json": {
+            "expandedObjectLayers": [
+                7
+            ],
             "scale": 0.3218125,
-            "selectedLayer": 0,
+            "selectedLayer": 6,
             "viewCenter": {
-                "x": 800.1553699747524,
+                "x": 798.6016702272286,
                 "y": 798.6016702272285
             }
         },
@@ -159,8 +165,8 @@
             "scale": 0.75,
             "selectedLayer": 6,
             "viewCenter": {
-                "x": 1600.6666666666665,
-                "y": 1600
+                "x": 2226.6666666666665,
+                "y": 2637.333333333333
             }
         },
         "wetland.json#tiles": {
@@ -178,10 +184,7 @@
         "forest.json",
         "tutorial.json",
         "volcano.json",
-        "wetland.json",
-        "port_city.json",
-        "snow_city.json",
-        "desert_city.json"
+        "wetland.json"
     ],
     "project": "rpg_map.tiled-project",
     "recentFiles": [
@@ -190,12 +193,12 @@
         "guild1f.json",
         "guild2f.json",
         "forest.json",
-        "desert_city.json",
-        "snow_city.json",
-        "port_city.json",
         "wetland.json",
         "volcano.json",
         "tutorial.json",
+        "desert_city.json",
+        "snow_city.json",
+        "port_city.json",
         "starter_town.json"
     ]
 }
