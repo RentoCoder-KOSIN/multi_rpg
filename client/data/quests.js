@@ -50,8 +50,8 @@ export const QUESTS = {
         target: 'boss',
         required: 1,
         reward: {
-            exp: 10000,
-            gold: 8000,
+            exp: 200,
+            gold: 600,
             item: 'iron_shield'
         }
         // ボス戦マップ(battle)のクエスト。街への転移の解放条件（battle.json の Teleports.requiredQuest）
