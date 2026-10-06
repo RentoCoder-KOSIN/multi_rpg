@@ -391,24 +391,6 @@
          "objects":[
                 {
                  "height":0,
-                 "id":21,
-                 "name":"",
-                 "opacity":1,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"forest_slime"
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":337.333333333333,
-                 "y":498.666666666667
-                }, 
-                {
-                 "height":0,
                  "id":34,
                  "name":"",
                  "opacity":1,
