@@ -50,6 +50,11 @@ export const SHOP_LOADOUTS = {
             "stat_reset_book", "job_reset_book"
         ]
     },
+    // チュートリアルの雑貨屋: 最初の戦いに必要なポーションだけを並べる
+    tutorial_shop: {
+        title: "はじまりの雑貨屋",
+        items: ["potion", "mp_potion", "high_potion"]
+    },
     city_death: {
         title: "闇の取引所",
         items: ["death_scythe", "resurrection_scroll", "cursed_ring", "cheat_sword", "dragonfang_pendant"]

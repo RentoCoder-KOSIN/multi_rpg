@@ -1,5 +1,5 @@
 {
-    "activeFile": "wetland.json",
+    "activeFile": "tutorial.json",
     "expandedProjectPaths": [
         "."
     ],
@@ -41,10 +41,10 @@
                 37
             ],
             "expandedObjectLayers": [
+                41,
                 42,
-                35,
                 40,
-                41
+                35
             ],
             "scale": 0.5,
             "selectedLayer": 15,
@@ -86,8 +86,8 @@
         },
         "forest.json": {
             "expandedObjectLayers": [
-                9,
-                5
+                5,
+                9
             ],
             "scale": 0.75,
             "selectedLayer": 2,
@@ -104,23 +104,27 @@
         },
         "guild1f.json": {
             "expandedObjectLayers": [
-                13
+                13,
+                15
             ],
-            "scale": 0.5254687499999999,
-            "selectedLayer": 1,
+            "scale": 0.75,
+            "selectedLayer": 9,
             "viewCenter": {
-                "x": 479.5718108831401,
-                "y": 479.5718108831401
+                "x": 245.33333333333337,
+                "y": 479.99999999999994
             }
         },
         "guild1f.json#tiles": {
             "scaleInDock": 1
         },
         "guild2f.json": {
+            "expandedObjectLayers": [
+                10
+            ],
             "scale": 0.5254687499999999,
-            "selectedLayer": 0,
+            "selectedLayer": 5,
             "viewCenter": {
-                "x": 479.57181088314013,
+                "x": 479.5718108831401,
                 "y": 479.5718108831401
             }
         },
@@ -143,9 +147,9 @@
                 13
             ],
             "expandedObjectLayers": [
-                6,
+                10,
                 12,
-                10
+                6
             ],
             "scale": 0.75,
             "selectedLayer": 7,
@@ -221,8 +225,8 @@
             "scale": 0.75,
             "selectedLayer": 7,
             "viewCenter": {
-                "x": 1304,
-                "y": 337.33333333333337
+                "x": 1600,
+                "y": 1600
             }
         },
         "wetland.json#tiles": {
@@ -248,10 +252,10 @@
         "guild1f.json",
         "guild2f.json",
         "forest.json",
-        "tutorial.json",
-        "volcano.json",
         "ruins.json",
         "wetland.json",
+        "volcano.json",
+        "tutorial.json",
         "city (1).json",
         "forest (1).json",
         "battle.json",

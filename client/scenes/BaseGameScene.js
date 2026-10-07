@@ -29,6 +29,7 @@ import { registerNetworkCallbacks } from './base/networkCallbacks.js';
 import { createGameKeys, registerInputHandlers } from './base/input.js';
 import { createGameUI, setupEnemyDebug } from './base/ui.js';
 import { setupFacilities } from './base/facilities.js';
+import { setupChests, updateChests } from './base/chests.js';
 import {
     updateEnemyContactDamage,
     regenerateMp,
@@ -172,6 +173,9 @@ export default class BaseGameScene extends Phaser.Scene {
         // 鍛冶屋・各種ショップ・クエストボードなどの施設。Tiledの「FacilityTrigger」レイヤーから作る（data/facilities.js）
         setupFacilities(this);
 
+        // 宝箱。Tiledの「Chests」レイヤー（タイルオブジェクト）から作る（data/chests.js）
+        setupChests(this);
+
         const playerNames = this.registry.get('playerNames') || {};
         const socket = this.networkManager.getSocket();
         const myPlayerName = (socket && playerNames[socket.id]) || 'You';
@@ -235,6 +239,7 @@ export default class BaseGameScene extends Phaser.Scene {
         if (this.partyLocatorUI) this.partyLocatorUI.update();
         if (this.objectiveIndicatorUI) this.objectiveIndicatorUI.update(time);
 
+        updateChests(this);
         updateEnemyContactDamage(this);
 
         this.player.updateBuffs();

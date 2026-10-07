@@ -132,6 +132,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             equipmentCapLevel: saved.equipmentCapUnlocked ? 100 : (saved.equipmentCapLevel || 0),
             tutorialFlags: (saved.tutorialFlags && typeof saved.tutorialFlags === 'object') ? { ...saved.tutorialFlags } : {},
             inventory: saved.inventory || [],
+            // 開けた宝箱の記録（"マップ名:オブジェクトID" の配列）。1人1回だけ開けられるようにする
+            openedChests: Array.isArray(saved.openedChests) ? [...saved.openedChests] : [],
             // 鍛冶屋で武器/防具(アイテムID)に付与した属性。 { itemId: 'fire' | 'water' | ... }
             // 存在しない属性の付与（属性定義の変更前のデータなど）は破棄する
             itemElements: Object.fromEntries(

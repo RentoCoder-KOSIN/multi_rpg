@@ -432,10 +432,70 @@
    "visible": true,
    "x": 0,
    "y": 0
-  }
+  },
+ {
+  "draworder": "topdown",
+  "id": 15,
+  "name": "Chests",
+  "objects": [
+   {
+    "gid": 862,
+    "height": 32,
+    "id": 39,
+    "name": "",
+    "properties": [
+     {
+      "name": "loot",
+      "type": "string",
+      "value": "small"
+     },
+     {
+      "name": "openedGid",
+      "type": "int",
+      "value": 870
+     }
+    ],
+    "rotation": 0,
+    "type": "",
+    "visible": true,
+    "width": 32,
+    "x": 32,
+    "y": 736
+   },
+   {
+    "gid": 862,
+    "height": 32,
+    "id": 40,
+    "name": "",
+    "properties": [
+     {
+      "name": "loot",
+      "type": "string",
+      "value": "small"
+     },
+     {
+      "name": "openedGid",
+      "type": "int",
+      "value": 870
+     }
+    ],
+    "rotation": 0,
+    "type": "",
+    "visible": true,
+    "width": 32,
+    "x": 544,
+    "y": 800
+   }
+  ],
+  "opacity": 1,
+  "type": "objectgroup",
+  "visible": true,
+  "x": 0,
+  "y": 0
+ }
  ],
- "nextlayerid": 15,
- "nextobjectid": 39,
+ "nextlayerid": 16,
+ "nextobjectid": 41,
  "orientation": "orthogonal",
  "properties": [
   {
