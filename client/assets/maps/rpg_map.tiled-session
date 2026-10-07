@@ -1,5 +1,5 @@
 {
-    "activeFile": "wetland.json",
+    "activeFile": "guild2f.json",
     "expandedProjectPaths": [
         "."
     ],
@@ -22,21 +22,35 @@
         "battle.json#tiles": {
             "scaleInDock": 1
         },
+        "city (1).json": {
+            "scale": 0.75,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 266.66666666666663,
+                "y": 458.66666666666663
+            }
+        },
+        "city (1).json#tiles": {
+            "scaleInDock": 1
+        },
+        "city (1).json#water": {
+            "scaleInDock": 1
+        },
         "city.json": {
             "expandedGroupLayers": [
                 37
             ],
             "expandedObjectLayers": [
                 41,
+                42,
                 35,
-                40,
-                42
+                40
             ],
             "scale": 0.5,
-            "selectedLayer": 14,
+            "selectedLayer": 15,
             "viewCenter": {
-                "x": 426,
-                "y": 1936
+                "x": 1600,
+                "y": 1600
             }
         },
         "city.json#tiles": {
@@ -56,6 +70,20 @@
         "desert_city.json#tiles": {
             "scaleInDock": 1
         },
+        "forest (1).json": {
+            "scale": 0.16090625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 1597.2033404544572,
+                "y": 1597.203340454457
+            }
+        },
+        "forest (1).json#tiles": {
+            "scaleInDock": 1
+        },
+        "forest (1).json#waters": {
+            "scaleInDock": 1
+        },
         "forest.json": {
             "expandedObjectLayers": [
                 5,
@@ -71,6 +99,9 @@
         "forest.json#tiles": {
             "scaleInDock": 1
         },
+        "forest.json#waters": {
+            "scaleInDock": 1
+        },
         "guild1f.json": {
             "expandedObjectLayers": [
                 13
@@ -78,7 +109,7 @@
             "scale": 0.5254687499999999,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 479.5718108831401,
+                "x": 479.57181088314013,
                 "y": 479.5718108831401
             }
         },
@@ -89,7 +120,7 @@
             "scale": 0.5254687499999999,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 479.5718108831401,
+                "x": 479.57181088314013,
                 "y": 479.5718108831401
             }
         },
@@ -112,9 +143,9 @@
                 13
             ],
             "expandedObjectLayers": [
-                12,
+                6,
                 10,
-                6
+                12
             ],
             "scale": 0.75,
             "selectedLayer": 7,
@@ -153,8 +184,8 @@
         },
         "tutorial.json": {
             "expandedObjectLayers": [
-                25,
-                9
+                9,
+                25
             ],
             "scale": 0.42007812499999997,
             "selectedLayer": 7,
@@ -190,8 +221,8 @@
             "scale": 0.75,
             "selectedLayer": 4,
             "viewCenter": {
-                "x": 257.33333333333337,
-                "y": 277.33333333333337
+                "x": 1600,
+                "y": 1600
             }
         },
         "wetland.json#tiles": {
@@ -215,15 +246,15 @@
     "recentFiles": [
         "city.json",
         "guild1f.json",
-        "guild2f.json",
-        "forest.json",
-        "tutorial.json",
-        "volcano.json",
         "ruins.json",
         "wetland.json",
+        "volcano.json",
+        "tutorial.json",
+        "forest.json",
+        "guild2f.json",
+        "city (1).json",
+        "forest (1).json",
         "battle.json",
-        "desert_city.json",
-        "snow_city.json",
-        "port_city.json"
+        "desert_city.json"
     ]
 }
