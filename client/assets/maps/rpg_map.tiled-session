@@ -1,5 +1,5 @@
 {
-    "activeFile": "guild2f.json",
+    "activeFile": "wetland.json",
     "expandedProjectPaths": [
         "."
     ],
@@ -43,8 +43,8 @@
             "expandedObjectLayers": [
                 42,
                 35,
-                41,
-                40
+                40,
+                41
             ],
             "scale": 0.5,
             "selectedLayer": 15,
@@ -219,10 +219,10 @@
                 11
             ],
             "scale": 0.75,
-            "selectedLayer": 4,
+            "selectedLayer": 7,
             "viewCenter": {
-                "x": 1600,
-                "y": 1600
+                "x": 1304,
+                "y": 337.33333333333337
             }
         },
         "wetland.json#tiles": {
@@ -246,12 +246,12 @@
     "recentFiles": [
         "city.json",
         "guild1f.json",
+        "guild2f.json",
+        "forest.json",
+        "tutorial.json",
+        "volcano.json",
         "ruins.json",
         "wetland.json",
-        "volcano.json",
-        "tutorial.json",
-        "forest.json",
-        "guild2f.json",
         "city (1).json",
         "forest (1).json",
         "battle.json",
