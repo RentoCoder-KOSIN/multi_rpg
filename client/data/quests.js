@@ -246,6 +246,50 @@ export const QUESTS = {
         reward: { exp: 120000, gold: 25000, item: 'shield_seed' },
         area: 'wetland'
     },
+    // ===== 遺跡（湿地と火山の間）のマップクエスト =====
+    ruins_skeleton_hunt: {
+        id: 'ruins_skeleton_hunt',
+        title: '遺跡をさまよう亡者',
+        description: '古代遺跡をさまよう「遺跡の亡者」を20体倒せ。',
+        type: 'kill',
+        target: 'ruins_skeleton',
+        required: 20,
+        reward: { exp: 12000, gold: 5000, item: 'high_potion' },
+        area: 'ruins',
+        nextQuest: 'ruins_goblin_hunt'
+    },
+    ruins_goblin_hunt: {
+        id: 'ruins_goblin_hunt',
+        title: '盗掘者を追い払え',
+        description: '遺跡を荒らす「盗掘ゴブリン」を20体討伐せよ。毒に注意。',
+        type: 'kill',
+        target: 'ruins_goblin',
+        required: 20,
+        reward: { exp: 18000, gold: 7000, item: 'power_seed' },
+        area: 'ruins',
+        nextQuest: 'ruins_wolf_hunt'
+    },
+    ruins_wolf_hunt: {
+        id: 'ruins_wolf_hunt',
+        title: '遺跡の番犬',
+        description: '遺跡の奥を守る「遺跡の番犬」を15体狩れ。凍結に注意。',
+        type: 'kill',
+        target: 'ruins_wolf',
+        required: 15,
+        reward: { exp: 28000, gold: 10000, item: 'shield_seed' },
+        area: 'ruins',
+        nextQuest: 'ruins_boss_quest'
+    },
+    ruins_boss_quest: {
+        id: 'ruins_boss_quest',
+        title: '遺跡の守護者ゴーレム (Boss)',
+        description: '遺跡の最奥に眠るマップボス「遺跡の守護者ゴーレム」を討伐せよ。',
+        type: 'kill',
+        target: 'ruins_boss',
+        required: 1,
+        reward: { exp: 250000, gold: 40000, item: 'magic_seed' },
+        area: 'ruins'
+    },
     slime_massacre: {
         id: 'slime_massacre',
         title: 'スライム100人斬り',
@@ -264,7 +308,7 @@ export const QUESTS = {
 // ===== マップの進行（クエストで次のマップへ進む仕組み）=====
 //
 // 街から先のマップは、下の順番で「そのマップのクエストを全て達成」すると次のマップへ進める。
-//   forest（最初から行ける） → wetland → volcano
+//   forest（最初から行ける） → wetland → ruins → volcano
 // 進行の解放は2か所で実現している:
 //   1. 転移（街 → 次のマップ）: Tiled の Teleports の requiredQuest に、下の MAP_CLEAR_QUESTS をカンマ区切りで書く
 //      （city.json に設定済み。全て達成しないと通れない。utils/questGate.js が判定する）
@@ -273,12 +317,13 @@ export const QUESTS = {
 //
 // 新しいマップを足すときは、AREA_ORDER の末尾に足し、MAP_CLEAR_QUESTS にそのマップのクエストIDを並べ、
 // 街の該当 Teleports の requiredQuest に「前のマップのMAP_CLEAR_QUESTS」を書けばよい。
-export const AREA_ORDER = ['forest', 'wetland', 'volcano'];
+export const AREA_ORDER = ['forest', 'wetland', 'ruins', 'volcano'];
 
 // マップごとの「全部達成すると次のマップに進める」クエスト
 export const MAP_CLEAR_QUESTS = {
     forest: ['kill_forest_slime', 'forest_skeleton_hunt', 'forest_boss_quest'],
     wetland: ['wetland_red_slime', 'kill_goblin', 'swamp_boss_quest'],
+    ruins: ['ruins_skeleton_hunt', 'ruins_goblin_hunt', 'ruins_wolf_hunt', 'ruins_boss_quest'],
     volcano: ['kill_ghost', 'kill_orc', 'kill_dire_wolf', 'dragon_slayer'],
 };
 

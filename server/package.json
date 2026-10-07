@@ -2,6 +2,7 @@
   "scripts": {
     "start": "node server.js",
     "check": "node tools/checkContent.js",
+    "add-ruins": "node tools/addRuinsMap.js",
     "import-accounts": "node tools/importAccounts.js"
   },
   "engines": {

@@ -7,7 +7,7 @@ import DialogueManager from '../managers/DialogueManager.js';
 import NetworkManager from '../managers/NetworkManager.js';
 import { resolvePlayerSpawn } from '../utils/playerSpawn.js';
 import { createNPCsFromMap } from '../utils/npcFactory.js';
-import { setupTilemap } from '../utils/tilemapHelper.js';
+import { setupTilemap, addMapTilesets } from '../utils/tilemapHelper.js';
 import { setupMapCollisions } from '../utils/collisionHelper.js';
 import { setupCameraAndWorld } from '../utils/cameraHelper.js';
 import { setupTeleportsFromMap, updateTeleports } from '../utils/teleportHelper.js';
@@ -86,10 +86,9 @@ export default class BaseGameScene extends Phaser.Scene {
 
         // --- Map ---
         this.map = this.make.tilemap({ key: config.mapKey });
-        const tileset = this.map.addTilesetImage('tiles', 'tiles');
-        const waterTileset = this.map.addTilesetImage('water', 'water');
-        const lavaTileset = this.map.addTilesetImage('lava', 'lava');
-        const { collidableLayers } = setupTilemap(this, this.map, [tileset, waterTileset, lavaTileset]);
+        // タイルセットは画像のファイル名で結び付ける（Tiled上の名前が "waters" などでも水が表示される）
+        const tilesets = addMapTilesets(this, this.map, config.mapKey);
+        const { collidableLayers } = setupTilemap(this, this.map, tilesets);
         this.collidableLayers = collidableLayers;
 
         // --- Player ---

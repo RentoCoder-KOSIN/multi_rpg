@@ -23,6 +23,7 @@ const MAP_META = {
     city: { name: "街" },
     forest: { name: "森" },
     wetland: { name: "湿地" },
+    ruins: { name: "遺跡" },
     volcano: { name: "火山" },
     guild1f: { name: "ギルド1F" },
     guild2f: { name: "ギルド2F" },

@@ -1601,7 +1601,7 @@
                         {
                          "name":"requiredQuest",
                          "type":"string",
-                         "value":"ruins_skeleton_hunt,ruins_goblin_hunt,ruins_wolf_hunt,ruins_boss_quest"
+                         "value":"wetland_red_slime,kill_goblin,swamp_boss_quest"
                         }, 
                         {
                          "name":"targetMap",
@@ -1617,46 +1617,8 @@
                  "type":"",
                  "visible":true,
                  "width":32,
-                 "x":1790.30303030303,
-                 "y":3038.9696969697
-                }, 
-                {
-                 "height":29.3333333333335,
-                 "id":118,
-                 "name":"to_ruins",
-                 "opacity":1,
-                 "properties":[
-                        {
-                         "name":"destX",
-                         "type":"int",
-                         "value":210
-                        }, 
-                        {
-                         "name":"destY",
-                         "type":"int",
-                         "value":276
-                        }, 
-                        {
-                         "name":"requiredQuest",
-                         "type":"string",
-                         "value":"wetland_red_slime,kill_goblin,swamp_boss_quest"
-                        }, 
-                        {
-                         "name":"targetMap",
-                         "type":"string",
-                         "value":"ruins"
-                        }, 
-                        {
-                         "name":"unlocked",
-                         "type":"bool",
-                         "value":false
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":30,
-                 "x":132.848484848485,
-                 "y":2238.81818181818
+                 "x":126.666666666667,
+                 "y":2242
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1714,20 +1676,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":1799.63636363636,
-                 "y":2979.21212121212
-                }, 
-                {
-                 "height":0,
-                 "id":119,
-                 "name":"ruins",
-                 "opacity":1,
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
                  "x":236,
-                 "y":2260
+                 "y":2258
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1905,7 +1855,7 @@
          "y":0
         }],
  "nextlayerid":43,
- "nextobjectid":120,
+ "nextobjectid":118,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",
