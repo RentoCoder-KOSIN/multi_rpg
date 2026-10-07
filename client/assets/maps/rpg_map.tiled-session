@@ -41,9 +41,9 @@
                 37
             ],
             "expandedObjectLayers": [
-                41,
                 42,
                 35,
+                41,
                 40
             ],
             "scale": 0.5,
@@ -86,8 +86,8 @@
         },
         "forest.json": {
             "expandedObjectLayers": [
-                5,
-                9
+                9,
+                5
             ],
             "scale": 0.75,
             "selectedLayer": 2,
@@ -109,7 +109,7 @@
             "scale": 0.5254687499999999,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 479.57181088314013,
+                "x": 479.5718108831401,
                 "y": 479.5718108831401
             }
         },
@@ -144,8 +144,8 @@
             ],
             "expandedObjectLayers": [
                 6,
-                10,
-                12
+                12,
+                10
             ],
             "scale": 0.75,
             "selectedLayer": 7,
