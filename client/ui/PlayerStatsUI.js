@@ -124,6 +124,8 @@ export default class PlayerStatsUI {
             row('凍結付与率', pct(stats.freezeChance, 1)),
             row('麻痺付与率', pct(stats.paralyzeChance, 1)),
             row('毒付与率', `${pct(stats.poisonChance, 1)}${stats.poisonDamage ? `（毎${stats.poisonDamage}ダメ）` : ''}`),
+            stats.statusImmunity ? row('状態異常', '<span style="color:#00ff88;font-weight:bold;">完全無効</span>') : '',
+            row('状態異常耐性', `凍結 ${Math.min(100, (stats.statusResist?.freeze || 0) + (stats.allStatusResist || 0))}%  麻痺 ${Math.min(100, (stats.statusResist?.paralyze || 0) + (stats.allStatusResist || 0))}%  毒 ${Math.min(100, (stats.statusResist?.poison || 0) + (stats.allStatusResist || 0))}%`),
             (stats.knockback) ? row('ノックバック', `${stats.knockback}px`) : '',
             (stats.bonusAtk || stats.bonusDef) ? row('種の加算', `ATK+${stats.bonusAtk || 0} / DEF+${stats.bonusDef || 0}`) : '',
         ].join('');

@@ -35,6 +35,11 @@ function summarizeItemStats(item) {
         if (statObj.knockback) p.push(`ノックバック+${statObj.knockback}`);
         if (statObj.allElementDamage) p.push(`全属性+${statObj.allElementDamage}`);
         if (statObj.allElementResist) p.push(`全耐性+${statObj.allElementResist}%`);
+        if (statObj.statusImmunity) p.push('状態異常無効');
+        if (statObj.allStatusResist) p.push(`全異常耐性+${statObj.allStatusResist}%`);
+        if (statObj.freezeResist) p.push(`凍結耐性+${statObj.freezeResist}%`);
+        if (statObj.paralyzeResist) p.push(`麻痺耐性+${statObj.paralyzeResist}%`);
+        if (statObj.poisonResist) p.push(`毒耐性+${statObj.poisonResist}%`);
         if (statObj.cooldownMult) p.push(`スキルCT×${statObj.cooldownMult}`);
         if (statObj.mpCostMult !== undefined) p.push(`MP消費×${statObj.mpCostMult}`);
     };

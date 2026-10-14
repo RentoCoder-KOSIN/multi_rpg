@@ -43,6 +43,7 @@ import { beginSkillAim, releaseAim, cancelAim, updateAim } from '../systems/aim.
 import { showHitEffect } from '../systems/skillEffects.js';
 import { destroySummon } from '../systems/summons.js';
 import { addOtherPlayer, spawnEnemyFromServer } from '../systems/entitySetup.js';
+import { MapAtmosphere } from '../systems/mapAtmosphere.js';
 
 // ウィンドウが開いている間、Player.update()に「キー入力なし」を伝えるためのダミー。
 // nullを渡すとPlayer.update内のHP/MP自然回復や位置同期まで丸ごとスキップされてしまうため、
@@ -164,6 +165,10 @@ export default class BaseGameScene extends Phaser.Scene {
         // --- Camera ---
         setupCameraAndWorld(this, this.map, this.player);
 
+        // --- Map Atmosphere & Environmental Effects ---
+        this.mapAtmosphere = new MapAtmosphere(this, this.currentMapKey);
+        this.events.once('shutdown', () => this.shutdown());
+
         // --- UI and input ---
         this.dialogue = new DialogueManager(this);
         createGameKeys(this, config);
@@ -253,6 +258,7 @@ export default class BaseGameScene extends Phaser.Scene {
         updateTeleports(this, this.player, this.npcs, this.teleports);
 
         updateActiveSummons(this);
+        if (this.mapAtmosphere) this.mapAtmosphere.update(time, delta);
     }
 
     // --- Entry points used by UI / entities / NetworkManager ---
@@ -313,6 +319,10 @@ export default class BaseGameScene extends Phaser.Scene {
     }
 
     shutdown() {
+        if (this.mapAtmosphere) {
+            this.mapAtmosphere.destroy();
+            this.mapAtmosphere = null;
+        }
         // Do not clear other players on map change:
         // NetworkManager lives in the registry and is shared between scenes.
     }

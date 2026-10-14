@@ -680,6 +680,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.stats.goldMultiplier = 1.0;
         this.stats.knockback = 0;
 
+        // 状態異常耐性 (%) / 状態異常完全無効フラグ
+        this.stats.statusResist = { freeze: 0, paralyze: 0, poison: 0 };
+        this.stats.allStatusResist = 0;
+        this.stats.statusImmunity = false;
+
         // 属性耐性(%) / 属性固定加算ダメージ。{ 属性id: 値 } で持つので、属性を足しても書き換え不要
         this.stats.elementResist = {};
         this.stats.elementDamage = {};
@@ -814,6 +819,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
                     this.stats.elementResist[el] = (this.stats.elementResist[el] || 0) + val;
                 });
             }
+
+            // 状態異常耐性
+            if (s.freezeResist) this.stats.statusResist.freeze += getInt(s.freezeResist);
+            if (s.paralyzeResist) this.stats.statusResist.paralyze += getInt(s.paralyzeResist);
+            if (s.poisonResist) this.stats.statusResist.poison += getInt(s.poisonResist);
+            if (s.allStatusResist || s.statusResist) {
+                const sr = getInt(s.allStatusResist || s.statusResist);
+                this.stats.allStatusResist += sr;
+            }
+            if (s.statusImmunity) this.stats.statusImmunity = true;
 
             // 経験値倍率は加算方式
             if (item.expMultiplier) this.stats.expMultiplier += (item.expMultiplier - 1.0);
@@ -1379,6 +1394,36 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
      */
     applyStatusEffect(type, duration, tickDamage = 0) {
         if (!this.isLocal || !this.active) return;
+
+        // 状態異常完全無効化
+        if (this.stats.statusImmunity) {
+            if (this.scene.notificationUI) {
+                const labels = { freeze: '❄️凍結を防いだ！', paralyze: '⚡麻痺を防いだ！', poison: '☠️毒を防いだ！' };
+                this.scene.notificationUI.show(labels[type] || `${type}を防いだ！`, 'info');
+            }
+            return;
+        }
+
+        // 状態異常耐性値の計算 (個別耐性% + 全状態異常耐性%)
+        const specificResist = this.stats.statusResist?.[type] || 0;
+        const totalResist = Math.min(100, specificResist + (this.stats.allStatusResist || 0));
+        const resistRate = totalResist / 100;
+
+        // 100%以上の耐性、または確率抽選で成功した場合は無効化
+        if (totalResist >= 100 || (resistRate > 0 && Math.random() < resistRate)) {
+            if (this.scene.notificationUI) {
+                const labels = { freeze: '❄️凍結を防いだ！', paralyze: '⚡麻痺を防いだ！', poison: '☠️毒を防いだ！' };
+                this.scene.notificationUI.show(labels[type] || `${type}を防いだ！`, 'info');
+            }
+            return;
+        }
+
+        // 耐性がある場合は持続時間と毒ダメージを軽減
+        if (resistRate > 0) {
+            duration = Math.max(500, Math.round(duration * (1 - resistRate * 0.5)));
+            tickDamage = Math.max(1, Math.round(tickDamage * (1 - resistRate * 0.5)));
+        }
+
         const now = Date.now();
         this.statusEffects[type] = { endTime: now + duration, tickDamage };
 

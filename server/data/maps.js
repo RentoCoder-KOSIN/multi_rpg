@@ -27,6 +27,9 @@ const MAP_META = {
     volcano: { name: "火山" },
     guild1f: { name: "ギルド1F" },
     guild2f: { name: "ギルド2F" },
+    desert_city: { name: "砂漠の街" },
+    snow_city: { name: "雪の街" },
+    port_city: { name: "港町" },
 };
 
 // 昔のTiledデータで使われていた別名（小文字で比較する）

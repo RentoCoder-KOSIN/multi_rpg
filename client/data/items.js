@@ -68,9 +68,14 @@ export const ITEMS = {
             poisonChance: 1.0,
             poisonDamage: 999,
             deathChance: 0.8,
+            freezeResist: 100,
+            paralyzeResist: 100,
+            poisonResist: 100,
+            allStatusResist: 100,
+            statusImmunity: true,
         },
         description:
-            "【デバッグ用】あらゆる効果が極限付与された神の棒。超高速連射・5連マルチ攻撃・全属性・確定状態異常・防御無視・HP/MP吸収・リジェネを完備。",
+            "【デバッグ用】あらゆる効果が極限付与された神の棒。超高速連射・5連マルチ攻撃・全属性・確定状態異常・状態異常完全無効・防御無視・HP/MP吸収・リジェネを完備。",
     }),
 
     holy_weapon: defineItem({
@@ -681,11 +686,11 @@ export const ITEMS = {
     cheat_armor: defineItem({
         id: "cheat_armor",
         name: "悠久の守護神鎧",
-        description: "あらゆる攻撃を無効化する神の鎧。",
+        description: "あらゆる攻撃と状態異常を無効化する神の鎧。",
         price: 99999999,
         type: "armor",
         level: 100,
-        stats: { defense: 99999 },
+        stats: { defense: 99999, statusImmunity: true, allStatusResist: 100 },
     }),
     chain_mail: defineItem({
         id: "chain_mail",

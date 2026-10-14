@@ -40,6 +40,9 @@
 | `knockback` | 攻撃時に敵をノックバックさせる距離(px) | `knockback: 60` |
 | `allElementDamage` | 火・水・雷・風・土・光・闇の全属性固定追加ダメージ | `allElementDamage: 100` |
 | `allElementResist` | 全属性の耐性（%） | `allElementResist: 20` |
+| `freezeResist` / `paralyzeResist` / `poisonResist` | 凍結・麻痺・毒耐性（%）。100で完全無効 | `freezeResist: 50`（50%で防ぐ） |
+| `allStatusResist` / `statusResist` | 全状態異常耐性（%） | `allStatusResist: 30` |
+| `statusImmunity` | 全ての状態異常を完全に無効化 | `statusImmunity: true` |
 
 ## 装備区分
 

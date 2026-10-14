@@ -145,6 +145,65 @@ export default class MinimapUI {
         const g = this.entityGraphics;
         g.clear();
 
+        // 0. テレポートポータル (Cyan/Purple Diamond)
+        if (this.scene.teleports) {
+            this.scene.teleports.forEach(tp => {
+                const cx = tp.x + (tp.width || 32) / 2;
+                const cy = tp.y + (tp.height || 32) / 2;
+                const rx = (cx - player.x) * this.zoom + this.radius;
+                const ry = (cy - player.y) * this.zoom + this.radius;
+                if (this.isInside(rx, ry)) {
+                    const unlocked = tp.visual ? tp.visual.isUnlocked : tp.unlocked;
+                    const color = unlocked ? 0x00ffff : 0xff33aa;
+                    g.fillStyle(color, 1);
+                    g.beginPath();
+                    g.moveTo(rx, ry - 4);
+                    g.lineTo(rx + 4, ry);
+                    g.lineTo(rx, ry + 4);
+                    g.lineTo(rx - 4, ry);
+                    g.closePath();
+                    g.fillPath();
+                    g.lineStyle(1, 0xffffff, 0.9);
+                    g.strokePath();
+                }
+            });
+        }
+
+        // 0.5 施設 (Facilities - Shop / Blacksmith / Board)
+        if (this.scene.facilityZones) {
+            this.scene.facilityZones.forEach(f => {
+                const cx = f.zone.x + f.zone.width / 2;
+                const cy = f.zone.y + f.zone.height / 2;
+                const rx = (cx - player.x) * this.zoom + this.radius;
+                const ry = (cy - player.y) * this.zoom + this.radius;
+                if (this.isInside(rx, ry)) {
+                    g.fillStyle(0xbb55ff, 1);
+                    g.fillRect(rx - 2.5, ry - 2.5, 5, 5);
+                    g.lineStyle(1, 0xffffff, 0.8);
+                    g.strokeRect(rx - 2.5, ry - 2.5, 5, 5);
+                }
+            });
+        }
+
+        // 0.8 未開封の宝箱 (Gold Diamond)
+        if (this.scene.chestObjects) {
+            const opened = new Set(player.stats?.openedChests || []);
+            const mapKey = this.scene.currentMapKey || this.scene.map?.key;
+            this.scene.chestObjects.forEach(chest => {
+                const chestKey = `${mapKey}:${chest.id}`;
+                if (!opened.has(chestKey) && !chest.isOpened) {
+                    const rx = (chest.x - player.x) * this.zoom + this.radius;
+                    const ry = (chest.y - player.y) * this.zoom + this.radius;
+                    if (this.isInside(rx, ry)) {
+                        g.fillStyle(0xffd700, 1);
+                        g.fillCircle(rx, ry, 2.5);
+                        g.lineStyle(1, 0xffaa00, 0.8);
+                        g.strokeCircle(rx, ry, 2.5);
+                    }
+                }
+            });
+        }
+
         // 1. NPC (Yellow)
         g.fillStyle(0xffff00, 1);
         if (this.scene.npcs) {
@@ -153,7 +212,7 @@ export default class MinimapUI {
             });
         }
 
-        // 2. 他のプレイヤー (Blue)。パーティーメンバーは別色で目立たせるので後で描く
+        // 2. 他のプレイヤー (Blue)
         const partyIds = new Set(
             (this.scene.networkManager?.partyData?.members || []).map(m => m.id)
         );
@@ -165,20 +224,39 @@ export default class MinimapUI {
             });
         }
 
-        // 3. 敵 (Red)
-        g.fillStyle(0xff3300, 1);
+        // 3. 敵 (Red / Boss: Gold ring pulse)
         if (this.scene.networkManager) {
             const enemies = this.scene.networkManager.getEnemies();
             Object.values(enemies).forEach(e => {
-                if (e.active) this.drawDot(e.x, e.y, player, 2);
+                if (!e.active) return;
+                const isBoss = (e.type && e.type.includes('boss')) || (this.scene.boss === e);
+                const rx = (e.x - player.x) * this.zoom + this.radius;
+                const ry = (e.y - player.y) * this.zoom + this.radius;
+                if (this.isInside(rx, ry)) {
+                    if (isBoss) {
+                        g.fillStyle(0xff0044, 1);
+                        g.fillCircle(rx, ry, 4.5);
+                        g.lineStyle(1.5, 0xffff00, 0.9);
+                        g.strokeCircle(rx, ry, 4.5);
+                    } else {
+                        g.fillStyle(0xff3300, 1);
+                        g.fillCircle(rx, ry, 2);
+                    }
+                }
             });
         }
         if (this.scene.boss && this.scene.boss.active) {
-            this.drawDot(this.scene.boss.x, this.scene.boss.y, player, 4);
+            const rx = (this.scene.boss.x - player.x) * this.zoom + this.radius;
+            const ry = (this.scene.boss.y - player.y) * this.zoom + this.radius;
+            if (this.isInside(rx, ry)) {
+                g.fillStyle(0xff0044, 1);
+                g.fillCircle(rx, ry, 5);
+                g.lineStyle(1.5, 0xffff00, 1);
+                g.strokeCircle(rx, ry, 5);
+            }
         }
 
-        // 3.5 パーティーメンバー (Orange + white ring)。ミニマップの範囲外にいる場合は
-        // 円の縁に寄せて表示し、おおよその方角がわかるようにする
+        // 3.5 パーティーメンバー (Orange + white ring)
         if (this.scene.networkManager && partyIds.size > 1) {
             const others = this.scene.networkManager.getOtherPlayers();
             const rim = this.radius - 5;
@@ -196,20 +274,36 @@ export default class MinimapUI {
             });
         }
 
-        // 4. 自分 (Center Green)
+        // 4. 自分 (Center Green) & 向きインジケータ
         g.fillStyle(0x00ff00, 1);
         g.fillCircle(this.radius, this.radius, 4);
 
-        // 向き
-        const angle = player.rotation || 0;
-        g.lineStyle(2, 0x00ff00, 1);
+        // 向き（移動中なら速度ベクトル、静止時は facingDirection）
+        const vx = player.body?.velocity?.x || 0;
+        const vy = player.body?.velocity?.y || 0;
+        let angle = 0;
+        if (Math.hypot(vx, vy) > 5) {
+            angle = Math.atan2(vy, vx);
+        } else {
+            angle = (player.facingDirection === -1) ? Math.PI : 0;
+        }
+
+        const arrowDist = 11;
+        const tipX = this.radius + Math.cos(angle) * arrowDist;
+        const tipY = this.radius + Math.sin(angle) * arrowDist;
+        const leftX = this.radius + Math.cos(angle + 2.5) * 6;
+        const leftY = this.radius + Math.sin(angle + 2.5) * 6;
+        const rightX = this.radius + Math.cos(angle - 2.5) * 6;
+        const rightY = this.radius + Math.sin(angle - 2.5) * 6;
+
+        g.fillStyle(0x00ff88, 1);
         g.beginPath();
-        g.moveTo(this.radius, this.radius);
-        g.lineTo(
-            this.radius + Math.cos(angle) * 10,
-            this.radius + Math.sin(angle) * 10
-        );
-        g.strokePath();
+        g.moveTo(tipX, tipY);
+        g.lineTo(leftX, leftY);
+        g.lineTo(this.radius, this.radius);
+        g.lineTo(rightX, rightY);
+        g.closePath();
+        g.fillPath();
     }
 
     drawDot(worldX, worldY, player, dotSize) {
