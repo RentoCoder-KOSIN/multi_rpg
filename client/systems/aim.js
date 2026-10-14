@@ -47,7 +47,7 @@ function canAim(scene) {
  */
 export function beginBasicAim(scene, owner, keyObj = null) {
     if (!canAim(scene)) return;
-    scene.aimState = { owner, kind: 'basic', keyObj };
+    scene.aimState = { owner, kind: 'basic', keyObj, pressStartTime: scene.time ? scene.time.now : Date.now() };
     scene.aimGfx.setVisible(true);
 }
 
@@ -110,6 +110,14 @@ export function updateAim(scene) {
     gfx.clear();
 
     if (state.kind === 'basic') {
+        // 長押し連射: 200ms以上押し続けている場合、攻撃間隔(cooldown)ごとに通常攻撃を自動実行する
+        const now = scene.time.now;
+        const { cooldown } = findBasicAttackTargets(scene, player);
+        if (state.pressStartTime && (now - state.pressStartTime >= 200)) {
+            if (!player.lastAttackTime || now - player.lastAttackTime >= cooldown) {
+                performBasicAttack(scene);
+            }
+        }
         drawBasicAim(scene, gfx, player);
     } else {
         drawSkillAim(scene, gfx, player, state.skillId);

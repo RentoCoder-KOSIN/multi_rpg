@@ -15,15 +15,58 @@ import { COMBAT_CONFIG } from '../gameConstants.js';
 // 職業が未設定（none）などのときに使う通常攻撃の既定値。職業ごとの値は data/jobs.js の attackRange / attackHit
 const DEFAULT_BASIC_ATTACK_RANGE = 80;
 
-// 通常攻撃の距離と命中方式を、現在の職業から取得する
+// 通常攻撃の距離と命中方式を、現在の職業と装備から取得する
 function getBasicAttackSpec(player) {
     const job = JOBS[player.stats?.job];
+    const rangeBonus = player.stats?.attackRangeBonus || 0;
+    const hitMode = (player.stats?.forceAreaAttack) ? 'area' : (job?.attackHit ?? 'area');
+    const cdMult = (job?.attackCooldownMult ?? 1) * (player.stats?.attackCooldownMult ?? 1);
     return {
-        range: job?.attackRange ?? DEFAULT_BASIC_ATTACK_RANGE,
-        hit: job?.attackHit ?? 'area',
-        // 通常攻撃の間隔（職業の attackCooldownMult で速さが変わる）
-        cooldown: BASIC_ATTACK_COOLDOWN_MS * (job?.attackCooldownMult ?? 1)
+        range: Math.max(20, (job?.attackRange ?? DEFAULT_BASIC_ATTACK_RANGE) + rangeBonus),
+        hit: hitMode,
+        // 通常攻撃の間隔（職業と装備の attackCooldownMult で速さが変わる、下限50ms）
+        cooldown: Math.max(50, Math.floor(BASIC_ATTACK_COOLDOWN_MS * cdMult))
     };
+}
+
+// HP吸収(lifesteal)、MP吸収(manaSteal)、ノックバック(knockback)の共通処理
+function applyCombatVampAndKnockback(scene, player, enemy, damage) {
+    if (!damage || damage <= 0) return;
+
+    // HP吸収
+    if (player.stats?.lifesteal > 0) {
+        const heal = Math.ceil(damage * player.stats.lifesteal);
+        player.stats.hp = Math.min(player.stats.maxHp, player.stats.hp + heal);
+        const healText = scene.add.text(player.x, player.y - 40, `+${heal}`, {
+            fontSize: '12px', color: '#00ff00', fontFamily: UI_FONT
+        }).setOrigin(0.5);
+        scene.tweens.add({ targets: healText, y: player.y - 80, alpha: 0, duration: 800, onComplete: () => healText.destroy() });
+    }
+
+    // MP吸収
+    if (player.stats?.manaSteal > 0) {
+        const mpHeal = Math.ceil(damage * player.stats.manaSteal);
+        player.stats.mp = Math.min(player.stats.maxMp, player.stats.mp + mpHeal);
+        const mpText = scene.add.text(player.x, player.y - 55, `+${mpHeal} MP`, {
+            fontSize: '12px', color: '#00ccff', fontFamily: UI_FONT
+        }).setOrigin(0.5);
+        scene.tweens.add({ targets: mpText, y: player.y - 95, alpha: 0, duration: 800, onComplete: () => mpText.destroy() });
+    }
+
+    // ノックバック
+    if (player.stats?.knockback > 0 && enemy && enemy.active && enemy.x !== undefined && enemy.y !== undefined) {
+        const angle = Phaser.Math.Angle.Between(player.x, player.y, enemy.x, enemy.y);
+        const dist = player.stats.knockback;
+        const targetX = enemy.x + Math.cos(angle) * dist;
+        const targetY = enemy.y + Math.sin(angle) * dist;
+        scene.tweens.add({
+            targets: enemy,
+            x: targetX,
+            y: targetY,
+            duration: 100,
+            ease: 'Cubic.easeOut'
+        });
+    }
 }
 
 // 通常攻撃の届く範囲を一瞬だけ輪で見せる（職業ごとの射程の違いが分かるように）
@@ -213,18 +256,32 @@ export function performBasicAttack(scene) {
     enemies.forEach(enemy => {
         if (!enemy || !enemy.active) return;
 
-        const damageData = player.getDamage(COMBAT_CONFIG.BASIC_ATTACK_MULT, enemy);
-        const damage = damageData.amount;
+        const hits = Math.max(1, player.stats?.multiHit || 1);
+        for (let hitIndex = 0; hitIndex < hits; hitIndex++) {
+            const executeHit = () => {
+                if (!enemy || !enemy.active) return;
 
-        const effects = {};
-        if (damageData.isFreeze) effects.freezeMs = FREEZE_DURATION_MS;
-        else if (damageData.isParalyze) effects.paralyzeMs = PARALYZE_DURATION_MS;
-        enemy.takeDamage(damage, player, Object.keys(effects).length ? effects : null, buildHitInfo(damageData));
-        enemy.lastHitTime = now;
+                const damageData = player.getDamage(COMBAT_CONFIG.BASIC_ATTACK_MULT, enemy);
+                const damage = damageData.amount;
 
-        applyHitEffects(scene, enemy, player, damageData);
+                const effects = {};
+                if (damageData.isFreeze) effects.freezeMs = FREEZE_DURATION_MS;
+                else if (damageData.isParalyze) effects.paralyzeMs = PARALYZE_DURATION_MS;
+                enemy.takeDamage(damage, player, Object.keys(effects).length ? effects : null, buildHitInfo(damageData));
+                enemy.lastHitTime = scene.time.now;
 
-        if (areEffectsEnabled(scene)) scene.cameras.main.shake(100, 0.005);
+                applyHitEffects(scene, enemy, player, damageData);
+                applyCombatVampAndKnockback(scene, player, enemy, damage);
+
+                if (areEffectsEnabled(scene)) scene.cameras.main.shake(100, 0.005);
+            };
+
+            if (hitIndex === 0) {
+                executeHit();
+            } else {
+                scene.time.delayedCall(hitIndex * 60, executeHit);
+            }
+        }
     });
 
     player.lastAttackTime = now;
@@ -509,35 +566,39 @@ function applyDamageSkill(scene, skill, { enemies, range, rangeType, direction, 
     const targets = selectSkillTargets(player, skill, { enemies, range, rangeType, direction });
 
     targets.forEach(enemy => {
-        const damageData = player.getDamage(damageMultiplier, enemy, skill.element || null);
-        let damage = damageData.amount;
-        const statusEffects = mergeStatusEffects(damageData, getSkillStatusEffects(skill, player));
+        const hits = Math.max(1, player.stats?.multiHit || 1);
+        for (let hitIndex = 0; hitIndex < hits; hitIndex++) {
+            const executeSkillHit = () => {
+                if (!enemy || !enemy.active) return;
 
-        // アンデッド特効（エクソシズムなど effect.vsUndead を持つスキル）
-        if (skill.effect?.vsUndead && UNDEAD_ENEMY_TYPES.includes(enemy.type)) {
-            damage = Math.ceil(damage * skill.effect.vsUndead);
+                const damageData = player.getDamage(damageMultiplier, enemy, skill.element || null);
+                let damage = damageData.amount;
+                const statusEffects = mergeStatusEffects(damageData, getSkillStatusEffects(skill, player));
+
+                // アンデッド特効（エクソシズムなど effect.vsUndead を持つスキル）
+                if (skill.effect?.vsUndead && UNDEAD_ENEMY_TYPES.includes(enemy.type)) {
+                    damage = Math.ceil(damage * skill.effect.vsUndead);
+                }
+
+                enemy.takeDamage(damage, player, Object.keys(statusEffects).length ? statusEffects : null, buildHitInfo(damageData));
+
+                applyHitEffects(scene, enemy, player, {
+                    ...damageData,
+                    isFreeze: !!statusEffects.freezeMs,
+                    isParalyze: !!statusEffects.paralyzeMs,
+                    isPoison: !!statusEffects.poisonMs,
+                    poisonTick: statusEffects.poisonTick || damageData.poisonTick,
+                });
+
+                applyCombatVampAndKnockback(scene, player, enemy, damage);
+                showHitEffect(scene, enemy.x, enemy.y, skill.color || 0xffffff);
+            };
+
+            if (hitIndex === 0) {
+                executeSkillHit();
+            } else {
+                scene.time.delayedCall(hitIndex * 60, executeSkillHit);
+            }
         }
-
-        enemy.takeDamage(damage, player, Object.keys(statusEffects).length ? statusEffects : null, buildHitInfo(damageData));
-
-        applyHitEffects(scene, enemy, player, {
-            ...damageData,
-            isFreeze: !!statusEffects.freezeMs,
-            isParalyze: !!statusEffects.paralyzeMs,
-            isPoison: !!statusEffects.poisonMs,
-            poisonTick: statusEffects.poisonTick || damageData.poisonTick,
-        });
-
-        // Lifesteal
-        if (player.stats.lifesteal > 0) {
-            const heal = Math.ceil(damage * player.stats.lifesteal);
-            player.stats.hp = Math.min(player.stats.maxHp, player.stats.hp + heal);
-            const healText = scene.add.text(player.x, player.y - 40, `+${heal}`, {
-                fontSize: '12px', color: '#00ff00', fontFamily: UI_FONT
-            }).setOrigin(0.5);
-            scene.tweens.add({ targets: healText, y: player.y - 80, alpha: 0, duration: 800, onComplete: () => healText.destroy() });
-        }
-
-        showHitEffect(scene, enemy.x, enemy.y, skill.color || 0xffffff);
     });
 }

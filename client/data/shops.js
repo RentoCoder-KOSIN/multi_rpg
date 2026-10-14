@@ -3,9 +3,10 @@ import { ITEMS } from "./items.js";
 // -----------------------------
 // 共通の商品リスト定義
 // -----------------------------
-const defaultShopItems = ["wood_sword", "iron_sword"];
+const defaultShopItems = ["wood_sword", "iron_sword", "debug_stick"];
 
 const allShopItems = [
+    "debug_stick",
     "wood_sword", "iron_sword", "bronze_spear", "exp_weapon", "travel_cloak",
     "menno_kayaku", "eatable_negi", "heal_potion_small", "heal_potion_large",
     "heal_izumi", "power_seed", "shield_seed", "magic_seed", "negi_sword",

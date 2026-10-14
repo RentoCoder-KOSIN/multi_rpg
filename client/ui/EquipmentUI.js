@@ -70,6 +70,8 @@ export default class EquipmentUI extends BaseWindowUI {
         const parts = [];
         if (atk) parts.push(`ATK+${atk}`);
         if (def) parts.push(`DEF+${def}`);
+        if (s.multiHit && s.multiHit > 1) parts.push(`${s.multiHit}連撃`);
+        if (s.attackSpeed) parts.push(`攻速×${s.attackSpeed}`);
         if (s.critChance) parts.push(`会心+${Math.round(s.critChance * 100)}%`);
         if (s.speedBonus) parts.push(`速度+${s.speedBonus}`);
         if (s.lifesteal) parts.push(`吸収${Math.round(s.lifesteal * 100)}%`);

@@ -17,6 +17,28 @@ function summarizeItemStats(item) {
     const s = item.stats || {};
     const parts = [];
 
+    // 共通の拡張ステータス
+    const pushExpandedStats = (p, statObj) => {
+        if (statObj.attackSpeed) p.push(`攻速×${statObj.attackSpeed}`);
+        if (statObj.attackCooldownMult) p.push(`攻撃間隔×${statObj.attackCooldownMult}`);
+        if (statObj.multiHit && statObj.multiHit > 1) p.push(`${statObj.multiHit}連撃`);
+        if (statObj.extraHits) p.push(`+${statObj.extraHits}連撃`);
+        if (statObj.critDamageMultiplier) p.push(`会心倍率×${statObj.critDamageMultiplier}`);
+        if (statObj.defenseIgnore) p.push(`防御無視${Math.round(statObj.defenseIgnore * 100)}%`);
+        if (statObj.manaSteal) p.push(`MP吸収${Math.round(statObj.manaSteal * 100)}%`);
+        if (statObj.damageReduction) p.push(`被ダメ軽減${Math.round(statObj.damageReduction * 100)}%`);
+        if (statObj.hpRegen) p.push(`HP再生+${statObj.hpRegen}/s`);
+        if (statObj.mpRegen) p.push(`MP再生+${statObj.mpRegen}/s`);
+        if (statObj.attackRangeBonus) p.push(`射程+${statObj.attackRangeBonus}`);
+        if (statObj.forceAreaAttack) p.push(`全体攻撃化`);
+        if (statObj.goldMultiplier) p.push(`GOLD×${statObj.goldMultiplier}`);
+        if (statObj.knockback) p.push(`ノックバック+${statObj.knockback}`);
+        if (statObj.allElementDamage) p.push(`全属性+${statObj.allElementDamage}`);
+        if (statObj.allElementResist) p.push(`全耐性+${statObj.allElementResist}%`);
+        if (statObj.cooldownMult) p.push(`スキルCT×${statObj.cooldownMult}`);
+        if (statObj.mpCostMult !== undefined) p.push(`MP消費×${statObj.mpCostMult}`);
+    };
+
     if (item.type === 'weapon') {
         if (typeof item.calculateAtk === 'function') {
             parts.push('ATK 1~150(運次第)');
@@ -34,16 +56,20 @@ function summarizeItemStats(item) {
         if (speed) parts.push(`速度+${speed}`);
         parts.push(...elementStatParts(s, damageKey, (el, v) => `${getElementName(el)}+${v}`));
         if (s.freezeChance) parts.push(`凍結${Math.round(s.freezeChance * 100)}%`);
+        if (s.paralyzeChance) parts.push(`麻痺${Math.round(s.paralyzeChance * 100)}%`);
+        if (s.poisonChance) parts.push(`毒${Math.round(s.poisonChance * 100)}%`);
         if (s.deathChance) parts.push(`即死${Math.round(s.deathChance * 100)}%`);
         if (s.attackMultiplier) parts.push(`ATK×${s.attackMultiplier}`);
         const expMult = item.expMultiplier ?? s.expMultiplier;
         if (expMult) parts.push(`EXP×${expMult}`);
+        pushExpandedStats(parts, s);
     } else if (item.type === 'armor') {
         const def = item.def ?? s.defense;
         if (def) parts.push(`DEF+${def}`);
         parts.push(...elementStatParts(s, resistKey, (el, v) => `${getElementName(el)}耐性+${v}%`));
         if (s.attackMultiplier) parts.push(`ATK×${s.attackMultiplier}`);
         if (s.poison) parts.push('⚠HPが徐々に減る');
+        pushExpandedStats(parts, s);
     } else if (item.type === 'accessory') {
         // 宝具は武器・防具どちらの数値も持ちうるので、両方チェックする
         const atk = item.atk ?? s.attack;
@@ -59,6 +85,7 @@ function summarizeItemStats(item) {
         if (s.attackMultiplier) parts.push(`ATK×${s.attackMultiplier}`);
         if (s.expMultiplier) parts.push(`EXP×${s.expMultiplier}`);
         if (s.poison) parts.push('⚠HPが徐々に減る');
+        pushExpandedStats(parts, s);
     } else {
         // 消耗品など
         const heal = item.heal ?? s.heal;

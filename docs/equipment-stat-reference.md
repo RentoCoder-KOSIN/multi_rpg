@@ -23,6 +23,23 @@
 | `freezeChance` / `paralyzeChance` | 凍結・麻痺の発生率。0〜1 | `freezeChance: 0.15` |
 | `poisonChance` / `poisonDamage` | 毒の発生率と1回あたりのダメージ | `poisonChance: 0.1` |
 | `deathChance` | 即死効果の発生率。0〜1 | `deathChance: 0.05` |
+| `attackSpeed` | 通常攻撃の速度倍率（攻撃間隔が 1/倍率 に短縮） | `attackSpeed: 2.0`（2倍速） |
+| `attackCooldownMult` | 通常攻撃の間隔倍率（小さいほど高速連打） | `attackCooldownMult: 0.5` |
+| `multiHit` / `extraHits` | マルチ攻撃。1回の攻撃で発生する連続ヒット数 | `multiHit: 3`（3連撃） |
+| `attackRangeBonus` | 通常攻撃の射程増加(px) | `attackRangeBonus: 50` |
+| `forceAreaAttack` | 通常攻撃を全敵マルチターゲット（範囲攻撃）化 | `forceAreaAttack: true` |
+| `critDamageMultiplier` | 会心時のダメージ倍率（デフォルトは1.5倍） | `critDamageMultiplier: 3.0` |
+| `defenseIgnore` / `armorPenetration` | 敵の防御力を無視する割合。0〜1 | `defenseIgnore: 0.5`（50%無視） |
+| `manaSteal` | 与ダメージのMP吸収率。0〜1 | `manaSteal: 0.05`（5%） |
+| `damageReduction` | 敵から受けるダメージの軽減率。0〜1 | `damageReduction: 0.3`（30%カット） |
+| `hpRegen` / `mpRegen` | 毎秒のHP/MP自然回復量固定加算 | `hpRegen: 50` |
+| `cooldownMult` | スキルのクールダウン短縮倍率 | `cooldownMult: 0.5`（半減） |
+| `mpCostMult` | スキルのMP消費倍率 | `mpCostMult: 0`（消費なし） |
+| `healPowerMult` | 回復スキルの回復量倍率 | `healPowerMult: 1.5` |
+| `goldMultiplier` | モンスター撃破等の獲得GOLD倍率 | `goldMultiplier: 2.0` |
+| `knockback` | 攻撃時に敵をノックバックさせる距離(px) | `knockback: 60` |
+| `allElementDamage` | 火・水・雷・風・土・光・闇の全属性固定追加ダメージ | `allElementDamage: 100` |
+| `allElementResist` | 全属性の耐性（%） | `allElementResist: 20` |
 
 ## 装備区分
 

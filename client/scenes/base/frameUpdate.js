@@ -59,11 +59,16 @@ export function regenerateMp(scene, time) {
         return;
     }
 
-    // Once per second: 1% of max MP + MEN / 5
+    // Once per second: 1% of max MP + MEN / 5 + mpRegen
     if (!scene._lastMpRegen || time - scene._lastMpRegen > MP_REGEN_INTERVAL_MS) {
-        const regenAmount = Math.max(1, Math.floor(stats.maxMp * 0.01) + Math.floor(stats.men / 5));
+        const baseRegen = Math.max(1, Math.floor(stats.maxMp * 0.01) + Math.floor(stats.men / 5));
+        const totalMpRegen = baseRegen + (stats.mpRegen || 0);
         if (stats.mp < stats.maxMp) {
-            stats.mp = Math.min(stats.maxMp, stats.mp + regenAmount);
+            stats.mp = Math.min(stats.maxMp, stats.mp + totalMpRegen);
+        }
+        // HP自然回復 (hpRegen)
+        if (stats.hpRegen && stats.hpRegen > 0 && stats.hp < stats.maxHp) {
+            stats.hp = Math.min(stats.maxHp, stats.hp + stats.hpRegen);
         }
         scene._lastMpRegen = time;
     }

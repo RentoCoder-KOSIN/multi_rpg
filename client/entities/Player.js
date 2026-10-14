@@ -431,7 +431,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     gainGold(amount) {
         if (!this.isLocal) return;
-        amount = Math.ceil(amount * getRebirthRewardMult(this.stats.reincarnationCount || 0)); // 周回ボーナス
+        const goldMult = (this.stats.goldMultiplier || 1.0) * getRebirthRewardMult(this.stats.reincarnationCount || 0);
+        amount = Math.ceil(amount * goldMult); // 周回ボーナス・装備ボーナス
         this.stats.gold += amount;
         this.saveStats();
         if (this.scene.notificationUI) {
@@ -666,6 +667,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // 装備由来の特殊効果（毎回リセットしてから再計算する）
         this.stats.atkMultiplier = 1.0;
+        this.stats.attackCooldownMult = 1.0;
+        this.stats.multiHit = 1;
+        this.stats.attackRangeBonus = 0;
+        this.stats.forceAreaAttack = false;
+        this.stats.critDamageMultiplier = COMBAT_CONFIG.CRIT_MULTIPLIER;
+        this.stats.defenseIgnore = 0;
+        this.stats.manaSteal = 0;
+        this.stats.damageReduction = 0;
+        this.stats.hpRegen = 0;
+        this.stats.mpRegen = 0;
+        this.stats.goldMultiplier = 1.0;
+        this.stats.knockback = 0;
+
         // 属性耐性(%) / 属性固定加算ダメージ。{ 属性id: 値 } で持つので、属性を足しても書き換え不要
         this.stats.elementResist = {};
         this.stats.elementDamage = {};
@@ -728,6 +742,78 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
                 this.stats.atkMultiplier *= (power < 1 ? Math.round(m * 100) / 100 : m);
             }
             if (s.poison) this.stats.poisonEquipped = true;
+
+            // 攻撃速度 (attackSpeed: 倍率 / attackCooldownMult: クールダウン倍率)
+            if (s.attackSpeed) {
+                const spd = (power < 1 ? 1 + (s.attackSpeed - 1) * power : s.attackSpeed);
+                if (spd > 0) this.stats.attackCooldownMult *= (1 / spd);
+            }
+            if (s.attackCooldownMult) {
+                const m = (power < 1 ? 1 - (1 - s.attackCooldownMult) * power : s.attackCooldownMult);
+                this.stats.attackCooldownMult *= Math.max(0.05, m);
+            }
+
+            // スキルクールダウン短縮 / スキルMP消費 / 回復量倍率
+            if (s.cooldownMult !== undefined) {
+                const m = (power < 1 ? 1 - (1 - s.cooldownMult) * power : s.cooldownMult);
+                this.stats.cooldownMult *= Math.max(0.05, m);
+            }
+            if (s.mpCostMult !== undefined) {
+                const m = (power < 1 ? 1 - (1 - s.mpCostMult) * power : s.mpCostMult);
+                this.stats.mpCostMult *= Math.max(0, m);
+            }
+            if (s.healPowerMult !== undefined) {
+                const m = (power < 1 ? 1 + (s.healPowerMult - 1) * power : s.healPowerMult);
+                this.stats.healPowerMult *= m;
+            }
+
+            // マルチ攻撃（多段ヒット）
+            if (s.multiHit) this.stats.multiHit += (getInt(s.multiHit) - 1);
+            if (s.extraHits) this.stats.multiHit += getInt(s.extraHits);
+
+            // 攻撃射程増加 / 単体職でも強制範囲攻撃化
+            if (s.attackRangeBonus) this.stats.attackRangeBonus += getInt(s.attackRangeBonus);
+            if (s.forceAreaAttack) this.stats.forceAreaAttack = true;
+
+            // 会心ダメージ倍率強化
+            if (s.critDamageMultiplier) {
+                const bonus = (s.critDamageMultiplier - COMBAT_CONFIG.CRIT_MULTIPLIER) * power;
+                this.stats.critDamageMultiplier += Math.max(0, bonus);
+            }
+
+            // 防御無視 / 貫通 (0〜1)
+            if (s.defenseIgnore) this.stats.defenseIgnore = Math.min(1.0, this.stats.defenseIgnore + getRate(s.defenseIgnore));
+            if (s.armorPenetration) this.stats.defenseIgnore = Math.min(1.0, this.stats.defenseIgnore + getRate(s.armorPenetration));
+
+            // MP吸収 (0〜1)
+            if (s.manaSteal) this.stats.manaSteal += getRate(s.manaSteal);
+
+            // 被ダメージ軽減 (0〜1)
+            if (s.damageReduction) this.stats.damageReduction = Math.min(1.0, this.stats.damageReduction + getRate(s.damageReduction));
+
+            // HP / MP 自動回復
+            if (s.hpRegen) this.stats.hpRegen += getInt(s.hpRegen);
+            if (s.mpRegen) this.stats.mpRegen += getInt(s.mpRegen);
+
+            // ゴールド獲得倍率
+            if (s.goldMultiplier) this.stats.goldMultiplier += (getVal(s.goldMultiplier) - 1.0);
+
+            // ノックバック
+            if (s.knockback) this.stats.knockback += getInt(s.knockback);
+
+            // 全属性ダメージ / 全属性耐性
+            if (s.allElementDamage) {
+                const val = getInt(s.allElementDamage);
+                ELEMENTS.forEach(el => {
+                    this.stats.elementDamage[el] = (this.stats.elementDamage[el] || 0) + val;
+                });
+            }
+            if (s.allElementResist) {
+                const val = getInt(s.allElementResist);
+                ELEMENTS.forEach(el => {
+                    this.stats.elementResist[el] = (this.stats.elementResist[el] || 0) + val;
+                });
+            }
 
             // 経験値倍率は加算方式
             if (item.expMultiplier) this.stats.expMultiplier += (item.expMultiplier - 1.0);
@@ -839,7 +925,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         // クリティカル判定
         const isCrit = Math.random() < Math.min(this.stats.critChance || 0, COMBAT_CONFIG.CRIT_CHANCE_CAP);
         if (isCrit) {
-            amount = Math.ceil(amount * COMBAT_CONFIG.CRIT_MULTIPLIER);
+            const critMult = this.stats.critDamageMultiplier || COMBAT_CONFIG.CRIT_MULTIPLIER;
+            amount = Math.ceil(amount * critMult);
         }
 
         amount += elementalBonus;
@@ -857,7 +944,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const isElementWeak = affinityMult < 1.0;
 
         // 敵の防御力による軽減（フラット減算。プレイヤーが受けるダメージの計算式と揃えてある）
-        const targetDef = target ? (target.def ?? target.stats?.def ?? 0) : 0;
+        let targetDef = target ? (target.def ?? target.stats?.def ?? 0) : 0;
+        if (this.stats.defenseIgnore > 0) {
+            targetDef = Math.floor(targetDef * Math.max(0, 1 - this.stats.defenseIgnore));
+        }
         if (targetDef > 0) {
             amount = Math.max(1, amount - targetDef);
         }
@@ -1256,7 +1346,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         // 周回による難易度上昇: 転生回数に応じて敵から受けるダメージが増える（gameConstants.js 参照）
         finalAmount *= getRebirthDamageTakenMult(this.stats.reincarnationCount || 0);
 
-        finalAmount = Math.max(1, Math.round(finalAmount));
+        // 装備による被ダメージ軽減 (damageReduction)
+        if (this.stats.damageReduction > 0) {
+            finalAmount *= Math.max(0, 1 - this.stats.damageReduction);
+        }
+
+        finalAmount = Math.max(this.stats.damageReduction >= 1 ? 0 : 1, Math.round(finalAmount));
 
         this.stats.hp = Math.max(0, this.stats.hp - finalAmount);
         this.saveStats();
