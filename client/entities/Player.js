@@ -149,7 +149,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             // 旧セーブデータ（relicキーが無い）でも weapon/armor はそのまま引き継ぎつつ
             // relic だけ null で補える。
             equipment: { weapon: null, armor: null, relic: null, ...(saved.equipment || {}) },
-            // 強化レベル: { 'weapon': 3, 'armor': 2, 'relic': 0 } のように装備スロットごとに管理
+            // 強化レベル: アイテムIDごとに管理（装備変更で他装備がMAXにならないよう個別保持）
+            itemEnhanceLevels: (saved.itemEnhanceLevels && typeof saved.itemEnhanceLevels === 'object')
+                ? { ...saved.itemEnhanceLevels }
+                : {},
             enhanceLevels: (saved.enhanceLevels && typeof saved.enhanceLevels === 'object')
                 ? { weapon: 0, armor: 0, relic: 0, ...saved.enhanceLevels }
                 : { weapon: 0, armor: 0, relic: 0 },
@@ -1044,14 +1047,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             });
         });
 
-        // 強化ボーナスを適用（装備スロットごとの enhanceLevel × 5%）
+        // 強化ボーナスを適用（アイテムごとの enhanceLevel × 5%）
         // ※ 属性ボーナスを含む全装備補正が確定した後に加算する。
         const enhSlots = ['weapon', 'armor', 'relic'];
         enhSlots.forEach(slot => {
-            const enhLv = this.stats.enhanceLevels?.[slot] || 0;
-            if (!enhLv) return;
-            const enhItem = ITEMS[this.stats.equipment[slot]];
+            const itemId = this.stats.equipment[slot];
+            if (!itemId) return;
+            const enhItem = ITEMS[itemId];
             if (!enhItem) return;
+            const enhLv = this.getEnhanceLevel(itemId);
+            if (!enhLv) return;
             const enhS = enhItem.stats || {};
             const bonus = enhLv * 0.05; // 1レベルにつき +5%
             const baseItemAtk = isMagical
@@ -1098,6 +1103,24 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     /**
+     * 装備またはスロットの強化レベルを取得する
+     * @param {string} slotOrItemId - 'weapon' | 'armor' | 'relic' または アイテムID
+     */
+    getEnhanceLevel(slotOrItemId) {
+        if (!slotOrItemId) return 0;
+        let itemId = slotOrItemId;
+        if (slotOrItemId === 'weapon' || slotOrItemId === 'armor' || slotOrItemId === 'relic') {
+            itemId = this.stats.equipment[slotOrItemId];
+        }
+        if (!itemId) return 0;
+        // アイテムごとの強化値を優先
+        if (this.stats.itemEnhanceLevels && this.stats.itemEnhanceLevels[itemId] !== undefined) {
+            return this.stats.itemEnhanceLevels[itemId];
+        }
+        return 0;
+    }
+
+    /**
      * 装備強化
      * @param {string} slot - 'weapon' | 'armor' | 'relic'
      * @param {string} stoneId - 'enhance_stone_1' | 'enhance_stone_2' | 'enhance_stone_3'
@@ -1111,8 +1134,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             return { success: false };
         }
 
+        if (!this.stats.itemEnhanceLevels) this.stats.itemEnhanceLevels = {};
         if (!this.stats.enhanceLevels) this.stats.enhanceLevels = { weapon: 0, armor: 0, relic: 0 };
-        const currentLevel = this.stats.enhanceLevels[slot] || 0;
+        const currentLevel = this.getEnhanceLevel(itemId);
 
         // 石の種類ごとの上限
         const stoneLimits = {
@@ -1167,22 +1191,30 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const roll = Math.random();
         if (roll < successRate) {
             // 成功！
-            this.stats.enhanceLevels[slot] = currentLevel + 1;
+            const newLv = currentLevel + 1;
+            this.stats.itemEnhanceLevels[itemId] = newLv;
+            this.stats.enhanceLevels[slot] = newLv;
             this.applyEquipmentStats();
             this.saveStats();
             checkAchievements(this);
-            const newLv = currentLevel + 1;
             if (this.scene.notificationUI) this.scene.notificationUI.show(`✨ 強化成功！ +${newLv} になった！`, 'success');
             return { success: true, newLevel: newLv };
         } else {
             // 失敗: +6以上は1段階下がるリスクあり（+5以下は据え置き）
             if (currentLevel >= 6) {
-                this.stats.enhanceLevels[slot] = Math.max(0, currentLevel - 1);
+                const newLv = Math.max(0, currentLevel - 1);
+                this.stats.itemEnhanceLevels[itemId] = newLv;
+                this.stats.enhanceLevels[slot] = newLv;
                 this.applyEquipmentStats();
                 this.saveStats();
-                if (this.scene.notificationUI) this.scene.notificationUI.show(`💔 強化失敗… +${currentLevel - 1} に下がってしまった`, 'error');
-                return { success: false, downgraded: true, newLevel: currentLevel - 1 };
+                if (this.scene.notificationUI) this.scene.notificationUI.show(`💔 強化失敗… +${newLv} に下がってしまった`, 'error');
+                return { success: false, downgraded: true, newLevel: newLv };
             } else {
+                this.saveStats();
+                if (this.scene.notificationUI) this.scene.notificationUI.show('💔 強化失敗…（レベルは維持されました）', 'error');
+                return { success: false, downgraded: false, newLevel: currentLevel };
+            }
+        }
                 this.saveStats();
                 if (this.scene.notificationUI) this.scene.notificationUI.show('💔 強化失敗…（レベルは維持されました）', 'error');
                 return { success: false, downgraded: false, newLevel: currentLevel };

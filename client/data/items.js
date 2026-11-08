@@ -1522,4 +1522,62 @@ export const ITEMS = {
         stats: { attack: 580, critChance: 0.16, windDamage: 50, paralyzeChance: 0.12 },
         description: "世界の起源を宿した神話の弓。会心+16%、風属性+50。魔石ガチャ限定。",
     }),
+
+    // ===== 属性オーブ・結晶素材（クラフト・属性付与用） =====
+    fire_orb: defineItem({
+        id: "fire_orb",
+        name: "🔥 火炎のオーブ",
+        type: "material",
+        price: 50000,
+        description: "灼熱の炎が凝縮された宝珠。装備に火炎属性を付与する素材。",
+    }),
+    ice_orb: defineItem({
+        id: "ice_orb",
+        name: "❄️ 氷結のオーブ",
+        type: "material",
+        price: 50000,
+        description: "永久凍土の冷気が宿る宝珠。装備に氷結属性を付与する素材。",
+    }),
+    thunder_orb: defineItem({
+        id: "thunder_orb",
+        name: "⚡ 雷光のオーブ",
+        type: "material",
+        price: 50000,
+        description: "雷雲の電撃を封じ込めた宝珠。装備に雷光属性を付与する素材。",
+    }),
+    light_orb: defineItem({
+        id: "light_orb",
+        name: "🌟 聖光のオーブ",
+        type: "material",
+        price: 60000,
+        description: "神聖な光が満ちる宝珠。装備に聖光属性を付与する素材。",
+    }),
+    dark_orb: defineItem({
+        id: "dark_orb",
+        name: "🌑 暗黒のオーブ",
+        type: "material",
+        price: 60000,
+        description: "深淵の闇を宿した宝珠。装備に暗黒属性を付与する素材。",
+    }),
+    wind_orb: defineItem({
+        id: "wind_orb",
+        name: "🌀 風嵐のオーブ",
+        type: "material",
+        price: 50000,
+        description: "疾風の魔力が吹き荒れる宝珠。装備に風嵐属性を付与する素材。",
+    }),
+    earth_orb: defineItem({
+        id: "earth_orb",
+        name: "🪨 大地のオーブ",
+        type: "material",
+        price: 50000,
+        description: "大地の堅牢な力が宿る宝珠。装備に大地属性を付与する素材。",
+    }),
+    holy_orb: defineItem({
+        id: "holy_orb",
+        name: "✨ 神聖のオーブ",
+        type: "material",
+        price: 80000,
+        description: "最高位の聖なる祈りが込められた至宝。装備に神聖属性を付与する素材。",
+    }),
 };

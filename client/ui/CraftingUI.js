@@ -3,7 +3,7 @@ import BaseWindowUI from "./BaseWindowUI.js";
 import { ITEMS } from "../data/items.js";
 import { defineItem } from "../data/schema.js";
 
-// クラフト構成データ定義
+// クラフト構成データ定義（高難度・エンドコンテンツ級ゴールド消費設定）
 export const CRAFT_CONFIG = {
     categories: [
         { key: 'weapon', label: '⚔️ 武器', icon: '⚔️' },
@@ -14,93 +14,92 @@ export const CRAFT_CONFIG = {
     baseTypes: {
         weapon: [
             { key: 'oneHandSword', label: '片手剣', icon: '⚔️', atkMult: 1.0, defMult: 0, hpBonus: 0, mpBonus: 0, speedBonus: 0, critBonus: 0.05, desc: '攻守バランスの取れた標準的な剣' },
-            { key: 'twoHandSword', label: '大剣',   icon: '🗡️', atkMult: 1.35, defMult: 0, hpBonus: 40, mpBonus: 0, speedBonus: -5, critBonus: 0.08, desc: '圧倒的な威力を誇る大型両手剣' },
-            { key: 'bow',          label: '長弓',   icon: '🏹', atkMult: 0.95, defMult: 0, hpBonus: 0, mpBonus: 20, speedBonus: 10, critBonus: 0.12, desc: '身軽に遠くの標的を射抜く弓' },
-            { key: 'staff',        label: '魔導杖', icon: '🪄', atkMult: 0.85, defMult: 0, hpBonus: 0, mpBonus: 120, speedBonus: 0, critBonus: 0.04, desc: '高い魔力を宿した魔導師の杖' },
-            { key: 'axe',          label: '戦斧',   icon: '🪓', atkMult: 1.25, defMult: 5, hpBonus: 20, mpBonus: 0, speedBonus: 0, critBonus: 0.15, desc: '会心の一撃を繰り出す重厚な斧' },
-            { key: 'spear',        label: '長槍',   icon: '🔱', atkMult: 1.10, defMult: 2, hpBonus: 10, mpBonus: 0, speedBonus: 5, critBonus: 0.07, desc: 'リーチの長い突き刺し型の長槍' },
+            { key: 'twoHandSword', label: '大剣',   icon: '🗡️', atkMult: 1.35, defMult: 0, hpBonus: 400, mpBonus: 0, speedBonus: -5, critBonus: 0.08, desc: '圧倒的な威力を誇る大型両手剣' },
+            { key: 'bow',          label: '長弓',   icon: '🏹', atkMult: 0.95, defMult: 0, hpBonus: 0, mpBonus: 200, speedBonus: 10, critBonus: 0.12, desc: '身軽に遠くの標的を射抜く弓' },
+            { key: 'staff',        label: '魔導杖', icon: '🪄', atkMult: 0.85, defMult: 0, hpBonus: 0, mpBonus: 1200, speedBonus: 0, critBonus: 0.04, desc: '高い魔力を宿した魔導師の杖' },
+            { key: 'axe',          label: '戦斧',   icon: '🪓', atkMult: 1.25, defMult: 50, hpBonus: 200, mpBonus: 0, speedBonus: 0, critBonus: 0.15, desc: '会心の一撃を繰り出す重厚な斧' },
+            { key: 'spear',        label: '長槍',   icon: '🔱', atkMult: 1.10, defMult: 20, hpBonus: 100, mpBonus: 0, speedBonus: 5, critBonus: 0.07, desc: 'リーチの長い突き刺し型の長槍' },
         ],
         armor: [
-            { key: 'plate',   label: '重装甲冑', icon: '🛡️', atkMult: 0, defMult: 1.3, hpBonus: 180, mpBonus: 0, speedBonus: -5, critBonus: 0, desc: '強固な鋼鉄で身を固める重鎧' },
-            { key: 'leather', label: '軽装道着', icon: '🥋', atkMult: 0.05, defMult: 0.95, hpBonus: 80, mpBonus: 30, speedBonus: 15, critBonus: 0.05, desc: '俊敏な動きを妨げない軽装鎧' },
-            { key: 'robe',    label: '魔導法衣', icon: '🥻', atkMult: 0, defMult: 0.85, hpBonus: 50, mpBonus: 150, speedBonus: 5, critBonus: 0.03, desc: '魔力循環を高める神秘のローブ' },
+            { key: 'plate',   label: '重装甲冑', icon: '🛡️', atkMult: 0, defMult: 1.3, hpBonus: 1800, mpBonus: 0, speedBonus: -5, critBonus: 0, desc: '強固な鋼鉄で身を固める重鎧' },
+            { key: 'leather', label: '軽装道着', icon: '🥋', atkMult: 0.05, defMult: 0.95, hpBonus: 800, mpBonus: 300, speedBonus: 15, critBonus: 0.05, desc: '俊敏な動きを妨げない軽装鎧' },
+            { key: 'robe',    label: '魔導法衣', icon: '🥻', atkMult: 0, defMult: 0.85, hpBonus: 500, mpBonus: 1500, speedBonus: 5, critBonus: 0.03, desc: '魔力循環を高める神秘のローブ' },
         ],
         relic: [
-            { key: 'ring',   label: '覇者の指輪',  icon: '💍', atkMult: 0.15, defMult: 0, hpBonus: 40, mpBonus: 30, speedBonus: 0, critBonus: 0.10, desc: '攻撃力と会心率を高める指輪' },
-            { key: 'amulet', label: '守護の首飾り',icon: '📿', atkMult: 0, defMult: 0.15, hpBonus: 160, mpBonus: 40, speedBonus: 0, critBonus: 0, desc: '生命力と防御力を高める首飾り' },
-            { key: 'orb',    label: '賢者の宝珠',  icon: '🔮', atkMult: 0.05, defMult: 0.05, hpBonus: 0, mpBonus: 180, speedBonus: 0, critBonus: 0.05, desc: 'MPと魔法力を極限まで高める宝珠' },
-            { key: 'charm',  label: '神速の護符',  icon: '👟', atkMult: 0.08, defMult: 0, hpBonus: 50, mpBonus: 20, speedBonus: 25, critBonus: 0.08, desc: '疾風の如き速度を授ける護符' },
+            { key: 'ring',   label: '覇者の指輪',  icon: '💍', atkMult: 0.15, defMult: 0, hpBonus: 400, mpBonus: 300, speedBonus: 0, critBonus: 0.10, desc: '攻撃力と会心率を高める指輪' },
+            { key: 'amulet', label: '守護の首飾り',icon: '📿', atkMult: 0, defMult: 0.15, hpBonus: 1600, mpBonus: 400, speedBonus: 0, critBonus: 0, desc: '生命力と防御力を高める首飾り' },
+            { key: 'orb',    label: '賢者の宝珠',  icon: '🔮', atkMult: 0.05, defMult: 0.05, hpBonus: 0, mpBonus: 1800, speedBonus: 0, critBonus: 0.05, desc: 'MPと魔法力を極限まで高める宝珠' },
+            { key: 'charm',  label: '神速の護符',  icon: '👟', atkMult: 0.08, defMult: 0, hpBonus: 500, mpBonus: 200, speedBonus: 25, critBonus: 0.08, desc: '疾風の如き速度を授ける護符' },
         ]
     },
 
+    // 素材品質ランク（1000倍基準のエンドコンテンツ価格）
     grades: [
-        { key: 'iron',       label: '鉄製 (アイアン)',     tier: 1, baseAtk: 12,  baseDef: 8,  costGold: 600,   color: '#cccccc', reqItems: [{ id: 'enhance_stone_1', count: 1 }],  desc: '標準的な鉄製素材' },
-        { key: 'steel',      label: '鋼製 (スティール)',   tier: 2, baseAtk: 25,  baseDef: 18, costGold: 2400,  color: '#88bbff', reqItems: [{ id: 'enhance_stone_1', count: 3 }],  desc: '鍛え抜かれた鋼鉄' },
-        { key: 'mithril',    label: '銀製 (ミスリル)',     tier: 3, baseAtk: 48,  baseDef: 34, costGold: 8500,  color: '#aa88ff', reqItems: [{ id: 'enhance_stone_2', count: 2 }],  desc: '魔力を帯びた希少金属' },
-        { key: 'orichalcum', label: '神金 (オリハルコン)', tier: 4, baseAtk: 85,  baseDef: 60, costGold: 28000, color: '#ffd700', reqItems: [{ id: 'enhance_stone_2', count: 5 }],  desc: '神話に語られる最高峰の金属' },
-        { key: 'astral',     label: '星辰 (竜骨・星屑)',   tier: 5, baseAtk: 140, baseDef: 95, costGold: 80000, color: '#ff3388', reqItems: [{ id: 'enhance_stone_2', count: 10 }], desc: '宇宙の星屑と古竜の骨から成る奇跡の結晶' }
+        { key: 'iron',       label: '鉄製 (アイアン)',     tier: 1, baseAtk: 40,  baseDef: 25,  costGold: 600000,   color: '#cccccc', reqItems: [{ id: 'enhance_stone_1', count: 1 }],  desc: '標準的な鉄製素材' },
+        { key: 'steel',      label: '鋼製 (スティール)',   tier: 2, baseAtk: 90,  baseDef: 60,  costGold: 2400000,  color: '#88bbff', reqItems: [{ id: 'enhance_stone_1', count: 3 }],  desc: '鍛え抜かれた鋼鉄' },
+        { key: 'mithril',    label: '銀製 (ミスリル)',     tier: 3, baseAtk: 180, baseDef: 120, costGold: 8500000,  color: '#aa88ff', reqItems: [{ id: 'enhance_stone_2', count: 2 }],  desc: '魔力を帯びた希少金属' },
+        { key: 'orichalcum', label: '神金 (オリハルコン)', tier: 4, baseAtk: 320, baseDef: 220, costGold: 28000000, color: '#ffd700', reqItems: [{ id: 'enhance_stone_2', count: 5 }],  desc: '神話に語られる最高峰の金属' },
+        { key: 'astral',     label: '星辰 (竜骨・星屑)',   tier: 5, baseAtk: 550, baseDef: 380, costGold: 80000000, color: '#ff3388', reqItems: [{ id: 'enhance_stone_3', count: 2 }], desc: '宇宙の星屑と古竜の骨から成る奇跡の結晶' }
     ],
 
-    // 属性コア（複数選択可能、無属性は単独のみ）
+    // 属性コア（オーブ未所持の場合はゴールド代用可能）
     elements: [
-        { key: 'none',    label: '無属性', icon: '⚪', color: '#ffffff', reqOrb: null,           exclusive: true, desc: '属性のない純粋な力' },
-        { key: 'fire',    label: '火炎',   icon: '🔥', color: '#ff4400', reqOrb: 'fire_orb',    exclusive: false, desc: '炎の追加ダメージ' },
-        { key: 'ice',     label: '氷結',   icon: '❄️', color: '#00ccff', reqOrb: 'ice_orb',     exclusive: false, desc: '氷の凍てつく力' },
-        { key: 'thunder', label: '雷光',   icon: '⚡', color: '#ffcc00', reqOrb: 'thunder_orb', exclusive: false, desc: '雷の電撃と高会心' },
-        { key: 'light',   label: '聖光',   icon: '🌟', color: '#ffffaa', reqOrb: 'light_orb',   exclusive: false, desc: '聖なる光の加護' },
-        { key: 'dark',    label: '暗黒',   icon: '🌑', color: '#aa44ff', reqOrb: 'dark_orb',    exclusive: false, desc: '闇の力と吸収' },
-        { key: 'wind',    label: '風嵐',   icon: '🌀', color: '#aaffee', reqOrb: 'wind_orb',    exclusive: false, desc: '嵐の速度と連続攻撃' },
-        { key: 'earth',   label: '大地',   icon: '🪨', color: '#cc8844', reqOrb: 'earth_orb',   exclusive: false, desc: '大地の守護と重撃' },
-        { key: 'holy',    label: '神聖',   icon: '✨', color: '#ffffff', reqOrb: 'holy_orb',    exclusive: false, desc: '神の加護・アンデッド特攻' },
-        { key: 'chaos',   label: '混沌',   icon: '☠️', color: '#ff33ff', reqOrb: 'chaos_orb',   exclusive: false, desc: '全属性をランダムに発動' },
+        { key: 'none',    label: '無属性', icon: '⚪', color: '#ffffff', reqOrb: null,          exclusive: true,  goldAlt: 0,       desc: '属性のない純粋な力' },
+        { key: 'fire',    label: '火炎',   icon: '🔥', color: '#ff4400', reqOrb: 'fire_orb',    exclusive: false, goldAlt: 500000,  desc: '炎の追加ダメージ' },
+        { key: 'ice',     label: '氷結',   icon: '❄️', color: '#00ccff', reqOrb: 'ice_orb',     exclusive: false, goldAlt: 500000,  desc: '氷の凍てつく力' },
+        { key: 'thunder', label: '雷光',   icon: '⚡', color: '#ffcc00', reqOrb: 'thunder_orb', exclusive: false, goldAlt: 500000,  desc: '雷の電撃と高会心' },
+        { key: 'light',   label: '聖光',   icon: '🌟', color: '#ffffaa', reqOrb: 'light_orb',   exclusive: false, goldAlt: 600000,  desc: '聖なる光の加護' },
+        { key: 'dark',    label: '暗黒',   icon: '🌑', color: '#aa44ff', reqOrb: 'dark_orb',    exclusive: false, goldAlt: 600000,  desc: '闇の力と吸収' },
+        { key: 'wind',    label: '風嵐',   icon: '🌀', color: '#aaffee', reqOrb: 'wind_orb',    exclusive: false, goldAlt: 500000,  desc: '嵐の速度と連続攻撃' },
+        { key: 'earth',   label: '大地',   icon: '🪨', color: '#cc8844', reqOrb: 'earth_orb',   exclusive: false, goldAlt: 500000,  desc: '大地の守護と重撃' },
+        { key: 'holy',    label: '神聖',   icon: '✨', color: '#ffffff', reqOrb: 'holy_orb',    exclusive: false, goldAlt: 800000,  desc: '神の加護・アンデッド特攻' },
     ],
 
-    // 状態異常（確率調整可能: 最大20%）
+    // 状態異常（確率調整: 最大20% / 1%あたりの費用）
     statusEffects: [
-        { key: 'poison',   label: '毒',     icon: '☠️', color: '#44ff44', defaultChance: 10, costPerPct: 200, desc: '毎秒HPを削るスリップダメージ' },
-        { key: 'paralyze', label: '麻痺',   icon: '⚡', color: '#ffff00', defaultChance: 10, costPerPct: 350, desc: '敵の動きと攻撃を封じる' },
-        { key: 'burn',     label: '燃焼',   icon: '🔥', color: '#ff6600', defaultChance: 10, costPerPct: 200, desc: '継続炎上大ダメージ' },
-        { key: 'freeze',   label: '凍結',   icon: '❄️', color: '#00ffff', defaultChance: 8,  costPerPct: 450, desc: '敵を完全に氷結・行動不能' },
-        { key: 'stun',     label: 'スタン', icon: '💥', color: '#ffaa00', defaultChance: 8,  costPerPct: 500, desc: '強烈な衝撃で行動を即時中断' },
-        { key: 'petrify',  label: '石化',   icon: '🪨', color: '#888855', defaultChance: 5,  costPerPct: 600, desc: '敵を完全に石化硬直させる' },
-        { key: 'curse',    label: '呪い',   icon: '💀', color: '#aa00ff', defaultChance: 8,  costPerPct: 400, desc: '敵の受ける全ダメージを1.3倍に増加' },
-        { key: 'bleed',    label: '出血',   icon: '🩸', color: '#ff0033', defaultChance: 12, costPerPct: 220, desc: '移動・行動時に激しいスリップダメージ' },
-        { key: 'confuse',  label: '混乱',   icon: '💫', color: '#ff88ff', defaultChance: 10, costPerPct: 300, desc: '敵の向き・行動がランダム化' },
-        { key: 'blind',    label: '失明',   icon: '👁️', color: '#888888', defaultChance: 15, costPerPct: 180, desc: '敵の命中率・索敵を大幅低下' },
-        { key: 'silence',  label: '沈黙',   icon: '🔇', color: '#8888aa', defaultChance: 10, costPerPct: 250, desc: '敵の特殊攻撃・スキルを封じる' },
+        { key: 'poison',   label: '毒',     icon: '☠️', color: '#44ff44', defaultChance: 10, costPerPct: 200000, desc: '毎秒HPを削るスリップダメージ' },
+        { key: 'paralyze', label: '麻痺',   icon: '⚡', color: '#ffff00', defaultChance: 10, costPerPct: 350000, desc: '敵の動きと攻撃を封じる' },
+        { key: 'burn',     label: '燃焼',   icon: '🔥', color: '#ff6600', defaultChance: 10, costPerPct: 200000, desc: '継続炎上大ダメージ' },
+        { key: 'freeze',   label: '凍結',   icon: '❄️', color: '#00ffff', defaultChance: 8,  costPerPct: 450000, desc: '敵を完全に氷結・行動不能' },
+        { key: 'stun',     label: 'スタン', icon: '💥', color: '#ffaa00', defaultChance: 8,  costPerPct: 500000, desc: '強烈な衝撃で行動を即時中断' },
+        { key: 'petrify',  label: '石化',   icon: '🪨', color: '#888855', defaultChance: 5,  costPerPct: 600000, desc: '敵を完全に石化硬直させる' },
+        { key: 'curse',    label: '呪い',   icon: '💀', color: '#aa00ff', defaultChance: 8,  costPerPct: 400000, desc: '敵の受ける全ダメージを1.3倍に増加' },
+        { key: 'bleed',    label: '出血',   icon: '🩸', color: '#ff0033', defaultChance: 12, costPerPct: 220000, desc: '移動・行動時に激しいスリップダメージ' },
+        { key: 'confuse',  label: '混乱',   icon: '💫', color: '#ff88ff', defaultChance: 10, costPerPct: 300000, desc: '敵の向き・行動がランダム化' },
+        { key: 'blind',    label: '失明',   icon: '👁️', color: '#888888', defaultChance: 15, costPerPct: 180000, desc: '敵の命中率・索敵を大幅低下' },
+        { key: 'silence',  label: '沈黙',   icon: '🔇', color: '#8888aa', defaultChance: 10, costPerPct: 250000, desc: '敵の特殊攻撃・スキルを封じる' },
     ],
 
     traits: [
         { key: 'none',     label: 'なし',       costMult: 1.0,  stats: {}, desc: '標準的な仕上がり' },
-        { key: 'might',    label: '剛力の印',   costMult: 1.25, stats: { attackBonus: 15 }, desc: '攻撃力 +15' },
-        { key: 'guardian', label: '鉄壁の印',   costMult: 1.25, stats: { defenseBonus: 12, maxHpBonus: 100 }, desc: '防御力 +12, 最大HP +100' },
-        { key: 'fatal',    label: '必殺の印',   costMult: 1.30, stats: { critBonus: 0.12 }, desc: '会心率 +12%' },
-        { key: 'vampiric', label: '吸血の刻印', costMult: 1.35, stats: { lifestealBonus: 0.06 }, desc: 'ライフスティール +6%' },
-        { key: 'gale',     label: '疾風の印',   costMult: 1.30, stats: { speedBonus: 20 }, desc: '移動速度 +20' },
-        { key: 'supreme',  label: '覇道の刻印', costMult: 1.60, stats: { attackBonus: 25, defenseBonus: 20, maxHpBonus: 150, critBonus: 0.08 }, desc: '全性能が飛躍的に向上' },
-        { key: 'berserker',label: '狂戦士の刻印',costMult: 1.50, stats: { attackBonus: 40, defenseBonus: -15 }, desc: '攻撃力 +40 / 防御力 -15' },
-        { key: 'sage',     label: '賢者の刻印', costMult: 1.45, stats: { maxMpBonus: 200, critBonus: 0.05 }, desc: '最大MP +200 / 会心率 +5%' },
+        { key: 'might',    label: '剛力の印',   costMult: 1.25, stats: { attackBonus: 50 }, desc: '攻撃力 +50' },
+        { key: 'guardian', label: '鉄壁の印',   costMult: 1.25, stats: { defenseBonus: 40, maxHpBonus: 500 }, desc: '防御力 +40, 最大HP +500' },
+        { key: 'fatal',    label: '必殺の印',   costMult: 1.30, stats: { critBonus: 0.15 }, desc: '会心率 +15%' },
+        { key: 'vampiric', label: '吸血の刻印', costMult: 1.35, stats: { lifestealBonus: 0.08 }, desc: 'ライフスティール +8%' },
+        { key: 'gale',     label: '疾風の印',   costMult: 1.30, stats: { speedBonus: 30 }, desc: '移動速度 +30' },
+        { key: 'supreme',  label: '覇道の刻印', costMult: 1.60, stats: { attackBonus: 100, defenseBonus: 80, maxHpBonus: 1000, critBonus: 0.10 }, desc: '全性能が飛躍的に向上' },
     ],
 
-    // ステータス自由振り分け設定（1ポイントあたりのコスト）
+    // ステータス自由振り分け設定（1000倍設定）
     statAllocation: [
-        { key: 'attack',    label: '攻撃力 (ATK)',   color: '#ff7777', costPerPoint: 100,  max: 500 },
-        { key: 'defense',   label: '防御力 (DEF)',   color: '#77aaff', costPerPoint: 100,  max: 500 },
-        { key: 'maxHp',     label: '最大HP',         color: '#77ff77', costPerPoint: 20,   max: 5000 },
-        { key: 'maxMp',     label: '最大MP',         color: '#dd77ff', costPerPoint: 30,   max: 2000 },
-        { key: 'speed',     label: '移動速度',       color: '#ffff77', costPerPoint: 200,  max: 100 },
-        { key: 'critChance',label: '会心率 (%)',     color: '#ffaa44', costPerPoint: 2000, max: 50,  isPercent: true },
+        { key: 'attack',    label: '攻撃力 (ATK)',   color: '#ff7777', costPerPoint: 100000,  max: 1000 },
+        { key: 'defense',   label: '防御力 (DEF)',   color: '#77aaff', costPerPoint: 100000,  max: 1000 },
+        { key: 'maxHp',     label: '最大HP',         color: '#77ff77', costPerPoint: 20000,   max: 10000 },
+        { key: 'maxMp',     label: '最大MP',         color: '#dd77ff', costPerPoint: 30000,   max: 5000 },
+        { key: 'speed',     label: '移動速度',       color: '#ffff77', costPerPoint: 200000,  max: 150 },
+        { key: 'critChance',label: '会心率 (%)',     color: '#ffaa44', costPerPoint: 2000000, max: 50,  isPercent: true },
     ],
-};
 
-// Lv100 + 生産職の必要条件確認
-export function checkCraftRequirements(player) {
-    const job = player?.stats?.job;
-    const isArtisan = job === 'artisan' || job === 'master_smith' || job === 'alchemist' || job === 'runemaster';
-    const level = player?.stats?.level || 0;
-    const isLevel100 = level >= 100;
-    return { isArtisan, isLevel100, canCraft: isArtisan && isLevel100 };
-}
+    // 特殊性能カスタマイズ設定（自由度拡張）
+    specialFeatures: [
+        { key: 'multiHit',           label: '多段攻撃数',       color: '#ffaa22', costPerStep: 5000000, step: 1, max: 4, base: 1, unit: '回', desc: '1回の通常攻撃で繰り出す連続ヒット数 (最大4回)' },
+        { key: 'attackRangeBonus',   label: '射程拡大',         color: '#66ccff', costPerStep: 500000,  step: 10, max: 80, base: 0, unit: 'px', desc: '通常攻撃の攻撃範囲を前方に拡張' },
+        { key: 'defenseIgnore',      label: '防御貫通 (%)',     color: '#ff8844', costPerStep: 300000,  step: 5, max: 50, base: 0, unit: '%', desc: '敵の防御力を無視して貫通ダメージを与える' },
+        { key: 'lifestealBonus',     label: '吸血 (Lifesteal %)',color: '#ff55aa', costPerStep: 800000, step: 2, max: 25, base: 0, unit: '%', desc: '与えたダメージの割合分HPを回復する' },
+        { key: 'manaSteal',          label: 'MP吸収 (%)',       color: '#cc88ff', costPerStep: 600000,  step: 2, max: 20, base: 0, unit: '%', desc: '敵にダメージを与えてMPを回復する' },
+        { key: 'critDamageBonus',    label: '会心倍率強化',     color: '#ffdd44', costPerStep: 1500000, step: 0.1, max: 1.5, base: 0, unit: '倍加算', desc: 'クリティカル時のダメージ倍率を底上げ (標準1.5倍に加算)' },
+    ]
+};
 
 export default class CraftingUI extends BaseWindowUI {
     constructor(scene) {
@@ -117,9 +116,7 @@ export default class CraftingUI extends BaseWindowUI {
         this.selectedCategory = 'weapon';
         this.selectedBaseTypeIndex = 0;
         this.selectedGradeIndex = 0;
-        // 複合属性: 配列で管理（'none' が含まれる場合は排他）
         this.selectedElements = ['none'];
-        // 状態異常付与率 (key → 0〜20%)
         this.statusRates = {
             poison: 0, paralyze: 0, burn: 0, freeze: 0,
             stun: 0, petrify: 0, curse: 0, bleed: 0,
@@ -127,11 +124,18 @@ export default class CraftingUI extends BaseWindowUI {
         };
         this.selectedTraitIndex = 0;
         this.customName = '';
-        // ステータス自由振り分け (key → 数値)
-        this.statPoints = {
-            attack: 0, defense: 0, maxHp: 0, maxMp: 0, speed: 0, critChance: 0
+
+        // ステータス自由振り分け
+        this.statPoints = { attack: 0, defense: 0, maxHp: 0, maxMp: 0, speed: 0, critChance: 0 };
+
+        // 特殊性能カスタマイズ
+        this.specialValues = {
+            multiHit: 1, attackRangeBonus: 0, defenseIgnore: 0,
+            lifestealBonus: 0, manaSteal: 0, critDamageBonus: 0,
+            forceAreaAttack: false
         };
-        // UIタブ管理: 'config' | 'status' | 'stats'
+
+        // UIタブ管理: 'config' | 'status' | 'stats' | 'special' | 'rename'
         this._activeTab = 'config';
     }
 
@@ -158,7 +162,6 @@ export default class CraftingUI extends BaseWindowUI {
         return (this.scene.player?.stats?.level || 0) >= 100;
     }
 
-    // 状態異常ON/OFF切り替え（デフォルト確率を設定または0に）
     toggleStatusEffect(key) {
         const seDef = CRAFT_CONFIG.statusEffects.find(s => s.key === key);
         if (!seDef) return;
@@ -169,13 +172,10 @@ export default class CraftingUI extends BaseWindowUI {
         }
     }
 
-    // 状態異常確率設定（0〜20%）
     setStatusEffectRate(key, rate) {
-        const parsed = Math.max(0, Math.min(20, Math.round(rate)));
-        this.statusRates[key] = parsed;
+        this.statusRates[key] = Math.max(0, Math.min(20, Math.round(rate)));
     }
 
-    // 属性選択トグル（'none'は排他・他属性複数選択可）
     toggleElement(key) {
         const elDef = CRAFT_CONFIG.elements.find(e => e.key === key);
         if (!elDef) return;
@@ -183,7 +183,6 @@ export default class CraftingUI extends BaseWindowUI {
             this.selectedElements = ['none'];
             return;
         }
-        // noneを外す
         this.selectedElements = this.selectedElements.filter(k => k !== 'none');
         const idx = this.selectedElements.indexOf(key);
         if (idx >= 0) {
@@ -194,7 +193,6 @@ export default class CraftingUI extends BaseWindowUI {
         }
     }
 
-    // 状態異常コスト合計計算
     calcStatusEffectsCost() {
         let total = 0;
         CRAFT_CONFIG.statusEffects.forEach(se => {
@@ -204,13 +202,25 @@ export default class CraftingUI extends BaseWindowUI {
         return total;
     }
 
-    // ステータス振り分けコスト計算
     calcStatAllocationCost() {
         let total = 0;
         CRAFT_CONFIG.statAllocation.forEach(sa => {
             const val = this.statPoints[sa.key] || 0;
             if (val > 0) total += val * sa.costPerPoint;
         });
+        return total;
+    }
+
+    calcSpecialFeaturesCost() {
+        let total = 0;
+        CRAFT_CONFIG.specialFeatures.forEach(sf => {
+            const val = (this.specialValues[sf.key] || sf.base) - sf.base;
+            if (val > 0) {
+                const steps = Math.round(val / sf.step);
+                total += steps * sf.costPerStep;
+            }
+        });
+        if (this.specialValues.forceAreaAttack) total += 10000000;
         return total;
     }
 
@@ -221,6 +231,7 @@ export default class CraftingUI extends BaseWindowUI {
         const grade = CRAFT_CONFIG.grades[this.selectedGradeIndex];
         const elements = this.selectedElements.map(k => CRAFT_CONFIG.elements.find(e => e.key === k)).filter(Boolean);
         const trait = CRAFT_CONFIG.traits[this.selectedTraitIndex];
+        const player = this.scene.player;
 
         // 状態異常一覧（確率 > 0 のもの）
         const activeStatusEffects = CRAFT_CONFIG.statusEffects
@@ -237,23 +248,18 @@ export default class CraftingUI extends BaseWindowUI {
                 };
             });
 
-        const isArtisan = this.isArtisanClass();
-        const artisanMult = isArtisan ? 1.15 : 1.0;
-        const costDiscount = isArtisan ? 0.70 : 1.0;
-        const materialDiscount = isArtisan ? 0.75 : 1.0;
-
         let finalAtk = 0;
         let finalDef = 0;
 
         if (cat === 'weapon') {
-            finalAtk = Math.round(grade.baseAtk * base.atkMult * artisanMult) + (trait.stats.attackBonus || 0);
-            finalDef = Math.round(base.defMult * grade.baseDef * artisanMult) + (trait.stats.defenseBonus || 0);
+            finalAtk = Math.round(grade.baseAtk * base.atkMult) + (trait.stats.attackBonus || 0);
+            finalDef = Math.round(base.defMult * grade.baseDef) + (trait.stats.defenseBonus || 0);
         } else if (cat === 'armor') {
-            finalDef = Math.round(grade.baseDef * base.defMult * artisanMult) + (trait.stats.defenseBonus || 0);
-            finalAtk = Math.round(base.atkMult * grade.baseAtk * artisanMult) + (trait.stats.attackBonus || 0);
+            finalDef = Math.round(grade.baseDef * base.defMult) + (trait.stats.defenseBonus || 0);
+            finalAtk = Math.round(base.atkMult * grade.baseAtk) + (trait.stats.attackBonus || 0);
         } else {
-            finalAtk = Math.round(grade.baseAtk * base.atkMult * artisanMult) + (trait.stats.attackBonus || 0);
-            finalDef = Math.round(grade.baseDef * base.defMult * artisanMult) + (trait.stats.defenseBonus || 0);
+            finalAtk = Math.round(grade.baseAtk * base.atkMult) + (trait.stats.attackBonus || 0);
+            finalDef = Math.round(grade.baseDef * base.defMult) + (trait.stats.defenseBonus || 0);
         }
 
         // ステータス振り分けを加算
@@ -263,42 +269,50 @@ export default class CraftingUI extends BaseWindowUI {
         const finalMp    = (base.mpBonus  || 0) + (trait.stats.maxMpBonus   || 0) + (this.statPoints.maxMp   || 0);
         const finalSpeed = (base.speedBonus || 0) + (trait.stats.speedBonus  || 0) + (this.statPoints.speed   || 0);
         const finalCrit  = (base.critBonus || 0) + (trait.stats.critBonus    || 0) + ((this.statPoints.critChance || 0) / 100);
-        const finalLifesteal = trait.stats.lifestealBonus || 0;
+        const finalLifesteal = (trait.stats.lifestealBonus || 0) + ((this.specialValues.lifestealBonus || 0) / 100);
 
-        // 費用計算（素材品質 × 刻印倍率 + 属性オーブ追加 + 状態異常追加 + ステータス振り分けコスト）
-        let totalGold = Math.round(grade.costGold * trait.costMult * costDiscount);
+        // 費用計算（ベース × 刻印倍率 ＋ 各種追加費用）
+        let totalGold = Math.round(grade.costGold * trait.costMult);
 
-        // 複合属性追加コスト（2つ目以降は50%割増）
+        // 複合属性追加コスト（2つ目以降は割増）
         const nonNoneElements = elements.filter(e => e.key !== 'none');
         nonNoneElements.forEach((el, i) => {
-            const addCost = i === 0 ? 1000 : 2000;
+            const addCost = i === 0 ? 1000000 : 2500000;
             totalGold += addCost;
         });
 
-        // 状態異常追加コスト
+        // 状態異常・ステータス・特殊性能コスト
         totalGold += this.calcStatusEffectsCost();
-
-        // ステータス振り分けコスト
         totalGold += this.calcStatAllocationCost();
+        totalGold += this.calcSpecialFeaturesCost();
 
-        // 必要素材
+        // 必要素材（オーブ未所持ならゴールドで自動代用）
         const requiredItems = [];
+        let orbGoldSubstitute = 0;
         (grade.reqItems || []).forEach(req => {
-            const count = Math.max(1, Math.round(req.count * materialDiscount));
-            requiredItems.push({ id: req.id, count });
+            requiredItems.push({ id: req.id, count: req.count, isOrb: false });
         });
-        // 属性オーブ（選択された属性の数だけ）
         nonNoneElements.forEach(el => {
-            if (el.reqOrb) requiredItems.push({ id: el.reqOrb, count: 1 });
+            if (el.reqOrb) {
+                // プレイヤーのインベントリにオーブがあるか確認
+                const invEntry = (player?.stats?.inventory || []).find(i => (typeof i === 'string' ? i : i.id) === el.reqOrb);
+                const count = typeof invEntry === 'object' ? (invEntry.count || 1) : (invEntry ? 1 : 0);
+                if (count >= 1) {
+                    requiredItems.push({ id: el.reqOrb, count: 1, isOrb: true, substituted: false });
+                } else {
+                    // オーブが無いのでゴールド代用
+                    orbGoldSubstitute += (el.goldAlt || 500000);
+                    requiredItems.push({ id: el.reqOrb, count: 1, isOrb: true, substituted: true, altGold: el.goldAlt || 500000 });
+                }
+            }
         });
+        totalGold += orbGoldSubstitute;
 
-        // 属性ラベル（複合）
+        // 属性・状態異常ラベル
         const elementLabel = nonNoneElements.length > 0
             ? nonNoneElements.map(e => `${e.icon}${e.label}`).join('・')
             : '無属性';
         const elementKeys = nonNoneElements.map(e => e.key);
-
-        // 状態異常ラベル
         const statusLabel = activeStatusEffects.length > 0
             ? activeStatusEffects.map(s => `${s.icon}${s.label}(${s.percent}%)`).join(' ')
             : 'なし';
@@ -307,9 +321,13 @@ export default class CraftingUI extends BaseWindowUI {
         const elemPart = nonNoneElements.length > 0 ? nonNoneElements.map(e => e.label).join('・') + 'の' : '';
         const defaultName = `${grade.label.split(' ')[0]}の${elemPart}${base.label}`;
 
+        // 宝具の内部typeは accessory
+        const itemType = cat === 'relic' ? 'accessory' : cat;
+
         return {
             name: this.customName.trim() || defaultName,
             category: cat,
+            itemType,
             weaponClass: cat === 'weapon' ? base.key : (cat === 'armor' ? 'armor' : 'relic'),
             elements: elementKeys,
             elementLabel,
@@ -327,7 +345,13 @@ export default class CraftingUI extends BaseWindowUI {
                 maxMp: finalMp,
                 speed: finalSpeed,
                 critChance: finalCrit,
-                lifesteal: finalLifesteal
+                lifesteal: finalLifesteal,
+                multiHit: this.specialValues.multiHit || 1,
+                attackRangeBonus: this.specialValues.attackRangeBonus || 0,
+                defenseIgnore: (this.specialValues.defenseIgnore || 0) / 100,
+                manaSteal: (this.specialValues.manaSteal || 0) / 100,
+                forceAreaAttack: !!this.specialValues.forceAreaAttack,
+                critDamageMultiplier: 1.5 + (this.specialValues.critDamageBonus || 0)
             },
             traitDesc: trait.desc,
             baseDesc: base.desc,
@@ -351,9 +375,9 @@ export default class CraftingUI extends BaseWindowUI {
         // ===== 要件バナー =====
         {
             const bannerBg = this.scene.add.graphics();
-            const bannerColor = canCraftClass ? 0xff8800 : 0xaa2222;
-            const bannerBorderColor = canCraftClass ? 0xffaa00 : 0xff4444;
-            bannerBg.fillStyle(bannerColor, 0.25);
+            const bannerColor = canCraftClass ? 0x224422 : 0xaa2222;
+            const bannerBorderColor = canCraftClass ? 0x55ff55 : 0xff4444;
+            bannerBg.fillStyle(bannerColor, 0.35);
             bannerBg.fillRoundedRect(-w / 2 + 25, -h / 2 + 45, w - 50, 24, 6);
             bannerBg.lineStyle(1.5, bannerBorderColor, 0.8);
             bannerBg.strokeRoundedRect(-w / 2 + 25, -h / 2 + 45, w - 50, 24, 6);
@@ -362,7 +386,7 @@ export default class CraftingUI extends BaseWindowUI {
             let bannerMsg = '';
             const playerLv = player.stats?.level || 0;
             if (canCraftClass) {
-                bannerMsg = `🌟 職人ボーナス適用中！ (費用30%OFF / 素材25%OFF / 性能+15%) | 現在Lv: ${playerLv}`;
+                bannerMsg = `🔨 工房・オリジナル装備生成 (生産職専用 / 現在Lv: ${playerLv})`;
             } else {
                 const reasons = [];
                 if (!isArtisan) reasons.push('生産職（職人系）への転職が必要');
@@ -375,12 +399,14 @@ export default class CraftingUI extends BaseWindowUI {
             }).setOrigin(0.5));
         }
 
-        // ===== メインタブ切り替え (3タブ) =====
+        // ===== メインタブ切り替え (5タブ) =====
         const tabY = -h / 2 + 78;
         const tabs = [
-            { key: 'config', label: '🔧 装備設定',            width: 135 },
-            { key: 'status', label: '☣️ 状態異常 (Max20%)',  width: 155 },
-            { key: 'stats',  label: '📊 ステータス振り分け', width: 155 },
+            { key: 'config',  label: '🔧 基本設定',     width: 95 },
+            { key: 'status',  label: '☣️ 状態異常',    width: 95 },
+            { key: 'stats',   label: '📊 ステータス',   width: 95 },
+            { key: 'special', label: '⚡ 特殊性能',     width: 95 },
+            { key: 'rename',  label: '🏷️ 装備改名',     width: 95 },
         ];
         let tabStartX = -w / 2 + 30;
         tabs.forEach((tab) => {
@@ -391,7 +417,7 @@ export default class CraftingUI extends BaseWindowUI {
                 .setStrokeStyle(1.5, isSel ? 0xffffff : 0x4a90e2)
                 .setInteractive({ useHandCursor: true });
             const ttxt = this.scene.add.text(tx, tabY, tab.label, {
-                fontSize: '11px', fontFamily: UI_FONT, color: isSel ? '#000000' : '#aaaaaa', style: 'bold'
+                fontSize: '10px', fontFamily: UI_FONT, color: isSel ? '#000000' : '#aaaaaa', style: 'bold'
             }).setOrigin(0.5);
             tbg.on('pointerdown', (p, lx, ly, e) => {
                 if (e) e.stopPropagation();
@@ -399,19 +425,25 @@ export default class CraftingUI extends BaseWindowUI {
                 this.refresh();
             });
             this.bodyContainer.add([tbg, ttxt]);
-            tabStartX += tWidth + 8;
+            tabStartX += tWidth + 6;
         });
 
-        // ===== プレビュー (右カラム・常時表示) =====
-        this._buildPreview(canCraftClass, isArtisan);
+        // リネームタブ以外の時は右カラムにプレビューを表示
+        if (this._activeTab !== 'rename') {
+            this._buildPreview(canCraftClass, isArtisan);
+        }
 
         // ===== メインコンテンツ =====
         if (this._activeTab === 'config') {
             this._buildConfigTab();
         } else if (this._activeTab === 'status') {
             this._buildStatusTab();
-        } else {
+        } else if (this._activeTab === 'stats') {
             this._buildStatsTab();
+        } else if (this._activeTab === 'special') {
+            this._buildSpecialTab();
+        } else if (this._activeTab === 'rename') {
+            this._buildRenameTab();
         }
     }
 
@@ -488,7 +520,7 @@ export default class CraftingUI extends BaseWindowUI {
             const txt = this.scene.add.text(8, gy, g.label, {
                 fontSize: '10px', fontFamily: UI_FONT, color: g.color, style: isSel ? 'bold' : 'normal'
             }).setOrigin(0, 0.5);
-            const costTxt = this.scene.add.text(322, gy, `${g.costGold.toLocaleString()}G`, {
+            const costTxt = this.scene.add.text(322, gy, `${(g.costGold / 10000).toLocaleString()}万G`, {
                 fontSize: '10px', fontFamily: UI_FONT, color: '#ffd700'
             }).setOrigin(1, 0.5);
             btn.on('pointerdown', (p, lx, ly, e) => {
@@ -501,8 +533,8 @@ export default class CraftingUI extends BaseWindowUI {
         this.bodyContainer.add(gradeCont);
         curY += CRAFT_CONFIG.grades.length * 24 + 4;
 
-        // 4. 複合属性コア（複数選択可）
-        this.bodyContainer.add(this.scene.add.text(leftX, curY, '④ 属性コア（複数選択可・無属性は排他）:', {
+        // 4. 複合属性コア
+        this.bodyContainer.add(this.scene.add.text(leftX, curY, '④ 属性コア (複数選択可・オーブ未所持はG代用):', {
             fontSize: '11px', fontFamily: UI_FONT, color: '#8fd3ff', style: 'bold'
         }));
         curY += 15;
@@ -527,56 +559,17 @@ export default class CraftingUI extends BaseWindowUI {
         this.bodyContainer.add(elemCont);
         curY += (Math.ceil(CRAFT_CONFIG.elements.length / 5) * 24) + 4;
 
-        // 5. 状態異常クイックトグル ＋ 確率調整タブ誘導
-        this.bodyContainer.add(this.scene.add.text(leftX, curY, '⑤ 状態異常付与 (クイック切替 / 確率調整: Max20%):', {
-            fontSize: '11px', fontFamily: UI_FONT, color: '#8fd3ff', style: 'bold'
-        }));
-        // 詳細調整タブへのリンク
-        const detailTabBtn = this.scene.add.text(leftX + 415, curY, '👉 確率調整タブを開く [Max20%]', {
-            fontSize: '10px', fontFamily: UI_FONT, color: '#ffd700', style: 'bold'
-        }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
-        detailTabBtn.on('pointerdown', (p, lx, ly, e) => {
-            if (e) e.stopPropagation();
-            this._activeTab = 'status';
-            this.refresh();
-        });
-        this.bodyContainer.add(detailTabBtn);
-
-        curY += 15;
-        const seCont = this.scene.add.container(leftX, curY);
-        CRAFT_CONFIG.statusEffects.forEach((se, idx) => {
-            const currentPct = this.statusRates[se.key] || 0;
-            const isSel = currentPct > 0;
-            const sx = (idx % 6) * 69 + 32;
-            const sy = Math.floor(idx / 6) * 24 + 10;
-            const btn = this.scene.add.rectangle(sx, sy, 65, 20, isSel ? 0x224433 : 0x141a24)
-                .setStrokeStyle(1.5, isSel ? 0x55ffaa : 0x2c3b4d)
-                .setInteractive({ useHandCursor: true });
-            const lbl = isSel ? `${se.icon}${currentPct}%` : `${se.icon}${se.label}`;
-            const txt = this.scene.add.text(sx, sy, lbl, {
-                fontSize: '10px', fontFamily: UI_FONT, color: isSel ? '#ffffff' : se.color
-            }).setOrigin(0.5);
-            btn.on('pointerdown', (p, lx, ly, e) => {
-                if (e) e.stopPropagation();
-                this.toggleStatusEffect(se.key);
-                this.refresh();
-            });
-            seCont.add([btn, txt]);
-        });
-        this.bodyContainer.add(seCont);
-        curY += (Math.ceil(CRAFT_CONFIG.statusEffects.length / 6) * 24) + 4;
-
-        // 6. 特殊刻印
-        this.bodyContainer.add(this.scene.add.text(leftX, curY, '⑥ 特殊刻印:', {
+        // 5. 特殊刻印
+        this.bodyContainer.add(this.scene.add.text(leftX, curY, '⑤ 特殊刻印:', {
             fontSize: '11px', fontFamily: UI_FONT, color: '#8fd3ff', style: 'bold'
         }));
         curY += 15;
         const traitCont = this.scene.add.container(leftX, curY);
         CRAFT_CONFIG.traits.forEach((tr, idx) => {
             const isSel = this.selectedTraitIndex === idx;
-            const tx2 = (idx % 5) * 82 + 38;
-            const ty2 = Math.floor(idx / 5) * 24 + 10;
-            const btn = this.scene.add.rectangle(tx2, ty2, 76, 20, isSel ? 0x224433 : 0x141a24)
+            const tx2 = (idx % 4) * 100 + 46;
+            const ty2 = Math.floor(idx / 4) * 24 + 10;
+            const btn = this.scene.add.rectangle(tx2, ty2, 94, 20, isSel ? 0x224433 : 0x141a24)
                 .setStrokeStyle(1, isSel ? 0x55ffaa : 0x2c3b4d)
                 .setInteractive({ useHandCursor: true });
             const txt = this.scene.add.text(tx2, ty2, tr.label, {
@@ -592,7 +585,6 @@ export default class CraftingUI extends BaseWindowUI {
         this.bodyContainer.add(traitCont);
     }
 
-    // ===== 状態異常付与・確率操作タブ (最大20%) =====
     _buildStatusTab() {
         const w = this.config.width;
         const h = this.config.height;
@@ -608,20 +600,17 @@ export default class CraftingUI extends BaseWindowUI {
         }));
         curY += 20;
 
-        // 状態異常費用合計
         const totalStatusCost = this.calcStatusEffectsCost();
-        this.bodyContainer.add(this.scene.add.text(leftX, curY, `💰 状態異常付与コスト合計: ${totalStatusCost.toLocaleString()} G`, {
+        this.bodyContainer.add(this.scene.add.text(leftX, curY, `💰 状態異常付与コスト合計: ${(totalStatusCost / 10000).toLocaleString()}万G`, {
             fontSize: '11px', fontFamily: UI_FONT, color: '#ffd700', style: 'bold'
         }));
         curY += 24;
 
-        // 11種類の状態異常を一覧表示
         CRAFT_CONFIG.statusEffects.forEach(se => {
             const currentPct = Math.min(20, this.statusRates[se.key] || 0);
             const cost = currentPct * se.costPerPct;
             const isEnabled = currentPct > 0;
 
-            // ON/OFF トグルボタン
             const onOffBtn = this.scene.add.rectangle(leftX + 24, curY + 7, 44, 20, isEnabled ? 0x225533 : 0x222222)
                 .setStrokeStyle(1, isEnabled ? 0x55ffaa : 0x555555).setInteractive({ useHandCursor: true });
             const onOffTxt = this.scene.add.text(leftX + 24, curY + 7, isEnabled ? 'ON' : 'OFF', {
@@ -633,17 +622,14 @@ export default class CraftingUI extends BaseWindowUI {
                 this.refresh();
             });
 
-            // ラベル + アイコン
             this.bodyContainer.add(this.scene.add.text(leftX + 54, curY + 7, `${se.icon} ${se.label}`, {
                 fontSize: '11px', fontFamily: UI_FONT, color: isEnabled ? se.color : '#888888', style: 'bold'
             }).setOrigin(0, 0.5));
 
-            // 説明文
             this.bodyContainer.add(this.scene.add.text(leftX + 130, curY + 7, se.desc, {
                 fontSize: '10px', fontFamily: UI_FONT, color: '#666666'
             }).setOrigin(0, 0.5));
 
-            // [−] ボタン
             const minusBtn = this.scene.add.rectangle(leftX + 300, curY + 7, 20, 18, 0x332222)
                 .setStrokeStyle(1, 0xff5555).setInteractive({ useHandCursor: true });
             const minusTxt = this.scene.add.text(leftX + 300, curY + 7, '−', {
@@ -655,12 +641,10 @@ export default class CraftingUI extends BaseWindowUI {
                 this.refresh();
             });
 
-            // 現在確率表示 (Max 20%)
             const pctTxt = this.scene.add.text(leftX + 332, curY + 7, `${currentPct}%`, {
                 fontSize: '11px', fontFamily: UI_FONT, color: isEnabled ? '#ffffff' : '#555555', style: 'bold'
             }).setOrigin(0.5);
 
-            // [+] ボタン
             const plusBtn = this.scene.add.rectangle(leftX + 365, curY + 7, 20, 18, 0x223322)
                 .setStrokeStyle(1, 0x55ff55).setInteractive({ useHandCursor: true });
             const plusTxt = this.scene.add.text(leftX + 365, curY + 7, '+', {
@@ -672,13 +656,12 @@ export default class CraftingUI extends BaseWindowUI {
                 this.refresh();
             });
 
-            // [✏️] 直接入力ボタン
             const editBtn = this.scene.add.text(leftX + 386, curY + 7, '✏️', {
                 fontSize: '12px', fontFamily: UI_FONT
             }).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
             editBtn.on('pointerdown', (p, lx, ly, e) => {
                 if (e) e.stopPropagation();
-                const input = prompt(`${se.label}の発動確率を入力してください (0〜20%)\n1%あたり ${se.costPerPct.toLocaleString()}G`, String(currentPct));
+                const input = prompt(`${se.label}の発動確率を入力してください (0〜20%)\n1%あたり ${(se.costPerPct / 10000).toLocaleString()}万G`, String(currentPct));
                 if (input !== null) {
                     const parsed = parseInt(input, 10);
                     if (!isNaN(parsed)) {
@@ -688,8 +671,7 @@ export default class CraftingUI extends BaseWindowUI {
                 }
             });
 
-            // コスト表示
-            const costTxt = this.scene.add.text(leftX + 412, curY + 7, cost > 0 ? `= ${cost.toLocaleString()}G` : '', {
+            const costTxt = this.scene.add.text(leftX + 412, curY + 7, cost > 0 ? `= ${(cost / 10000).toLocaleString()}万G` : '', {
                 fontSize: '10px', fontFamily: UI_FONT, color: '#ffd700'
             }).setOrigin(0, 0.5);
 
@@ -697,7 +679,6 @@ export default class CraftingUI extends BaseWindowUI {
             curY += 28;
         });
 
-        // 全リセットボタン
         curY += 6;
         const resetAllBtn = this.scene.add.rectangle(leftX + 180, curY + 12, 180, 24, 0x332222)
             .setStrokeStyle(1.5, 0xff5555).setInteractive({ useHandCursor: true });
@@ -722,16 +703,15 @@ export default class CraftingUI extends BaseWindowUI {
             fontSize: '12px', fontFamily: UI_FONT, color: '#ffd700', style: 'bold'
         }));
         curY += 20;
-        this.bodyContainer.add(this.scene.add.text(leftX, curY, '入力した数値がそのまま装備ステータスに加算されます。値が大きいほど費用が増加します。', {
+        this.bodyContainer.add(this.scene.add.text(leftX, curY, '入力した数値が装備に加算されます。高値ほど費用が跳ね上がります。', {
             fontSize: '10px', fontFamily: UI_FONT, color: '#888888'
         }));
         curY += 22;
 
-        // 合計コスト表示
         const totalStatCost = this.calcStatAllocationCost();
         const player = this.scene.player;
         const hasGoldForStats = (player?.stats?.gold || 0) >= totalStatCost;
-        this.bodyContainer.add(this.scene.add.text(leftX, curY, `💰 ステータス振り分けコスト合計: ${totalStatCost.toLocaleString()} G`, {
+        this.bodyContainer.add(this.scene.add.text(leftX, curY, `💰 ステータス強化コスト合計: ${(totalStatCost / 10000).toLocaleString()}万G`, {
             fontSize: '12px', fontFamily: UI_FONT, color: hasGoldForStats ? '#ffd700' : '#ff4444', style: 'bold'
         }));
         curY += 26;
@@ -741,17 +721,14 @@ export default class CraftingUI extends BaseWindowUI {
             const cost = val * sa.costPerPoint;
             const unitLabel = sa.isPercent ? '%' : '';
 
-            // ラベル
             this.bodyContainer.add(this.scene.add.text(leftX, curY, sa.label, {
                 fontSize: '11px', fontFamily: UI_FONT, color: sa.color, style: 'bold'
             }));
 
-            // コスト/ポイント表示
-            this.bodyContainer.add(this.scene.add.text(leftX + 155, curY, `(${sa.costPerPoint.toLocaleString()}G / 1${unitLabel}  最大: ${sa.max}${unitLabel})`, {
+            this.bodyContainer.add(this.scene.add.text(leftX + 155, curY, `(${(sa.costPerPoint / 10000).toLocaleString()}万G/1  最大: ${sa.max}${unitLabel})`, {
                 fontSize: '10px', fontFamily: UI_FONT, color: '#666666'
             }));
 
-            // [-] ボタン
             const minusBtn = this.scene.add.rectangle(leftX + 310, curY + 7, 22, 20, 0x332222)
                 .setStrokeStyle(1, 0xff5555).setInteractive({ useHandCursor: true });
             const minusTxt = this.scene.add.text(leftX + 310, curY + 7, '−', {
@@ -759,17 +736,15 @@ export default class CraftingUI extends BaseWindowUI {
             }).setOrigin(0.5);
             minusBtn.on('pointerdown', (p, lx, ly, e) => {
                 if (e) e.stopPropagation();
-                const step = sa.isPercent ? 1 : (sa.key === 'maxHp' ? 50 : sa.key === 'maxMp' ? 20 : 1);
+                const step = sa.isPercent ? 1 : (sa.key === 'maxHp' ? 50 : sa.key === 'maxMp' ? 20 : 5);
                 this.statPoints[sa.key] = Math.max(0, (this.statPoints[sa.key] || 0) - step);
                 this.refresh();
             });
 
-            // 現在値表示
             const valTxt = this.scene.add.text(leftX + 355, curY + 7, `${val}${unitLabel}`, {
                 fontSize: '13px', fontFamily: UI_FONT, color: val > 0 ? '#ffffff' : '#555555', style: 'bold'
             }).setOrigin(0.5);
 
-            // [+] ボタン
             const plusBtn = this.scene.add.rectangle(leftX + 400, curY + 7, 22, 20, 0x223322)
                 .setStrokeStyle(1, 0x55ff55).setInteractive({ useHandCursor: true });
             const plusTxt = this.scene.add.text(leftX + 400, curY + 7, '+', {
@@ -777,49 +752,35 @@ export default class CraftingUI extends BaseWindowUI {
             }).setOrigin(0.5);
             plusBtn.on('pointerdown', (p, lx, ly, e) => {
                 if (e) e.stopPropagation();
-                const step = sa.isPercent ? 1 : (sa.key === 'maxHp' ? 50 : sa.key === 'maxMp' ? 20 : 1);
+                const step = sa.isPercent ? 1 : (sa.key === 'maxHp' ? 50 : sa.key === 'maxMp' ? 20 : 5);
                 this.statPoints[sa.key] = Math.min(sa.max, (this.statPoints[sa.key] || 0) + step);
                 this.refresh();
             });
 
-            // [直接入力] ボタン
             const inputBtn = this.scene.add.text(leftX + 430, curY + 7, '✏️', {
                 fontSize: '14px', fontFamily: UI_FONT
             }).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
             inputBtn.on('pointerdown', (p, lx, ly, e) => {
                 if (e) e.stopPropagation();
-                const step = sa.isPercent ? 1 : (sa.key === 'maxHp' ? 50 : sa.key === 'maxMp' ? 20 : 1);
-                const input = prompt(`${sa.label}に振り分ける量を入力 (0〜${sa.max}${unitLabel}、${step}刻み)\n1${unitLabel}あたり${sa.costPerPoint.toLocaleString()}G`, String(val));
+                const step = sa.isPercent ? 1 : (sa.key === 'maxHp' ? 50 : sa.key === 'maxMp' ? 20 : 5);
+                const input = prompt(`${sa.label}に振り分ける量を入力 (0〜${sa.max}${unitLabel})\n1${unitLabel}あたり ${(sa.costPerPoint / 10000).toLocaleString()}万G`, String(val));
                 if (input !== null) {
                     const parsed = parseInt(input, 10);
                     if (!isNaN(parsed)) {
-                        const snapped = Math.round(parsed / step) * step;
-                        this.statPoints[sa.key] = Math.max(0, Math.min(sa.max, snapped));
+                        this.statPoints[sa.key] = Math.max(0, Math.min(sa.max, parsed));
                         this.refresh();
                     }
                 }
             });
 
-            // コスト
-            const costTxt2 = this.scene.add.text(leftX + 460, curY + 7, cost > 0 ? `= ${cost.toLocaleString()}G` : '', {
+            const costTxt2 = this.scene.add.text(leftX + 455, curY + 7, cost > 0 ? `= ${(cost / 10000).toLocaleString()}万G` : '', {
                 fontSize: '10px', fontFamily: UI_FONT, color: '#ffd700'
             }).setOrigin(0, 0.5);
 
-            // [リセット]
-            const resetBtn = this.scene.add.text(-w / 2 + 390, curY + 7, '↺', {
-                fontSize: '13px', fontFamily: UI_FONT, color: '#888888'
-            }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-            resetBtn.on('pointerdown', (p, lx, ly, e) => {
-                if (e) e.stopPropagation();
-                this.statPoints[sa.key] = 0;
-                this.refresh();
-            });
-
-            this.bodyContainer.add([minusBtn, minusTxt, valTxt, plusBtn, plusTxt, inputBtn, costTxt2, resetBtn]);
+            this.bodyContainer.add([minusBtn, minusTxt, valTxt, plusBtn, plusTxt, inputBtn, costTxt2]);
             curY += 42;
         });
 
-        // 全リセットボタン
         curY += 8;
         const resetAllBtn = this.scene.add.rectangle(leftX + 200, curY + 15, 200, 28, 0x332222)
             .setStrokeStyle(1.5, 0xff5555).setInteractive({ useHandCursor: true });
@@ -832,6 +793,171 @@ export default class CraftingUI extends BaseWindowUI {
             this.refresh();
         });
         this.bodyContainer.add([resetAllBtn, resetAllTxt]);
+    }
+
+    // ===== 特殊性能カスタマイズタブ (多段攻撃・貫通・射程等) =====
+    _buildSpecialTab() {
+        const w = this.config.width;
+        const h = this.config.height;
+        const leftX = -w / 2 + 30;
+        let curY = -h / 2 + 105;
+
+        this.bodyContainer.add(this.scene.add.text(leftX, curY, '⚡ 特殊性能カスタマイズ (多段攻撃・貫通・射程・吸血等)', {
+            fontSize: '12px', fontFamily: UI_FONT, color: '#ffd700', style: 'bold'
+        }));
+        curY += 18;
+        this.bodyContainer.add(this.scene.add.text(leftX, curY, '武器に特殊な戦闘挙動を付加します。唯一無二の性能を実現可能。', {
+            fontSize: '10px', fontFamily: UI_FONT, color: '#888888'
+        }));
+        curY += 20;
+
+        const totalSpecialCost = this.calcSpecialFeaturesCost();
+        this.bodyContainer.add(this.scene.add.text(leftX, curY, `💰 特殊性能コスト合計: ${(totalSpecialCost / 10000).toLocaleString()}万G`, {
+            fontSize: '11px', fontFamily: UI_FONT, color: '#ffd700', style: 'bold'
+        }));
+        curY += 24;
+
+        CRAFT_CONFIG.specialFeatures.forEach(sf => {
+            const currentVal = this.specialValues[sf.key] !== undefined ? this.specialValues[sf.key] : sf.base;
+            const diff = currentVal - sf.base;
+            const steps = Math.round(diff / sf.step);
+            const cost = steps * sf.costPerStep;
+
+            this.bodyContainer.add(this.scene.add.text(leftX, curY, sf.label, {
+                fontSize: '11px', fontFamily: UI_FONT, color: sf.color, style: 'bold'
+            }));
+
+            this.bodyContainer.add(this.scene.add.text(leftX + 130, curY, sf.desc, {
+                fontSize: '9px', fontFamily: UI_FONT, color: '#666666'
+            }));
+
+            // [−]
+            const minusBtn = this.scene.add.rectangle(leftX + 315, curY + 6, 20, 18, 0x332222)
+                .setStrokeStyle(1, 0xff5555).setInteractive({ useHandCursor: true });
+            const minusTxt = this.scene.add.text(leftX + 315, curY + 6, '−', {
+                fontSize: '13px', fontFamily: UI_FONT, color: '#ff5555'
+            }).setOrigin(0.5);
+            minusBtn.on('pointerdown', (p, lx, ly, e) => {
+                if (e) e.stopPropagation();
+                this.specialValues[sf.key] = Math.max(sf.base, currentVal - sf.step);
+                this.refresh();
+            });
+
+            // 現在値
+            const displayVal = sf.step < 1 ? currentVal.toFixed(1) : currentVal;
+            const valTxt = this.scene.add.text(leftX + 348, curY + 6, `${displayVal}${sf.unit}`, {
+                fontSize: '11px', fontFamily: UI_FONT, color: currentVal > sf.base ? '#ffffff' : '#555555', style: 'bold'
+            }).setOrigin(0.5);
+
+            // [+]
+            const plusBtn = this.scene.add.rectangle(leftX + 385, curY + 6, 20, 18, 0x223322)
+                .setStrokeStyle(1, 0x55ff55).setInteractive({ useHandCursor: true });
+            const plusTxt = this.scene.add.text(leftX + 385, curY + 6, '+', {
+                fontSize: '13px', fontFamily: UI_FONT, color: '#55ff55'
+            }).setOrigin(0.5);
+            plusBtn.on('pointerdown', (p, lx, ly, e) => {
+                if (e) e.stopPropagation();
+                this.specialValues[sf.key] = Math.min(sf.max, currentVal + sf.step);
+                this.refresh();
+            });
+
+            // コスト
+            const costTxt = this.scene.add.text(leftX + 412, curY + 6, cost > 0 ? `= ${(cost / 10000).toLocaleString()}万G` : '', {
+                fontSize: '10px', fontFamily: UI_FONT, color: '#ffd700'
+            }).setOrigin(0, 0.5);
+
+            this.bodyContainer.add([minusBtn, minusTxt, valTxt, plusBtn, plusTxt, costTxt]);
+            curY += 36;
+        });
+
+        // 強制範囲化トグル
+        curY += 4;
+        const isArea = !!this.specialValues.forceAreaAttack;
+        const areaBtn = this.scene.add.rectangle(leftX + 50, curY + 10, 90, 24, isArea ? 0x225544 : 0x222222)
+            .setStrokeStyle(1.5, isArea ? 0x55ffaa : 0x555555).setInteractive({ useHandCursor: true });
+        const areaTxt = this.scene.add.text(leftX + 50, curY + 10, isArea ? '🌀強制範囲化 ON' : '強制範囲化 OFF', {
+            fontSize: '10px', fontFamily: UI_FONT, color: isArea ? '#55ffaa' : '#888888', style: 'bold'
+        }).setOrigin(0.5);
+        areaBtn.on('pointerdown', (p, lx, ly, e) => {
+            if (e) e.stopPropagation();
+            this.specialValues.forceAreaAttack = !this.specialValues.forceAreaAttack;
+            this.refresh();
+        });
+        const areaDesc = this.scene.add.text(leftX + 105, curY + 10, '単体武器でも周囲全敵に同時命中 (費用: +1,000万G)', {
+            fontSize: '10px', fontFamily: UI_FONT, color: '#888888'
+        }).setOrigin(0, 0.5);
+        this.bodyContainer.add([areaBtn, areaTxt, areaDesc]);
+    }
+
+    // ===== 制作済み装備リネームタブ =====
+    _buildRenameTab() {
+        const w = this.config.width;
+        const h = this.config.height;
+        const leftX = -w / 2 + 40;
+        let curY = -h / 2 + 105;
+
+        this.bodyContainer.add(this.scene.add.text(0, curY, '🏷️ 制作済みオリジナル装備の名前変更 (リネーム)', {
+            fontSize: '14px', fontFamily: UI_FONT, color: '#ffd700', style: 'bold'
+        }).setOrigin(0.5));
+        curY += 25;
+        this.bodyContainer.add(this.scene.add.text(0, curY, '工房で過去に制作したオリジナル装備の名前を、いつでも無料で自由に変更できます。', {
+            fontSize: '11px', fontFamily: UI_FONT, color: '#aaaaaa'
+        }).setOrigin(0.5));
+        curY += 30;
+
+        const player = this.scene.player;
+        const customItems = player?.stats?.customItems || {};
+        const customList = Object.values(customItems);
+
+        if (customList.length === 0) {
+            const noBox = this.scene.add.rectangle(0, curY + 80, w - 100, 100, 0x121a28, 0.8)
+                .setStrokeStyle(1, 0x4a90e2, 0.5);
+            const noTxt = this.scene.add.text(0, curY + 80, '制作済みのオリジナル装備がまだありません。\n「🔧 基本設定」で装備を制作するとここに表示されます。', {
+                fontSize: '12px', fontFamily: UI_FONT, color: '#888888', align: 'center'
+            }).setOrigin(0.5);
+            this.bodyContainer.add([noBox, noTxt]);
+            return;
+        }
+
+        // リスト表示
+        customList.forEach((item, idx) => {
+            const rowY = curY + idx * 46;
+            const rowBox = this.scene.add.rectangle(0, rowY, w - 80, 38, 0x141f30, 0.9)
+                .setStrokeStyle(1, 0x335577, 0.8);
+
+            const iconTxt = this.scene.add.text(-w / 2 + 65, rowY, item.icon || '⚔️', { fontSize: '20px' }).setOrigin(0.5);
+            const nameTxt = this.scene.add.text(-w / 2 + 90, rowY - 6, item.name, {
+                fontSize: '12px', fontFamily: UI_FONT, color: '#ffffff', style: 'bold'
+            });
+            const descTxt = this.scene.add.text(-w / 2 + 90, rowY + 9, `ID: ${item.id} | ${item.description || ''}`, {
+                fontSize: '9px', fontFamily: UI_FONT, color: '#888888'
+            });
+
+            // リネームボタン
+            const renBtn = this.scene.add.rectangle(w / 2 - 100, rowY, 90, 26, 0x2288ee)
+                .setStrokeStyle(1.5, 0x88ffff).setInteractive({ useHandCursor: true });
+            const renTxt = this.scene.add.text(w / 2 - 100, rowY, '✏️ 名前の変更', {
+                fontSize: '11px', fontFamily: UI_FONT, color: '#ffffff', style: 'bold'
+            }).setOrigin(0.5);
+
+            renBtn.on('pointerdown', (p, lx, ly, e) => {
+                if (e) e.stopPropagation();
+                const newName = prompt(`「${item.name}」の新しい名前を入力してください:`, item.name);
+                if (newName !== null && newName.trim()) {
+                    const trimmed = newName.trim();
+                    item.name = trimmed;
+                    if (ITEMS[item.id]) ITEMS[item.id].name = trimmed;
+                    if (player.stats.customItems[item.id]) player.stats.customItems[item.id].name = trimmed;
+                    player.saveStats();
+                    if (this.scene.notificationUI) {
+                        this.scene.notificationUI.show(`✨ 装備名を「${trimmed}」に変更しました！`, 'success');
+                    }
+                    this.refresh();
+                }
+            });
+
+            this.bodyContainer.add([rowBox, iconTxt, nameTxt, descTxt, renBtn, renTxt]);
+        });
     }
 
     _buildPreview(canCraftClass, isArtisan) {
@@ -864,7 +990,7 @@ export default class CraftingUI extends BaseWindowUI {
         editNameBtn.on('pointerdown', (p, lx, ly, e) => {
             if (e) e.stopPropagation();
             const input = prompt('装備の名前を入力:', craft.name);
-            if (input !== null) { this.customName = input.trim(); this.refresh(); }
+            if (input !== null && input.trim()) { this.customName = input.trim(); this.refresh(); }
         });
         this.bodyContainer.add(editNameBtn);
 
@@ -876,8 +1002,8 @@ export default class CraftingUI extends BaseWindowUI {
             fontSize: '10px', fontFamily: UI_FONT, color: '#ff88cc', wordWrap: { width: 270 }
         }));
 
-        // ステータス
-        let sY = previewY + 76;
+        // ステータス一覧
+        let sY = previewY + 74;
         const addStat = (label, val, suffix = '', color = '#ffffff') => {
             if (val === 0 || val === null || val === undefined) return;
             this.bodyContainer.add(this.scene.add.text(rightX + 14, sY, label, {
@@ -886,7 +1012,7 @@ export default class CraftingUI extends BaseWindowUI {
             this.bodyContainer.add(this.scene.add.text(rightX + 281, sY, `${val > 0 ? '+' : ''}${val}${suffix}`, {
                 fontSize: '10px', fontFamily: UI_FONT, color, style: 'bold'
             }).setOrigin(1, 0));
-            sY += 17;
+            sY += 16;
         };
 
         if (craft.stats.attack)   addStat('攻撃力 (ATK)',     craft.stats.attack,   '', '#ff7777');
@@ -896,9 +1022,14 @@ export default class CraftingUI extends BaseWindowUI {
         if (craft.stats.critChance) addStat('会心率 (CRIT)',  Math.round(craft.stats.critChance * 100), '%', '#ffaa44');
         if (craft.stats.speed)    addStat('移動速度',         craft.stats.speed,    '', '#ffff77');
         if (craft.stats.lifesteal) addStat('吸血 (Lifesteal)', Math.round(craft.stats.lifesteal * 100), '%', '#ff55aa');
+        if (craft.stats.multiHit > 1) addStat('多段攻撃数',   `${craft.stats.multiHit}回`, '', '#ffaa22');
+        if (craft.stats.defenseIgnore > 0) addStat('防御貫通', `${Math.round(craft.stats.defenseIgnore * 100)}%`, '', '#ff8844');
+        if (craft.stats.attackRangeBonus > 0) addStat('射程延長', `${craft.stats.attackRangeBonus}px`, '', '#66ccff');
+        if (craft.stats.manaSteal > 0) addStat('MP吸収', `${Math.round(craft.stats.manaSteal * 100)}%`, '', '#cc88ff');
+        if (craft.stats.forceAreaAttack) addStat('攻撃方式', '🌀全周囲薙ぎ払い', '', '#55ffaa');
 
         // 刻印テキスト
-        sY = Math.max(sY, previewY + 190);
+        sY = Math.max(sY, previewY + 215);
         this.bodyContainer.add(this.scene.add.text(rightX + 14, sY, `刻印: ${craft.traitDesc}`, {
             fontSize: '10px', fontFamily: UI_FONT, color: '#88ffcc', wordWrap: { width: 265 }
         }));
@@ -917,16 +1048,30 @@ export default class CraftingUI extends BaseWindowUI {
         }));
 
         const hasGold = (player?.stats?.gold || 0) >= craft.gold;
-        this.bodyContainer.add(this.scene.add.text(rightX + 14, costY + 26, `🪙 費用: ${craft.gold.toLocaleString()} G`, {
+        const goldDisplay = craft.gold >= 100000000
+            ? `${(craft.gold / 100000000).toFixed(2)}億G`
+            : `${(craft.gold / 10000).toLocaleString()}万G`;
+        const myGoldDisplay = (player?.stats?.gold || 0) >= 100000000
+            ? `${((player?.stats?.gold || 0) / 100000000).toFixed(2)}億G`
+            : `${((player?.stats?.gold || 0) / 10000).toLocaleString()}万G`;
+
+        this.bodyContainer.add(this.scene.add.text(rightX + 14, costY + 26, `🪙 費用: ${goldDisplay}`, {
             fontSize: '11px', fontFamily: UI_FONT, color: hasGold ? '#ffd700' : '#ff4444'
         }));
-        this.bodyContainer.add(this.scene.add.text(rightX + 281, costY + 26, `(所持: ${(player?.stats?.gold || 0).toLocaleString()}G)`, {
+        this.bodyContainer.add(this.scene.add.text(rightX + 281, costY + 26, `(所持: ${myGoldDisplay})`, {
             fontSize: '10px', fontFamily: UI_FONT, color: '#888888'
         }).setOrigin(1, 0));
 
         let hasAllItems = true;
         let itemY = costY + 46;
         craft.requiredItems.forEach(req => {
+            if (req.substituted) {
+                this.bodyContainer.add(this.scene.add.text(rightX + 14, itemY, `🪙 オーブ代用金: +${(req.altGold / 10000).toLocaleString()}万G`, {
+                    fontSize: '10px', fontFamily: UI_FONT, color: '#ffd700'
+                }));
+                itemY += 17;
+                return;
+            }
             const itemDef = ITEMS[req.id];
             const invEntry = (player?.stats?.inventory || []).find(i => (typeof i === 'string' ? i : i.id) === req.id);
             const count = typeof invEntry === 'object' ? (invEntry.count || 1) : (invEntry ? 1 : 0);
@@ -979,7 +1124,6 @@ export default class CraftingUI extends BaseWindowUI {
         const player = this.scene.player;
         if (!player) return;
 
-        // Lv100 + 生産職の二重チェック
         if (!this.isArtisanClass()) {
             if (this.scene.notificationUI) this.scene.notificationUI.show('クラフトは「職人（生産職）」のみ可能です！', 'error');
             return;
@@ -992,23 +1136,25 @@ export default class CraftingUI extends BaseWindowUI {
         // コスト消費
         player.stats.gold -= craft.gold;
         craft.requiredItems.forEach(req => {
-            player.removeItem(req.id, req.count);
+            if (!req.substituted) {
+                player.removeItem(req.id, req.count);
+            }
         });
 
         // カスタムアイテムID生成
         const customId = `craft_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
-        // アイテム定義を作成
+        // アイテム定義を作成（defineItem を通してもプロパティを維持）
         const newItem = defineItem({
             id: customId,
             name: craft.name,
-            type: craft.category,
+            type: craft.itemType,
             weaponClass: craft.weaponClass,
             elements: craft.elements.length > 0 ? craft.elements : null,
             element: craft.elements[0] || null,
             statusEffects: craft.statusEffects.length > 0 ? craft.statusEffects : null,
-            level: craft.tier * 10,
-            price: Math.round(craft.gold * 0.4),
+            level: craft.tier * 20,
+            price: Math.round(craft.gold * 0.3),
             icon: craft.icon,
             stats: craft.stats,
             description: `【オリジナル製作装備】${craft.traitDesc} / 品質: ${craft.gradeLabel} / 属性: ${craft.elementLabel} / 状態異常: ${craft.statusLabel}`
@@ -1023,10 +1169,6 @@ export default class CraftingUI extends BaseWindowUI {
 
         // インベントリに追加
         player.addItem(customId);
-
-        // 振り分け・状態異常リセット
-        Object.keys(this.statPoints).forEach(k => { this.statPoints[k] = 0; });
-        Object.keys(this.statusRates).forEach(k => { this.statusRates[k] = 0; });
 
         // 鍛冶エフェクト演出
         if (this.scene.cameras?.main) {

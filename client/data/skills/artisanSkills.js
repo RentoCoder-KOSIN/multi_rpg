@@ -29,8 +29,8 @@ export const ARTISAN_SKILLS = {
         id: 'crafting_mastery',
         name: '工匠の極意',
         icon: '⚒️',
-        description: '生産技術の真髄。オリジナル装備制作の費用と素材を25%軽減し、装備攻撃力・防御力を強化する。',
-        effect: { atkMult: 1.08, defMult: 1.08 }
+        description: '生産技術の真髄。武具の扱いと手入れに習熟し、攻撃力・防御力+3%。',
+        effect: { atkMult: 1.03, defMult: 1.03 }
     }),
 
     armor_reinforce: active({
@@ -44,16 +44,16 @@ export const ARTISAN_SKILLS = {
         rangeType: 'circle',
         color: 0x4a90e2,
         icon: '🛡️',
-        description: '一時的に自身の防具を締め直す。防御力+35%（15秒間）。',
-        effect: { buffType: 'defense_buff', buffMult: 0.35, buffDuration: 15000 }
+        description: '一時的に自身の防具を締め直す。防御力+20%（15秒間）。',
+        effect: { buffType: 'defense_buff', buffMult: 0.20, buffDuration: 15000 }
     }),
 
     metal_temper: passive({
         id: 'metal_temper',
         name: '焼入れの心得',
         icon: '🔥',
-        description: '熱と金属への深い理解。攻撃力+12%、クリティカル率+8%。',
-        effect: { atkMult: 1.12, critChanceFlat: 0.08 }
+        description: '熱と金属への深い理解。攻撃力+4%、クリティカル率+3%。',
+        effect: { atkMult: 1.04, critChanceFlat: 0.03 }
     }),
 
     explosive_flask: active({
@@ -77,8 +77,8 @@ export const ARTISAN_SKILLS = {
         id: 'artisan_aura',
         name: '巨匠の息吹',
         icon: '✨',
-        description: '熟練の職人が放つ集中力。最大HP+15%、スキルCD-10%。',
-        effect: { maxHpMult: 1.15, cooldownMult: 0.90 }
+        description: '熟練の職人が放つ集中力。最大HP+5%、スキルCD-5%。',
+        effect: { maxHpMult: 1.05, cooldownMult: 0.95 }
     }),
 
     overclock_forge: active({
@@ -115,8 +115,8 @@ export const ARTISAN_SKILLS = {
         id: 'master_refine',
         name: '神器精錬',
         icon: '👑',
-        description: '名工たる者の境地。全能力が向上する。攻撃力+18%、防御力+18%、HP+15%。',
-        effect: { atkMult: 1.18, defMult: 1.18, maxHpMult: 1.15 }
+        description: '名工たる者の境地。全能力が向上する。攻撃力+5%、防御力+5%、HP+5%。',
+        effect: { atkMult: 1.05, defMult: 1.05, maxHpMult: 1.05 }
     }),
 
     // ===== 上位職: 錬金術師 (Alchemist) =====
@@ -139,8 +139,8 @@ export const ARTISAN_SKILLS = {
         id: 'philosopher_stone',
         name: '賢者の秘薬',
         icon: '💎',
-        description: '錬金術の究極点。最大MP+25%、ライフスティール+6%、EXP獲得+10%。',
-        effect: { maxMpMult: 1.25, lifestealFlat: 0.06, expMultBonus: 0.10 }
+        description: '錬金術の究極点。最大MP+6%、ライフスティール+2%、EXP獲得+5%。',
+        effect: { maxMpMult: 1.06, lifestealFlat: 0.02, expMultBonus: 0.05 }
     }),
 
     // ===== 上位職: ルーンマスター (Runemaster) =====
@@ -155,15 +155,15 @@ export const ARTISAN_SKILLS = {
         rangeType: 'circle',
         color: 0xaa44ff,
         icon: '🔮',
-        description: '古代ルーンの結界を展開し、パーティ全体の受けるダメージを大幅に軽減する。',
-        effect: { buffType: 'defense_buff', buffMult: 0.45, buffDuration: 15000 }
+        description: '古代ルーンの結界を展開し、パーティ全体の受けるダメージを軽減する。',
+        effect: { buffType: 'defense_buff', buffMult: 0.25, buffDuration: 15000 }
     }),
 
     enchanted_weapon: passive({
         id: 'enchanted_weapon',
         name: 'ルーンエンチャント',
         icon: '⚡',
-        description: '武器に古代文字の魔力を刻み込む。会心率+12%、スキルCD-12%、攻撃力+15%。',
-        effect: { critChanceFlat: 0.12, cooldownMult: 0.88, atkMult: 1.15 }
+        description: '武器に古代文字の魔力を刻み込む。会心率+4%、スキルCD-5%、攻撃力+5%。',
+        effect: { critChanceFlat: 0.04, cooldownMult: 0.95, atkMult: 1.05 }
     })
 };

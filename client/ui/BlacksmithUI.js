@@ -231,7 +231,7 @@ export default class BlacksmithUI extends BaseWindowUI {
         // 2. 現在の装備品と強化状態
         const equippedId = player.stats.equipment[this._selectedSlot];
         const itemDef = ITEMS[equippedId];
-        const curLv = player.stats.enhanceLevels?.[this._selectedSlot] || 0;
+        const curLv = player.getEnhanceLevel ? player.getEnhanceLevel(this._selectedSlot) : (player.stats.enhanceLevels?.[this._selectedSlot] || 0);
 
         const infoBox = this.scene.add.graphics();
         infoBox.fillStyle(0x121a2e, 0.9);

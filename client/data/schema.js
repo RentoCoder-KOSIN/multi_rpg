@@ -219,6 +219,11 @@ export function defineItem({
     // Equipment category used by job compatibility checks. Legacy equipment
     // can omit it and remains universally usable.
     weaponClass = null,
+    icon = null,
+    element = null,
+    elements = null,
+    statusEffects = null,
+    ...rest
 } = {}) {
     assert(id, 'item is missing an id');
     assert(name, `item "${id}": missing a name`);
@@ -227,7 +232,10 @@ export function defineItem({
 
     // lvlReq is kept as the field name existing UI/equip-check code reads;
     // `level` is the schema-facing name requested for the struct.
-    const item = { id, name, type, description, price, level, lvlReq: level, stats, effect, weaponClass };
+    const item = {
+        id, name, type, description, price, level, lvlReq: level, stats, effect, weaponClass,
+        icon, element, elements, statusEffects, ...rest
+    };
     if (typeof calculateAtk === 'function') item.calculateAtk = calculateAtk;
     return item;
 }

@@ -138,7 +138,8 @@ export default class EquipmentUI extends BaseWindowUI {
         slot.add(labelTxt);
 
         const item = ITEMS[itemId];
-        const enhLv = this.scene.player?.stats?.enhanceLevels?.[slotType] || 0;
+        const player = this.scene.player;
+        const enhLv = player?.getEnhanceLevel ? player.getEnhanceLevel(slotType) : (player?.stats?.enhanceLevels?.[slotType] || 0);
         const enhTag = (item && enhLv > 0) ? ` +${enhLv}` : '';
         const itemName = item ? `${item.name}${enhTag}` : '--- なし ---';
         const itemColor = item ? (enhLv >= 15 ? '#ff44ff' : (enhLv >= 10 ? '#ffd700' : '#ffffff')) : '#666666';
