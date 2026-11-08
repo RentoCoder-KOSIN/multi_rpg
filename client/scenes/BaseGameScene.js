@@ -43,6 +43,7 @@ import { beginSkillAim, releaseAim, cancelAim, updateAim } from '../systems/aim.
 import { showHitEffect } from '../systems/skillEffects.js';
 import { destroySummon } from '../systems/summons.js';
 import { addOtherPlayer, spawnEnemyFromServer } from '../systems/entitySetup.js';
+import { AbyssManager } from '../systems/abyssManager.js';
 import { MapAtmosphere } from '../systems/mapAtmosphere.js';
 
 // ウィンドウが開いている間、Player.update()に「キー入力なし」を伝えるためのダミー。
@@ -192,6 +193,11 @@ export default class BaseGameScene extends Phaser.Scene {
 
         setupEnemyDebug(this);
 
+        // 無限の深淵ダンジョン管理
+        if (this.currentMapKey === 'abyss') {
+            this.abyssManager = new AbyssManager(this);
+        }
+
         // Process players queued during load once the scene is fully active (next frame)
         this.time.delayedCall(0, () => {
             if (this.networkManager) {
@@ -323,6 +329,10 @@ export default class BaseGameScene extends Phaser.Scene {
     }
 
     shutdown() {
+        if (this.abyssManager) {
+            this.abyssManager.destroy();
+            this.abyssManager = null;
+        }
         if (this.mapAtmosphere) {
             this.mapAtmosphere.destroy();
             this.mapAtmosphere = null;

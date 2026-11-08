@@ -8,6 +8,8 @@ import { applySkillEffect, showHitEffect } from '../../systems/skillEffects.js';
 import { handleSummonUpdate } from '../../systems/summons.js';
 import { applyBuffVisual } from '../../systems/buffVisuals.js';
 import { applyAdminAction } from '../../ui/AdminUI.js';
+import { ITEMS } from '../../data/items.js';
+import { rollRandomOptions } from '../../data/randomOptions.js';
 
 /**
  * Register every NetworkManager callback the game scene reacts to.
@@ -88,7 +90,15 @@ function handleEnemyKilled(scene, enemyData) {
         if (exp > 0) scene.player.gainExp(exp, enemyData.level);
         if (gold > 0) scene.player.gainGold(gold);
 
-        drops.forEach(itemId => scene.player.addItem(itemId));
+        drops.forEach(itemId => {
+            const item = ITEMS[itemId];
+            if (item && (item.type === 'weapon' || item.type === 'armor' || item.type === 'accessory')) {
+                const rolled = rollRandomOptions(item.type, enemyData.level || 1);
+                scene.player.addItem(itemId, 1, enemyData.level, rolled);
+            } else {
+                scene.player.addItem(itemId);
+            }
+        });
     }
 }
 

@@ -15,6 +15,7 @@ import { isAdminFlag } from "../ui/AdminUI.js";
 import { getSaved, setSaved, flushSave } from "../utils/saveStore.js";
 import { onEnemyKill, onGoldEarned, onJobUnlocked, checkAchievements } from "../systems/achievementTracker.js";
 import { findMap } from "../data/maps.js";
+import { OPTION_POOL } from "../data/randomOptions.js";
 
 // 状態異常の基本持続時間（ms）。武器の属性付与などから発生する。
 const STATUS_DURATIONS = {
@@ -572,11 +573,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
-    addItem(itemId, amount = 1) {
+    addItem(itemId, amount = 1, monsterLevel = null, rolledOptions = null) {
         if (!this.isLocal || !ITEMS[itemId]) return;
         const itemDef = ITEMS[itemId];
 
-        // 武器と防具以外はスタック可能
+        // 武器と防具・装飾品以外はスタック可能
         const isStackable = itemDef.type !== 'weapon' && itemDef.type !== 'armor' && itemDef.type !== 'accessory';
 
         // 経験値倍率つきの装備は、入手した時点で一目でわかるようにタグを付ける
@@ -595,12 +596,23 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
                 this.scene.notificationUI.show(`アイテム入手: ${itemDef.name} x${amount}${expTag}`, 'success');
             }
         } else {
-            // スタック不可アイテムは個別に追記
+            // スタック不可アイテム（装備品等）
             for (let i = 0; i < amount; i++) {
-                this.stats.inventory.push({ id: itemId, count: 1 });
-            }
-            if (this.scene.notificationUI) {
-                this.scene.notificationUI.show(`アイテム入手: ${itemDef.name}${expTag}`, 'success');
+                const uid = 'item_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+                const invEntry = { id: itemId, count: 1, uid };
+                if (rolledOptions) {
+                    invEntry.options = rolledOptions;
+                }
+                this.stats.inventory.push(invEntry);
+
+                if (this.scene.notificationUI) {
+                    if (rolledOptions && rolledOptions.options?.length > 0) {
+                        const optTag = ` [${rolledOptions.rarityName}]`;
+                        this.scene.notificationUI.show(`装備入手: ${rolledOptions.prefix || ''}${itemDef.name}${optTag}`, 'warning', 4500);
+                    } else {
+                        this.scene.notificationUI.show(`アイテム入手: ${itemDef.name}${expTag}`, 'success');
+                    }
+                }
             }
         }
         this.saveStats();
@@ -1125,6 +1137,39 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             if (baseItemHp)  this.stats.maxHp = Math.ceil(this.stats.maxHp + baseItemHp  * bonus);
         });
 
+        // ランダムOP（ハクスラ厳選エンチャント）の適用
+        this.stats.atkMult = 1.0;
+        this.stats.defMult = 1.0;
+        this.stats.bonusMaxHp = 0;
+        this.stats.bonusMaxMp = 0;
+        this.stats.cooldownReduction = 0;
+
+        if (this.stats.equipmentOptions) {
+            ['weapon', 'armor', 'relic'].forEach(slot => {
+                const optData = this.stats.equipmentOptions[slot];
+                if (optData && Array.isArray(optData.options)) {
+                    optData.options.forEach(op => {
+                        const def = OPTION_POOL.find(p => p.id === op.id);
+                        if (def && typeof def.apply === 'function') {
+                            def.apply(this.stats, op.value);
+                        }
+                    });
+                }
+            });
+        }
+
+        if (this.stats.bonusMaxHp) this.stats.maxHp += this.stats.bonusMaxHp;
+        if (this.stats.bonusMaxMp) this.stats.maxMp += this.stats.bonusMaxMp;
+        if (this.stats.atkMult && this.stats.atkMult !== 1) {
+            this.stats.atk = Math.round(this.stats.atk * this.stats.atkMult);
+        }
+        if (this.stats.defMult && this.stats.defMult !== 1) {
+            this.stats.def = Math.round(this.stats.def * this.stats.defMult);
+        }
+        if (this.stats.cooldownReduction) {
+            this.stats.cooldownMult = (this.stats.cooldownMult || 1) * Math.max(0.4, 1 - this.stats.cooldownReduction);
+        }
+
         // ここまでで武器/防具/宝具による補正が乗った後の値なので、装備前との差分を
         // 「装備補正値」として保持する（UI表示用。種による永続加算はここに含めない）。
         // 装備由来の speedBonus を加算（上限で頭打ち）
@@ -1480,7 +1525,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         return def;
     }
 
-    equipItem(itemId) {
+    equipItem(itemId, itemUidOrOptions = null) {
         if (!this.isLocal || !ITEMS[itemId]) return;
         const item = ITEMS[itemId];
 
@@ -1490,14 +1535,39 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             return false;
         }
 
-        // レベル不足でも装備は可能。ただし制限解除の証がない限り、性能はレベル差に応じて低下する。
+        // オプション情報の取得
+        let targetOptions = null;
+        let targetUid = null;
+        if (itemUidOrOptions && typeof itemUidOrOptions === 'object' && itemUidOrOptions.options) {
+            targetOptions = itemUidOrOptions;
+        } else if (typeof itemUidOrOptions === 'string') {
+            targetUid = itemUidOrOptions;
+            const found = this.stats.inventory?.find(i => typeof i === 'object' && i.uid === targetUid);
+            if (found && found.options) targetOptions = found.options;
+        } else {
+            // インベントリから該当アイテムのオプションを探索
+            const found = this.stats.inventory?.find(i => typeof i === 'object' && i.id === itemId && i.options);
+            if (found) {
+                targetOptions = found.options;
+                targetUid = found.uid;
+            }
+        }
+
+        this.stats.equipmentOptions = this.stats.equipmentOptions || {};
+        this.stats.equipmentUid = this.stats.equipmentUid || {};
 
         if (item.type === 'weapon') {
             this.stats.equipment.weapon = itemId;
+            this.stats.equipmentOptions.weapon = targetOptions;
+            this.stats.equipmentUid.weapon = targetUid;
         } else if (item.type === 'armor') {
             this.stats.equipment.armor = itemId;
+            this.stats.equipmentOptions.armor = targetOptions;
+            this.stats.equipmentUid.armor = targetUid;
         } else if (item.type === 'accessory') {
             this.stats.equipment.relic = itemId;
+            this.stats.equipmentOptions.relic = targetOptions;
+            this.stats.equipmentUid.relic = targetUid;
         }
 
         this.applyEquipmentStats(); // すべてのステータスを再計算
@@ -1505,7 +1575,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         if (this.scene.notificationUI) {
             const power = this.getEquipmentPowerMultiplier(item);
             const suffix = power < 1 ? `（性能 ${Math.round(power * 100)}%）` : '';
-            this.scene.notificationUI.show(`${item.name} を装備しました！${suffix}`, 'info');
+            const optPrefix = targetOptions?.prefix || '';
+            const optRarity = targetOptions ? ` [${targetOptions.rarityName}]` : '';
+            this.scene.notificationUI.show(`${optPrefix}${item.name}${optRarity} を装備しました！${suffix}`, 'info');
 
             // 経験値倍率つきの装備は、実際に効いているかどうかが分かりにくいという声が
             // あったため、装備した瞬間に「x◯発動中/Lv上限で無効」をはっきり表示する。

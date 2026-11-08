@@ -158,6 +158,70 @@ export default class DialogueManager {
             return;
         }
 
+        // --- 無限の深淵 挑戦ゲート ---
+        if (npc.abyssTrigger) {
+            const player = this.scene.player;
+            const maxFloor = player?.stats?.abyssMaxFloor || 1;
+            let dialogueIndex = 0;
+            const dialogueLines = (npc.dialogue && npc.dialogue.length > 0)
+                ? npc.dialogue
+                : ["果てなき試練【無限の深淵】へと挑むか？"];
+
+            this.showNextLine = () => {
+                if (dialogueIndex < dialogueLines.length) {
+                    this.startTypewriter(`${npc.name}: ${dialogueLines[dialogueIndex]}`);
+                    dialogueIndex++;
+                } else {
+                    this.scene.input.keyboard.off('keydown-SPACE', this.showNextLine);
+                    this.showNextLine = null;
+
+                    this.startTypewriter(`【無限の深淵】に突入しますか？\n(最高到達記録: 第 ${maxFloor} 層)  [Y] 突入 / [N] 準備する`);
+                    this.choiceText.setVisible(true);
+
+                    this.choiceHandler = (event) => {
+                        const key = event.key.toLowerCase();
+                        if (key === 'y') {
+                            this.choiceText.setVisible(false);
+                            this.scene.input.keyboard.off('keydown', this.choiceHandler);
+                            this.showSystemMessage("深淵へのゲートが開かれた…！");
+
+                            this.scene.registry.set('abyssStartFloor', 1);
+
+                            this.scene.time.delayedCall(1000, () => {
+                                this.hideDialogueUI();
+                                this.isTalking = false;
+                                npc.talking = false;
+                                this.currentNPC = null;
+
+                                this.scene.cameras.main.fadeOut(300, 0, 0, 0);
+                                this.scene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+                                    this.scene.scene.start('abyss', {
+                                        mapKey: 'abyss',
+                                        spawn: 'default'
+                                    });
+                                });
+                            });
+                        } else if (key === 'n') {
+                            this.choiceText.setVisible(false);
+                            this.scene.input.keyboard.off('keydown', this.choiceHandler);
+                            this.showSystemMessage("また覚悟が決まったら声をかけてくれ。");
+                            this.scene.time.delayedCall(1200, () => {
+                                this.hideDialogueUI();
+                                this.isTalking = false;
+                                npc.talking = false;
+                                this.currentNPC = null;
+                            });
+                        }
+                    };
+                    this.scene.input.keyboard.on('keydown', this.choiceHandler);
+                }
+            };
+
+            this.showNextLine();
+            this.scene.input.keyboard.on('keydown-SPACE', this.showNextLine);
+            return;
+        }
+
         // --- 転職 ---
         if (npc.jobQuest && JOBS[npc.jobQuest]) {
             const job = JOBS[npc.jobQuest];

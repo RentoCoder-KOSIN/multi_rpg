@@ -32,6 +32,7 @@ const MAP_META = {
     port_city: { name: "港都市マリーナ" },
     glacier: { name: "氷河フロストグレイシア" },
     desert: { name: "大砂漠サンドリア" },
+    abyss: { name: "無限の深淵", showQuestTracker: false },
 };
 
 // 昔のTiledデータで使われていた別名（小文字で比較する）

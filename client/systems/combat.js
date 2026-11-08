@@ -357,9 +357,17 @@ function mergeStatusEffects(damageData, skillEffects) {
 export function findBasicAttackTargets(scene, player) {
     const { range, hit, cooldown } = getBasicAttackSpec(player);
     const inRange = [];
-    const allEnemies = scene.networkManager?.getEnemies() || {};
+    const serverEnemies = Object.values(scene.networkManager?.getEnemies() || {});
+    const allEnemies = [...serverEnemies];
+    if (scene.children?.list) {
+        scene.children.list.forEach(child => {
+            if (child instanceof Enemy && child.active && !allEnemies.includes(child)) {
+                allEnemies.push(child);
+            }
+        });
+    }
 
-    Object.values(allEnemies).forEach(enemy => {
+    allEnemies.forEach(enemy => {
         if (!enemy || !enemy.active) return;
         if (Math.hypot(enemy.x - player.x, enemy.y - player.y) < range) inRange.push(enemy);
     });

@@ -39,6 +39,14 @@ export function createNPCsFromMap(scene, map, layerName = 'NPCs') {
         if (npc.bossNPC) {
             console.log('[npcFactory] Boss NPC found:', npc.name, 'value:', bossNPCProp.value);
         }
+
+        // abyssTrigger（無限の深淵 門番NPC）
+        const abyssTriggerProp = obj.properties?.find(p => p.name === 'abyssTrigger');
+        npc.abyssTrigger = abyssTriggerProp && (
+            abyssTriggerProp.value === true ||
+            abyssTriggerProp.value === 'true' ||
+            String(abyssTriggerProp.value).toLowerCase() === 'true'
+        );
         npcs.push(npc);
     });
 

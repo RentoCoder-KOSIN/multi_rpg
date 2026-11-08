@@ -215,16 +215,19 @@ export default class InventoryUI extends BaseWindowUI {
 
             const slot = this.scene.add.container(x, y);
 
-            // スロット背景
+            // スロット背景（ランダムOPのレアリティ色を反映）
             const slotBg = this.scene.add.graphics();
-            this.drawSlot(slotBg, 0x0f3460, 0.4, 0x533483, 0.3);
+            const optColorHex = invItem.options?.color ? parseInt(invItem.options.color.replace('#', '0x')) : 0x533483;
+            this.drawSlot(slotBg, 0x0f3460, 0.4, optColorHex, invItem.options ? 0.8 : 0.3);
 
             // アイコン
             const itemIcon = this.scene.add.text(0, -10, this.getItemEmoji(item), { fontSize: '30px' }).setOrigin(0.5);
 
-            // 名前
-            const nameText = this.scene.add.text(0, 25, item.name.substring(0, 6), {
-                fontSize: '11px', fontFamily: UI_FONT, color: '#ffffff'
+            // 名前（OPプレフィックス・レアリティ色を反映）
+            const displayTitle = invItem.options?.prefix ? `${invItem.options.prefix}${item.name}` : item.name;
+            const titleColor = invItem.options?.color || '#ffffff';
+            const nameText = this.scene.add.text(0, 25, displayTitle.substring(0, 7), {
+                fontSize: '11px', fontFamily: UI_FONT, color: titleColor
             }).setOrigin(0.5);
 
             // 個数表示 (スタック可能な場合)
@@ -251,7 +254,7 @@ export default class InventoryUI extends BaseWindowUI {
                 this.handleItemClick(index, !!(event && event.shiftKey));
             });
 
-            this.slots.push({ bg: slotBg, item: item, container: slot, id: itemId }); // idも保持
+            this.slots.push({ bg: slotBg, item: item, container: slot, id: itemId, invItem: invItem, optColorHex }); // invItemも保持
         });
         this.updateSelection();
     }
@@ -272,10 +275,15 @@ export default class InventoryUI extends BaseWindowUI {
         if (this.slots.length === 0) return;
 
         this.slots.forEach((slot, index) => {
-            // 文字列ID比較 (オブジェクト化されたインベントリでも item.id は文字列)
-            const isEquipped = this.scene.player.stats.equipment.weapon === slot.item.id ||
-                this.scene.player.stats.equipment.armor === slot.item.id ||
-                this.scene.player.stats.equipment.relic === slot.item.id;
+            // 装備中判定（uidがあればuid比較、なければID比較）
+            const eqUid = this.scene.player?.stats?.equipmentUid;
+            const eq = this.scene.player?.stats?.equipment || {};
+            let isEquipped = false;
+            if (eqUid && slot.invItem?.uid) {
+                isEquipped = eqUid.weapon === slot.invItem.uid || eqUid.armor === slot.invItem.uid || eqUid.relic === slot.invItem.uid;
+            } else {
+                isEquipped = eq.weapon === slot.item.id || eq.armor === slot.item.id || eq.relic === slot.item.id;
+            }
 
             if (index === this.selectedIndex) {
                 this.drawSlot(slot.bg, 0xe94560, 0.4, 0xffffff, 1);
@@ -287,15 +295,28 @@ export default class InventoryUI extends BaseWindowUI {
                         const power = this.scene.player.getEquipmentPowerMultiplier?.(slot.item) ?? 1;
                         reqText = isOk ? `\n必要Lv: ${slot.item.lvlReq} ✔` : `\n必要Lv: ${slot.item.lvlReq}（装備可・性能${Math.round(power * 100)}%）`;
                     }
-                    this.detailText.setText(`${typeStr} ${slot.item.name}${reqText}\n${slot.item.description}`);
 
+                    // ランダムOP表示
+                    let optText = '';
+                    const opts = slot.invItem?.options;
+                    if (opts && Array.isArray(opts.options) && opts.options.length > 0) {
+                        optText = `\n\n✨ 【${opts.rarityName}】追加OP:`;
+                        opts.options.forEach(o => {
+                            optText += `\n • ${o.name} +${o.value}${o.unit}`;
+                        });
+                    }
+
+                    const displayName = opts?.prefix ? `${opts.prefix}${slot.item.name}` : slot.item.name;
+                    this.detailText.setText(`${typeStr} ${displayName}${reqText}\n${slot.item.description}${optText}`);
                 }
                 // スクロール追従
                 const targetY = -(Math.max(0, Math.floor(index / 5) - 1)) * 110;
                 this.listContainer.y = targetY;
                 slot.container.setScale(1.1);
             } else {
-                this.drawSlot(slot.bg, 0x0f3460, 0.4, isEquipped ? 0x00ff00 : 0x533483, isEquipped ? 1 : 0.3);
+                const borderCol = isEquipped ? 0x00ff00 : (slot.optColorHex || 0x533483);
+                const borderAlpha = isEquipped ? 1 : (slot.invItem?.options ? 0.8 : 0.3);
+                this.drawSlot(slot.bg, 0x0f3460, 0.4, borderCol, borderAlpha);
                 slot.container.setScale(1);
             }
         });
@@ -314,8 +335,8 @@ export default class InventoryUI extends BaseWindowUI {
         if (!item || !this.scene.player) return;
 
         if (item.type === 'weapon' || item.type === 'armor' || item.type === 'accessory') {
-            // 装備品はまとめ使用の対象外（useAllは無視）
-            this.scene.player.equipItem(itemId);
+            // 装備品はまとめ使用の対象外（uid または options を渡して装備）
+            this.scene.player.equipItem(itemId, invItem.uid || invItem.options);
         } else if (item.type === 'material') {
             // 属性の玉などの素材はここでは使用しない（街の鍛冶屋で使う）
             if (this.scene.notificationUI) {

@@ -87,7 +87,9 @@ function analyze() {
             }
         }
     }
-    const unreachable = Object.keys(maps).filter(k => !reached.has(k));
+    // 特殊な方法（NPC会話・イベント等）で突入するマップはTeleports入口なしでも許容
+    const SPECIAL_ENTRY_MAPS = ["abyss"];
+    const unreachable = Object.keys(maps).filter(k => !reached.has(k) && !SPECIAL_ENTRY_MAPS.includes(k));
     for (const k of unreachable) {
         problems.push(`[転移] ${k} には、${START_MAPS.join(" / ")} から転移で辿り着けません（どのマップの Teleports からも入口が無い）`);
     }

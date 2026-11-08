@@ -363,12 +363,12 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
             console.log(`[Enemy] ${this.type} died - AI learning finalized`);
         }
 
-        // ボス（BattleSceneが一回限りで生成するローカル敵）はリスポーンさせず、
-        // 完全に破壊してdestroyイベントを発火させる（BattleScene側がこれで撃破を検知する）
-        const isOneOffLocalBoss = !this.isServerManaged && this.type === 'boss';
+        // ボス（BattleSceneが一回限りで生成するローカル敵）やリスポーンなし指定の敵（無限の深淵など）は
+        // リスポーンさせず、完全に破壊してdestroyイベントを発火させる
+        const isOneOffLocal = !this.isServerManaged && (this.type === 'boss' || this.noRespawn);
 
-        // サーバー管理されている敵、またはボスは既存の破壊フローに任せる
-        if (this.isServerManaged || isOneOffLocalBoss) {
+        // サーバー管理されている敵、またはローカル破壊対象の敵は既存の破壊フローに任せる
+        if (this.isServerManaged || isOneOffLocal) {
             if (this.moveEvent) this.moveEvent.remove();
             if (this.active && this.scene) {
                 try {
