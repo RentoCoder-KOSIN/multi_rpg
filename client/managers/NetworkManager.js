@@ -197,6 +197,9 @@ export default class NetworkManager {
         this.socket.on("tradeRequestReceived", ({ fromId, fromName }) => {
             if (this.scene) {
                 this.scene._pendingTradeFrom = { fromId, fromName };
+                if (this.scene.tradeUI) {
+                    this.scene.tradeUI.showTradeRequest(fromId, fromName);
+                }
                 this.scene.notificationUI?.show(
                     `🤝 ${fromName} からトレード申請！ [Y]承認 / [N]拒否`, 'info'
                 );
@@ -217,9 +220,9 @@ export default class NetworkManager {
                 this.scene.tradeUI.onPartnerReady();
             }
         });
-        this.socket.on("tradeCompleted", ({ lostItems, gainedItems }) => {
+        this.socket.on("tradeCompleted", ({ lostItems, gainedItems, lostGold, gainedGold }) => {
             if (this.scene?.tradeUI) {
-                this.scene.tradeUI.onTradeComplete(lostItems, gainedItems);
+                this.scene.tradeUI.onTradeComplete(lostItems, gainedItems, lostGold, gainedGold);
             }
         });
         this.socket.on("tradeCancelled", ({ reason }) => {

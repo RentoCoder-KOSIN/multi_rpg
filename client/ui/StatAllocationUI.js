@@ -6,7 +6,7 @@ export default class StatAllocationUI extends BaseWindowUI {
     constructor(scene) {
         super(scene, {
             title: '📊 STATS ALLOCATION',
-            width: 480,
+            width: 530,
             height: 480,
             depth: 200000,
             themeColor: 0x4a90e2
@@ -43,7 +43,7 @@ export default class StatAllocationUI extends BaseWindowUI {
 
         stats.forEach(stat => {
             // ステータス名と現在値
-            const statText = this.scene.add.text(-width / 2 + 40, stat.y, `${stat.label}: 5`, {
+            const statText = this.scene.add.text(-width / 2 + 30, stat.y, `${stat.label}: 5`, {
                 fontSize: '12px',
                 fontFamily: UI_FONT,
                 color: '#ffffff'
@@ -51,27 +51,27 @@ export default class StatAllocationUI extends BaseWindowUI {
             this.statTexts[stat.key] = statText;
 
             // 説明テキスト
-            const descText = this.scene.add.text(-width / 2 + 120, stat.y, stat.desc, {
+            const descText = this.scene.add.text(-width / 2 + 110, stat.y, stat.desc, {
                 fontSize: '11px',
                 fontFamily: UI_FONT,
                 color: '#aaaaaa'
             });
 
             // 効果表示（実際の数値・装備補正込みの値は refresh() で更新する）
-            const effectText = this.scene.add.text(-width / 2 + 40, stat.y + 12, stat.effect, {
+            const effectText = this.scene.add.text(-width / 2 + 30, stat.y + 12, stat.effect, {
                 fontSize: '11px',
                 fontFamily: UI_FONT,
                 color: '#00ff00'
             });
             this.effectTexts[stat.key] = effectText;
 
-            // +ボタン
-            const plusBtn = this.scene.add.rectangle(width / 2 - 120, stat.y, 60, 44, 0x00aa00)
-                .setStrokeStyle(3, 0x00ff00)
+            // +1ボタン
+            const plusBtn = this.scene.add.rectangle(width / 2 - 135, stat.y, 45, 42, 0x00aa00)
+                .setStrokeStyle(2, 0x00ff00)
                 .setInteractive({ useHandCursor: true });
 
-            const plusText = this.scene.add.text(width / 2 - 120, stat.y, '+', {
-                fontSize: '28px',
+            const plusText = this.scene.add.text(width / 2 - 135, stat.y, '+1', {
+                fontSize: '16px',
                 fontFamily: UI_FONT,
                 color: '#ffffff'
             }).setOrigin(0.5);
@@ -86,12 +86,12 @@ export default class StatAllocationUI extends BaseWindowUI {
             });
 
             // +5ボタン
-            const plus5Btn = this.scene.add.rectangle(width / 2 - 50, stat.y, 70, 44, 0x0088aa)
-                .setStrokeStyle(3, 0x00aaff)
+            const plus5Btn = this.scene.add.rectangle(width / 2 - 82, stat.y, 50, 42, 0x0088aa)
+                .setStrokeStyle(2, 0x00aaff)
                 .setInteractive({ useHandCursor: true });
 
-            const plus5Text = this.scene.add.text(width / 2 - 50, stat.y, '+5', {
-                fontSize: '18px',
+            const plus5Text = this.scene.add.text(width / 2 - 82, stat.y, '+5', {
+                fontSize: '16px',
                 fontFamily: UI_FONT,
                 color: '#ffffff'
             }).setOrigin(0.5);
@@ -105,10 +105,29 @@ export default class StatAllocationUI extends BaseWindowUI {
                 }
             });
 
+            // 直接入力ボタン
+            const inputBtn = this.scene.add.rectangle(width / 2 - 28, stat.y, 48, 42, 0x6a3093)
+                .setStrokeStyle(2, 0x9b59b6)
+                .setInteractive({ useHandCursor: true });
+
+            const inputTxt = this.scene.add.text(width / 2 - 28, stat.y, '入力', {
+                fontSize: '13px',
+                fontFamily: UI_FONT,
+                color: '#ffffff'
+            }).setOrigin(0.5);
+
+            inputBtn.on('pointerover', () => inputBtn.setFillStyle(0x8e44ad));
+            inputBtn.on('pointerout', () => inputBtn.setFillStyle(0x6a3093));
+            inputBtn.on('pointerdown', (pointer, x, y, event) => {
+                if (event) event.stopPropagation();
+                this._promptStatInput(stat.key, stat.label);
+            });
+
             this.container.add([
                 statText, descText, effectText,
                 plusBtn, plusText,
-                plus5Btn, plus5Text
+                plus5Btn, plus5Text,
+                inputBtn, inputTxt
             ]);
         });
 
@@ -136,6 +155,32 @@ export default class StatAllocationUI extends BaseWindowUI {
                 this.toggle();
             }
         });
+    }
+
+    _promptStatInput(statKey, label) {
+        const player = this.scene.player;
+        if (!player) return;
+        const available = player.stats.statPoints || 0;
+        if (available <= 0) {
+            this.scene.notificationUI?.show('割り振れるステータスポイントがありません', 'error');
+            return;
+        }
+
+        const input = prompt(`${label} に割り振るポイント数を入力してください\n（残りポイント: ${available} pt）`);
+        if (input === null) return;
+        const pts = parseInt(input.trim(), 10);
+        if (isNaN(pts) || pts <= 0) {
+            this.scene.notificationUI?.show('1以上の有効な数値を入力してください', 'error');
+            return;
+        }
+        if (pts > available) {
+            this.scene.notificationUI?.show(`残りポイント (${available} pt) を超えています`, 'error');
+            return;
+        }
+
+        if (player.allocateStatPoint(statKey, pts)) {
+            this.refresh();
+        }
     }
 
     open() {

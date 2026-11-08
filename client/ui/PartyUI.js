@@ -47,8 +47,11 @@ export default class PartyUI extends BaseWindowUI {
     }
 
     invite() {
-        const id = prompt("招待するプレイヤーID:", "");
-        if (id?.trim()) this.scene.networkManager.inviteToParty(id.trim());
+        const id = prompt("招待するプレイヤーの名前 または ユーザーID:\n（例: rento または u-xxxx）", "");
+        if (id?.trim()) {
+            this.scene.networkManager.inviteToParty(id.trim());
+            this.scene.notificationUI?.show(`「${id.trim()}」へ招待を送信しました`, 'info');
+        }
     }
 
     refresh() {
@@ -63,7 +66,7 @@ export default class PartyUI extends BaseWindowUI {
             fontSize: "12px", color: "#00ffff", fontFamily: UI_FONT
         }));
         if (current) {
-            if (isLeader) this.currentContainer.add(button(this.scene, 205, -165, "INVITE", 0x4a90e2, () => this.invite()));
+            if (isLeader) this.currentContainer.add(button(this.scene, 205, -165, "ID/名前で招待", 0x4a90e2, () => this.invite(), 110));
             current.members.forEach((member, index) => {
                 const y = -135 + index * 32;
                 this.currentContainer.add(this.scene.add.text(-275, y, `${member.id === current.leader ? "👑 " : ""}${member.name}  Lv.${member.level}  [${getJobLabel(member.job)}]  ${member.map}`, {
@@ -73,6 +76,34 @@ export default class PartyUI extends BaseWindowUI {
                     this.currentContainer.add(button(this.scene, 215, y + 5, "KICK", 0xb03040, () => this.scene.networkManager.kickFromParty(member.id), 70));
                 }
             });
+
+            // リーダーの場合、近く（同マップ）の他プレイヤーを一覧表示して直接招待できる機能
+            if (isLeader && current.members.length < 4) {
+                const others = this.scene.networkManager?.getOtherPlayers() || {};
+                const playerNames = this.scene.registry.get('playerNames') || {};
+                const partyMemberIds = new Set(current.members.map(m => m.id));
+                const nearbyCandidates = Object.keys(others)
+                    .filter(id => others[id]?.active && !partyMemberIds.has(id))
+                    .slice(0, 3);
+
+                if (nearbyCandidates.length > 0) {
+                    const candidateY = -5;
+                    this.currentContainer.add(this.scene.add.text(-275, candidateY - 14, "📍 近くのプレイヤーを招待:", {
+                        fontSize: "11px", color: "#88ccff", fontFamily: UI_FONT
+                    }));
+                    nearbyCandidates.forEach((candId, idx) => {
+                        const cy = candidateY + 8 + idx * 28;
+                        const cName = playerNames[candId] || `Player ${candId.substring(0, 6)}`;
+                        this.currentContainer.add(this.scene.add.text(-265, cy, `${cName}`, {
+                            fontSize: "11px", color: "#ffffff", fontFamily: UI_FONT
+                        }));
+                        this.currentContainer.add(button(this.scene, 215, cy + 4, "招待", 0x258a50, () => {
+                            this.scene.networkManager.inviteToParty(candId);
+                            this.scene.notificationUI?.show(`${cName} に招待を送信しました`, 'info');
+                        }, 70));
+                    });
+                }
+            }
         }
 
         this.listContainer.add(this.scene.add.text(-275, 110, "参加できるパーティー", {

@@ -1,6 +1,6 @@
 /**
  * トレードハンドラー
- * 2プレイヤー間のアイテム交換を仲介・同期する。
+ * 2プレイヤー間のアイテム・ゴールド交換を仲介・同期する。
  */
 const { findSocketByPlayerId } = require('../utils/socketUtils');
 
@@ -42,7 +42,8 @@ module.exports = function registerTradeHandlers(socket, { io }) {
         const key = getSessionKey(playerId, targetId);
         tradeSessions[key] = {
             playerA: playerId, playerB: targetId,
-            offerA: [], offerB: [],
+            offerA: { items: [], gold: 0 },
+            offerB: { items: [], gold: 0 },
             readyA: false, readyB: false,
         };
         socket.emit('tradeStarted', {
@@ -90,14 +91,28 @@ module.exports = function registerTradeHandlers(socket, { io }) {
 
         // 両者確定でトレード実行
         if (session.readyA && session.readyB) {
+            const parseOffer = (o) => {
+                if (Array.isArray(o)) return { items: o, gold: 0 };
+                return {
+                    items: Array.isArray(o?.items) ? o.items : [],
+                    gold: Math.max(0, parseInt(o?.gold, 10) || 0)
+                };
+            };
+            const a = parseOffer(session.offerA);
+            const b = parseOffer(session.offerB);
+
             socket.emit('tradeCompleted', {
-                lostItems: session.offerA,
-                gainedItems: session.offerB
+                lostItems: isA ? a.items : b.items,
+                gainedItems: isA ? b.items : a.items,
+                lostGold: isA ? a.gold : b.gold,
+                gainedGold: isA ? b.gold : a.gold
             });
             if (targetSocket) {
                 targetSocket.emit('tradeCompleted', {
-                    lostItems: session.offerB,
-                    gainedItems: session.offerA
+                    lostItems: isA ? b.items : a.items,
+                    gainedItems: isA ? a.items : b.items,
+                    lostGold: isA ? b.gold : a.gold,
+                    gainedGold: isA ? a.gold : b.gold
                 });
             }
             delete tradeSessions[key];

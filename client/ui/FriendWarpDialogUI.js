@@ -60,6 +60,13 @@ export function executeFriendWarp(scene, targetMember) {
 
         scene.notificationUI?.show(`「${targetMember.name}」のそばへワープしました！`, 'success', 3500);
     } else {
+        // 自力で到達したことのあるマップかチェック
+        const canWarp = player.hasVisitedMap ? player.hasVisitedMap(targetMember.map) : true;
+        if (!canWarp) {
+            scene.notificationUI?.show(`「${getMapDisplayName(targetMember.map)}」にはまだ自力で到達したことがないためワープできません`, 'error', 3500);
+            return;
+        }
+
         const targetSceneKey = resolveSceneKey(targetMember.map);
         if (!targetSceneKey || !scene.scene.get(targetSceneKey)) {
             scene.notificationUI?.show(`移動先マップ「${targetMember.map}」が見つかりません`, 'error', 3000);
@@ -147,8 +154,10 @@ export default class FriendWarpDialogUI extends BaseWindowUI {
             bg.strokeRoundedRect(-w / 2 + 25, 0, w - 50, rowH, 8);
             card.add(bg);
 
+            const player = this.scene.player;
             const isSame = m.map === this.scene.currentMapKey;
-            const mapTag = isSame ? '📍同マップ' : `🌐${getMapDisplayName(m.map)}`;
+            const hasVisited = isSame || (player?.hasVisitedMap ? player.hasVisitedMap(m.map) : true);
+            const mapTag = isSame ? '📍同マップ' : (hasVisited ? `🌐${getMapDisplayName(m.map)}` : `🔒${getMapDisplayName(m.map)} (未到達)`);
 
             const nameText = this.scene.add.text(-w / 2 + 40, 10, `${m.name} (Lv.${m.level || 1})`, {
                 fontSize: '12px', fontFamily: UI_FONT, color: '#ffffff', style: 'bold'
@@ -156,21 +165,27 @@ export default class FriendWarpDialogUI extends BaseWindowUI {
             card.add(nameText);
 
             const mapText = this.scene.add.text(-w / 2 + 40, 30, mapTag, {
-                fontSize: '10px', fontFamily: UI_FONT, color: isSame ? '#55ff99' : '#ffcc66'
+                fontSize: '10px', fontFamily: UI_FONT, color: isSame ? '#55ff99' : (hasVisited ? '#ffcc66' : '#888888')
             });
             card.add(mapText);
 
-            const btnBg = this.scene.add.rectangle(w / 2 - 80, 25, 80, 28, 0x0088aa)
-                .setStrokeStyle(1.5, 0x00ffff)
+            const btnBg = this.scene.add.rectangle(w / 2 - 80, 25, 80, 28, hasVisited ? 0x0088aa : 0x333344)
+                .setStrokeStyle(1.5, hasVisited ? 0x00ffff : 0x555566)
                 .setInteractive({ useHandCursor: true });
-            const btnText = this.scene.add.text(w / 2 - 80, 25, 'ワープ 🌀', {
-                fontSize: '11px', fontFamily: UI_FONT, color: '#ffffff', style: 'bold'
+            const btnText = this.scene.add.text(w / 2 - 80, 25, hasVisited ? 'ワープ 🌀' : '未到達 🔒', {
+                fontSize: '11px', fontFamily: UI_FONT, color: hasVisited ? '#ffffff' : '#888888', style: 'bold'
             }).setOrigin(0.5);
 
-            btnBg.on('pointerover', () => btnBg.setFillStyle(0x00bbdd));
-            btnBg.on('pointerout', () => btnBg.setFillStyle(0x0088aa));
+            if (hasVisited) {
+                btnBg.on('pointerover', () => btnBg.setFillStyle(0x00bbdd));
+                btnBg.on('pointerout', () => btnBg.setFillStyle(0x0088aa));
+            }
             btnBg.on('pointerdown', (pointer, x, y, event) => {
                 if (event) event.stopPropagation();
+                if (!hasVisited) {
+                    this.scene.notificationUI?.show(`「${getMapDisplayName(m.map)}」にはまだ自力で到達したことがないためワープできません`, 'error', 3500);
+                    return;
+                }
                 this.close();
                 executeFriendWarp(this.scene, m);
             });

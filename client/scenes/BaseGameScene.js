@@ -119,6 +119,9 @@ export default class BaseGameScene extends Phaser.Scene {
         }
 
         this.currentMapKey = data?.mapKey || config.mapKey;
+        if (this.player && this.player.markMapVisited) {
+            this.player.markMapVisited(this.currentMapKey);
+        }
         this.activeSummons = []; // 自分の召喚獣（最大player.stats.maxSummons体、上位職パッシブで2体まで）
         this.otherSummons = {};  // 他プレイヤーの召喚獣。{ [playerId]: { [summonId]: SummonedBeast } }
 

@@ -14,6 +14,7 @@ import { showDamageNumber } from "../utils/damagePopup.js";
 import { isAdminFlag } from "../ui/AdminUI.js";
 import { getSaved, setSaved, flushSave } from "../utils/saveStore.js";
 import { onEnemyKill, onGoldEarned, onJobUnlocked, checkAchievements } from "../systems/achievementTracker.js";
+import { findMap } from "../data/maps.js";
 
 // 状態異常の基本持続時間（ms）。武器の属性付与などから発生する。
 const STATUS_DURATIONS = {
@@ -169,6 +170,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             unlockedSkills: saved.unlockedSkills || [],
             skillLevels: saved.skillLevels || {}, // { skillId: level }
             customItems: (saved.customItems && typeof saved.customItems === 'object') ? { ...saved.customItems } : {},
+            // 訪れたことのあるマップ一覧（フレンドワープの移動可能制限などに使用）
+            visitedMaps: Array.isArray(saved.visitedMaps) ? [...saved.visitedMaps] : ['city', 'tutorial'],
             // スロット数を3→8に拡張。古いセーブデータ(3枠)も足りない分をnullで埋めて引き継ぐ
             activeSkills: this.padActiveSkills(saved.activeSkills)
         };
@@ -443,6 +446,44 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         if (this.scene.networkManager) {
             this.scene.networkManager.sendPlayerStats(this.stats.hp, this.stats.maxHp, this.stats.level, this.stats.mp, this.stats.maxMp, this.stats.job);
         }
+    }
+
+    /**
+     * マップの訪問を記録する
+     * @param {string} mapKey
+     */
+    markMapVisited(mapKey) {
+        if (!mapKey || !this.isLocal) return;
+        if (!Array.isArray(this.stats.visitedMaps)) {
+            this.stats.visitedMaps = ['city', 'tutorial'];
+        }
+        const def = findMap(mapKey);
+        const canonicalKey = def?.key || mapKey;
+        if (!this.stats.visitedMaps.includes(canonicalKey)) {
+            this.stats.visitedMaps.push(canonicalKey);
+            this.saveStats();
+        }
+    }
+
+    /**
+     * 指定マップに行ったことがあるかどうか
+     * @param {string} mapKey
+     * @returns {boolean}
+     */
+    hasVisitedMap(mapKey) {
+        if (!mapKey) return false;
+        if (!Array.isArray(this.stats.visitedMaps)) {
+            this.stats.visitedMaps = ['city', 'tutorial'];
+        }
+        const def = findMap(mapKey);
+        const targetKey = def?.key || mapKey;
+        const targetSceneKey = def?.sceneKey || mapKey;
+        return this.stats.visitedMaps.some(k => {
+            const kDef = findMap(k);
+            const kKey = kDef?.key || k;
+            const kScene = kDef?.sceneKey || k;
+            return kKey === targetKey || kScene === targetSceneKey || k === mapKey;
+        });
     }
 
     gainExp(amount, enemyLevel = null) {
