@@ -87,7 +87,7 @@ export default class PlayerStatsUI {
             : 'なし';
         const buffs = Object.entries(p.activeBuffs || {}).filter(([, b]) => b && b.endTime > now);
         const buffText = buffs.length
-            ? buffs.map(([t, b]) => `${BUFF_LABELS[t] || esc(t)} +${b.value} ${secLeft(b.endTime)}秒`).join('<br>')
+            ? buffs.map(([t, b]) => `${BUFF_LABELS[t] || esc(t)} +${b.value}${b.stacks > 1 ? ` (×${b.stacks})` : ''} ${secLeft(b.endTime)}秒`).join('<br>')
             : 'なし';
         const hpPct = Math.round(((stats.hp || 0) / (stats.maxHp || 1)) * 100);
         const state = [

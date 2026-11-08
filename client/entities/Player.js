@@ -1408,20 +1408,44 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     /**
-     * バフを適用
+     * バフを適用（重ねがけ・スタック対応: 最大5スタック）
      */
-    applyBuff(buffType, value, duration) {
+    applyBuff(buffType, value, duration, maxStacks = 5) {
         const now = Date.now();
-        this.activeBuffs[buffType] = {
-            value: value,
-            endTime: now + duration
-        };
+        const current = this.activeBuffs[buffType];
+
+        if (current && current.endTime > now) {
+            // 既存バフがある場合はスタック加算
+            const stacks = Math.min((current.stacks || 1) + 1, maxStacks);
+            current.stacks = stacks;
+            current.value = (current.baseValue || current.value) * stacks;
+            current.endTime = now + duration;
+        } else {
+            // 新規バフ
+            this.activeBuffs[buffType] = {
+                baseValue: value,
+                value: value,
+                stacks: 1,
+                endTime: now + duration
+            };
+        }
+
+        const buff = this.activeBuffs[buffType];
 
         // バフに応じてステータスを更新
         if (buffType === 'speed_buff') {
-            this.speed = Math.min(SPEED_CONFIG.BASE_SPEED + this.stats.speedBonus + value, SPEED_CONFIG.MAX_TOTAL_SPEED);
-        } else if (buffType === 'defense_buff') {
-            // 防御力バフは getDamage 相当のメソッドで参照
+            this.speed = Math.min(SPEED_CONFIG.BASE_SPEED + this.stats.speedBonus + buff.value, SPEED_CONFIG.MAX_TOTAL_SPEED);
+        }
+
+        if (this.scene.notificationUI && buff.stacks > 1) {
+            const buffNames = {
+                attack_buff: '攻撃力バフ',
+                defense_buff: '防御力バフ',
+                speed_buff: '移動速度バフ',
+                summon_power_up: '召喚強化バフ'
+            };
+            const label = buffNames[buffType] || buffType;
+            this.scene.notificationUI.show(`✨ ${label} が重ねがけされた！ (${buff.stacks}スタック)`, 'info', 2000);
         }
     }
 

@@ -17,6 +17,28 @@ export function applyBuffVisual(scene, target, buffType, buffValue, duration) {
     const buffInfo = BUFF_ICONS[buffType];
     if (!buffInfo) return;
 
+    if (!target.buffIcons) target.buffIcons = [];
+
+    // 重ねがけ（スタック）の既存アイコン更新
+    const existing = target.buffIcons.find(b => b.type === buffType);
+    if (existing && existing.container?.active) {
+        existing.stacks = (existing.stacks || 1) + 1;
+        if (!existing.stackText) {
+            existing.stackText = scene.add.text(10, 8, `×${existing.stacks}`, {
+                fontSize: '11px',
+                fontFamily: UI_FONT,
+                color: '#ffd700',
+                stroke: '#000000',
+                strokeThickness: 3
+            }).setOrigin(0.5);
+            existing.container.add(existing.stackText);
+        } else {
+            existing.stackText.setText(`×${existing.stacks}`);
+        }
+        scene.tweens.add({ targets: existing.container, scale: { from: 1.3, to: 1 }, duration: 200, ease: 'Back.easeOut' });
+        return;
+    }
+
     // Icon container above the target
     const buffIcon = scene.add.container(target.x, target.y - 60);
     const bg = scene.add.circle(0, 0, 18, buffInfo.color, 0.8);
@@ -26,8 +48,8 @@ export function applyBuffVisual(scene, target, buffType, buffValue, duration) {
     buffIcon.setDepth(1000);
 
     // Track icons on the target so several buffs sit side by side
-    if (!target.buffIcons) target.buffIcons = [];
-    target.buffIcons.push({ container: buffIcon, type: buffType });
+    const iconEntry = { container: buffIcon, type: buffType, stacks: 1, stackText: null };
+    target.buffIcons.push(iconEntry);
 
     const updateIconPosition = () => {
         if (buffIcon.active && target.active) {
