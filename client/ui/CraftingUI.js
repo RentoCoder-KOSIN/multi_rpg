@@ -471,6 +471,7 @@ export default class CraftingUI extends BaseWindowUI {
                 if (e) e.stopPropagation();
                 this.selectedCategory = cat.key;
                 this.selectedBaseTypeIndex = 0;
+                this.customName = ''; // カテゴリ変更時は名前をリセット
                 this.refresh();
             });
             catCont.add([btn, txt]);
@@ -498,6 +499,7 @@ export default class CraftingUI extends BaseWindowUI {
             btn.on('pointerdown', (p, lx, ly, e) => {
                 if (e) e.stopPropagation();
                 this.selectedBaseTypeIndex = idx;
+                this.customName = ''; // 形状変更時も名前をリセット
                 this.refresh();
             });
             baseCont.add([btn, txt]);
@@ -889,75 +891,156 @@ export default class CraftingUI extends BaseWindowUI {
         this.bodyContainer.add([areaBtn, areaTxt, areaDesc]);
     }
 
-    // ===== 制作済み装備リネームタブ =====
+    // ===== 制作済み装備・所持装備リネームタブ =====
     _buildRenameTab() {
         const w = this.config.width;
         const h = this.config.height;
-        const leftX = -w / 2 + 40;
         let curY = -h / 2 + 105;
 
-        this.bodyContainer.add(this.scene.add.text(0, curY, '🏷️ 制作済みオリジナル装備の名前変更 (リネーム)', {
+        this.bodyContainer.add(this.scene.add.text(0, curY, '🏷️ 装備の名前変更 (リネーム工房)', {
             fontSize: '14px', fontFamily: UI_FONT, color: '#ffd700', style: 'bold'
         }).setOrigin(0.5));
-        curY += 25;
-        this.bodyContainer.add(this.scene.add.text(0, curY, '工房で過去に制作したオリジナル装備の名前を、いつでも無料で自由に変更できます。', {
+        curY += 22;
+        this.bodyContainer.add(this.scene.add.text(0, curY, '現在装備中の武具や、インベントリ内の装備品の名前をいつでも自由に変更できます。', {
             fontSize: '11px', fontFamily: UI_FONT, color: '#aaaaaa'
         }).setOrigin(0.5));
-        curY += 30;
+        curY += 26;
 
         const player = this.scene.player;
-        const customItems = player?.stats?.customItems || {};
-        const customList = Object.values(customItems);
+        if (!player) return;
 
-        if (customList.length === 0) {
+        // リネーム対象の装備を収集（装備中 ＋ customItems ＋ インベントリ内の装備）
+        const targetMap = new Map();
+
+        // 1. 装備中
+        const equipSlots = [
+            { slot: 'weapon', label: '【装備中・武器】' },
+            { slot: 'armor',  label: '【装備中・防具】' },
+            { slot: 'relic',  label: '【装備中・宝具】' }
+        ];
+        equipSlots.forEach(({ slot, label }) => {
+            const id = player.stats?.equipment?.[slot];
+            if (id && ITEMS[id]) {
+                targetMap.set(id, { id, item: ITEMS[id], tag: label, isEquipped: true, tagColor: '#ffd700' });
+            }
+        });
+
+        // 2. クラフトカスタムアイテム
+        const customItems = player.stats?.customItems || {};
+        Object.entries(customItems).forEach(([id, it]) => {
+            if (!targetMap.has(id)) {
+                targetMap.set(id, { id, item: it, tag: '【オリジナル制作】', isEquipped: false, tagColor: '#55ffaa' });
+            }
+        });
+
+        // 3. インベントリ内の武具
+        (player.stats?.inventory || []).forEach(invItem => {
+            const id = typeof invItem === 'string' ? invItem : invItem.id;
+            const def = ITEMS[id];
+            if (def && (def.type === 'weapon' || def.type === 'armor' || def.type === 'accessory')) {
+                if (!targetMap.has(id)) {
+                    targetMap.set(id, { id, item: def, tag: '【所持品】', isEquipped: false, tagColor: '#88aaff' });
+                }
+            }
+        });
+
+        const allEquipList = Array.from(targetMap.values());
+
+        if (allEquipList.length === 0) {
             const noBox = this.scene.add.rectangle(0, curY + 80, w - 100, 100, 0x121a28, 0.8)
                 .setStrokeStyle(1, 0x4a90e2, 0.5);
-            const noTxt = this.scene.add.text(0, curY + 80, '制作済みのオリジナル装備がまだありません。\n「🔧 基本設定」で装備を制作するとここに表示されます。', {
+            const noTxt = this.scene.add.text(0, curY + 80, '名前変更が可能な装備品を持っていません。', {
                 fontSize: '12px', fontFamily: UI_FONT, color: '#888888', align: 'center'
             }).setOrigin(0.5);
             this.bodyContainer.add([noBox, noTxt]);
             return;
         }
 
-        // リスト表示
-        customList.forEach((item, idx) => {
+        // ページネーション（1ページ最大6件）
+        if (this._renamePage === undefined) this._renamePage = 0;
+        const perPage = 6;
+        const totalPages = Math.ceil(allEquipList.length / perPage);
+        this._renamePage = Math.max(0, Math.min(totalPages - 1, this._renamePage));
+
+        const pageItems = allEquipList.slice(this._renamePage * perPage, (this._renamePage + 1) * perPage);
+
+        // リスト描画
+        pageItems.forEach((entry, idx) => {
             const rowY = curY + idx * 46;
-            const rowBox = this.scene.add.rectangle(0, rowY, w - 80, 38, 0x141f30, 0.9)
-                .setStrokeStyle(1, 0x335577, 0.8);
+            const item = entry.item;
+            const rowBox = this.scene.add.rectangle(0, rowY, w - 80, 40, entry.isEquipped ? 0x1c2b44 : 0x141f30, 0.9)
+                .setStrokeStyle(1.5, entry.isEquipped ? 0xffd700 : 0x335577, 0.8);
 
             const iconTxt = this.scene.add.text(-w / 2 + 65, rowY, item.icon || '⚔️', { fontSize: '20px' }).setOrigin(0.5);
-            const nameTxt = this.scene.add.text(-w / 2 + 90, rowY - 6, item.name, {
+
+            // タグ + 名前
+            const titleContainer = this.scene.add.container(-w / 2 + 88, rowY - 7);
+            const tagTxt = this.scene.add.text(0, 0, entry.tag, {
+                fontSize: '10px', fontFamily: UI_FONT, color: entry.tagColor, style: 'bold'
+            });
+            const nameTxt = this.scene.add.text(tagTxt.width + 6, 0, item.name, {
                 fontSize: '12px', fontFamily: UI_FONT, color: '#ffffff', style: 'bold'
             });
-            const descTxt = this.scene.add.text(-w / 2 + 90, rowY + 9, `ID: ${item.id} | ${item.description || ''}`, {
+            titleContainer.add([tagTxt, nameTxt]);
+
+            // 説明・ステータス
+            const descTxt = this.scene.add.text(-w / 2 + 88, rowY + 9, `ID: ${entry.id} | ${item.description || ''}`, {
                 fontSize: '9px', fontFamily: UI_FONT, color: '#888888'
             });
 
             // リネームボタン
-            const renBtn = this.scene.add.rectangle(w / 2 - 100, rowY, 90, 26, 0x2288ee)
+            const renBtn = this.scene.add.rectangle(w / 2 - 100, rowY, 100, 26, 0x2288ee)
                 .setStrokeStyle(1.5, 0x88ffff).setInteractive({ useHandCursor: true });
-            const renTxt = this.scene.add.text(w / 2 - 100, rowY, '✏️ 名前の変更', {
+            const renTxt = this.scene.add.text(w / 2 - 100, rowY, '✏️ 名前を変更', {
                 fontSize: '11px', fontFamily: UI_FONT, color: '#ffffff', style: 'bold'
             }).setOrigin(0.5);
 
             renBtn.on('pointerdown', (p, lx, ly, e) => {
                 if (e) e.stopPropagation();
-                const newName = prompt(`「${item.name}」の新しい名前を入力してください:`, item.name);
+                const newName = prompt(`【${entry.tag}】\n現在の名前: 「${item.name}」\n新しい名前を入力してください:`, item.name);
                 if (newName !== null && newName.trim()) {
                     const trimmed = newName.trim();
                     item.name = trimmed;
-                    if (ITEMS[item.id]) ITEMS[item.id].name = trimmed;
-                    if (player.stats.customItems[item.id]) player.stats.customItems[item.id].name = trimmed;
+                    if (ITEMS[entry.id]) ITEMS[entry.id].name = trimmed;
+                    if (player.stats.customItems && player.stats.customItems[entry.id]) {
+                        player.stats.customItems[entry.id].name = trimmed;
+                    }
                     player.saveStats();
                     if (this.scene.notificationUI) {
-                        this.scene.notificationUI.show(`✨ 装備名を「${trimmed}」に変更しました！`, 'success');
+                        this.scene.notificationUI.show(`✨ 「${trimmed}」に改名しました！`, 'success');
                     }
                     this.refresh();
                 }
             });
 
-            this.bodyContainer.add([rowBox, iconTxt, nameTxt, descTxt, renBtn, renTxt]);
+            this.bodyContainer.add([rowBox, iconTxt, titleContainer, descTxt, renBtn, renTxt]);
         });
+
+        // ページネーションボタン (複数ページある場合)
+        if (totalPages > 1) {
+            const pageY = curY + perPage * 46 + 10;
+            const prevBtn = this.scene.add.text(-80, pageY, '◀ 前のページ', {
+                fontSize: '11px', fontFamily: UI_FONT, color: this._renamePage > 0 ? '#88ffff' : '#555555'
+            }).setOrigin(0.5).setInteractive({ useHandCursor: this._renamePage > 0 });
+            prevBtn.on('pointerdown', (p, lx, ly, e) => {
+                if (e) e.stopPropagation();
+                if (this._renamePage > 0) { this._renamePage--; this.refresh(); }
+            });
+
+            const pageInfo = this.scene.add.text(0, pageY, `${this._renamePage + 1} / ${totalPages}`, {
+                fontSize: '11px', fontFamily: UI_FONT, color: '#ffffff'
+            }).setOrigin(0.5);
+
+            const nextBtn = this.scene.add.text(80, pageY, '次のページ ▶', {
+                fontSize: '11px', fontFamily: UI_FONT, color: this._renamePage < totalPages - 1 ? '#88ffff' : '#555555'
+            }).setOrigin(0.5).setInteractive({ useHandCursor: this._renamePage < totalPages - 1 });
+            nextBtn.on('pointerdown', (p, lx, ly, e) => {
+                if (e) e.stopPropagation();
+                if (this._renamePage < totalPages - 1) { this._renamePage++; this.refresh(); }
+            });
+
+            this.bodyContainer.add([prevBtn, pageInfo, nextBtn]);
+        }
     }
 
     _buildPreview(canCraftClass, isArtisan) {
@@ -1178,6 +1261,7 @@ export default class CraftingUI extends BaseWindowUI {
             this.scene.notificationUI.show(`🎉 オリジナル装備「${craft.name}」を制作しました！`, 'success', 5000);
         }
 
+        this.customName = '';
         player.saveStats();
         this.refresh();
     }

@@ -92,6 +92,16 @@ export default class InventoryUI extends BaseWindowUI {
         });
         this.container.add(this.useManyBtn);
 
+        // 装備名変更ボタン (選択中装備を改名)
+        this.renameBtn = this.scene.add.text(panelWidth / 2 - 110, panelHeight / 2 - 25, '✏️', { fontSize: '22px' })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true });
+        this.renameBtn.on('pointerdown', (p, lx, ly, e) => {
+            if (e) e.stopPropagation();
+            this.handleItemRename();
+        });
+        this.container.add(this.renameBtn);
+
         // ゴミ箱ボタン
         this.trashBtn = this.scene.add.text(panelWidth / 2 - 40, panelHeight / 2 - 25, '🗑️', { fontSize: '24px' })
             .setOrigin(0.5)
@@ -554,5 +564,31 @@ export default class InventoryUI extends BaseWindowUI {
                 this.updateSelection();
             },
         });
+    }
+
+    // ✏️ アイテム改名
+    handleItemRename() {
+        if (this.selectedIndex < 0 || this.selectedIndex >= this.inventory.length) return;
+        const player = this.scene.player;
+        if (!player) return;
+
+        const invItem = this.inventory[this.selectedIndex];
+        const itemId = entryId(invItem);
+        const item = ITEMS[itemId];
+        if (!item) return;
+
+        const newName = prompt(`「${item.name}」の新しい名前を入力してください:`, item.name);
+        if (newName !== null && newName.trim()) {
+            const trimmed = newName.trim();
+            item.name = trimmed;
+            if (ITEMS[itemId]) ITEMS[itemId].name = trimmed;
+            if (player.stats.customItems && player.stats.customItems[itemId]) {
+                player.stats.customItems[itemId].name = trimmed;
+            }
+            player.saveStats();
+            this.scene.notificationUI?.show(`✨ 「${trimmed}」に改名しました！`, 'success');
+            this.refreshList();
+            this.updateSelection();
+        }
     }
 }

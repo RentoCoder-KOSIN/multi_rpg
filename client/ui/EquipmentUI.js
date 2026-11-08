@@ -163,10 +163,31 @@ export default class EquipmentUI extends BaseWindowUI {
         if (item) {
             const power = this.scene.player?.getEquipmentPowerMultiplier?.(item) ?? 1;
             const powerTag = power < 1 ? ` ${Math.round(power * 100)}%` : '';
-            const statTxt = this.scene.add.text(145, 5, `${this.summarizeStats(item)}${powerTag}`, {
+            const statTxt = this.scene.add.text(105, 5, `${this.summarizeStats(item)}${powerTag}`, {
                 fontSize: '11px', fontFamily: UI_FONT, color: '#00ff00'
             }).setOrigin(1, 0);
             slot.add(statTxt);
+
+            // 装備品の直接改名ボタン
+            const renameBtn = this.scene.add.text(148, -20, '✏️改名', {
+                fontSize: '11px', fontFamily: UI_FONT, color: '#88ffff', style: 'bold'
+            }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
+            renameBtn.on('pointerdown', (p, lx, ly, e) => {
+                if (e) e.stopPropagation();
+                const newName = prompt(`「${item.name}」の新しい名前を入力してください:`, item.name);
+                if (newName !== null && newName.trim()) {
+                    const trimmed = newName.trim();
+                    item.name = trimmed;
+                    if (ITEMS[itemId]) ITEMS[itemId].name = trimmed;
+                    if (player.stats.customItems && player.stats.customItems[itemId]) {
+                        player.stats.customItems[itemId].name = trimmed;
+                    }
+                    player.saveStats();
+                    this.scene.notificationUI?.show(`✨ 「${trimmed}」に改名しました！`, 'success');
+                    this.refresh();
+                }
+            });
+            slot.add(renameBtn);
         }
 
         this.slotContainer.add(slot);
