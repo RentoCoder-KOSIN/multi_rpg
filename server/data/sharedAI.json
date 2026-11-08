@@ -31858,7 +31858,7 @@
       "episodeCount": 1375,
       "updateCount": 283326
     },
-    "timestamp": 1794118172119
+    "timestamp": 1794124295447
   },
   "forest_slime": {
     "qTableData": {
@@ -66841,7 +66841,7 @@
       "episodeCount": 2071,
       "updateCount": 539375
     },
-    "timestamp": 1794118172119
+    "timestamp": 1794124295448
   },
   "skeleton": {
     "qTableData": {
@@ -112716,7 +112716,7 @@
       "episodeCount": 2553,
       "updateCount": 875485
     },
-    "timestamp": 1794118172119
+    "timestamp": 1794124295448
   },
   "dragon_boss": {
     "qTableData": {
@@ -113091,7 +113091,7 @@
       "episodeCount": 0,
       "updateCount": 3178
     },
-    "timestamp": 1794118172119
+    "timestamp": 1794124295448
   },
   "goblin": {
     "qTableData": {
@@ -142964,7 +142964,7 @@
       "episodeCount": 1260,
       "updateCount": 286525
     },
-    "timestamp": 1794118172119
+    "timestamp": 1794124295448
   },
   "bat": {
     "qTableData": {
@@ -144809,7 +144809,7 @@
       "episodeCount": 93,
       "updateCount": 19251
     },
-    "timestamp": 1794118172119
+    "timestamp": 1794124295448
   },
   "red_slime": {
     "qTableData": {
@@ -156006,7 +156006,7 @@
       "episodeCount": 767,
       "updateCount": 322585
     },
-    "timestamp": 1794118172119
+    "timestamp": 1794124295448
   },
   "ghost": {
     "qTableData": {
@@ -182141,7 +182141,7 @@
       "episodeCount": 3835,
       "updateCount": 390419
     },
-    "timestamp": 1794118172120
+    "timestamp": 1794124295448
   },
   "orc": {
     "qTableData": {
@@ -209158,7 +209158,7 @@
       "episodeCount": 2269,
       "updateCount": 352484
     },
-    "timestamp": 1794118172120
+    "timestamp": 1794124295448
   },
   "dire_wolf": {
     "qTableData": {
@@ -242937,7 +242937,7 @@
       "episodeCount": 1996,
       "updateCount": 235414
     },
-    "timestamp": 1794118172120
+    "timestamp": 1794124295449
   },
   "marsh_bat": {
     "qTableData": {
@@ -274266,7 +274266,7 @@
       "episodeCount": 985,
       "updateCount": 203317
     },
-    "timestamp": 1794118172120
+    "timestamp": 1794124295449
   },
   "ruins_wolf": {
     "qTableData": {
@@ -291651,7 +291651,7 @@
       "episodeCount": 300,
       "updateCount": 163968
     },
-    "timestamp": 1794118172120
+    "timestamp": 1794124295449
   },
   "ruins_goblin": {
     "qTableData": {
@@ -309120,7 +309120,7 @@
       "episodeCount": 711,
       "updateCount": 129833
     },
-    "timestamp": 1794118172120
+    "timestamp": 1794124295449
   },
   "ruins_skeleton": {
     "qTableData": {
@@ -321143,7 +321143,7 @@
       "episodeCount": 496,
       "updateCount": 188910
     },
-    "timestamp": 1794118172120
+    "timestamp": 1794124295449
   },
   "forest_hornet": {
     "qTableData": {
@@ -324934,7 +324934,7 @@
       "episodeCount": 58,
       "updateCount": 8623
     },
-    "timestamp": 1794118172121
+    "timestamp": 1794124295449
   },
   "forest_wolf": {
     "qTableData": {
@@ -326877,7 +326877,7 @@
       "episodeCount": 18,
       "updateCount": 13245
     },
-    "timestamp": 1794118172121
+    "timestamp": 1794124295449
   },
   "ruins_gargoyle": {
     "qTableData": {
@@ -327042,7 +327042,7 @@
       "episodeCount": 0,
       "updateCount": 831
     },
-    "timestamp": 1794118172121
+    "timestamp": 1794124295449
   },
   "magma_slime": {
     "qTableData": {
@@ -328999,7 +328999,7 @@
       "episodeCount": 8,
       "updateCount": 1462
     },
-    "timestamp": 1794118172121
+    "timestamp": 1794124295449
   },
   "hell_hound": {
     "qTableData": {
@@ -331040,7 +331040,7 @@
       "episodeCount": 8,
       "updateCount": 1455
     },
-    "timestamp": 1794118172121
+    "timestamp": 1794124295449
   },
   "fire_elemental": {
     "qTableData": {
@@ -332507,7 +332507,7 @@
       "episodeCount": 5,
       "updateCount": 1503
     },
-    "timestamp": 1794118172121
+    "timestamp": 1794124295449
   },
   "lava_golem": {
     "qTableData": {
@@ -333820,7 +333820,7 @@
       "episodeCount": 3,
       "updateCount": 1904
     },
-    "timestamp": 1794118172121
+    "timestamp": 1794124295449
   },
   "swamp_viper": {
     "qTableData": {
@@ -335735,6 +335735,6 @@
       "episodeCount": 10,
       "updateCount": 5567
     },
-    "timestamp": 1794118172121
+    "timestamp": 1794124295449
   }
 }

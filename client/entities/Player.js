@@ -1215,11 +1215,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
                 return { success: false, downgraded: false, newLevel: currentLevel };
             }
         }
-                this.saveStats();
-                if (this.scene.notificationUI) this.scene.notificationUI.show('💔 強化失敗…（レベルは維持されました）', 'error');
-                return { success: false, downgraded: false, newLevel: currentLevel };
-            }
-        }
     }
 
     /** クイックスロット用の消耗品を1個使用する。 */
