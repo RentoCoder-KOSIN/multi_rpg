@@ -1,0 +1,109 @@
+* {
+    margin: 0 auto;
+    padding: 0;
+}
+
+/* ピクセルアートを滑らかに補間しない（タイルの継ぎ目を目立たなくする） */
+html, body, canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    -ms-interpolation-mode: nearest-neighbor;
+}
+
+/* キャンバスをブラウザいっぱいに広げる（背景の青い余白を残さない） */
+body {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgb(16, 9, 56);
+    overflow: hidden;
+}
+
+#game-shell {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+}
+
+#game-root {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    margin: 0;
+}
+
+#game-sidebar {
+    display: none;
+    flex: none;
+    width: 280px;
+    height: calc(100% - 12px);
+    margin: 6px 6px 6px 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 10px;
+    min-height: 0;
+    font-family: "Meiryo UI", "Yu Gothic UI", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", sans-serif;
+    color: #d7e6ff;
+}
+
+#game-sidebar.is-active { display: flex; }
+
+.game-side-panel {
+    box-sizing: border-box;
+    background: rgba(8, 13, 29, .94);
+    border: 2px solid rgba(74, 144, 226, .8);
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 0 14px rgba(74, 144, 226, .2);
+}
+
+#player-status-panel {
+    flex: 1 1 0;      /* 余った高さを全部使い、足りなければ内部スクロール */
+    min-height: 0;
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.6;
+}
+.status-title, .activity-panel h2 { margin: 0 0 12px; font-size: 17px; color: #fff; }
+/* プレイヤー詳細（PlayerStatsUI） */
+.ss { margin-top: 10px; padding-top: 6px; border-top: 1px solid rgba(74, 144, 226, .45); }
+.ss h3 { margin: 0 0 4px; font-size: 13px; color: #ffe07a; }
+.sr { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; line-height: 1.55; color: #cfe0ff; }
+.sr span { flex: none; color: #9fb4d6; }
+.sr b { font-weight: normal; color: #fff; text-align: right; overflow-wrap: anywhere; }
+.sl { font-size: 12px; line-height: 1.5; color: #e5efff; padding-left: 8px; overflow-wrap: anywhere; }
+#player-status-panel::-webkit-scrollbar { width: 6px; }
+#player-status-panel::-webkit-scrollbar-thumb { background: rgba(74, 144, 226, .6); border-radius: 3px; }
+.activity-panel {
+    flex: 0 0 clamp(150px, 30%, 260px);   /* 縮まない高さ */
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow: hidden;
+}
+.activity-panel h2 { color: #ffe07a; flex: none; }
+#activity-log {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;          /* ログはスクロール式 */
+    overflow-wrap: anywhere;
+    padding-right: 4px;
+}
+.log-entry { padding: 1px 0; border-bottom: 1px solid rgba(74, 144, 226, .15); }
+.log-empty { color: #7f93b5; }
+#activity-log::-webkit-scrollbar { width: 6px; }
+#activity-log::-webkit-scrollbar-thumb { background: rgba(74, 144, 226, .6); border-radius: 3px; }
+
+canvas {
+    display: block;
+    /* キャンバスをブラウザのCSSスケーリングで拡大しない（ピクセルアート崩れ防止） */
+    max-width: none;
+    width: auto;
+    height: auto;
+}

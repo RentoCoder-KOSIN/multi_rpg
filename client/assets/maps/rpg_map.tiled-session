@@ -1,0 +1,264 @@
+{
+    "activeFile": "tutorial.json",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "file.lastUsedOpenFilter": "All Files (*)",
+    "fileStates": {
+        "": {
+            "scaleInDock": 1
+        },
+        "battle.json": {
+            "expandedObjectLayers": [
+                7
+            ],
+            "scale": 0.6568359375,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 383.65744870651196,
+                "y": 319.71454058876003
+            }
+        },
+        "battle.json#tiles": {
+            "scaleInDock": 1
+        },
+        "city (1).json": {
+            "scale": 0.75,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 266.66666666666663,
+                "y": 458.66666666666663
+            }
+        },
+        "city (1).json#tiles": {
+            "scaleInDock": 1
+        },
+        "city (1).json#water": {
+            "scaleInDock": 1
+        },
+        "city.json": {
+            "expandedGroupLayers": [
+                37
+            ],
+            "expandedObjectLayers": [
+                40,
+                41,
+                42,
+                35
+            ],
+            "scale": 0.5,
+            "selectedLayer": 18,
+            "viewCenter": {
+                "x": 2888,
+                "y": 610
+            }
+        },
+        "city.json#tiles": {
+            "scaleInDock": 1
+        },
+        "city.json#water": {
+            "scaleInDock": 1
+        },
+        "desert_city.json": {
+            "scale": 1.6090625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 480.7147018838609,
+                "y": 351.7576228393863
+            }
+        },
+        "desert_city.json#tiles": {
+            "scaleInDock": 1
+        },
+        "forest (1).json": {
+            "scale": 0.16090625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 1597.2033404544572,
+                "y": 1597.203340454457
+            }
+        },
+        "forest (1).json#tiles": {
+            "scaleInDock": 1
+        },
+        "forest (1).json#waters": {
+            "scaleInDock": 1
+        },
+        "forest.json": {
+            "expandedObjectLayers": [
+                9,
+                5
+            ],
+            "scale": 0.75,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 1601.3333333333333,
+                "y": 1601.3333333333333
+            }
+        },
+        "forest.json#tiles": {
+            "scaleInDock": 1
+        },
+        "forest.json#waters": {
+            "scaleInDock": 1
+        },
+        "guild1f.json": {
+            "expandedObjectLayers": [
+                15,
+                13
+            ],
+            "scale": 0.75,
+            "selectedLayer": 4,
+            "viewCenter": {
+                "x": 541.3333333333334,
+                "y": 481.33333333333337
+            }
+        },
+        "guild1f.json#tiles": {
+            "scaleInDock": 1
+        },
+        "guild2f.json": {
+            "expandedObjectLayers": [
+                10
+            ],
+            "scale": 0.5254687499999999,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 479.57181088314,
+                "y": 481.4748736247398
+            }
+        },
+        "guild2f.json#tiles": {
+            "scaleInDock": 1
+        },
+        "port_city.json": {
+            "scale": 1.6090625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 480.4039619343562,
+                "y": 351.7576228393863
+            }
+        },
+        "port_city.json#tiles": {
+            "scaleInDock": 1
+        },
+        "ruins.json": {
+            "expandedGroupLayers": [
+                13
+            ],
+            "expandedObjectLayers": [
+                6,
+                12,
+                10
+            ],
+            "scale": 0.75,
+            "selectedLayer": 7,
+            "viewCenter": {
+                "x": 1600.6666666666665,
+                "y": 1600
+            }
+        },
+        "ruins.json#tiles": {
+            "scaleInDock": 1
+        },
+        "ruins.json#waters": {
+            "scaleInDock": 1
+        },
+        "snow_city.json": {
+            "scale": 0.33,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 478.7878787878788,
+                "y": 351.51515151515144
+            }
+        },
+        "snow_city.json#tiles": {
+            "scaleInDock": 1
+        },
+        "starter_town.json": {
+            "scale": 0.80453125,
+            "selectedLayer": 3,
+            "viewCenter": {
+                "x": 319.44066809089145,
+                "y": 239.89124101767334
+            }
+        },
+        "starter_town.json#tiles": {
+            "scaleInDock": 1
+        },
+        "tutorial.json": {
+            "expandedObjectLayers": [
+                25,
+                9
+            ],
+            "scale": 0.42007812499999997,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 478.48242514413243,
+                "y": 640.3570764366748
+            }
+        },
+        "tutorial.json#tiles": {
+            "scaleInDock": 1
+        },
+        "volcano.json": {
+            "expandedObjectLayers": [
+                7,
+                5
+            ],
+            "scale": 0.3218125,
+            "selectedLayer": 4,
+            "viewCenter": {
+                "x": 700.7185861332298,
+                "y": 798.6016702272285
+            }
+        },
+        "volcano.json#lava": {
+            "scaleInDock": 1
+        },
+        "volcano.json#tiles": {
+            "scaleInDock": 1
+        },
+        "wetland.json": {
+            "expandedObjectLayers": [
+                11
+            ],
+            "scale": 0.75,
+            "selectedLayer": 7,
+            "viewCenter": {
+                "x": 1600.6666666666665,
+                "y": 1600
+            }
+        },
+        "wetland.json#tiles": {
+            "scaleInDock": 1
+        },
+        "wetland.json#waters": {
+            "scaleInDock": 1
+        }
+    },
+    "openFiles": [
+        "city.json",
+        "guild1f.json",
+        "tutorial.json",
+        "volcano.json",
+        "wetland.json",
+        "ruins.json",
+        "desert_city.json"
+    ],
+    "project": "rpg_map.tiled-project",
+    "recentFiles": [
+        "city.json",
+        "guild1f.json",
+        "desert_city.json",
+        "ruins.json",
+        "wetland.json",
+        "volcano.json",
+        "tutorial.json",
+        "forest.json",
+        "guild2f.json",
+        "city (1).json",
+        "forest (1).json",
+        "battle.json"
+    ]
+}

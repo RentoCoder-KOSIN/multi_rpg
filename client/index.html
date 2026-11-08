@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>オンラインRPG協力　β</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:,">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+    <!-- <script src="/socket.io/socket.io.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <script type="module" src="main.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- index.html の head か body の先頭 -->
+
+
+</head>
+<body>
+    <main id="game-shell">
+        <div id="game-root"></div>
+        <aside id="game-sidebar" aria-label="プレイヤー情報">
+            <section class="game-side-panel" id="player-status-panel"></section>
+            <section class="game-side-panel activity-panel">
+                <h2>ACTIVITY LOG</h2>
+                <div id="activity-log"><div class="log-empty">ゲームイベントをここに表示します</div></div>
+            </section>
+        </aside>
+    </main>
+</body>
+</html>

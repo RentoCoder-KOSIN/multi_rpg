@@ -1,0 +1,18 @@
+# Render の Blueprint（New + → Blueprint からこのリポジトリを選ぶとWebサービスが作られる）
+# データベースは Neon（無料・期限なし）を使う。接続URLは Render の画面で入力する。
+services:
+  - type: web
+    name: multi-rpg
+    runtime: node
+    plan: free                  # 常時起動したい場合は有料プラン(starter以上)に変更
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: DATABASE_URL       # Neon の接続文字列（postgres://...）を作成時に入力する
+        sync: false
+      - key: ADMIN_PASSWORD     # adminパネル用。自分で決めた値を入力する（コードの初期値は使わない）
+        sync: false

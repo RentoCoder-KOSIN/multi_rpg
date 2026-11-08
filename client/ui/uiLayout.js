@@ -1,0 +1,115 @@
+/**
+ * HUD layout DATA. This file contains only numbers; the logic lives in UILayoutManager.js.
+ *
+ * To move / resize a UI, edit its entry here. To add a new UI, add an entry here and call
+ *   getUILayout(scene).register('yourId', yourContainer);
+ * from the UI class. Nothing else needs to change.
+ *
+ * Entry fields:
+ *   anchor   'top|middle|bottom' + '-' + 'left|center|right'  (which point of the screen to attach to)
+ *   margin   {x, y}  distance from the anchored edge (px). For 'middle' / 'center' it is a signed offset.
+ *                    A negative value pushes the element partly off-screen.
+ *   size     {w, h}  size of the element (px). Dynamic sizes are updated with layout.setSize(id, w, h).
+ *   origin   {x, y}  where the game object's own (0,0) sits inside the element, as a 0..1 fraction.
+ *                    {0,0} = top-left corner (default), {0.5,0.5} = center.
+ *   relative {to, side, gap}  optional. Place next to another entry instead of using the anchor on
+ *                    that axis. side: 'below' | 'above' | 'left' | 'right'.
+ *
+ * Coordinates are game pixels (the game is 800x600 and scaled by Phaser.Scale.FIT).
+ */
+
+// Skill dial geometry (also read by SkillBarUI)
+const SKILL_DIAL_RADIUS = 80;      // ring radius the slots sit on
+const SKILL_DIAL_PADDING = 38;     // background circle radius = ring radius + padding
+const SKILL_DIAL_BOTTOM_CLIP = 28; // dial center is this far above the bottom edge (lower part is cut off)
+const SKILL_DIAL_BG_RADIUS = SKILL_DIAL_RADIUS + SKILL_DIAL_PADDING;
+
+export const UI_LAYOUT = {
+    // HP / MP / EXP panel: fixed in the dedicated right-hand information area.
+    stats: {
+        anchor: 'top-right',
+        margin: { x: 15, y: 15 },
+        size: { w: 320, h: 320 }
+    },
+
+    // In-game player HUD (name / Lv / HP / MP / EXP): top-left corner.
+    playerHud: {
+        anchor: 'top-left',
+        margin: { x: 15, y: 15 },
+        size: { w: 232, h: 76 }
+    },
+
+    // Side menu toggle button: to the right of the player HUD
+    menu: {
+        anchor: 'top-left',
+        margin: { x: 15, y: 0 },
+        size: { w: 46, h: 46 },
+        origin: { x: 0.5, y: 0.5 },
+        relative: { to: 'playerHud', side: 'right', gap: 12 }
+    },
+
+    // Quest tracker: left edge, vertically centered (height is dynamic -> setSize)
+    quest: {
+        anchor: 'middle-left',
+        margin: { x: 15, y: 20 },
+        size: { w: 280, h: 50 }
+    },
+
+    // Minimap: bottom-left corner (the player HUD takes the top-left).
+    minimap: {
+        anchor: 'bottom-left',
+        margin: { x: 15, y: 15 },
+        size: { w: 140, h: 140 }
+    },
+
+    // Party member list: under the status panel in the right-hand information area.
+    party: {
+        anchor: 'top-right',
+        margin: { x: 15, y: 0 },
+        size: { w: 200, h: 55 },
+        relative: { to: 'stats', side: 'below', gap: 15 }
+    },
+
+    // Persistent gameplay messages (EXP, quest progress, loot, etc.).
+    activityLog: {
+        anchor: 'bottom-right',
+        margin: { x: 15, y: 15 },
+        size: { w: 320, h: 165 }
+    },
+
+    // Skill dial: round, origin = center
+    skillDial: {
+        anchor: 'bottom-right',
+        margin: { x: 12, y: -(SKILL_DIAL_BG_RADIUS - SKILL_DIAL_BOTTOM_CLIP) },
+        size: { w: SKILL_DIAL_BG_RADIUS * 2, h: SKILL_DIAL_BG_RADIUS * 2 },
+        origin: { x: 0.5, y: 0.5 },
+        radius: SKILL_DIAL_RADIUS,
+        bgPadding: SKILL_DIAL_PADDING
+    },
+
+    // Touch action buttons (mobile only): stacked above the skill dial so they never overlap.
+    // The container origin is the center of the bottom button row.
+    virtualPad: {
+        anchor: 'bottom-right',
+        margin: { x: 15, y: 0 },
+        size: { w: 270, h: 170 },
+        origin: { x: 0.5, y: 135 / 170 },
+        relative: { to: 'skillDial', side: 'above', gap: 10 }
+    },
+
+    // Enemy AI debug panel (hidden by default): bottom-left, to the right of the minimap
+    aiStats: {
+        anchor: 'bottom-left',
+        margin: { x: 10, y: 10 },
+        size: { w: 250, h: 140 },
+        relative: { to: 'minimap', side: 'right', gap: 10 }
+    },
+
+    // "[C] talk" prompt: center of the prompt is 120px above the bottom edge
+    interactPrompt: {
+        anchor: 'bottom-center',
+        margin: { x: 0, y: 102.5 },
+        size: { w: 150, h: 35 },
+        origin: { x: 0.5, y: 0.5 }
+    }
+};

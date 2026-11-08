@@ -1,0 +1,83 @@
+import TitleScene from "./scenes/TitleScene.js";
+import { computeGameSize } from "./utils/gameSize.js";
+
+// サーバー設定
+export const SERVER_CONFIG = {
+    // url: (typeof window !== 'undefined' && window.SERVER_URL) || "https://samara-reticent-jeanice.ngrok-free.dev/",
+    // url: "https://orange-space-computing-machine-r4qv4vrq7ww52pq4p-3000.app.github.dev/",
+    url: window.location.origin,
+    reconnectAttempts: 5,
+    reconnectDelay: 1000,
+};
+
+// デバッグ設定
+export const DEBUG = {
+    enabled:
+        (typeof window !== "undefined" && window.DEBUG_MODE === true) || false,
+    showPhysics: false,
+};
+
+// 敵AI設定
+export const ENEMY_AI_CONFIG = {
+    enabled: true, // 敵AIの有効/無効
+    trainingEnabled: true, // 強化学習の有効/無効
+    peerLearning: true, // 【新】敵同士の相互学習 (ON/OFF)
+    serverSync: true, // 学習データをサーバーに送信・保存する
+};
+
+// 敵AIピア学習設定【新】
+export const PEER_LEARNING_CONFIG = {
+    enabled: true, // ピア学習の有効/無効
+    detectionRange: 150, // 敵同士の検出範囲（px）
+    dataShareInterval: 2000, // データ共有の間隔（ms）
+    rewardBonus: 1.0, // 連携時のボーナス報酬
+};
+
+// 敵の攻撃間合い（可視化用）。
+// 本来の判定は server/config.js の ENEMY_ATTACK_RANGE（サーバー管理の敵）と
+// Enemy.js の attackRange（ローカル限定の敵・ボス）が持っているが、
+// クライアントとサーバーは別プロセスなので定数を1つに共有できず、
+// 表示用にサーバー側の値をここに複製している。
+// サーバー側の ENEMY_ATTACK_RANGE を変えたら、ここも同じ値に揃えること。
+export const ENEMY_ATTACK_RANGE = 75;
+
+// 敵AI設定ログ出力
+console.log("[Config] Enemy AI Settings:", ENEMY_AI_CONFIG);
+console.log("[Config] Peer Learning Settings:", PEER_LEARNING_CONFIG);
+
+const config = {
+    type: Phaser.AUTO,
+    // 解像度は表示領域の縦横比に合わせる（utils/gameSize.js）。実行中の変化は main.js が追従する。
+    ...computeGameSize(document.getElementById('game-root')),
+    parent: 'game-root',
+    pixelArt: true,
+    roundPixels: true,
+    render: {
+        antialias: false,
+        pixelArt: true,
+        roundPixels: true,
+        powerPreference: 'high-performance'
+    },
+    fps: {
+        target: 60,
+        min: 30,
+        smoothStep: true
+    },
+    physics: {
+        default: "arcade",
+        arcade: {
+            debug: DEBUG.showPhysics,
+            gravity: { y: 0 },
+        },
+    },
+
+    // TitleScene only: main.js appends one scene per map (scenes/mapScenes.js)
+    scene: [TitleScene],
+
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+    },
+};
+
+export default config;

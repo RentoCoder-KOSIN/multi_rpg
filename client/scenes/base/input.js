@@ -1,0 +1,171 @@
+// Keyboard / pointer setup for game scenes.
+import { isAnyWindowOpen } from '../../utils/uiState.js';
+import { TOTAL_SKILL_SLOTS } from '../../gameConstants.js';
+import { createAim, beginBasicAim, releaseAim } from '../../systems/aim.js';
+
+/**
+ * Create the gameplay keys polled in update().
+ */
+export function createGameKeys(scene, config) {
+    const KeyCodes = Phaser.Input.Keyboard.KeyCodes;
+    scene.interactKey = scene.input.keyboard.addKey(KeyCodes.C);
+    // スキルスロット数ぶんキー1〜8を割り当てる（TOTAL_SKILL_SLOTSに連動）
+    const numberKeyCodes = [
+        KeyCodes.ONE, KeyCodes.TWO, KeyCodes.THREE, KeyCodes.FOUR,
+        KeyCodes.FIVE, KeyCodes.SIX, KeyCodes.SEVEN, KeyCodes.EIGHT
+    ];
+    scene.skillKeys = numberKeyCodes
+        .slice(0, TOTAL_SKILL_SLOTS)
+        .map(code => scene.input.keyboard.addKey(code));
+    scene.partyKey = scene.input.keyboard.addKey(KeyCodes.V);
+    scene.chatKey = scene.input.keyboard.addKey(KeyCodes.T);
+    if (config.showDebugKey) scene.debugKey = scene.input.keyboard.addKey(KeyCodes.D);
+}
+
+/**
+ * Register event-driven input: attack key, window shortcuts, AI toggle, tap-to-move.
+ * Call after the UI windows exist.
+ */
+export function registerInputHandlers(scene) {
+    scene.attackKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+    // 攻撃・スキルは「押している間は範囲表示、離したら発動」（systems/aim.js）
+    createAim(scene);
+    scene.attackKey.on('down', () => beginBasicAim(scene, 'space', scene.attackKey));
+    scene.attackKey.on('up', () => releaseAim(scene, 'space'));
+    (scene.skillKeys || []).forEach((key, index) => {
+        const owner = `key-skill-${index}`;
+        key.on('down', () => scene.beginSkillAim(index, owner, key));
+        key.on('up', () => releaseAim(scene, owner));
+    });
+
+    // O: settings, K: skill manager
+    scene.input.keyboard.on('keydown-O', () => {
+        if (scene.settingsUI) scene.settingsUI.toggle();
+    });
+    scene.input.keyboard.on('keydown-K', () => {
+        if (!scene.shopUI.isOpen && !scene.inventoryUI.isOpen && !scene.equipmentUI.isOpen &&
+            !scene.statAllocationUI.isOpen && !scene.blacksmithUI?.isOpen) {
+            scene.skillManagerUI.toggle();
+        }
+    });
+    scene.chatKey.on('down', () => scene.chatUI?.toggle());
+
+    // R: 輪廻転生ウィンドウ
+    scene.input.keyboard.on('keydown-R', () => {
+        if (!scene.shopUI.isOpen && !scene.inventoryUI.isOpen && !scene.equipmentUI.isOpen &&
+            !scene.statAllocationUI.isOpen && !scene.blacksmithUI?.isOpen && !scene.skillManagerUI?.isOpen) {
+            scene.reincarnationUI?.toggle();
+        }
+    });
+
+    // U: 実績・称号ウィンドウ
+    scene.input.keyboard.on('keydown-U', () => {
+        if (!scene.shopUI.isOpen && !scene.inventoryUI.isOpen && !scene.equipmentUI.isOpen &&
+            !scene.statAllocationUI.isOpen && !scene.blacksmithUI?.isOpen && !scene.skillManagerUI?.isOpen) {
+            scene.achievementUI?.toggle();
+        }
+    });
+
+    // Y/N: トレード申請の承認/拒否
+    scene.input.keyboard.on('keydown-Y', () => {
+        if (scene._pendingTradeFrom) {
+            scene.networkManager?.sendTradeAccept(scene._pendingTradeFrom.fromId);
+            scene._pendingTradeFrom = null;
+        }
+    });
+    scene.input.keyboard.on('keydown-N', () => {
+        if (scene._pendingTradeFrom) {
+            scene.networkManager?.sendTradeDecline(scene._pendingTradeFrom.fromId);
+            scene._pendingTradeFrom = null;
+            scene.notificationUI?.show('トレード申請を拒否しました', 'info');
+        }
+    });
+
+    // M: サイドメニュー開閉
+    scene.input.keyboard.on('keydown-M', () => {
+        scene.sideMenuUI?.toggle();
+    });
+
+    // H: 操作ガイド & キー一覧ウィンドウ
+    scene.input.keyboard.on('keydown-H', () => {
+        // チュートリアル中のみTutorialGuideUIが[H]を使う場合があるが、
+        // keyGuideWindowUIもトグル可能にする
+        scene.keyGuideWindowUI?.toggle();
+    });
+
+    // ESC closes one open window (topmost in this order)
+    scene.escKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+    scene.escKey.on('down', () => closeTopWindow(scene));
+
+    // Shift+T toggles AI training for all enemies
+    scene.input.keyboard.on('keydown', (event) => {
+        if (event.key.toLowerCase() === 't' && event.shiftKey) {
+            toggleAITraining(scene);
+        }
+    });
+
+    // Tap / click to move (mobile only)
+    scene.input.on('pointerdown', (pointer, currentlyOver) => {
+        if (currentlyOver && currentlyOver.length > 0) return;          // clicked on UI
+        if (scene.dialogue && scene.dialogue.isTalking) return;         // no moving while talking
+        if (isAnyWindowOpen(scene)) return;                             // no moving while a window is open
+
+        if (scene.isMobile && scene.player && scene.player.active) {
+            const worldPoint = scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
+            scene.player.moveTo(worldPoint.x, worldPoint.y);
+        }
+    });
+}
+
+function closeTopWindow(scene) {
+    // 個数ダイアログが最前面。Escはそれだけを閉じる（ダイアログ自身のEsc処理に任せる）
+    if (scene.quantityDialog && scene.quantityDialog.isBlocking()) return;
+
+    if (scene.shopUI && scene.shopUI.isOpen) {
+        scene.shopUI.close();
+    } else if (scene.inventoryUI && scene.inventoryUI.isOpen) {
+        scene.inventoryUI.toggle();
+    } else if (scene.equipmentUI && scene.equipmentUI.isOpen) {
+        scene.equipmentUI.toggle();
+    } else if (scene.statAllocationUI && scene.statAllocationUI.isOpen) {
+        scene.statAllocationUI.toggle();
+    } else if (scene.skillManagerUI && scene.skillManagerUI.isOpen) {
+        scene.skillManagerUI.toggle();
+    } else if (scene.blacksmithUI && scene.blacksmithUI.isOpen) {
+        scene.blacksmithUI.toggle();
+    } else if (scene.reincarnationUI && scene.reincarnationUI.isOpen) {
+        scene.reincarnationUI.toggle();
+    } else if (scene.achievementUI && scene.achievementUI.isOpen) {
+        scene.achievementUI.toggle();
+    } else if (scene.keyGuideWindowUI && scene.keyGuideWindowUI.isOpen) {
+        scene.keyGuideWindowUI.toggle();
+    } else if (scene.tradeUI && scene.tradeUI.isOpen) {
+        scene.tradeUI.close();
+    } else if (scene.chatUI && scene.chatUI.isOpen) {
+        scene.chatUI.toggle();
+    } else if (scene.partyUI && scene.partyUI.isOpen) {
+        scene.partyUI.toggle();
+    } else if (scene.settingsUI && scene.settingsUI.visible) { // SettingsUI exposes `visible`, not `isOpen`
+        scene.settingsUI.toggle();
+    } else if (scene.sideMenuUI && scene.sideMenuUI.isExpanded) {
+        scene.sideMenuUI.toggle();
+    }
+}
+
+function toggleAITraining(scene) {
+    scene.aiTrainingEnabled = !scene.aiTrainingEnabled;
+    const mode = scene.aiTrainingEnabled ? 'ON' : 'OFF';
+
+    const enemies = scene.networkManager?.getEnemies() || {};
+    Object.values(enemies).forEach(enemy => {
+        if (enemy.ai && enemy.active) {
+            enemy.ai.setTrainingMode(scene.aiTrainingEnabled);
+        }
+    });
+
+    if (scene.notificationUI) {
+        scene.notificationUI.show(`AI Training: ${mode}`, 'info');
+    }
+    console.log(`[BaseGameScene] AI Training mode: ${mode}`);
+}

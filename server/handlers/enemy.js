@@ -1,0 +1,94 @@
+const { enemies, parties, playerToParty, players } = require("../state");
+const { findSocketByPlayerId } = require("../utils/socketUtils");
+
+// ドロップ抽選（当たったアイテムIDの配列を返す）
+function rollDrops(enemy) {
+    return (enemy.drops || [])
+        .filter(drop => Math.random() < drop.chance)
+        .map(drop => drop.id);
+}
+
+module.exports = function registerEnemyHandlers(socket, { io, aiManager, enemyService }) {
+    const playerId = socket.data.playerId;
+
+    // 撃破通知を送る。パーティーがある場合は同じマップのメンバーで経験値・ゴールドを等分する
+    function notifyDefeat(mapKey, enemy, drops) {
+        const payload = (exp, gold, dropList) => ({
+            id: enemy.id,
+            type: enemy.type,
+            level: enemy.level,
+            killedBy: playerId,
+            exp,
+            gold,
+            drops: dropList
+        });
+
+        const partyId = playerToParty[playerId];
+        if (!(partyId && parties[partyId])) {
+            io.to(`map:${mapKey}`).emit("enemyDefeated", payload(enemy.exp, enemy.gold, drops));
+            return;
+        }
+
+        const membersInMap = parties[partyId].members.filter(id => players[id]?.map === mapKey);
+        const shareCount = membersInMap.length;
+
+        membersInMap.forEach(memberId => {
+            const memberSocket = findSocketByPlayerId(io, memberId);
+            if (!memberSocket) return;
+
+            memberSocket.emit("enemyDefeated", payload(
+                Math.ceil(enemy.exp / shareCount),
+                Math.ceil(enemy.gold / shareCount),
+                memberId === playerId ? drops : [] // ドロップはキラーのみ
+            ));
+        });
+    }
+
+    socket.on("enemyHit", ({ id, damage, freezeMs, paralyzeMs }) => {
+        const mapKey = socket.data.map;
+        const enemy = enemies[mapKey]?.[id];
+        if (!enemy) return;
+
+        enemy.hp -= damage;
+
+        // 凍結効果（氷属性武器など）: 一定時間、移動と攻撃を止める
+        if (freezeMs > 0) {
+            enemy.frozenUntil = Date.now() + freezeMs;
+        }
+
+        // 麻痺効果（風属性武器など）: 凍結と同様、一定時間移動と攻撃を止める
+        if (paralyzeMs > 0) {
+            enemy.paralyzedUntil = Date.now() + paralyzeMs;
+        }
+
+        if (enemy.hp <= 0) {
+            // AI に死亡を通知（学習反映）
+            aiManager.unregisterEnemy(id);
+            delete enemies[mapKey][id];
+
+            notifyDefeat(mapKey, enemy, rollDrops(enemy));
+
+            // クエスト用ボスなど noAutoRespawn な敵は、倒された後に自動では復活しない。
+            // 再度挑戦したい場合は requestBossSpawn で明示的にスポーンし直す。
+            if (!enemy.noAutoRespawn) {
+                setTimeout(() => enemyService.respawnEnemy(mapKey, enemy), enemy.respawnDelay);
+            }
+        } else {
+            io.to(`map:${mapKey}`).emit("enemyStatUpdate", {
+                id,
+                hp: enemy.hp,
+                maxHp: enemy.maxHp
+            });
+        }
+    });
+
+    // クエスト用ボス（boss_spawnレイヤーのもの）をこのプレイヤーのいるマップに出現させる。
+    // 既に同じスポーン地点のボスが生きていれば何もしない（enemyService側で二重湧き防止）。
+    // これにより、同じマップにいる全員に同じボスが見え、パーティー共有の撃破通知・
+    // 経験値分配もそのまま適用される（notifyDefeat参照）。
+    socket.on("requestBossSpawn", () => {
+        const mapKey = socket.data.map;
+        if (!mapKey) return;
+        enemyService.spawnBossOnDemand(mapKey);
+    });
+};

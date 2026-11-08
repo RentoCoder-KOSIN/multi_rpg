@@ -1,0 +1,440 @@
+import { UI_FONT } from '../fontConfig.js';
+import { getSaved, removeSaved, getSession, logout, flushSave, exportAccountJson } from '../utils/saveStore.js';
+
+export default class LobbyUI {
+    constructor(scene, networkManager) {
+        this.scene = scene;
+        this.networkManager = networkManager;
+        this.playerNames = {}; // playerId -> name
+        this.readyPlayers = new Set(); // 準備完了したプレイヤーのID
+        this.maxPlayers = 12;
+        // 名前の初期値はアカウントのユーザー名
+        this.myPlayerName = getSession()?.username || '';
+        this.isReady = false;
+        this.gameSessionActive = false;
+        this.useSaveData = !!getSaved('playerStats');
+
+        this.createUI();
+        this.setupNetworkEvents();
+
+        // 初期表示
+        this.scene.time.delayedCall(200, () => {
+            if (this.networkManager.getSocket()?.connected) {
+                const myId = this.networkManager.getPlayerId();
+                if (!this.playerNames[myId]) {
+                    this.playerNames[myId] = this.myPlayerName || 'Player';
+                }
+                this.updatePlayerList();
+            }
+        });
+    }
+
+    createUI() {
+        const { width, height } = this.scene.scale;
+        // Keep a dedicated information column on wide screens.  The lobby itself
+        // lives in the remaining space instead of being a small centered modal.
+        this.hasInfoPanel = width >= 1000;
+        const infoWidth = this.hasInfoPanel ? 310 : 0;
+        const outerMargin = 32;
+        const columnGap = 24;
+        const panelWidth = this.hasInfoPanel
+            ? Math.min(760, width - infoWidth - outerMargin * 2 - columnGap)
+            : Math.min(width * 0.9, 700);
+        const panelHeight = Math.min(height - 48, 620);
+        const mainX = this.hasInfoPanel
+            ? outerMargin + panelWidth / 2
+            : width / 2;
+
+        this.mainContainer = this.scene.add.container(mainX, height / 2).setScrollFactor(0).setDepth(1000);
+
+        // --- 背景パネル ---
+        this.bgGfx = this.scene.add.graphics();
+        // 外枠の輝き
+        this.bgGfx.lineStyle(6, 0x4a90e2, 0.2);
+        this.bgGfx.strokeRoundedRect(-panelWidth / 2 - 2, -panelHeight / 2 - 2, panelWidth + 4, panelHeight + 4, 22);
+        // メインパネル
+        this.bgGfx.fillStyle(0x0a0a1a, 0.95);
+        this.bgGfx.fillRoundedRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 20);
+        this.bgGfx.lineStyle(3, 0x4a90e2, 0.8);
+        this.bgGfx.strokeRoundedRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 20);
+        this.mainContainer.add(this.bgGfx);
+
+        // --- ヘッダー ---
+        this.titleText = this.scene.add.text(0, -panelHeight / 2 + 40, '⚔️ マルチプレイヤー ロビー', {
+            fontSize: '24px', color: '#ffffff', fontFamily: UI_FONT, stroke: '#4a90e2', strokeThickness: 5
+        }).setOrigin(0.5);
+        this.mainContainer.add(this.titleText);
+
+        this.connectionStatusText = this.scene.add.text(0, -panelHeight / 2 + 80, '接続済み', {
+            fontSize: '11px', color: '#2ecc40', fontFamily: UI_FONT
+        }).setOrigin(0.5);
+        this.mainContainer.add(this.connectionStatusText);
+
+        this.playerCountText = this.scene.add.text(0, -panelHeight / 2 + 110, '待機人数: 0 / 4', {
+            fontSize: '14px', color: '#ffffff', fontFamily: UI_FONT
+        }).setOrigin(0.5);
+        this.mainContainer.add(this.playerCountText);
+
+        // 操作説明 (重なり防止のため上部に配置)
+        this.instructionText = this.scene.add.text(0, -panelHeight / 2 + 140,
+            '名前を入力して準備完了！全員の準備ができると開始できます。', {
+            fontSize: '11px', color: '#888888', fontFamily: UI_FONT
+        }).setOrigin(0.5);
+        this.mainContainer.add(this.instructionText);
+
+        // --- プレイヤーリストエリア ---
+        const listBg = this.scene.add.graphics();
+        listBg.fillStyle(0x000000, 0.3);
+        listBg.fillRoundedRect(-panelWidth / 2 + 30, -panelHeight / 2 + 165, panelWidth - 60, 190, 15);
+        this.mainContainer.add(listBg);
+
+        this.playerListContainer = this.scene.add.container(0, -panelHeight / 2 + 260);
+        this.mainContainer.add(this.playerListContainer);
+
+        // --- 操作エリア (下部) ---
+        const startY = 85;
+
+        // 名前入力
+        this.nameLabel = this.scene.add.text(0, startY, 'プレイヤー名:', {
+            fontSize: '12px', color: '#aaaaaa', fontFamily: UI_FONT
+        }).setOrigin(0.5);
+        this.mainContainer.add(this.nameLabel);
+
+        this.nameInputBg = this.scene.add.rectangle(0, startY + 35, 320, 45, 0x1a1a2e, 1)
+            .setOrigin(0.5).setStrokeStyle(2, 0x4a90e2, 1);
+        this.mainContainer.add(this.nameInputBg);
+
+        this.nameInputText = this.scene.add.text(0, startY + 35, this.myPlayerName || 'Player', {
+            fontSize: '16px', color: '#ffffff', fontFamily: UI_FONT
+        }).setOrigin(0.5);
+        this.mainContainer.add(this.nameInputText);
+
+        // 準備ボタン
+        this.readyButton = this.scene.add.rectangle(0, startY + 105, 240, 55, 0x4a90e2, 1)
+            .setOrigin(0.5).setStrokeStyle(2, 0xffffff, 0.5).setInteractive({ useHandCursor: true });
+        this.mainContainer.add(this.readyButton);
+
+        this.readyButtonText = this.scene.add.text(0, startY + 105, '準備完了', {
+            fontSize: '18px', color: '#ffffff', fontFamily: UI_FONT
+        }).setOrigin(0.5);
+        this.mainContainer.add(this.readyButtonText);
+
+        // セーブデータ切り替え
+        this.saveToggleButton = this.scene.add.container(0, startY + 155);
+        const saveToggleBg = this.scene.add.rectangle(0, 0, 240, 32, 0x4a90e2, 0.3)
+            .setStrokeStyle(1, 0xffffff, 0.2).setInteractive({ useHandCursor: true });
+        this.saveToggleText = this.scene.add.text(0, 0, 'つづきから', {
+            fontSize: '11px', color: '#ffffff', fontFamily: UI_FONT
+        }).setOrigin(0.5);
+        this.saveToggleButton.add([saveToggleBg, this.saveToggleText]);
+        this.mainContainer.add(this.saveToggleButton);
+
+        if (!getSaved('playerStats')) this.saveToggleButton.setVisible(false);
+
+        // ログイン中のアカウント表示、セーブJSON保存、ログアウト
+        const accountName = getSession()?.username || '';
+        this.accountText = this.scene.add.text(-panelWidth / 2 + 24, -panelHeight / 2 + 18, `👤 ${accountName}`, {
+            fontSize: '11px', color: '#9ec5ff', fontFamily: UI_FONT
+        }).setOrigin(0, 0.5);
+
+        this.saveJsonText = this.scene.add.text(panelWidth / 2 - 110, -panelHeight / 2 + 18, '[セーブJSON]', {
+            fontSize: '11px', color: '#55f088', fontFamily: UI_FONT
+        }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
+        this.saveJsonText.on('pointerdown', async () => {
+            try {
+                await flushSave();
+                const res = exportAccountJson();
+                if (res) {
+                    this.addLobbyLog('セーブデータをJSON保存しました');
+                }
+            } catch (err) {
+                console.warn('save error', err);
+            }
+        });
+
+        this.logoutText = this.scene.add.text(panelWidth / 2 - 24, -panelHeight / 2 + 18, '[ログアウト]', {
+            fontSize: '11px', color: '#ff8b7b', fontFamily: UI_FONT
+        }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
+        this.logoutText.on('pointerdown', () => {
+            flushSave(true);
+            logout();
+            window.location.reload();
+        });
+        this.mainContainer.add([this.accountText, this.saveJsonText, this.logoutText]);
+
+        if (this.hasInfoPanel) {
+            this.createInfoPanel(width - outerMargin - infoWidth / 2, height / 2, infoWidth, panelHeight);
+        }
+
+        // 開始ボタン (ホストのみ)
+        this.startButton = this.scene.add.rectangle(0, startY + 215, 300, 60, 0x2ecc40, 1)
+            .setOrigin(0.5).setStrokeStyle(3, 0xffffff, 1).setInteractive({ useHandCursor: true }).setVisible(false);
+        this.startButtonText = this.scene.add.text(0, startY + 215, 'ゲーム開始', {
+            fontSize: '22px', color: '#ffffff', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 3
+        }).setOrigin(0.5).setVisible(false);
+        this.mainContainer.add([this.startButton, this.startButtonText]);
+
+        this.setupHTMLInput(width, height, startY + 35);
+        this.setupInteractions();
+    }
+
+    createInfoPanel(x, y, width, height) {
+        this.infoContainer = this.scene.add.container(x, y).setScrollFactor(0).setDepth(1000);
+        const left = -width / 2;
+        const top = -height / 2;
+        const gfx = this.scene.add.graphics();
+        gfx.fillStyle(0x0a0a1a, 0.92);
+        gfx.fillRoundedRect(left, top, width, height, 18);
+        gfx.lineStyle(2, 0x4a90e2, 0.75);
+        gfx.strokeRoundedRect(left, top, width, height, 18);
+        gfx.fillStyle(0x4a90e2, 0.12);
+        gfx.fillRoundedRect(left, top, width, 54, { tl: 18, tr: 18, bl: 0, br: 0 });
+
+        const title = this.scene.add.text(left + 20, top + 20, 'ルーム情報', {
+            fontSize: '15px', color: '#ffffff', fontFamily: UI_FONT
+        });
+        this.infoConnectionText = this.scene.add.text(left + 20, top + 72, '● 接続済み', {
+            fontSize: '11px', color: '#2ecc40', fontFamily: UI_FONT
+        });
+        this.infoRoomText = this.scene.add.text(left + 20, top + 102, '参加者: 0 / 4', {
+            fontSize: '11px', color: '#9ec5ff', fontFamily: UI_FONT
+        });
+        this.infoAccountText = this.scene.add.text(left + 20, top + 132, `アカウント: ${getSession()?.username || '-'}`, {
+            fontSize: '11px', color: '#cccccc', fontFamily: UI_FONT, wordWrap: { width: width - 40 }
+        });
+
+        const logTop = top + 182;
+        gfx.lineStyle(1, 0x4a90e2, 0.45);
+        gfx.lineBetween(left + 18, logTop - 16, -left - 18, logTop - 16);
+        const logTitle = this.scene.add.text(left + 20, logTop, 'ACTIVITY LOG', {
+            fontSize: '11px', color: '#ffd700', fontFamily: UI_FONT
+        });
+        this.lobbyLogText = this.scene.add.text(left + 20, logTop + 30, '', {
+            fontSize: '11px', color: '#d7e6ff', fontFamily: 'monospace', lineSpacing: 7,
+            wordWrap: { width: width - 40 }
+        });
+        this.infoContainer.add([gfx, title, this.infoConnectionText, this.infoRoomText, this.infoAccountText, logTitle, this.lobbyLogText]);
+        this.lobbyLogs = [];
+        this.addLobbyLog('ロビーに接続しました');
+    }
+
+    addLobbyLog(message) {
+        if (!this.lobbyLogText) return;
+        const stamp = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+        this.lobbyLogs.unshift(`[${stamp}] ${message}`);
+        this.lobbyLogs = this.lobbyLogs.slice(0, 10);
+        this.lobbyLogText.setText(this.lobbyLogs.join('\n'));
+    }
+
+    setupHTMLInput(w, h, yOff) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = this.myPlayerName || 'Player';
+        input.maxLength = 16;
+        input.style.position = 'fixed';
+        input.style.textAlign = 'center';
+        input.style.backgroundColor = 'transparent';
+        input.style.color = 'transparent';
+        input.style.border = 'none';
+        input.style.outline = 'none';
+        input.style.zIndex = '10000';
+        input.style.caretColor = '#4a90e2';
+
+        const updatePos = () => {
+            if (!this.mainContainer) return;
+            const cv = this.scene.game.canvas;
+            const r = cv.getBoundingClientRect();
+            const sx = r.width / this.scene.game.config.width;
+            const sy = r.height / this.scene.game.config.height;
+            input.style.left = (r.left + r.width / 2 - 160 * sx) + 'px';
+            input.style.top = (r.top + r.height / 2 + (yOff - 22) * sy) + 'px';
+            input.style.width = (320 * sx) + 'px';
+            input.style.height = (45 * sy) + 'px';
+            input.style.fontSize = (16 * sx) + 'px';
+        };
+
+        document.body.appendChild(input);
+        this.htmlInput = input;
+        input.addEventListener('input', (e) => {
+            this.myPlayerName = e.target.value || 'Player';
+            this.nameInputText.setText(this.myPlayerName);
+            this.networkManager.getSocket()?.emit('playerNameUpdate', { name: this.myPlayerName });
+        });
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !this.isReady) this.toggleReady(); });
+        window.addEventListener('resize', updatePos);
+        this.scene.scale.on('resize', updatePos);
+        updatePos();
+    }
+
+    setupInteractions() {
+        this.readyButton.on('pointerdown', () => this.toggleReady());
+        this.readyButton.on('pointerover', () => {
+            this.readyButton.setStrokeStyle(3, 0xffffff, 1).setScale(1.02);
+            this.readyButton.setSize(240 * 1.02, 55 * 1.02);
+        });
+        this.readyButton.on('pointerout', () => {
+            this.readyButton.setStrokeStyle(2, 0xffffff, 0.5).setScale(1);
+            this.readyButton.setSize(240, 55);
+        });
+
+        const bg = this.saveToggleButton.list[0];
+        bg.on('pointerdown', () => {
+            this.useSaveData = !this.useSaveData;
+            this.updateSaveToggleUI();
+        });
+
+        this.startButton.on('pointerdown', () => { if (this.canStart()) this.startGame(); });
+        this.scene.tweens.add({
+            targets: [this.startButton, this.startButtonText],
+            scale: 1.05, duration: 600, yoyo: true, repeat: -1
+        });
+    }
+
+    updateSaveToggleUI() {
+        const bg = this.saveToggleButton.list[0];
+        if (this.useSaveData) {
+            bg.setFillStyle(0x4a90e2, 0.5).setStrokeStyle(1, 0xffffff, 0.4);
+            this.saveToggleText.setText('つづきから').setColor('#ffffff');
+        } else {
+            bg.setFillStyle(0xe74c3c, 0.5).setStrokeStyle(1, 0xffffff, 0.4);
+            this.saveToggleText.setText('最初から(消去)').setColor('#ffffff');
+        }
+    }
+
+    setupNetworkEvents() {
+        const socket = this.networkManager.getSocket();
+        if (!socket) return;
+
+        socket.on('lobbyPlayerJoined', (d) => {
+            if (d.playerNames) this.playerNames = { ...this.playerNames, ...d.playerNames };
+            this.addLobbyLog('プレイヤーが参加しました');
+            this.updatePlayerList(d.players);
+        });
+        socket.on('lobbyPlayerLeft', (d) => {
+            if (d.players) {
+                const ids = Object.keys(d.players);
+                Object.keys(this.playerNames).forEach(id => { if (!ids.includes(id)) delete this.playerNames[id]; });
+            }
+            this.addLobbyLog('プレイヤーが退出しました');
+            this.updatePlayerList(d.players);
+        });
+        socket.on('lobbyPlayerNameUpdate', (d) => { if (d.socketId) { this.playerNames[d.socketId] = d.name; this.updatePlayerList(); } });
+        socket.on('lobbyPlayerReady', (d) => {
+            if (d.socketId) {
+                if (d.ready) this.readyPlayers.add(d.socketId); else this.readyPlayers.delete(d.socketId);
+                this.addLobbyLog(`${this.playerNames[d.socketId] || 'プレイヤー'}: ${d.ready ? '準備完了' : '準備解除'}`);
+                this.updatePlayerList();
+            }
+        });
+        socket.on('lobbyInfo', (d) => {
+            if (d.playerNames) this.playerNames = { ...d.playerNames };
+            if (d.readyPlayers) this.readyPlayers = new Set(d.readyPlayers);
+            this.gameSessionActive = !!d.gameSessionActive;
+            this.updatePlayerList(d.players);
+        });
+        socket.on('lobbyKicked', () => { alert('ロビーからキックされました。'); window.location.reload(); });
+        socket.on('lobbyGameStarted', () => {
+            if (!this.useSaveData) { removeSaved('playerStats'); removeSaved('playerQuests'); }
+            if (this.playerNames) this.scene.registry.set('playerNames', this.playerNames);
+            this.destroy();
+            const stats = getSaved('playerStats');
+            const completedTutorial = !!stats?.tutorialFlags?.leftTutorial;
+            const startMap = completedTutorial ? 'city' : 'tutorial';
+            this.networkManager.changeMap(startMap, 0, 0);
+            this.scene.time.delayedCall(200, () => this.scene.scene.start(completedTutorial ? 'city' : 'GameScene'));
+        });
+    }
+
+    updatePlayerList(players = null) {
+        if (!this.playerListContainer) return;
+        this.playerListContainer.removeAll(true);
+        if (!players) players = Object.keys(this.playerNames).reduce((acc, id) => { acc[id] = {}; return acc; }, {});
+
+        const ids = Object.keys(players);
+        const count = ids.length;
+        this.playerCountText.setText(`待機人数: ${count} / ${this.maxPlayers}`);
+        this.infoRoomText?.setText(`参加者: ${count} / ${this.maxPlayers}`);
+
+        const myId = this.networkManager.getPlayerId();
+        const sortedIds = Object.keys(this.playerNames).sort();
+        const isHost = sortedIds[0] === myId;
+
+        ids.forEach((id, index) => {
+            const isMe = id === myId;
+            const name = this.playerNames[id] || `Player ${id.substring(0, 4)}`;
+            const isReady = this.readyPlayers.has(id);
+            const y = (index - (count - 1) / 2) * 44;
+
+            const box = this.scene.add.container(0, y);
+            const bGfx = this.scene.add.graphics();
+            bGfx.fillStyle(isMe ? 0x4a90e2 : 0x2a2a3e, 0.4);
+            bGfx.fillRoundedRect(-250, -18, 500, 36, 6);
+            bGfx.lineStyle(2, isReady ? 0x2ecc40 : 0x444444, 1);
+            bGfx.strokeRoundedRect(-250, -18, 500, 36, 6);
+            box.add(bGfx);
+
+            const nTxt = this.scene.add.text(-230, 0, (isMe ? '▶ ' : '') + name + (sortedIds[0] === id ? ' (ホスト)' : ''), {
+                fontSize: '11px', color: '#ffffff', fontFamily: UI_FONT
+            }).setOrigin(0, 0.5);
+            box.add(nTxt);
+
+            if (isHost && !isMe) {
+                const kBtn = this.scene.add.text(120, 0, '[キック]', { fontSize: '11px', color: '#ff4b2b', fontFamily: UI_FONT })
+                    .setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
+                kBtn.on('pointerdown', () => this.networkManager.getSocket()?.emit('lobbyKick', { targetId: id }));
+                kBtn.on('pointerover', () => kBtn.setColor('#ff0000'));
+                kBtn.on('pointerout', () => kBtn.setColor('#ff4b2b'));
+                box.add(kBtn);
+            }
+
+            const sTxt = this.scene.add.text(230, 0, isReady ? '準備完了' : '待機中', {
+                fontSize: '11px', color: isReady ? '#2ecc40' : '#888888', fontFamily: UI_FONT
+            }).setOrigin(1, 0.5);
+            box.add(sTxt);
+
+            this.playerListContainer.add(box);
+        });
+        this.updateStartButton();
+    }
+
+    toggleReady() {
+        this.isReady = !this.isReady;
+        this.networkManager.getSocket()?.emit('lobbyReady', { ready: this.isReady });
+        if (this.isReady) {
+            this.readyButton.setFillStyle(0x2ecc40).setStrokeStyle(3, 0xffffff, 1);
+            this.readyButtonText.setText('準備解除');
+        } else {
+            this.readyButton.setFillStyle(0x4a90e2).setStrokeStyle(2, 0xffffff, 0.5);
+            this.readyButtonText.setText('準備完了');
+        }
+        this.addLobbyLog(this.isReady ? 'あなたは準備完了です' : 'あなたは準備を解除しました');
+    }
+
+    updateStartButton() {
+        const can = this.canStart();
+        if (this.startButton) {
+            this.startButton.setVisible(can);
+            this.startButtonText.setVisible(can);
+            this.startButtonText.setText(this.gameSessionActive ? '途中参加する' : 'ゲーム開始');
+        }
+    }
+
+    canStart() {
+        if (this.gameSessionActive) return true;
+        const ids = Object.keys(this.playerNames);
+        if (ids.length === 0) return false;
+        const myId = this.networkManager.getPlayerId();
+        const sorted = [...ids].sort();
+        return (sorted[0] === myId) && ids.every(id => this.readyPlayers.has(id));
+    }
+
+    startGame() {
+        this.networkManager.getSocket()?.emit(this.gameSessionActive ? 'lobbyJoinGame' : 'lobbyStartGame');
+    }
+
+    destroy() {
+        if (this.htmlInput?.parentNode) this.htmlInput.parentNode.removeChild(this.htmlInput);
+        if (this.mainContainer) this.mainContainer.destroy();
+        if (this.infoContainer) this.infoContainer.destroy();
+    }
+}

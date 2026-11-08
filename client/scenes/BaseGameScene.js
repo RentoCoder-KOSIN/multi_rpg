@@ -1,0 +1,342 @@
+// BaseGameScene.js
+// Shared parent of every playable map scene. It only orchestrates:
+// the actual logic lives in scenes/base/* (setup) and systems/* (gameplay).
+import Player from '../entities/Player.js';
+import QuestManager from '../managers/QuestManager.js';
+import DialogueManager from '../managers/DialogueManager.js';
+import NetworkManager from '../managers/NetworkManager.js';
+import { resolvePlayerSpawn } from '../utils/playerSpawn.js';
+import { createNPCsFromMap } from '../utils/npcFactory.js';
+import { setupTilemap, addMapTilesets } from '../utils/tilemapHelper.js';
+import { setupMapCollisions } from '../utils/collisionHelper.js';
+import { setupCameraAndWorld } from '../utils/cameraHelper.js';
+import { setupTeleportsFromMap, updateTeleports } from '../utils/teleportHelper.js';
+import { updateNPCInteraction } from '../utils/interactionHelper.js';
+import { updateEnemyDebugUI, drawEnemyAttackRanges } from '../utils/enemyDebug.js';
+import { isAnyWindowOpen } from '../utils/uiState.js';
+import { createPlayerAnimations } from '../animations/playerAnimations.js';
+import ShopUI from '../ui/ShopUI.js';
+import QuantityDialogUI from '../ui/QuantityDialogUI.js';
+import { isTeleportUnlocked } from '../utils/questGate.js';
+import InventoryUI from '../ui/InventoryUI.js';
+import PartyUI from '../ui/PartyUI.js';
+import PartyHUDUI from '../ui/PartyHUDUI.js';
+import ChatUI from '../ui/ChatUI.js';
+import PlayerNameUI from '../ui/PlayerNameUI.js';
+
+import { preloadCommonAssets } from './base/assets.js';
+import { registerNetworkCallbacks } from './base/networkCallbacks.js';
+import { createGameKeys, registerInputHandlers } from './base/input.js';
+import { createGameUI, setupEnemyDebug } from './base/ui.js';
+import { setupFacilities } from './base/facilities.js';
+import { setupChests, updateChests } from './base/chests.js';
+import {
+    updateEnemyContactDamage,
+    regenerateMp,
+    syncPlayerStats,
+    updateRemotePlayerNameTags,
+    updateActiveSummons
+} from './base/frameUpdate.js';
+
+import { performBasicAttack, usePlayerSkill } from '../systems/combat.js';
+import { beginSkillAim, releaseAim, cancelAim, updateAim } from '../systems/aim.js';
+import { showHitEffect } from '../systems/skillEffects.js';
+import { destroySummon } from '../systems/summons.js';
+import { addOtherPlayer, spawnEnemyFromServer } from '../systems/entitySetup.js';
+import { MapAtmosphere } from '../systems/mapAtmosphere.js';
+
+// ウィンドウが開いている間、Player.update()に「キー入力なし」を伝えるためのダミー。
+// nullを渡すとPlayer.update内のHP/MP自然回復や位置同期まで丸ごとスキップされてしまうため、
+// 各方向キーがfalseなオブジェクトを渡して移動だけを止める。
+const NEUTRAL_CURSORS = {
+    left: { isDown: false },
+    right: { isDown: false },
+    up: { isDown: false },
+    down: { isDown: false },
+};
+
+export default class BaseGameScene extends Phaser.Scene {
+    constructor(sceneKey) {
+        super(sceneKey);
+    }
+
+    getSceneConfig() {
+        throw new Error('getSceneConfig() must be implemented by subclass');
+    }
+
+    preload() {
+        preloadCommonAssets(this, this.getSceneConfig());
+    }
+
+    create(data) {
+        // サイドパネルを出すと表示領域の幅が変わる。UI（ウィンドウの中央位置やオーバーレイ）は
+        // 作成時のゲームサイズで作られるため、UIを作る前に同期的に解像度を合わせておく。
+        document.getElementById('game-sidebar')?.classList.add('is-active');
+        window.__refitGame?.();
+
+        this._isTeleporting = false;
+        this.events.on('wake', () => {
+            this._isTeleporting = false;
+        });
+        const config = this.getSceneConfig();
+
+        // --- QuestManager (shared across scenes through the registry) ---
+        this.questManager = this.registry.get('questManager') || new QuestManager(this);
+        this.questManager.setScene(this); // always point at the current scene
+        this.registry.set('questManager', this.questManager);
+        console.log('[BaseGameScene] QuestManager synchronized with scene');
+
+        // --- Map ---
+        this.map = this.make.tilemap({ key: config.mapKey });
+        // タイルセットは画像のファイル名で結び付ける（Tiled上の名前が "waters" などでも水が表示される）
+        const tilesets = addMapTilesets(this, this.map, config.mapKey);
+        const { collidableLayers } = setupTilemap(this, this.map, tilesets);
+        this.collidableLayers = collidableLayers;
+
+        // --- Player ---
+        const { x, y } = resolvePlayerSpawn(this.map, data);
+        // 個数ダイアログは、キー入力を先に受け取れるよう、ショップ/インベントリより先に作る
+        this.quantityDialog = new QuantityDialogUI(this);
+        this.quantityDialog.createUI();
+        this.shopUI = new ShopUI(this);
+        this.inventoryUI = new InventoryUI(this);
+        this.shopUI.createUI();
+        this.inventoryUI.createUI();
+        this.player = new Player(this, x, y, true, null);
+        console.log('Player spawn:', x, y);
+        createPlayerAnimations(this);
+        this.cursors = this.input.keyboard.createCursorKeys();
+
+        this.playBgm();
+
+        // --- NetworkManager (reused across scenes through the registry) ---
+        this.networkManager = this.registry.get('networkManager');
+        if (!this.networkManager) {
+            this.networkManager = new NetworkManager(this);
+            this.registry.set('networkManager', this.networkManager);
+        } else {
+            this.networkManager.scene = this;
+        }
+
+        this.currentMapKey = data?.mapKey || config.mapKey;
+        this.activeSummons = []; // 自分の召喚獣（最大player.stats.maxSummons体、上位職パッシブで2体まで）
+        this.otherSummons = {};  // 他プレイヤーの召喚獣。{ [playerId]: { [summonId]: SummonedBeast } }
+
+        this.partyUI = new PartyUI(this);
+        this.partyUI.createUI();
+        this.partyHUD = new PartyHUDUI(this);
+        this.chatUI = new ChatUI(this);
+        this.chatUI.createUI();
+
+        registerNetworkCallbacks(this);
+
+        this.networkManager.connect(this.currentMapKey, () => {
+            this.socket = this.networkManager.getSocket();
+            this.player.socket = this.socket;
+            // The newPlayer event is sent inside NetworkManager.connect()
+            console.log('[BaseGameScene] Connected, socket set to player');
+        });
+
+        // --- NPC ---
+        this.npcs = createNPCsFromMap(this, this.map);
+        this.npcs.forEach(npc => {
+            if (npc.questId && this.questManager.isFinished(npc.questId)) {
+                npc.is_Complited = true; // quest already reported
+            }
+        });
+
+        // --- Collisions ---
+        setupMapCollisions(this, {
+            player: this.player,
+            npcs: this.npcs,
+            collidableLayers,
+            otherPlayers: this.networkManager.getOtherPlayers()
+        });
+
+        // --- Teleports ---
+        this.teleports = setupTeleportsFromMap(this, this.map) || [];
+        this.teleports.forEach(tp => {
+            // requiredQuest はカンマ区切りで複数指定できる（全て達成で解放）
+            if (tp.requiredQuest && isTeleportUnlocked(this.questManager, tp)) {
+                tp.unlocked = true;
+            }
+        });
+
+        // --- Camera ---
+        setupCameraAndWorld(this, this.map, this.player);
+
+        // --- Map Atmosphere & Environmental Effects ---
+        this.mapAtmosphere = new MapAtmosphere(this, this.currentMapKey);
+        this.events.once('shutdown', () => this.shutdown());
+
+        // --- UI and input ---
+        this.dialogue = new DialogueManager(this);
+        createGameKeys(this, config);
+        createGameUI(this, config);
+        registerInputHandlers(this);
+
+        // 鍛冶屋・各種ショップ・クエストボードなどの施設。Tiledの「FacilityTrigger」レイヤーから作る（data/facilities.js）
+        setupFacilities(this);
+
+        // 宝箱。Tiledの「Chests」レイヤー（タイルオブジェクト）から作る（data/chests.js）
+        setupChests(this);
+
+        const playerNames = this.registry.get('playerNames') || {};
+        const socket = this.networkManager.getSocket();
+        const myPlayerName = (socket && playerNames[socket.id]) || 'You';
+        this.playerNameUI = new PlayerNameUI(this, this.player, myPlayerName);
+        this.player.nameUI = this.playerNameUI;
+
+        setupEnemyDebug(this);
+
+        // Process players queued during load once the scene is fully active (next frame)
+        this.time.delayedCall(0, () => {
+            if (this.networkManager) {
+                this.networkManager.sceneReady();
+            }
+        });
+    }
+
+    // Start the BGM once; keep it running across scene changes
+    playBgm() {
+        if (!this.sound.get('bgm')) {
+            this.sound.play('bgm', { loop: true, volume: 0.5 });
+        } else if (!this.sound.get('bgm').isPlaying) {
+            this.sound.get('bgm').play({ loop: true, volume: 0.5 });
+        }
+    }
+
+    update(time, delta) {
+        if (!this.player || !this.player.active) {
+            if (this.aimState) cancelAim(this); // 倒れた等で範囲表示だけ残らないように
+            return;
+        }
+
+        // スキル画面などウィンドウが開いている間は、矢印キーでプレイヤーが
+        // 動いてしまわないようにする（HP/MP自然回復や位置同期は止めたくないので、
+        // cursorsそのものを渡さないのではなく「どのキーも押されていない」状態を渡す）。
+        const windowOpen = isAnyWindowOpen(this);
+        this.player.update(windowOpen ? NEUTRAL_CURSORS : this.cursors);
+        if (windowOpen && this.player.body) this.player.setVelocity(0, 0); // ショップ等を開いている間は立ち止まる
+        // 攻撃・スキルの入力は systems/aim.js（押している間は範囲表示、離したら発動）。
+        // ウィンドウが開いている間は入力を受け付けず、表示中の範囲もupdateAim内で消える
+
+        if (Phaser.Input.Keyboard.JustDown(this.partyKey)) {
+            this.partyUI.toggle();
+        }
+
+        this.networkManager.checkPendingPlayers();
+        this.networkManager.updateRemotePlayers();
+        this.networkManager.updateEnemies(time, delta);
+        updateAim(this); // 敵の位置が更新された後に、範囲と赤ハイライトを描く
+
+        if (this.showEnemyDebug && this.enemyDebugText && this.enemyDebugText.visible) {
+            updateEnemyDebugUI(this);
+        }
+
+        // 敵の攻撃間合いを薄い輪で常時表示（Dキーのデバッグ表示とは別で常時ON）
+        drawEnemyAttackRanges(this);
+
+        updateNPCInteraction(this, { player: this.player, npcs: this.npcs, dialogue: this.dialogue, interactKey: this.interactKey, interactText: this.interactText, interactBg: this.interactBg });
+        if (this.playerNameUI) this.playerNameUI.updatePosition();
+        if (this.playerStatsUI) this.playerStatsUI.update();
+        if (this.playerHudUI) this.playerHudUI.update();
+        if (this.minimapUI) this.minimapUI.update();
+        if (this.partyLocatorUI) this.partyLocatorUI.update();
+        if (this.objectiveIndicatorUI) this.objectiveIndicatorUI.update(time);
+
+        updateChests(this);
+        updateEnemyContactDamage(this);
+
+        this.player.updateBuffs();
+        regenerateMp(this, time);
+        syncPlayerStats(this, time);
+        if (this.skillBarUI) this.skillBarUI.update();
+
+        updateRemotePlayerNameTags(this);
+
+        this.npcs.forEach(npc => npc.updateQuestIcon(this.questManager));
+        updateTeleports(this, this.player, this.npcs, this.teleports);
+
+        updateActiveSummons(this);
+        if (this.mapAtmosphere) this.mapAtmosphere.update(time, delta);
+    }
+
+    // --- Entry points used by UI / entities / NetworkManager ---
+
+    handleSkillUse(index) {
+        if (!this.player || !this.player.active) return;
+        const skillId = this.player.stats.activeSkills?.[index];
+        if (skillId) {
+            this.usePlayerSkill(skillId);
+        }
+    }
+
+    // スキルの範囲表示を開始する（押した時）。離した時は releaseAim(owner) で発動
+    beginSkillAim(index, owner, keyObj = null) {
+        if (!this.player || !this.player.active) return;
+        const skillId = this.player.stats.activeSkills?.[index];
+        if (typeof skillId === 'string' && skillId.startsWith('item:')) {
+            this.player.useQuickItem(skillId.slice(5));
+        } else if (skillId) beginSkillAim(this, skillId, owner, keyObj);
+    }
+    releaseAim(owner) { releaseAim(this, owner); }
+    cancelAim(owner = null) { cancelAim(this, owner); }
+
+    performBasicAttack() { performBasicAttack(this); }
+    usePlayerSkill(skillId) { usePlayerSkill(this, skillId); }
+    showHitEffect(x, y, color) { showHitEffect(this, x, y, color); }
+    destroySummon(summon) { destroySummon(this, summon); }
+    addOtherPlayer(id, x, y) { return addOtherPlayer(this, id, x, y); }
+    spawnEnemyFromServer(data) { return spawnEnemyFromServer(this, data); }
+
+    // Talk to the nearest NPC (used by the virtual pad button)
+    handleInteraction() {
+        if (!this.player || !this.player.active) return;
+        const distanceThreshold = 50;
+        let targetNPC = null;
+
+        for (const npc of this.npcs) {
+            const distance = Phaser.Math.Distance.Between(npc.x, npc.y, this.player.x, this.player.y);
+            if (distance < distanceThreshold) {
+                targetNPC = npc;
+                break;
+            }
+        }
+
+        if (targetNPC && this.dialogue && !this.dialogue.isTalking) {
+            this.dialogue.startDialogue(targetNPC);
+            // Same quest-progress logic as interactionHelper.js
+            if (targetNPC.questId) {
+                const quest = this.questManager.quests[targetNPC.questId];
+                if (quest && quest.type === 'talk' && quest.status === 'active') {
+                    quest.progress++;
+                    if (quest.progress >= quest.required) {
+                        this.questManager.completeQuest(targetNPC.questId);
+                    }
+                }
+            }
+        }
+    }
+
+    shutdown() {
+        if (this.mapAtmosphere) {
+            this.mapAtmosphere.destroy();
+            this.mapAtmosphere = null;
+        }
+        // Do not clear other players on map change:
+        // NetworkManager lives in the registry and is shared between scenes.
+    }
+
+    // Make the minimap camera skip the given game objects
+    minimapCameraIgnore(elements) {
+        if (!this.minimapUI || !this.minimapUI.minimapCamera) return;
+
+        const camera = this.minimapUI.minimapCamera;
+        if (Array.isArray(elements)) {
+            elements.forEach(el => { if (el) camera.ignore(el); });
+        } else if (elements) {
+            camera.ignore(elements);
+        }
+    }
+}

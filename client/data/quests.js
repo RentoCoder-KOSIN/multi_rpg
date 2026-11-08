@@ -1,0 +1,721 @@
+// カテゴリ定数
+export const QUEST_CATEGORIES = {
+    main:   { label: 'メイン',   icon: '🌟', color: '#ffd700' },
+    sub:    { label: 'サブ',     icon: '📋', color: '#66aaff' },
+    normal: { label: 'ノーマル', icon: '♻️', color: '#66cc66' },
+    unique: { label: 'ユニーク', icon: '💎', color: '#cc66ff' },
+};
+
+export const QUESTS = {
+    choose_job: {
+        id: "choose_job",
+        title: "職業の選択",
+        description: "職業管理人と話し、自分の歩む道を選べ。",
+        type: "custom",
+        target: "choose_job",
+        required: 1,
+        category: "main",
+        reward: {
+            exp: 50,
+            gold: 100,
+            item: "potion",
+        },
+        nextQuest: "kill_slime",
+    },
+    kill_slime: {
+        id: "kill_slime",
+        title: "スライム討伐の基礎",
+        description: "通常攻撃とスキルを試し、スライムを5体倒せ。",
+        type: "kill",
+        target: "slime",
+        required: 5,
+        category: "main",
+        reward: {
+            exp: 100,
+            gold: 150,
+            item: "mp_potion",
+        },
+    },
+    kill_forest_slime: {
+        id: "kill_forest_slime",
+        title: "森の掃除屋",
+        description: "森に生息する強化スライムを15体討伐せよ。",
+        type: "kill",
+        target: "forest_slime",
+        required: 15,
+        category: "sub",
+        reward: {
+            exp: 300,
+            gold: 400,
+            item: "travel_cloak",
+        },
+        area: "forest",
+        nextQuest: "forest_skeleton_hunt",
+    },
+    brave_check: {
+        id: "brave_check",
+        title: "勇者の試練 (Boss)",
+        description:
+            "チュートリアルボスを倒し、回避・回復・スキルの使い方を確認せよ。",
+        type: "kill",
+        target: "boss",
+        required: 1,
+        category: "main",
+        reward: {
+            exp: 200,
+            gold: 600,
+            item: "iron_shield",
+        },
+        // ボス戦マップ(battle)のクエスト。街への転移の解放条件（battle.json の Teleports.requiredQuest）
+    },
+    kill_bat: {
+        id: "kill_bat",
+        title: "不気味な羽音",
+        description: "洞窟のコウモリを10体間引きせよ。",
+        type: "kill",
+        target: "bat",
+        required: 10,
+        category: "sub",
+        reward: {
+            exp: 150,
+            gold: 200,
+            item: "heal_potion_small",
+        },
+        area: "wetland",
+        nextQuest: "kill_skeleton",
+    },
+    kill_skeleton: {
+        id: "kill_skeleton",
+        title: "動く骨の恐怖",
+        description: "スケルトンを12体浄化せよ。",
+        type: "kill",
+        target: "skeleton",
+        required: 12,
+        category: "sub",
+        reward: {
+            exp: 500,
+            gold: 600,
+            item: "iron_sword",
+        },
+        area: "forest",
+        nextQuest: "skeleton_extermination",
+    },
+    skeleton_extermination: {
+        id: "skeleton_extermination",
+        title: "死霊軍団の壊滅",
+        description: "スケルトンを50体倒し、地域の平和を取り戻せ。",
+        type: "kill",
+        target: "skeleton",
+        required: 50,
+        category: "sub",
+        reward: {
+            exp: 15000,
+            gold: 20000,
+            item: "power_seed",
+        },
+        area: "forest",
+    },
+    kill_goblin: {
+        id: "kill_goblin",
+        title: "小鬼の略奪",
+        description: "村の食料を盗むゴブリンを20体討伐せよ。",
+        type: "kill",
+        target: "goblin",
+        required: 20,
+        category: "sub",
+        reward: {
+            exp: 800,
+            gold: 1000,
+            item: "brass_knuckles",
+        },
+        area: "wetland",
+        nextQuest: "swamp_boss_quest",
+    },
+    kill_orc: {
+        id: "kill_orc",
+        title: "猪突猛進",
+        description: "強力な力を持つオークを10体倒せ。",
+        type: "kill",
+        target: "orc",
+        required: 10,
+        category: "sub",
+        reward: {
+            exp: 2500,
+            gold: 3000,
+            item: "plate_armor",
+        },
+        area: "volcano",
+        nextQuest: "kill_dire_wolf",
+    },
+    orc_hero: {
+        id: "orc_hero",
+        title: "オークの王者",
+        description: "オークを30体倒し、その武勇を示せ。",
+        type: "kill",
+        target: "orc",
+        required: 30,
+        category: "sub",
+        reward: {
+            exp: 20000,
+            gold: 50000,
+            item: "shield_seed",
+        },
+        area: "volcano",
+    },
+    kill_ghost: {
+        id: "kill_ghost",
+        title: "亡霊の密談",
+        description: "森を彷徨うゴーストを8体退散させよ。",
+        type: "kill",
+        target: "ghost",
+        required: 8,
+        category: "sub",
+        reward: {
+            exp: 1200,
+            gold: 1500,
+            item: "high_potion",
+        },
+        area: "volcano",
+        nextQuest: "kill_orc",
+    },
+    ghost_buster: {
+        id: "ghost_buster",
+        title: "ゴースト・バスター",
+        description: "ゴーストを40体退治し、夜の静寂を守れ。",
+        type: "kill",
+        target: "ghost",
+        required: 40,
+        category: "sub",
+        reward: {
+            exp: 20000,
+            gold: 30000,
+            item: "magic_seed",
+        },
+        area: "volcano",
+    },
+    dragon_slayer: {
+        id: "dragon_slayer",
+        title: "古の竜との決戦 (Boss)",
+        description: "世界を脅かすドラゴンボスを討伐せよ。",
+        type: "kill",
+        target: "dragon_boss",
+        required: 1,
+        category: "main",
+        reward: {
+            exp: 50000,
+            gold: 100000,
+            item: "hero_sword",
+        },
+        area: "volcano",
+    },
+    kill_dire_wolf: {
+        id: "kill_dire_wolf",
+        title: "銀翼の牙",
+        description: "素早い動きのダイアウルフを10体狩れ。",
+        type: "kill",
+        target: "dire_wolf",
+        required: 10,
+        category: "sub",
+        reward: {
+            exp: 3500,
+            gold: 5000,
+            item: "wooden_bow",
+        },
+        area: "volcano",
+        nextQuest: "dragon_slayer",
+    },
+    // ===== マップクエスト（そのマップの敵を倒す → マップボスを倒す）=====
+    // 各マップの「MAP_CLEAR_QUESTS」を全て達成すると、次のマップへの転移が解放される（下部のヘルパー参照）。
+    forest_skeleton_hunt: {
+        id: "forest_skeleton_hunt",
+        title: "森の骸骨狩り",
+        description: "森をさまようスケルトンを20体倒せ。",
+        type: "kill",
+        target: "skeleton",
+        required: 20,
+        category: "sub",
+        reward: { exp: 3000, gold: 1500, item: "high_potion" },
+        area: "forest",
+        nextQuest: "forest_boss_quest",
+    },
+    forest_boss_quest: {
+        id: "forest_boss_quest",
+        title: "森の主トレント (Boss)",
+        description: "森の奥に潜むマップボス「森の主トレント」を討伐せよ。",
+        type: "kill",
+        target: "forest_boss",
+        required: 1,
+        category: "main",
+        reward: { exp: 30000, gold: 8000, item: "power_seed" },
+        area: "forest",
+    },
+    wetland_red_slime: {
+        id: "wetland_red_slime",
+        title: "湿地の赤い脅威",
+        description: "レッドスライムを15体倒せ。",
+        type: "kill",
+        target: "red_slime",
+        required: 15,
+        category: "sub",
+        reward: { exp: 8000, gold: 3000, item: "high_potion" },
+        area: "wetland",
+        nextQuest: "wetland_marsh_bat",
+    },
+
+    wetland_marsh_bat: {
+        id: "wetland_marsh_bat",
+        title: "kill bat",
+        description: "kill bad 15",
+        type: "kill",
+        target: "marsh_bat",
+        required: 15,
+        category: "sub",
+        reward: { exp: 12000, gold: 3400 },
+        area: "wetland",
+        nextQuest: "kill_goblin",
+    },
+
+    swamp_boss_quest: {
+        id: "swamp_boss_quest",
+        title: "沼の主ヌシ (Boss)",
+        description: "湿地の底に棲むマップボス「沼の主ヌシ」を討伐せよ。",
+        type: "kill",
+        target: "swamp_boss",
+        required: 1,
+        category: "main",
+        reward: { exp: 120000, gold: 25000, item: "shield_seed" },
+        area: "wetland",
+    },
+    // ===== 遺跡（湿地と火山の間）のマップクエスト =====
+    ruins_skeleton_hunt: {
+        id: "ruins_skeleton_hunt",
+        title: "遺跡をさまよう亡者",
+        description: "古代遺跡をさまよう「遺跡の亡者」を20体倒せ。",
+        type: "kill",
+        target: "ruins_skeleton",
+        required: 20,
+        category: "sub",
+        reward: { exp: 12000, gold: 5000, item: "high_potion" },
+        area: "ruins",
+        nextQuest: "ruins_goblin_hunt",
+    },
+    ruins_goblin_hunt: {
+        id: "ruins_goblin_hunt",
+        title: "盗掘者を追い払え",
+        description: "遺跡を荒らす「盗掘ゴブリン」を20体討伐せよ。毒に注意。",
+        type: "kill",
+        target: "ruins_goblin",
+        required: 20,
+        category: "sub",
+        reward: { exp: 18000, gold: 7000, item: "power_seed" },
+        area: "ruins",
+        nextQuest: "ruins_wolf_hunt",
+    },
+    ruins_wolf_hunt: {
+        id: "ruins_wolf_hunt",
+        title: "遺跡の番犬",
+        description: "遺跡の奥を守る「遺跡の番犬」を15体狩れ。凍結に注意。",
+        type: "kill",
+        target: "ruins_wolf",
+        required: 15,
+        category: "sub",
+        reward: { exp: 28000, gold: 10000, item: "shield_seed" },
+        area: "ruins",
+        nextQuest: "ruins_boss_quest",
+    },
+    ruins_boss_quest: {
+        id: "ruins_boss_quest",
+        title: "遺跡の守護者ゴーレム (Boss)",
+        description:
+            "遺跡の最奥に眠るマップボス「遺跡の守護者ゴーレム」を討伐せよ。",
+        type: "kill",
+        target: "ruins_boss",
+        required: 1,
+        category: "main",
+        reward: { exp: 250000, gold: 40000, item: "magic_seed" },
+        area: "ruins",
+    },
+
+    // ===== 中間エネミー討伐クエスト =====
+    // 各マップに追加された中層エネミーを討伐するクエスト
+
+    // [森] Lv8 フォレストホーネット
+    forest_hornet_hunt: {
+        id: "forest_hornet_hunt",
+        title: "森の毒針蜂",
+        description: "森の浅瀬を飛び交い鋭い毒針で冒険者を狙う「フォレストホーネット」を8体討伐せよ。",
+        type: "kill",
+        target: "forest_hornet",
+        required: 8,
+        category: "sub",
+        reward: {
+            exp: 1500,
+            gold: 800,
+            item: "enhance_stone_1",
+        },
+        area: "forest",
+        nextQuest: "forest_wolf_hunt",
+    },
+
+    // [森] Lv19 フォレストウルフ
+    forest_wolf_hunt: {
+        id: "forest_wolf_hunt",
+        title: "群れ成す森狼",
+        description: "木々の影から俊敏な動きで襲いかかる「フォレストウルフ」を10体狩れ。",
+        type: "kill",
+        target: "forest_wolf",
+        required: 10,
+        category: "sub",
+        reward: {
+            exp: 5000,
+            gold: 2000,
+            item: "high_potion",
+        },
+        area: "forest",
+    },
+
+    // [湿地] Lv47 スワンプバイパー
+    swamp_viper_hunt: {
+        id: "swamp_viper_hunt",
+        title: "泥沼の毒蛇",
+        description: "湿地の泥水に潜み猛毒を牙に宿す「スワンプバイパー」を10体退治せよ。",
+        type: "kill",
+        target: "swamp_viper",
+        required: 10,
+        category: "sub",
+        reward: {
+            exp: 25000,
+            gold: 8000,
+            item: "enhance_stone_2",
+        },
+        area: "wetland",
+    },
+
+    // [遺跡] Lv61 遺跡のガーゴイル
+    ruins_gargoyle_hunt: {
+        id: "ruins_gargoyle_hunt",
+        title: "石像の監視者",
+        description: "古代遺跡の頭上から獲物を狙う「遺跡のガーゴイル」を8体討伐せよ。石化に注意。",
+        type: "kill",
+        target: "ruins_gargoyle",
+        required: 8,
+        category: "sub",
+        reward: {
+            exp: 40000,
+            gold: 15000,
+            item: "power_seed",
+        },
+        area: "ruins",
+    },
+
+    // [火山] Lv64 マグマスライム
+    magma_slime_hunt: {
+        id: "magma_slime_hunt",
+        title: "灼熱の粘液",
+        description: "超高温の溶岩地帯に適応した危険な「マグマスライム」を10体駆除せよ。",
+        type: "kill",
+        target: "magma_slime",
+        required: 10,
+        category: "sub",
+        reward: {
+            exp: 45000,
+            gold: 18000,
+            item: "high_mp_potion",
+        },
+        area: "volcano",
+        nextQuest: "fire_elemental_hunt",
+    },
+
+    // [火山] Lv76 ファイアエレメンタル
+    fire_elemental_hunt: {
+        id: "fire_elemental_hunt",
+        title: "猛威の炎精",
+        description: "紅蓮の炎を纏い侵入者を焼き尽くす「ファイアエレメンタル」を10体鎮火せよ。",
+        type: "kill",
+        target: "fire_elemental",
+        required: 10,
+        category: "sub",
+        reward: {
+            exp: 60000,
+            gold: 25000,
+            item: "great_potion",
+        },
+        area: "volcano",
+        nextQuest: "hell_hound_hunt",
+    },
+
+    // [火山] Lv82 ヘルハウンド
+    hell_hound_hunt: {
+        id: "hell_hound_hunt",
+        title: "地獄の業火犬",
+        description: "火山洞窟を駆け回り獲物を焼き裂く「ヘルハウンド」を8体討伐せよ。",
+        type: "kill",
+        target: "hell_hound",
+        required: 8,
+        category: "sub",
+        reward: {
+            exp: 75000,
+            gold: 32000,
+            item: "enhance_stone_3",
+        },
+        area: "volcano",
+        nextQuest: "lava_golem_hunt",
+    },
+
+    // [火山] Lv94 マグマゴーレム
+    lava_golem_hunt: {
+        id: "lava_golem_hunt",
+        title: "火山の巨石兵",
+        description: "冷え固まりつつある灼熱の巨躯「マグマゴーレム」を6体粉砕せよ。",
+        type: "kill",
+        target: "lava_golem",
+        required: 6,
+        category: "sub",
+        reward: {
+            exp: 110000,
+            gold: 50000,
+            item: "elixir",
+        },
+        area: "volcano",
+    },
+
+    slime_massacre: {
+        id: "slime_massacre",
+        title: "スライム100人斬り",
+        description: "スライムを累計100体倒す伝説を作れ。",
+        type: "kill",
+        target: [
+            "slime",
+            "forest_slime",
+            "red_slime",
+            "magma_slime"
+        ],
+        required: 100,
+        category: "sub",
+        reward: {
+            exp: 5000,
+            gold: 10000,
+            item: "exp_weapon",
+        },
+    },
+
+    // ===== リピートクエスト（♻ 何度でも受けられる）=====
+    // 受注・報告を繰り返すことで、コツコツ報酬を稼げる。
+
+    repeat_slime_hunt: {
+        id: "repeat_slime_hunt",
+        title: "スライム狩り",
+        description: "【毎回受注可】スライムを10体倒せ。何度でも受けられる日課クエスト。",
+        type: "kill",
+        target: ["slime", "forest_slime", "red_slime", "magma_slime"],
+        required: 10,
+        repeatable: true,
+        category: "normal",
+        reward: {
+            exp: 2000,
+            gold: 1500,
+        },
+    },
+
+    repeat_forest_beast: {
+        id: "repeat_forest_beast",
+        title: "森の害虫・獣退治",
+        description: "【毎回受注可】森に潜むホーネットや森狼を計10体討伐せよ。",
+        type: "kill",
+        target: ["forest_hornet", "forest_wolf"],
+        required: 10,
+        repeatable: true,
+        category: "normal",
+        area: "forest",
+        reward: {
+            exp: 4500,
+            gold: 2500,
+        },
+    },
+
+    repeat_skeleton_hunt: {
+        id: "repeat_skeleton_hunt",
+        title: "スケルトン退治",
+        description: "【毎回受注可】スケルトン系の敵を15体浄化せよ。",
+        type: "kill",
+        target: ["skeleton", "ruins_skeleton"],
+        required: 15,
+        repeatable: true,
+        category: "normal",
+        area: "forest",
+        reward: {
+            exp: 5000,
+            gold: 3000,
+        },
+    },
+
+    repeat_goblin_hunt: {
+        id: "repeat_goblin_hunt",
+        title: "ゴブリン討伐任務",
+        description: "【毎回受注可】ゴブリン系を20体討伐せよ。ゴールド目的に最適。",
+        type: "kill",
+        target: ["goblin", "ruins_goblin"],
+        required: 20,
+        repeatable: true,
+        category: "normal",
+        area: "wetland",
+        reward: {
+            exp: 8000,
+            gold: 6000,
+        },
+    },
+
+    repeat_orc_hunt: {
+        id: "repeat_orc_hunt",
+        title: "オーク討伐任務",
+        description: "【毎回受注可】強力なオークを10体倒せ。上級者向け日課クエスト。",
+        type: "kill",
+        target: ["orc"],
+        required: 10,
+        repeatable: true,
+        category: "normal",
+        area: "volcano",
+        reward: {
+            exp: 20000,
+            gold: 15000,
+        },
+    },
+
+    repeat_volcano_hazard: {
+        id: "repeat_volcano_hazard",
+        title: "火山の脅威排除",
+        description: "【毎回受注可】火山の猛獣（ヘルハウンド、マグマゴーレム、炎精）を8体討伐せよ。",
+        type: "kill",
+        target: ["hell_hound", "lava_golem", "fire_elemental", "magma_slime"],
+        required: 8,
+        repeatable: true,
+        category: "normal",
+        area: "volcano",
+        reward: {
+            exp: 65000,
+            gold: 38000,
+            item: "great_potion",
+        },
+    },
+
+    repeat_boss_hunt: {
+        id: "repeat_boss_hunt",
+        title: "ボス狩り週課",
+        description: "【毎回受注可】いずれかのマップボスを1体討伐せよ。最高級の日課クエスト。",
+        type: "kill",
+        target: ["forest_boss", "swamp_boss", "ruins_boss", "dragon_boss"],
+        required: 1,
+        repeatable: true,
+        category: "normal",
+        area: "forest",
+        reward: {
+            exp: 50000,
+            gold: 30000,
+            item: "high_potion",
+        },
+    },
+
+    // ===== 特殊クエスト（ユニークスキルを手に入れる一度限りの試練）=====
+
+    dragon_god_trial: {
+        id: "dragon_god_trial",
+        title: "竜神の試練",
+        description: "伝説の竜神の試練。火山の奥に潜むドラゴンボスを10回討伐し、竜神の力を証明せよ。",
+        type: "kill",
+        target: "dragon_boss",
+        required: 10,
+        category: "unique",
+        area: "volcano",
+        reward: {
+            exp: 200000,
+            gold: 500000,
+            skill: "dragon_god_slash",
+        },
+    },
+
+    ancient_hero_quest: {
+        id: "ancient_hero_quest",
+        title: "千の屍の上に立つ者",
+        description: "あらゆる種の敵を累計1000体倒し、真の英雄の称号を得よ。古の英雄の魂が宿るパッシブスキルが手に入る。",
+        type: "kill",
+        target: [
+            "slime", "forest_slime", "red_slime", "magma_slime",
+            "bat", "marsh_bat", "forest_hornet",
+            "skeleton", "ruins_skeleton",
+            "goblin", "ruins_goblin",
+            "forest_wolf", "dire_wolf", "ruins_wolf", "hell_hound",
+            "swamp_viper", "ruins_gargoyle", "ghost", "fire_elemental", "orc", "lava_golem",
+            "forest_boss", "swamp_boss", "ruins_boss", "dragon_boss"
+        ],
+        required: 1000,
+        category: "unique",
+        reward: {
+            exp: 300000,
+            gold: 200000,
+            skill: "ancient_hero_soul",
+        },
+    },
+
+    flame_guardian_quest: {
+        id: "flame_guardian_quest",
+        title: "炎の守護者の試練",
+        description: "火山エリアのボスを5回討伐し、炎の守護者として認められよ。パーティ強化スキル「聖炎の守護」を授ける。",
+        type: "kill",
+        target: "dragon_boss",
+        required: 5,
+        category: "unique",
+        area: "volcano",
+        reward: {
+            exp: 100000,
+            gold: 150000,
+            skill: "sacred_flame_ward",
+        },
+    },
+
+    eternal_hunter_trial: {
+        id: "eternal_hunter_trial",
+        title: "永遠の狩人への道",
+        description: "繰り返しクエストを累計50回こなし、永遠の狩人の証を手に入れよ。【ヒント：♻マークのクエストを繰り返そう】",
+        type: "repeat_count",
+        required: 50,
+        category: "unique",
+        reward: {
+            exp: 150000,
+            gold: 100000,
+            skill: "eternal_hunter_mark",
+        },
+    },
+};
+
+// ===== マップの進行（クエストで次のマップへ進む仕組み）=====
+//
+// 街から先のマップは、下の順番で「そのマップのクエストを全て達成」すると次のマップへ進める。
+//   forest（最初から行ける） → wetland → ruins → volcano
+// 進行の解放は2か所で実現している:
+//   1. 転移（街 → 次のマップ）: Tiled の Teleports の requiredQuest に、下の MAP_CLEAR_QUESTS をカンマ区切りで書く
+//      （city.json に設定済み。全て達成しないと通れない。utils/questGate.js が判定する）
+//   2. クエストの受注: quest.area が付いたクエストは、そのマップが解放されるまで受注できない
+//      （ギルドの掲示板にも出ない。QuestManager.canStart / areaUnlocked）
+//
+// 新しいマップを足すときは、AREA_ORDER の末尾に足し、MAP_CLEAR_QUESTS にそのマップのクエストIDを並べ、
+// 街の該当 Teleports の requiredQuest に「前のマップのMAP_CLEAR_QUESTS」を書けばよい。
+export const AREA_ORDER = ["forest", "wetland", "ruins", "volcano"];
+
+// マップごとの「全部達成すると次のマップに進める」クエスト
+export const MAP_CLEAR_QUESTS = {
+    forest: ["kill_forest_slime", "forest_skeleton_hunt", "forest_boss_quest"],
+    wetland: ["wetland_red_slime", "kill_goblin", "swamp_boss_quest"],
+    ruins: [
+        "ruins_skeleton_hunt",
+        "ruins_goblin_hunt",
+        "ruins_wolf_hunt",
+        "ruins_boss_quest",
+    ],
+    volcano: ["kill_ghost", "kill_orc", "kill_dire_wolf", "dragon_slayer"],
+};
+
+/** area の1つ前のマップ（最初のマップなら null） */
+export function previousArea(area) {
+    const i = AREA_ORDER.indexOf(area);
+    return i > 0 ? AREA_ORDER[i - 1] : null;
+}
