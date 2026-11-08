@@ -1,7 +1,7 @@
 import { UI_FONT } from '../fontConfig.js';
 import BaseWindowUI from './BaseWindowUI.js';
 import { ITEMS } from '../data/items.js';
-import { entryId, removeFromInventory, totalOwned } from '../utils/inventoryOps.js';
+import { entryId, removeFromInventory, totalOwned, unitSellPrice } from '../utils/inventoryOps.js';
 
 export const PRIZES = [
     // ---- C レア（よく出る消耗品・基本武器）----
@@ -152,6 +152,12 @@ export default class GachaUI extends BaseWindowUI {
         this.selectedLineupIndex = 0;
         this.filteredList = [];
         this.scrollOffset = 0;
+
+        // 自動フィルター設定 (ローカルストレージで永続化)
+        const savedFilters = (() => { try { return JSON.parse(localStorage.getItem('gachaAutoFilters') || '{}'); } catch (e) { return {}; } })();
+        this.autoFilterC   = savedFilters.autoFilterC   ?? false;
+        this.autoFilterR   = savedFilters.autoFilterR   ?? false;
+        this.autoFilterSR  = savedFilters.autoFilterSR  ?? false;
     }
 
     createUI() {
@@ -299,6 +305,9 @@ export default class GachaUI extends BaseWindowUI {
         this.createDrawButton(-150, 155, '1回召喚\n(魔石 x1)', 1);
         this.createDrawButton(150, 155, '10回連続召喚\n(魔石 x10)', 10);
 
+        // 自動フィルターUI
+        this.createAutoFilterUI();
+
         // ヒント
         this.hintText = this.scene.add.text(0, 220, '※ 魔石は無限の深淵クリア、実績解除、ダンジョンボス撃破などで獲得できます', {
             fontSize: '11px',
@@ -331,6 +340,59 @@ export default class GachaUI extends BaseWindowUI {
         bg.on('pointerout', () => bg.setFillStyle(0x581c87));
 
         this.drawContainer.add([bg, text]);
+    }
+
+    // ==========================================
+    // 自動フィルター UI (DRAW VIEW内)
+    // ==========================================
+    createAutoFilterUI() {
+        // ラベル
+        const label = this.scene.add.text(-300, 193, '🗑 自動売却フィルター:', {
+            fontSize: '11px',
+            fontFamily: UI_FONT,
+            color: '#94a3b8'
+        }).setOrigin(0, 0.5);
+        this.drawContainer.add(label);
+
+        const filters = [
+            { key: 'autoFilterC',  label: 'Cランク', color: 0x64748b, activeColor: 0x94a3b8 },
+            { key: 'autoFilterR',  label: 'Rランク', color: 0x0369a1, activeColor: 0x38bdf8 },
+            { key: 'autoFilterSR', label: 'SRランク', color: 0x6b21a8, activeColor: 0xc084fc },
+        ];
+
+        this.autoFilterBtns = [];
+        filters.forEach((f, i) => {
+            const x = -100 + i * 110;
+            const bg = this.scene.add.rectangle(x, 193, 100, 22, this[f.key] ? f.activeColor : f.color, 0.9)
+                .setStrokeStyle(1, this[f.key] ? 0xffffff : 0x475569)
+                .setInteractive({ useHandCursor: true });
+            const txt = this.scene.add.text(x, 193, (this[f.key] ? '✓ ' : '') + f.label, {
+                fontSize: '11px',
+                fontFamily: UI_FONT,
+                color: this[f.key] ? '#ffffff' : '#94a3b8'
+            }).setOrigin(0.5);
+            bg.on('pointerdown', () => {
+                this[f.key] = !this[f.key];
+                // 永続化
+                const saved = { autoFilterC: this.autoFilterC, autoFilterR: this.autoFilterR, autoFilterSR: this.autoFilterSR };
+                localStorage.setItem('gachaAutoFilters', JSON.stringify(saved));
+                // 表示更新
+                bg.setFillStyle(this[f.key] ? f.activeColor : f.color, 0.9);
+                bg.setStrokeStyle(1, this[f.key] ? 0xffffff : 0x475569);
+                txt.setText((this[f.key] ? '✓ ' : '') + f.label);
+                txt.setColor(this[f.key] ? '#ffffff' : '#94a3b8');
+            });
+            this.drawContainer.add([bg, txt]);
+            this.autoFilterBtns.push({ bg, txt, ...f });
+        });
+
+        // 説明
+        const desc = this.scene.add.text(240, 193, '(ON=自動売却してGに)', {
+            fontSize: '10px',
+            fontFamily: UI_FONT,
+            color: '#475569'
+        }).setOrigin(1, 0.5);
+        this.drawContainer.add(desc);
     }
 
     // ==========================================
@@ -688,32 +750,59 @@ export default class GachaUI extends BaseWindowUI {
         // ガチャ抽選
         const results = Array.from({ length: count }, pickPrize);
 
-        // アイテム付与
-        results.forEach(p => {
-            player.addItem(p.id, 1);
+        // 自動フィルター設定
+        const autoSellMap = {
+            C:  this.autoFilterC,
+            R:  this.autoFilterR,
+            SR: this.autoFilterSR,
+        };
+
+        // アイテム付与 / 自動売却
+        let totalAutoGold = 0;
+        const resultMeta = results.map(p => {
+            const item = ITEMS[p.id];
+            const doAutoSell = autoSellMap[p.rarity] ?? false;
+            if (doAutoSell) {
+                // 自動売却: インベントリに入れずゴールドへ
+                const gold = unitSellPrice(item) || 50;
+                player.gainGold(gold);
+                totalAutoGold += gold;
+                return { ...p, autoSold: true, gold };
+            } else {
+                player.addItem(p.id, 1);
+                return { ...p, autoSold: false };
+            }
         });
         player.saveStats();
 
         // 結果フォーマット
         const rank = { C: 1, R: 2, SR: 3, SSR: 4, UR: 5 };
+        // 最高ランクは「実際に獲得したもの」の中から決める（売却済みも含む）
         const top = results.reduce((best, p) => rank[p.rarity] > rank[best.rarity] ? p : best, results[0]);
 
         if (count === 1) {
-            const p = results[0];
+            const p = resultMeta[0];
             const item = ITEMS[p.id];
             const pu = PICKUP_ITEM_IDS.includes(p.id) ? ' ⭐PICK UP!!' : '';
-            this.resultText.setColor(RARITY_COLOR[p.rarity] || '#ffffff')
-                .setText(`🎉 【獲得】 [${p.rarity}] ${item.name}${pu}\n${item.description || ''}`);
+            if (p.autoSold) {
+                this.resultText.setColor(RARITY_COLOR[p.rarity] || '#ffffff')
+                    .setText(`💰 【自動売却】 [${p.rarity}] ${item.name}${pu}\n+${p.gold.toLocaleString()} G に換金しました`);
+            } else {
+                this.resultText.setColor(RARITY_COLOR[p.rarity] || '#ffffff')
+                    .setText(`🎉 【獲得】 [${p.rarity}] ${item.name}${pu}\n${item.description || ''}`);
+            }
         } else {
-            const lines = results.map(p => {
+            const lines = resultMeta.map(p => {
                 const pu = PICKUP_ITEM_IDS.includes(p.id) ? '⭐' : '';
-                return `[${p.rarity}] ${pu}${ITEMS[p.id].name}`;
+                const suffix = p.autoSold ? `💰+${p.gold.toLocaleString()}G` : '';
+                return `[${p.rarity}]${pu}${ITEMS[p.id].name}${suffix}`;
             });
             // 2列で表示
-            const col1 = lines.slice(0, 5).join('   ');
-            const col2 = lines.slice(5).join('   ');
+            const col1 = lines.slice(0, 5).join('\n');
+            const col2 = lines.slice(5).join('\n');
+            const goldMsg = totalAutoGold > 0 ? `\n💰 自動売却合計: +${totalAutoGold.toLocaleString()} G` : '';
             this.resultText.setColor(RARITY_COLOR[top.rarity] || '#ffffff')
-                .setText(`🎉 【10連召喚結果 - 最高ランク: ${top.rarity}】\n${col1}\n${col2}`);
+                .setText(`🎉 【10連召喚結果 - 最高ランク: ${top.rarity}】${goldMsg}\n${col1}   ${col2}`);
         }
 
         if (top.rarity === 'UR' || top.rarity === 'SSR') {
