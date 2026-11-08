@@ -62,17 +62,21 @@ export default class ReincarnationUI extends BaseWindowUI {
         const ready = player.canReincarnate();
         const cfg = REINCARNATION_CONFIG;
 
+        const currentCap = player.getMaxAllocatableStat ? player.getMaxAllocatableStat('str') : 120;
+        const nextCap = currentCap + cfg.STAT_CAP_PER_COUNT;
+
         const lines = [
-            `現在: Lv.${stats.level} (輪廻${stats.reincarnationCount || 0}回目)`,
+            `現在: Lv.${stats.level} (輪廻${stats.reincarnationCount || 0}周目)`,
             '',
             `Lv${cfg.REQUIRED_LEVEL}に到達すると輪廻転生できます。`,
             'レベルが1に戻り、職業を選び直せますが、',
             '習得済みスキルはすべて持ち越せます。',
-            '装備は全て外れます（アイテムは持ち物に残ります）。',
-            '割り振り済みのステータスポイントは全て返還され、',
-            `レベルアップの自然成長分は合計の${Math.round(cfg.NATURAL_GROWTH_REFUND_RATE * 100)}%がポイントに換算されます(残りは消えます)。`,
-            `基礎ステータスは初期値+${cfg.BASE_STAT_BONUS}×転生回数になります。`,
-            `さらにステータスポイントが+${cfg.BONUS_STAT_POINTS}されます。`,
+            '装備は全て外れます（所持アイテムはそのまま維持）。',
+            `【転生特典】`,
+            `・転生ボーナスポイント: +${cfg.BONUS_STAT_POINTS}pt (永続加算)`,
+            `・全基礎ステータス: +${cfg.BASE_STAT_BONUS} 永続底上げ`,
+            `・ステータス割り振り上限: ${currentCap}pt → ${nextCap}pt へ開放！`,
+            '（※Lv1に戻るため、前周のLvアップ分ptは再育成で獲得します）'
         ];
         this.infoText.setText(lines.join('\n'));
 

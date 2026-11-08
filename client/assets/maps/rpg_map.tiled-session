@@ -41,10 +41,10 @@
                 37
             ],
             "expandedObjectLayers": [
-                35,
+                41,
                 42,
                 40,
-                41
+                35
             ],
             "scale": 0.5,
             "selectedLayer": 18,
@@ -60,14 +60,17 @@
             "scaleInDock": 1
         },
         "desert_city.json": {
-            "scale": 1.6090625,
+            "scale": 0.12,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 481.0254418333657,
-                "y": 351.7576228393863
+                "x": 941.666666666667,
+                "y": 916.666666666667
             }
         },
         "desert_city.json#tiles": {
+            "scaleInDock": 1
+        },
+        "desert_city.json#water": {
             "scaleInDock": 1
         },
         "forest (1).json": {
@@ -92,8 +95,8 @@
             "scale": 0.75,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 1601.3333333333333,
-                "y": 1601.3333333333333
+                "x": 1600,
+                "y": 1600
             }
         },
         "forest.json#tiles": {
@@ -104,8 +107,8 @@
         },
         "guild1f.json": {
             "expandedObjectLayers": [
-                13,
-                15
+                15,
+                13
             ],
             "scale": 0.75,
             "selectedLayer": 4,
@@ -135,7 +138,7 @@
             "scale": 1.6090625,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 480.4039619343562,
+                "x": 479.7824820353467,
                 "y": 351.7576228393863
             }
         },
@@ -147,9 +150,9 @@
                 13
             ],
             "expandedObjectLayers": [
-                12,
                 6,
-                10
+                10,
+                12
             ],
             "scale": 0.75,
             "selectedLayer": 7,
@@ -168,11 +171,14 @@
             "scale": 0.33,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 478.78787878787875,
+                "x": 1324.2424242424242,
                 "y": 351.51515151515144
             }
         },
         "snow_city.json#tiles": {
+            "scaleInDock": 1
+        },
+        "snow_city.json#water": {
             "scaleInDock": 1
         },
         "starter_town.json": {
@@ -188,8 +194,8 @@
         },
         "tutorial.json": {
             "expandedObjectLayers": [
-                25,
-                9
+                9,
+                25
             ],
             "scale": 0.42007812499999997,
             "selectedLayer": 0,
@@ -203,8 +209,8 @@
         },
         "volcano.json": {
             "expandedObjectLayers": [
-                7,
-                5
+                5,
+                7
             ],
             "scale": 0.3218125,
             "selectedLayer": 4,

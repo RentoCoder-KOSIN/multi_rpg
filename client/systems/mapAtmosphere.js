@@ -74,6 +74,17 @@ const ATMOSPHERE_CONFIGS = {
         ambientTint: 0xaaccff,
         ambientAlpha: 0.03
     },
+    glacier: {
+        type: 'snow',
+        count: 75,
+        color: [0xffffff, 0xcce5ff, 0xe0f0ff],
+        speedY: { min: 60, max: 130 },
+        speedX: { min: -60, max: -10 },
+        size: { min: 2, max: 4.5 },
+        alpha: { min: 0.5, max: 0.95 },
+        ambientTint: 0x99ccff,
+        ambientAlpha: 0.06
+    },
     desert_city: {
         type: 'sand',
         count: 40,
@@ -84,6 +95,17 @@ const ATMOSPHERE_CONFIGS = {
         alpha: { min: 0.3, max: 0.7 },
         ambientTint: 0xbb7722,
         ambientAlpha: 0.03
+    },
+    desert: {
+        type: 'sand',
+        count: 70,
+        color: [0xddaa66, 0xbb8844, 0xffdd88, 0xcc9944],
+        speedY: { min: -10, max: 20 },
+        speedX: { min: 60, max: 140 },
+        size: { min: 2, max: 4 },
+        alpha: { min: 0.4, max: 0.85 },
+        ambientTint: 0xcc8833,
+        ambientAlpha: 0.05
     },
     port_city: {
         type: 'sparks',

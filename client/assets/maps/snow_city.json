@@ -140251,12 +140251,12 @@
             {
               "name": "destX",
               "type": "int",
-              "value": 309
+              "value": 1600
             },
             {
               "name": "destY",
               "type": "int",
-              "value": 440
+              "value": 2950
             },
             {
               "name": "targetMap",
@@ -140511,6 +140511,24 @@
               "name": "dialogue",
               "type": "string",
               "value": "[\"氷結晶から鍛え上げる武具は、熱をも凍りつかせる。\",\"鍛冶炉を使いたいならいつでも言ってくれ！\"]"
+            }
+          ]
+        },
+        {
+          "id": 50,
+          "name": "氷河ゲートの見張り",
+          "type": "",
+          "x": 1840,
+          "y": 240,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "dialog",
+              "type": "string",
+              "value": "[\"この北の転移陣の先は【氷河フロストグレイシア】だ。\",\"凍てつく吹雪が吹き荒れる危険な氷雪地帯だぞ。万全の準備をして進むんだ！\"]"
             }
           ]
         }

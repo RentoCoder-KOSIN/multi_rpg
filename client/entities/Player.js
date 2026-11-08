@@ -203,6 +203,33 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         // この項目が無い古いセーブデータは、レベル・職業タイプ・転生回数から自然成長分を差し引いた推定値で初期化する。
         this.stats.allocatedStats = this.sanitizeAllocatedStats(saved.allocatedStats) || this.estimateAllocatedStats();
 
+        // --- 輪廻転生インフレ防止・適正化マイグレーション（アヴァベル/イザナギ式）---
+        // 以前の仕様で転生毎にポイントが無限に重複返還されていたセーブデータを検知し、適正なポイントに整流化する
+        const currentLv = Math.max(1, this.stats.level || 1);
+        const reinCount = Math.min(this.stats.reincarnationCount || 0, REINCARNATION_CONFIG.MAX_SCALED_COUNT);
+        const expectedTotalPoints = (currentLv - 1) * 3 + reinCount * REINCARNATION_CONFIG.BONUS_STAT_POINTS;
+        const currentAllocatedTotal = RESET_CONFIG.STAT_KEYS.reduce((sum, k) => sum + Math.max(0, this.stats.allocatedStats?.[k] || 0), 0);
+        const currentTotalPoints = (this.stats.statPoints || 0) + currentAllocatedTotal;
+
+        // 許容誤差（種などのボーナスポイント等で若干多い場合を考慮し +60 まで許容）
+        if (currentTotalPoints > expectedTotalPoints + 60) {
+            console.warn(`[Player] 転生インフレセーブデータを検知 (所持:${currentTotalPoints}pt, 適正:${expectedTotalPoints}pt)。アヴァベル/イザナギ式バランスに適正化します。`);
+            this.stats.statPoints = expectedTotalPoints;
+            this.stats.allocatedStats = this.sanitizeAllocatedStats({});
+            // 基礎ステータスも再初期化
+            const reinBonus = reinCount * REINCARNATION_CONFIG.BASE_STAT_BONUS;
+            RESET_CONFIG.STAT_KEYS.forEach(k => {
+                const base = (k === 'agi') ? AGI_CONFIG.BASE_AGI : RESET_CONFIG.BASE_VALUE;
+                const grow = currentLv - 1;
+                const jobType = JOBS[this.stats.job]?.type || null;
+                let natural = base + reinBonus;
+                if (k === 'str') natural += grow * (jobType === 'physical' ? 2 : 1);
+                else if (k === 'int') natural += grow * (jobType === 'magical' ? 2 : 1);
+                else if (k !== 'agi') natural += grow;
+                this.stats[k] = natural;
+            });
+        }
+
         this.applyEquipmentStats(); // 装備中のステータスを反映
 
         // インベントリのマイグレーション (文字列配列 -> オブジェクト配列)
@@ -325,32 +352,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             return false;
         }
 
-        // 割り振り済みポイントの返還量は、レベル・転生回数を変える前の状態で求める
-        const alloc = this.stats.allocatedStats || this.estimateAllocatedStats();
-
-        // 自然成長分（レベルアップで自動的に増えた分）の合計を求める。
-        //   自然成長 = 現在値 - 初期値 - これまでの転生ボーナス - ポイントで割り振った分
-        // 合計の NATURAL_GROWTH_REFUND_RATE（10分の1）をポイントに換算し、残りは捨てる。
-        const prevReinBonus = (this.stats.reincarnationCount || 0) * REINCARNATION_CONFIG.BASE_STAT_BONUS;
-        const naturalTotal = RESET_CONFIG.STAT_KEYS.reduce((sum, k) => {
-            const base = (k === 'agi') ? AGI_CONFIG.BASE_AGI : RESET_CONFIG.BASE_VALUE;
-            return sum + Math.max(0, (this.stats[k] || 0) - base - prevReinBonus - (alloc[k] || 0));
-        }, 0);
-        const naturalRefund = Math.floor(naturalTotal * REINCARNATION_CONFIG.NATURAL_GROWTH_REFUND_RATE);
-
         this.stats.reincarnationCount = (this.stats.reincarnationCount || 0) + 1;
+        const cappedCount = Math.min(this.stats.reincarnationCount, REINCARNATION_CONFIG.MAX_SCALED_COUNT);
 
-        // レベル・経験値をリセット
+        // レベル・経験値をリセット（Lv1から新たな冒険へ）
         this.stats.level = 1;
         this.stats.exp = 0;
         this.stats.maxExp = calcMaxExp(1);
 
-        // 職業を選び直せるようにする。次に setJob() が呼ばれたときだけ
-        // 習得済みスキルのリセットをスキップさせるフラグを立てておく。
+        // 職業を選び直せるようにする（習得済みスキルはすべて持ち越す）
         this.stats.job = 'none';
         this.stats._skipSkillResetOnNextJob = true;
         this.stats.activeSkills = new Array(TOTAL_SKILL_SLOTS).fill(null);
         this.skillCooldowns = {};
+        
         // unlockedSkills / skillLevels はそのまま維持し、reincarnatedSkills にも永久記録する
         const currentSkills = this.stats.unlockedSkills || [];
         this.stats.reincarnatedSkills = Array.from(new Set([
@@ -362,24 +377,23 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             ...(this.stats.skillLevels || {})
         };
 
-        // 装備を全て外す（アイテムはインベントリに残る）。
-        // 以前は装備したままLv1に戻るため、Lv制限のある装備をLv1で着けたままになっていた。
+        // 装備を全て外す（アイテムはインベントリに残る）
         this.stats.equipment = { weapon: null, armor: null, relic: null };
 
-        // ステータスのリセットとポイント換算:
-        //  1. ポイントで割り振っていた分は、ステータスポイントとして全額返還する
-        //  2. 基礎ステータスは「初期値 + 転生ボーナス × 転生回数」に作り直す
-        //     （Lv100までの自然成長分は、合計の10分の1だけポイントに換算し、残りは捨てる）
-        //  3. そのうえで、転生1回ごとのボーナスポイントを加算する
-        // 未使用のステータスポイントや、種アイテムの永続加算（bonusAtk/bonusDef）はそのまま残る。
-        const refunded = RESET_CONFIG.STAT_KEYS.reduce((sum, k) => sum + Math.max(0, alloc[k] || 0), 0);
-        const reinBonus = this.stats.reincarnationCount * REINCARNATION_CONFIG.BASE_STAT_BONUS;
+        // --- アヴァベル/イザナギ式ステータス再構築 ---
+        // 1. 基礎ステータスは「初期値(5) + 転生ボーナス(各+3)」
+        const reinBonus = cappedCount * REINCARNATION_CONFIG.BASE_STAT_BONUS;
         RESET_CONFIG.STAT_KEYS.forEach(k => {
             const base = (k === 'agi') ? AGI_CONFIG.BASE_AGI : RESET_CONFIG.BASE_VALUE;
             this.stats[k] = base + reinBonus;
         });
+
+        // 2. 割り振り記録をリセット
         this.stats.allocatedStats = this.sanitizeAllocatedStats({});
-        this.stats.statPoints += refunded + naturalRefund + REINCARNATION_CONFIG.BONUS_STAT_POINTS;
+
+        // 3. 所持ステータスポイントは「転生回数 × 転生ボーナスポイント (アヴァベルの転生P)」
+        // （※前周のレベルアップ分はLv1に戻るためリセットされ、再度Lvを上げて獲得する健全な育成サイクル）
+        this.stats.statPoints = cappedCount * REINCARNATION_CONFIG.BONUS_STAT_POINTS;
 
         this.applyEquipmentStats();
         this.stats.hp = this.stats.maxHp;
@@ -387,9 +401,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         onJobUnlocked(this);
         this.saveStats();
 
+        const newStatCap = this.getMaxAllocatableStat('str');
         if (this.scene.notificationUI) {
             this.scene.notificationUI.show(
-                `輪廻転生した！(${this.stats.reincarnationCount}回目) 装備を外し、割り振り済み${refunded}pt+自然成長分${naturalRefund}ptを返還。基礎ステータスが強化され、Lv1から再スタート！`,
+                `【輪廻転生成功】(${this.stats.reincarnationCount}周目) 転生P+${REINCARNATION_CONFIG.BONUS_STAT_POINTS}pt獲得！全基礎ステ+${REINCARNATION_CONFIG.BASE_STAT_BONUS}！ステ上限が${newStatCap}ptへ開放！`,
                 'warning'
             );
         }
@@ -1631,12 +1646,28 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     /**
+     * アヴァベル/イザナギ式: 1つのステータスに割り振れる最大値（ステータスカウンター上限）を取得。
+     * 転生を重ねることで上限が+15ずつ開放され、極限特化ビルドが可能になる。
+     */
+    getMaxAllocatableStat(statKey) {
+        const rein = Math.min(this.stats.reincarnationCount || 0, REINCARNATION_CONFIG.MAX_SCALED_COUNT);
+        return REINCARNATION_CONFIG.STAT_CAP_BASE + rein * REINCARNATION_CONFIG.STAT_CAP_PER_COUNT;
+    }
+
+    /**
      * ステータスポイントを割り振る
      * @param {string} stat - 'str', 'int', 'vit', 'men', 'dex', 'agi'
      * @param {number} points - 割り振るポイント数
      */
     allocateStatPoint(stat, points = 1) {
         if (!this.isLocal) return false;
+        if (points <= 0) return false;
+
+        const validStats = RESET_CONFIG.STAT_KEYS;
+        if (!validStats.includes(stat)) {
+            return false;
+        }
+
         if (this.stats.statPoints < points) {
             if (this.scene.notificationUI) {
                 this.scene.notificationUI.show('ステータスポイントが足りません', 'error');
@@ -1644,8 +1675,18 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             return false;
         }
 
-        const validStats = RESET_CONFIG.STAT_KEYS;
-        if (!validStats.includes(stat)) {
+        // アヴァベル/イザナギ式: ステータス上限チェック
+        const maxCap = this.getMaxAllocatableStat(stat);
+        const currentAlloc = this.stats.allocatedStats?.[stat] || 0;
+        if (currentAlloc + points > maxCap) {
+            const remaining = Math.max(0, maxCap - currentAlloc);
+            if (this.scene.notificationUI) {
+                if (remaining <= 0) {
+                    this.scene.notificationUI.show(`このステータスは上限（${maxCap}pt）に達しています。輪廻転生で上限を開放できます！`, 'error');
+                } else {
+                    this.scene.notificationUI.show(`上限（${maxCap}pt）を超えるため割り振れません（現在 ${currentAlloc} / 上限 ${maxCap}。あと ${remaining}pt 可能）`, 'error');
+                }
+            }
             return false;
         }
 

@@ -195,12 +195,15 @@ export default class StatAllocationUI extends BaseWindowUI {
 
         if (this.pointsText) this.pointsText.setText(`残りポイント: ${player.stats.statPoints}`);
 
-        this.statTexts.str?.setText(`[1] STR: ${player.stats.str || 5}`);
-        this.statTexts.int?.setText(`[2] INT: ${player.stats.int || 5}`);
-        this.statTexts.vit?.setText(`[3] VIT: ${player.stats.vit || 5}`);
-        this.statTexts.men?.setText(`[4] MEN: ${player.stats.men || 5}`);
-        this.statTexts.dex?.setText(`[5] DEX: ${player.stats.dex || 5}`);
-        this.statTexts.agi?.setText(`[6] AGI: ${player.stats.agi || 5}`);
+        const maxCap = player.getMaxAllocatableStat ? player.getMaxAllocatableStat('str') : 120;
+        const alloc = player.stats.allocatedStats || {};
+
+        this.statTexts.str?.setText(`[1] STR: ${player.stats.str || 5} (振:${alloc.str || 0}/${maxCap})`);
+        this.statTexts.int?.setText(`[2] INT: ${player.stats.int || 5} (振:${alloc.int || 0}/${maxCap})`);
+        this.statTexts.vit?.setText(`[3] VIT: ${player.stats.vit || 5} (振:${alloc.vit || 0}/${maxCap})`);
+        this.statTexts.men?.setText(`[4] MEN: ${player.stats.men || 5} (振:${alloc.men || 0}/${maxCap})`);
+        this.statTexts.dex?.setText(`[5] DEX: ${player.stats.dex || 5} (振:${alloc.dex || 0}/${maxCap})`);
+        this.statTexts.agi?.setText(`[6] AGI: ${player.stats.agi || 5} (振:${alloc.agi || 0}/${maxCap})`);
 
         this.updateEffectTexts(player);
 

@@ -140251,12 +140251,12 @@
             {
               "name": "destX",
               "type": "int",
-              "value": 309
+              "value": 1600
             },
             {
               "name": "destY",
               "type": "int",
-              "value": 440
+              "value": 2950
             },
             {
               "name": "targetMap",
@@ -140506,6 +140506,24 @@
               "name": "dialogue",
               "type": "string",
               "value": "[\"熱砂の試練を耐え抜く強固な武具が必要だろう？\",\"鍛冶設備は自由に使ってくれ！\"]"
+            }
+          ]
+        },
+        {
+          "id": 50,
+          "name": "大砂漠ゲートの衛兵",
+          "type": "",
+          "x": 1840,
+          "y": 240,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "dialog",
+              "type": "string",
+              "value": "[\"この北の転移門をくぐれば【大砂漠サンドリア】へ通じている。\",\"太陽が照りつける灼熱の荒野だ。凶暴な魔物や砂嵐に気をつけろよ！\"]"
             }
           ]
         }
