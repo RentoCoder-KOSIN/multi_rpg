@@ -605,7 +605,7 @@ const ENEMY_STATS = {
     frost_golem: defineEnemy({
         id: "frost_golem",
         name: "氷晶ゴーレム",
-        sprite: "pipo-enemy046a.png",
+        sprite: "pipo-enemy033.png",
         size: "large",
         level: 140,
         hp: 700000,

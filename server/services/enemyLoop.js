@@ -57,8 +57,11 @@ function tryAttack(io, aiManager, enemy, result, mapPlayers) {
     const now = Date.now();
     if (enemy.lastAttackTime && now - enemy.lastAttackTime < ENEMY_ATTACK_COOLDOWN_MS) return;
 
+    const def = getEnemyStats(enemy.type);
+    const attackRange = def?.size === 'boss' ? 160 : (def?.size === 'large' ? 100 : ENEMY_ATTACK_RANGE);
+
     const distance = Math.hypot(enemy.x - target.x, enemy.y - target.y);
-    if (distance < ENEMY_ATTACK_RANGE) {
+    if (distance < attackRange) {
         enemy.lastAttackTime = now;
 
         // レベル差補正: 敵とプレイヤーのレベル差が大きいほど、
@@ -69,7 +72,6 @@ function tryAttack(io, aiManager, enemy, result, mapPlayers) {
         aiManager.notifyAttackHit(enemy.id, damage);
 
         // 状態異常（凍結・麻痺・毒）: 敵定義に statusEffect があれば確率判定する
-        const def = getEnemyStats(enemy.type);
         let statusEffect = null;
         if (def?.statusEffect && Math.random() < (def.statusEffect.chance || 0)) {
             const { type, duration, tickDamage } = def.statusEffect;
@@ -113,7 +115,9 @@ function updateBoss(io, aiManager, enemy, mapPlayers) {
     }
 
     // 攻撃範囲の少し手前まで近づく（範囲内なら立ち止まって攻撃）
-    if (nearest > ENEMY_ATTACK_RANGE * 0.8) {
+    const def = getEnemyStats(enemy.type);
+    const attackRange = def?.size === 'boss' ? 160 : (def?.size === 'large' ? 100 : ENEMY_ATTACK_RANGE);
+    if (nearest > attackRange * 0.75) {
         const angle = Math.atan2(target.y - enemy.y, target.x - enemy.x);
         enemy.x += Math.cos(angle) * BOSS_MOVE_SPEED * MOVE_SCALE;
         enemy.y += Math.sin(angle) * BOSS_MOVE_SPEED * MOVE_SCALE;

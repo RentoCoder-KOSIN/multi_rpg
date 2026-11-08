@@ -1,6 +1,6 @@
 import { UI_FONT } from '../fontConfig.js';
 import { getEnemyStats, getEnemyDisplayName } from '../data/enemyStats.js';
-import { getEnemySizeConfig } from '../data/enemySize.js';
+import { getEnemySizeConfig, getEnemySpriteBounds } from '../data/enemySize.js';
 import EnemyAI from '../ai/EnemyAI.js';
 import { ENEMY_AI_CONFIG } from '../config.js';
 import { getLevelDiffMultiplier } from '../utils/levelScaling.js';
@@ -117,44 +117,54 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         // 属性があれば名前の横に表示（例: Lv.1 スライム 💧水）
         const elInfo = this.element ? ELEMENT_INFO[this.element] : null;
         const elTag = elInfo ? ` ${elInfo.icon}${elInfo.name}` : '';
-        const label = `Lv.${this.level} ${displayName}${elTag}`;
+        const isBoss = this.isBossSize();
+        const prefix = isBoss ? '👑 【BOSS】 ' : '';
+        const label = `${prefix}Lv.${this.level} ${displayName}${elTag}`;
 
         this.nameText = this.scene.add.text(0, 0, label, {
-            fontSize: '11px',
-            color: '#ffffff',
+            fontSize: isBoss ? '13px' : '11px',
+            color: isBoss ? '#ffd700' : '#ffffff',
             fontFamily: UI_FONT,
-            stroke: '#000',
-            strokeThickness: 2
+            stroke: isBoss ? '#8b0000' : '#000000',
+            strokeThickness: isBoss ? 3 : 2
         }).setOrigin(0.5).setDepth(12);
     }
 
     adjustSizeAndHitbox() {
-        // キャッシュされたテクスチャ情報から元のサイズを確実に取得
+        const stats = getEnemyStats(this.type);
         const texture = this.scene.textures.get(this.texture.key);
         const source = texture.getSourceImage();
-        const baseWidth = source ? source.width : 32;
-        const baseHeight = source ? source.height : 32;
+        const baseWidth = source ? source.width : 480;
+        const baseHeight = source ? source.height : 480;
 
-        // 敵タイプのサイズ設定を取得
+        // 画像の実描画領域（余白を除いたバウンディングボックス）
+        const spriteBounds = getEnemySpriteBounds(stats?.sprite) || {
+            width: baseWidth, height: baseHeight,
+            minX: 0, maxX: baseWidth, minY: 0, maxY: baseHeight,
+            w: baseWidth, h: baseHeight
+        };
+        this.spriteBounds = spriteBounds;
+
         const sizeConfig = getEnemySizeConfig(this.type);
-        const { targetWidth, targetHeight, hitWidth, hitHeight } = sizeConfig;
+        const targetHeight = sizeConfig.targetHeight;
 
-        // スケールを設定
-        const scaleX = targetWidth / baseWidth;
-        const scaleY = targetHeight / baseHeight;
-        this.setScale(scaleX, scaleY);
+        // 実コンテンツ高さを基準に均等スケールを計算（アスペクト比維持）
+        const scale = targetHeight / spriteBounds.h;
+        this.setScale(scale, scale);
 
-        // 当たり判定（ボディ）の設定
-        // setSizeはテクスチャ（スケール前）基準の解像度で指定
-        const bodyWidth = hitWidth / scaleX;
-        const bodyHeight = hitHeight / scaleY;
+        // 当たり判定（ボディ）は実コンテンツ領域の中央・足元にフィットさせる
+        const bodyWidth = Math.round(spriteBounds.w * 0.72);
+        const bodyHeight = Math.round(spriteBounds.h * 0.75);
 
         this.body.setSize(bodyWidth, bodyHeight);
 
-        this.body.setOffset(
-            (baseWidth - bodyWidth) / 2,
-            (baseHeight - bodyHeight) / 2 + bodyHeight * 0.3
-        );
+        // オフセット（テクスチャローカル座標）
+        // 横はコンテンツ中央、縦は接地感が出るようやや足元寄りに配置
+        const offsetX = Math.round(spriteBounds.minX + (spriteBounds.w - bodyWidth) / 2);
+        const offsetY = Math.round(spriteBounds.minY + (spriteBounds.h - bodyHeight) * 0.85);
+
+        this.body.setOffset(offsetX, offsetY);
+        this.attackRange = sizeConfig.attackRange;
     }
 
     // マップボス（size:'boss'。type名は 'boss' とは限らない: forest_boss, swamp_boss, dragon_boss ...）か
@@ -163,32 +173,40 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
 
     createHealthBar() {
-        const barWidth = this.isBossSize() ? 100 : 40;
-        this.hpBarBg = this.scene.add.rectangle(0, 0, barWidth, 5, 0x000000);
+        const sizeConfig = getEnemySizeConfig(this.type);
+        const barWidth = sizeConfig.barWidth;
+        const barHeight = sizeConfig.barHeight;
+        this.hpBarBg = this.scene.add.rectangle(0, 0, barWidth, barHeight, 0x000000, 0.8);
         this.hpBarBg.setDepth(10);
-        this.hpBar = this.scene.add.rectangle(0, 0, barWidth, 5, 0x00ff00);
+        this.hpBar = this.scene.add.rectangle(0, 0, barWidth, barHeight, 0x00ff00, 1);
         this.hpBar.setDepth(11);
     }
 
     updateHealthBar() {
         if (!this.hpBar || !this.hpBarBg) return;
 
-        const x = this.x;
-        const y = this.y - (this.height * this.scaleY) / 2 - 10;
+        const source = this.texture.getSourceImage();
+        const baseHeight = source ? source.height : 480;
+        const spriteBounds = this.spriteBounds || { minY: 0 };
 
-        this.hpBarBg.setPosition(x, y);
-        this.hpBar.setPosition(x, y);
+        // 実コンテンツの上端（頭頂部）の画面Y座標
+        const topY = this.y + (spriteBounds.minY - baseHeight / 2) * this.scaleY - 10;
+        const x = this.x;
+
+        this.hpBarBg.setPosition(x, topY);
+        this.hpBar.setPosition(x, topY);
         this.hpBarBg.setDepth(this.y + 10);
         this.hpBar.setDepth(this.y + 11);
         if (this.nameText) this.nameText.setDepth(this.y + 12);
 
         if (this.nameText) {
-            this.nameText.setPosition(x, y - 12);
+            this.nameText.setPosition(x, topY - (this.isBossSize() ? 15 : 11));
             this.nameText.setVisible(this.active);
         }
 
+        const sizeConfig = getEnemySizeConfig(this.type);
         const percent = Math.max(0, this.hp / this.maxHp);
-        this.hpBar.width = (this.isBossSize() ? 100 : 40) * percent;
+        this.hpBar.width = sizeConfig.barWidth * percent;
 
         // 色を体力に合わせて変更
         if (percent < 0.3) this.hpBar.setFillStyle(0xff0000);

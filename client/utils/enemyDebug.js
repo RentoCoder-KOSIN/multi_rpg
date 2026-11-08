@@ -161,7 +161,8 @@ export function drawEnemyAttackRanges(scene) {
             return;
         }
 
-        const range = child.isServerManaged ? ENEMY_ATTACK_RANGE : (child.attackRange || 60);
+        const isBoss = child.isBossSize ? child.isBossSize() : (child.size === 'boss');
+        const range = child.attackRange || (isBoss ? 160 : (child.isServerManaged ? ENEMY_ATTACK_RANGE : 60));
 
         // 常時見える、薄い赤の危険エリア。敵の足元を中心に描く。
         if (!lowSpec) {
