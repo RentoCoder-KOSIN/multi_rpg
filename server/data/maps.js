@@ -30,6 +30,8 @@ const MAP_META = {
     desert_city: { name: "砂漠都市サンドリア" },
     snow_city: { name: "雪原都市フロストヘイヴン" },
     port_city: { name: "港都市マリーナ" },
+    glacier: { name: "氷河フロストグレイシア" },
+    desert: { name: "大砂漠サンドリア" },
 };
 
 // 昔のTiledデータで使われていた別名（小文字で比較する）
