@@ -3440,6 +3440,40 @@
               "value": true
             }
           ]
+        },
+        {
+          "id": 117,
+          "name": "to_snow_city",
+          "type": "",
+          "x": 10,
+          "y": 336,
+          "width": 64,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "opacity": 1,
+          "properties": [
+            {
+              "name": "destX",
+              "type": "int",
+              "value": 850
+            },
+            {
+              "name": "destY",
+              "type": "int",
+              "value": 336
+            },
+            {
+              "name": "targetMap",
+              "type": "string",
+              "value": "snow_city"
+            },
+            {
+              "name": "unlocked",
+              "type": "bool",
+              "value": true
+            }
+          ]
         }
       ]
     },
@@ -3636,7 +3670,376 @@
       "opacity": 1,
       "visible": true,
       "draworder": "topdown",
-      "objects": []
+      "objects": [
+        {
+          "id": 101,
+          "name": "sand_worm",
+          "type": "",
+          "x": 150,
+          "y": 150,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "sand_worm"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 102,
+          "name": "sand_worm",
+          "type": "",
+          "x": 240,
+          "y": 180,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "sand_worm"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 103,
+          "name": "desert_scorpion",
+          "type": "",
+          "x": 180,
+          "y": 260,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "desert_scorpion"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 104,
+          "name": "desert_scorpion",
+          "type": "",
+          "x": 260,
+          "y": 320,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "desert_scorpion"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 105,
+          "name": "sand_worm",
+          "type": "",
+          "x": 160,
+          "y": 520,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "sand_worm"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 106,
+          "name": "mummy_lord",
+          "type": "",
+          "x": 240,
+          "y": 560,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "mummy_lord"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 107,
+          "name": "mummy_lord",
+          "type": "",
+          "x": 300,
+          "y": 500,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "mummy_lord"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 108,
+          "name": "desert_scorpion",
+          "type": "",
+          "x": 680,
+          "y": 180,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "desert_scorpion"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 109,
+          "name": "mummy_lord",
+          "type": "",
+          "x": 740,
+          "y": 240,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "mummy_lord"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 110,
+          "name": "anubis_knight",
+          "type": "",
+          "x": 820,
+          "y": 220,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "anubis_knight"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 111,
+          "name": "anubis_knight",
+          "type": "",
+          "x": 860,
+          "y": 160,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "anubis_knight"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 112,
+          "name": "chaos_emperor",
+          "type": "",
+          "x": 800,
+          "y": 120,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "chaos_emperor"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 180000
+            }
+          ]
+        },
+        {
+          "id": 113,
+          "name": "desert_scorpion",
+          "type": "",
+          "x": 700,
+          "y": 520,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "desert_scorpion"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 114,
+          "name": "desert_scorpion",
+          "type": "",
+          "x": 780,
+          "y": 560,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "desert_scorpion"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 115,
+          "name": "anubis_knight",
+          "type": "",
+          "x": 840,
+          "y": 530,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "anubis_knight"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 116,
+          "name": "anubis_knight",
+          "type": "",
+          "x": 860,
+          "y": 600,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "anubis_knight"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        }
+      ]
     }
   ],
   "nextlayerid": 11,

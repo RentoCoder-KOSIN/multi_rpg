@@ -3440,6 +3440,45 @@
               "value": true
             }
           ]
+        },
+        {
+          "id": 120,
+          "name": "to_desert_city",
+          "type": "",
+          "x": 890,
+          "y": 336,
+          "width": 64,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "opacity": 1,
+          "properties": [
+            {
+              "name": "destX",
+              "type": "int",
+              "value": 480
+            },
+            {
+              "name": "destY",
+              "type": "int",
+              "value": 352
+            },
+            {
+              "name": "targetMap",
+              "type": "string",
+              "value": "desert_city"
+            },
+            {
+              "name": "requiredQuest",
+              "type": "string",
+              "value": "blizzard_boss_quest"
+            },
+            {
+              "name": "unlocked",
+              "type": "bool",
+              "value": false
+            }
+          ]
         }
       ]
     },
@@ -3626,7 +3665,445 @@
       "opacity": 1,
       "visible": true,
       "draworder": "topdown",
-      "objects": []
+      "objects": [
+        {
+          "id": 101,
+          "name": "frost_slime",
+          "type": "",
+          "x": 160,
+          "y": 150,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "frost_slime"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 102,
+          "name": "frost_slime",
+          "type": "",
+          "x": 250,
+          "y": 180,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "frost_slime"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 103,
+          "name": "frost_slime",
+          "type": "",
+          "x": 200,
+          "y": 240,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "frost_slime"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 104,
+          "name": "ice_wolf",
+          "type": "",
+          "x": 120,
+          "y": 320,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "ice_wolf"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 105,
+          "name": "ice_wolf",
+          "type": "",
+          "x": 180,
+          "y": 380,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "ice_wolf"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 106,
+          "name": "ice_wolf",
+          "type": "",
+          "x": 220,
+          "y": 450,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "ice_wolf"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 107,
+          "name": "frost_slime",
+          "type": "",
+          "x": 150,
+          "y": 550,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "frost_slime"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 108,
+          "name": "frost_slime",
+          "type": "",
+          "x": 240,
+          "y": 580,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "frost_slime"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 109,
+          "name": "yeti",
+          "type": "",
+          "x": 280,
+          "y": 520,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "yeti"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 110,
+          "name": "yeti",
+          "type": "",
+          "x": 340,
+          "y": 590,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "yeti"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 111,
+          "name": "yeti",
+          "type": "",
+          "x": 680,
+          "y": 160,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "yeti"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 112,
+          "name": "frost_golem",
+          "type": "",
+          "x": 740,
+          "y": 220,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "frost_golem"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 113,
+          "name": "frost_golem",
+          "type": "",
+          "x": 820,
+          "y": 280,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "frost_golem"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 114,
+          "name": "frost_golem",
+          "type": "",
+          "x": 860,
+          "y": 180,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "frost_golem"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 115,
+          "name": "blizzard_dragon",
+          "type": "",
+          "x": 800,
+          "y": 120,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "blizzard_dragon"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 120000
+            }
+          ]
+        },
+        {
+          "id": 116,
+          "name": "ice_wolf",
+          "type": "",
+          "x": 720,
+          "y": 500,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "ice_wolf"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 117,
+          "name": "ice_wolf",
+          "type": "",
+          "x": 820,
+          "y": 530,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "ice_wolf"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 118,
+          "name": "yeti",
+          "type": "",
+          "x": 760,
+          "y": 580,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "yeti"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        },
+        {
+          "id": 119,
+          "name": "frost_golem",
+          "type": "",
+          "x": 850,
+          "y": 600,
+          "width": 32,
+          "height": 32,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "type",
+              "type": "string",
+              "value": "frost_golem"
+            },
+            {
+              "name": "respawnDelay",
+              "type": "int",
+              "value": 8000
+            }
+          ]
+        }
+      ]
     }
   ],
   "nextlayerid": 11,

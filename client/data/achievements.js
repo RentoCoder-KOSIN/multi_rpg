@@ -61,12 +61,30 @@ export const ACHIEVEMENTS = {
     },
     level_100: {
         id: 'level_100',
-        name: 'レベルマスター',
-        description: 'レベル100（上限）に到達した',
-        reqText: 'プレイヤーLv.100（カンスト）に到達',
-        title: '【頂点の戦士】',
+        name: '百の頂',
+        description: 'レベル100に到達した',
+        reqText: 'プレイヤーLv.100に到達',
+        title: '【百戦錬磨】',
         titleColor: '#ffff00',
         condition: { type: 'level', value: 100 }
+    },
+    level_150: {
+        id: 'level_150',
+        name: '限界突破',
+        description: 'レベル150に到達した',
+        reqText: 'プレイヤーLv.150に到達',
+        title: '【超越者】',
+        titleColor: '#00ffff',
+        condition: { type: 'level', value: 150 }
+    },
+    level_200: {
+        id: 'level_200',
+        name: '極限の覇者',
+        description: '最大レベル200に到達した',
+        reqText: 'プレイヤーLv.200（カンスト）に到達',
+        title: '【神話の覇者】',
+        titleColor: '#ff0055',
+        condition: { type: 'level', value: 200 }
     },
     // === 転生実績 ===
     reborn_1: {

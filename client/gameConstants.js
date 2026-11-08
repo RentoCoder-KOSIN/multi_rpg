@@ -7,6 +7,20 @@
 // スキルスロット数（アクティブスキルバー / スキルマネージャー / キー入力で共有）
 export const TOTAL_SKILL_SLOTS = 8;
 
+// 移動速度（speed）の調整値
+// 転生や高DEXによる過度なインフレ（画面外飛び・操作不能・燃え尽き）を防ぐ上限設定
+export const SPEED_CONFIG = {
+    BASE_SPEED: 150,          // 基礎移動速度
+    MAX_SPEED_BONUS: 200,     // DEX・パッシブ・装備によるボーナスの合計上限 (150 + 200 = 350)
+    MAX_TOTAL_SPEED: 400,     // バフ等を含めた最終移動速度の絶対上限
+};
+
+// レベル・成長上限
+export const LEVEL_CONFIG = {
+    MAX_LEVEL: 200,           // レベルキャップ (100 -> 200)
+    REINCARNATION_MIN_LEVEL: 100, // 輪廻転生可能になる最低レベル
+};
+
 // 経験値・成長関連の調整値
 export const GROWTH_CONFIG = {
     // 装備の「経験値2倍」等の効果は、このレベル以下でのみ発動する

@@ -207,6 +207,7 @@ export const QUESTS = {
             item: "hero_sword",
         },
         area: "volcano",
+        nextQuest: "frost_investigation",
     },
     kill_dire_wolf: {
         id: "kill_dire_wolf",
@@ -704,21 +705,133 @@ export const QUESTS = {
             skill: "friend_warp",
         },
     },
+
+    // ===== 雪の街・フロストヘイヴン (Lv105〜150) =====
+    frost_investigation: {
+        id: "frost_investigation",
+        title: "白銀の雪原調査",
+        description: "雪の街フロストヘイヴン周辺に現れた「氷結晶スライム」を15体討伐せよ。",
+        type: "kill",
+        target: "frost_slime",
+        required: 15,
+        category: "main",
+        reward: { exp: 40000000, gold: 5000000, item: "ice_orb" },
+        area: "snow_city",
+        nextQuest: "frost_silver_fang",
+    },
+    frost_silver_fang: {
+        id: "frost_silver_fang",
+        title: "凍てつく白銀の牙",
+        description: "吹雪の森を駆ける獰猛な「フロストウルフ」を15体討伐せよ。",
+        type: "kill",
+        target: "ice_wolf",
+        required: 15,
+        category: "sub",
+        reward: { exp: 60000000, gold: 7500000, item: "power_seed" },
+        area: "snow_city",
+        nextQuest: "yeti_hunt",
+    },
+    yeti_hunt: {
+        id: "yeti_hunt",
+        title: "雪山の咆哮",
+        description: "雪原を揺るがす巨漢「イエティ」を10体討伐せよ。",
+        type: "kill",
+        target: "yeti",
+        required: 10,
+        category: "sub",
+        reward: { exp: 100000000, gold: 12000000, item: "shield_seed" },
+        area: "snow_city",
+        nextQuest: "frost_golem_hunt",
+    },
+    frost_golem_hunt: {
+        id: "frost_golem_hunt",
+        title: "絶対零度の守護者",
+        description: "氷の神殿を守る「氷晶ゴーレム」を8体討伐せよ。",
+        type: "kill",
+        target: "frost_golem",
+        required: 8,
+        category: "sub",
+        reward: { exp: 160000000, gold: 18000000, item: "magic_seed" },
+        area: "snow_city",
+        nextQuest: "blizzard_boss_quest",
+    },
+    blizzard_boss_quest: {
+        id: "blizzard_boss_quest",
+        title: "氷界の暴君 (Boss)",
+        description: "フロストヘイヴン最奥に君臨するマップボス「暴風雪竜ブリザードドラゴン」を討伐せよ。",
+        type: "kill",
+        target: "blizzard_dragon",
+        required: 1,
+        category: "main",
+        reward: { exp: 800000000, gold: 50000000, item: "elixir" },
+        area: "snow_city",
+        nextQuest: "desert_caravan_escort",
+    },
+
+    // ===== 砂漠の街・サンドリア (Lv155〜200) =====
+    desert_caravan_escort: {
+        id: "desert_caravan_escort",
+        title: "熱砂の地這い虫",
+        description: "砂漠の街サンドリアの隊商路を脅かす「サンドワーム」を15体駆除せよ。",
+        type: "kill",
+        target: "sand_worm",
+        required: 15,
+        category: "main",
+        reward: { exp: 350000000, gold: 20000000, item: "earth_orb" },
+        area: "desert_city",
+        nextQuest: "scorpion_sting",
+    },
+    scorpion_sting: {
+        id: "scorpion_sting",
+        title: "死の猛毒針",
+        description: "オアシス周辺を徘徊する危険生物「デススコルピオン」を15体討伐せよ。",
+        type: "kill",
+        target: "desert_scorpion",
+        required: 15,
+        category: "sub",
+        reward: { exp: 500000000, gold: 30000000, item: "dark_orb" },
+        area: "desert_city",
+        nextQuest: "ancient_tomb_purification",
+    },
+    ancient_tomb_purification: {
+        id: "ancient_tomb_purification",
+        title: "王家の呪い",
+        description: "砂に埋もれた古代神殿の亡霊「ミイラ卿」を10体退散させよ。",
+        type: "kill",
+        target: "mummy_lord",
+        required: 10,
+        category: "sub",
+        reward: { exp: 800000000, gold: 45000000, item: "power_seed" },
+        area: "desert_city",
+        nextQuest: "anubis_knight_hunt",
+    },
+    anubis_knight_hunt: {
+        id: "anubis_knight_hunt",
+        title: "冥府の執行者",
+        description: "冥界の門を守る最凶の番人「アヌビスの死刑執行人」を8体討伐せよ。",
+        type: "kill",
+        target: "anubis_knight",
+        required: 8,
+        category: "sub",
+        reward: { exp: 1200000000, gold: 60000000, item: "shield_seed" },
+        area: "desert_city",
+        nextQuest: "chaos_emperor_quest",
+    },
+    chaos_emperor_quest: {
+        id: "chaos_emperor_quest",
+        title: "混沌の終焉 (World Boss)",
+        description: "世界の果てで目覚めた究極の存在「混沌神カオスエンペラー」を討伐せよ！",
+        type: "kill",
+        target: "chaos_emperor",
+        required: 1,
+        category: "main",
+        reward: { exp: 5000000000, gold: 200000000, item: "dragon_heart" },
+        area: "desert_city",
+    },
 };
 
 // ===== マップの進行（クエストで次のマップへ進む仕組み）=====
-//
-// 街から先のマップは、下の順番で「そのマップのクエストを全て達成」すると次のマップへ進める。
-//   forest（最初から行ける） → wetland → ruins → volcano
-// 進行の解放は2か所で実現している:
-//   1. 転移（街 → 次のマップ）: Tiled の Teleports の requiredQuest に、下の MAP_CLEAR_QUESTS をカンマ区切りで書く
-//      （city.json に設定済み。全て達成しないと通れない。utils/questGate.js が判定する）
-//   2. クエストの受注: quest.area が付いたクエストは、そのマップが解放されるまで受注できない
-//      （ギルドの掲示板にも出ない。QuestManager.canStart / areaUnlocked）
-//
-// 新しいマップを足すときは、AREA_ORDER の末尾に足し、MAP_CLEAR_QUESTS にそのマップのクエストIDを並べ、
-// 街の該当 Teleports の requiredQuest に「前のマップのMAP_CLEAR_QUESTS」を書けばよい。
-export const AREA_ORDER = ["forest", "wetland", "ruins", "volcano"];
+export const AREA_ORDER = ["forest", "wetland", "ruins", "volcano", "snow_city", "desert_city"];
 
 // マップごとの「全部達成すると次のマップに進める」クエスト
 export const MAP_CLEAR_QUESTS = {
@@ -731,6 +844,8 @@ export const MAP_CLEAR_QUESTS = {
         "ruins_boss_quest",
     ],
     volcano: ["kill_ghost", "kill_orc", "kill_dire_wolf", "dragon_slayer"],
+    snow_city: ["frost_investigation", "frost_silver_fang", "yeti_hunt", "frost_golem_hunt", "blizzard_boss_quest"],
+    desert_city: ["desert_caravan_escort", "scorpion_sting", "ancient_tomb_purification", "anubis_knight_hunt", "chaos_emperor_quest"],
 };
 
 /** area の1つ前のマップ（最初のマップなら null） */

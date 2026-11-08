@@ -519,11 +519,15 @@ function buildPanel() {
                         id: "adm-level",
                         value: "100",
                         min: "1",
-                        max: "100",
+                        max: "200",
                     }),
                     btn("このLvまで上げる", actionLevel),
                     btn("Lv100", () => {
                         panel.querySelector("#adm-level").value = "100";
+                        actionLevel();
+                    }),
+                    btn("Lv200", () => {
+                        panel.querySelector("#adm-level").value = "200";
                         actionLevel();
                     }),
                 ),
@@ -646,7 +650,7 @@ function buildPanel() {
 function actionLevel() {
     const c = ctx();
     if (!c) return;
-    const target = Math.max(1, Math.min(100, num("adm-level", 1)));
+    const target = Math.max(1, Math.min(200, num("adm-level", 1)));
     if (sendToSelectedTarget("level", { target })) return;
     if (target <= c.player.stats.level) {
         log(`すでに Lv.${c.player.stats.level} です（レベルは上げるだけ）`);

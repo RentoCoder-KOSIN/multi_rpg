@@ -5,7 +5,7 @@ import { SKILLS } from "../data/skills.js";
 import { UNIQUE_SKILLS } from "../data/skills/uniqueSkills.js";
 import { getEnemyStats } from "../data/enemyStats.js";
 import { getLevelDiffMultiplier, getExpLevelMultiplier } from "../utils/levelScaling.js";
-import { TOTAL_SKILL_SLOTS, GROWTH_CONFIG, COMBAT_CONFIG, REINCARNATION_CONFIG, AGI_CONFIG, RESET_CONFIG, getRebirthDamageTakenMult, getRebirthRewardMult } from "../gameConstants.js";
+import { TOTAL_SKILL_SLOTS, GROWTH_CONFIG, COMBAT_CONFIG, REINCARNATION_CONFIG, AGI_CONFIG, RESET_CONFIG, SPEED_CONFIG, LEVEL_CONFIG, getRebirthDamageTakenMult, getRebirthRewardMult } from "../gameConstants.js";
 import {
     ELEMENTS, getElementMultiplier, getBlendedElementMultiplier, getElementColor,
     getWeaponElementBonus, resolveElement, resistKey, damageKey, collectElementStats,
@@ -109,7 +109,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             def: saved.def || 5,
             critChance: saved.critChance || 0,
             lifesteal: saved.lifesteal || 0,
-            speedBonus: Math.max(saved.speedBonus, 300) || 0,
+            speedBonus: Math.min(saved.speedBonus || 0, SPEED_CONFIG.MAX_SPEED_BONUS),
             expMultiplier: saved.expMultiplier || 1.0,
             statPoints: saved.statPoints || 0,
             // アイテム（種）による永続ステータス加算
@@ -502,7 +502,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const sourceMult = enemyLevel != null ? GROWTH_CONFIG.ENEMY_EXP_MULTIPLIER : 1;
         const finalAmount = Math.ceil(amount * sourceMult * expMult * levelPenalty * rebirthMult);
 
-        if (this.stats.level >= 100) {
+        if (this.stats.level >= LEVEL_CONFIG.MAX_LEVEL) {
             // レベルキャップ到達後も、敵を倒せば Job EXP は貯まる。
             // （以前は何も増えず、スキルレベル上げ・スキル解放の育成が止まって「やることが無い」状態だった）
             const jobGain = Math.ceil(finalAmount * GROWTH_CONFIG.JOB_EXP_RATE);
@@ -513,7 +513,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             return;
         }
 
-        if (this.stats.level < 100) { // レベルキャップ
+        if (this.stats.level < LEVEL_CONFIG.MAX_LEVEL) { // レベルキャップ
             this.stats.exp += finalAmount;
 
             // ジョブ経験値も獲得（簡単に貯まりすぎないよう、通常経験値の一部だけ加算する）
@@ -521,7 +521,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
             let leveledUp = false;
             // 複数レベルアップに対応 & 経験値を消費するように修正
-            while (this.stats.exp >= this.stats.maxExp && this.stats.level < 100) {
+            while (this.stats.exp >= this.stats.maxExp && this.stats.level < LEVEL_CONFIG.MAX_LEVEL) {
                 this.stats.exp -= this.stats.maxExp;
                 this.levelUp();
                 leveledUp = true;
@@ -859,7 +859,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         // 特殊ステータスの基礎値
         this.stats.critChance = (dex * 0.01) + passiveCritBonus;
         this.stats.lifesteal = passiveLifestealBonus;
-        this.stats.speedBonus = (dex * 2) + passiveSpeedBonus;
+        this.stats.speedBonus = Math.min((dex * 2) + passiveSpeedBonus, SPEED_CONFIG.MAX_SPEED_BONUS);
 
         // ステータス割り振り画面で「装備によってここまで補正されている」を
         // 表示できるように、装備を加算する直前（素のステータス）を控えておく。
@@ -1112,6 +1112,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // ここまでで武器/防具/宝具による補正が乗った後の値なので、装備前との差分を
         // 「装備補正値」として保持する（UI表示用。種による永続加算はここに含めない）。
+        // 装備由来の speedBonus を加算（上限で頭打ち）
+        this.stats.speedBonus = Math.min(this.stats.speedBonus, SPEED_CONFIG.MAX_SPEED_BONUS);
+
         this.stats.equipBonus = {
             atk: this.stats.atk - baseAtk,
             def: this.stats.def - baseDef,
@@ -1124,7 +1127,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.stats.atk += (this.stats.bonusAtk || 0);
         this.stats.def += (this.stats.bonusDef || 0);
 
-        this.speed = 150 + this.stats.speedBonus;
+        this.speed = Math.min(SPEED_CONFIG.BASE_SPEED + this.stats.speedBonus, SPEED_CONFIG.MAX_TOTAL_SPEED);
 
         // HPとMPが最大値を超えないように調整
         this.stats.hp = Math.min(this.stats.hp, this.stats.maxHp);
@@ -1401,7 +1404,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // バフに応じてステータスを更新
         if (buffType === 'speed_buff') {
-            this.speed = 150 + this.stats.speedBonus + value;
+            this.speed = Math.min(SPEED_CONFIG.BASE_SPEED + this.stats.speedBonus + value, SPEED_CONFIG.MAX_TOTAL_SPEED);
         } else if (buffType === 'defense_buff') {
             // 防御力バフは getDamage 相当のメソッドで参照
         }
@@ -1423,7 +1426,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // バフが切れたら速度を再計算
         if (buffExpired && !this.activeBuffs['speed_buff']) {
-            this.speed = 150 + this.stats.speedBonus;
+            this.speed = Math.min(SPEED_CONFIG.BASE_SPEED + this.stats.speedBonus, SPEED_CONFIG.MAX_TOTAL_SPEED);
         }
     }
 
@@ -1609,7 +1612,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
      */
     adminLevelUpTo(target) {
         if (!this.isLocal) return 0;
-        const goal = Math.min(100, Math.floor(target));
+        const goal = Math.min(LEVEL_CONFIG.MAX_LEVEL, Math.floor(target));
         let gained = 0;
         while (this.stats.level < goal) {
             this.levelUp(true);
