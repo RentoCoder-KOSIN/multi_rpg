@@ -1,5 +1,5 @@
 {
-    "activeFile": "tutorial.json",
+    "activeFile": "desert_city.json",
     "expandedProjectPaths": [
         "."
     ],
@@ -41,16 +41,16 @@
                 37
             ],
             "expandedObjectLayers": [
-                40,
-                41,
+                35,
                 42,
-                35
+                40,
+                41
             ],
             "scale": 0.5,
             "selectedLayer": 18,
             "viewCenter": {
-                "x": 2888,
-                "y": 610
+                "x": 1600,
+                "y": 1600
             }
         },
         "city.json#tiles": {
@@ -63,7 +63,7 @@
             "scale": 1.6090625,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 480.7147018838609,
+                "x": 481.0254418333657,
                 "y": 351.7576228393863
             }
         },
@@ -86,8 +86,8 @@
         },
         "forest.json": {
             "expandedObjectLayers": [
-                9,
-                5
+                5,
+                9
             ],
             "scale": 0.75,
             "selectedLayer": 2,
@@ -104,14 +104,14 @@
         },
         "guild1f.json": {
             "expandedObjectLayers": [
-                15,
-                13
+                13,
+                15
             ],
             "scale": 0.75,
             "selectedLayer": 4,
             "viewCenter": {
-                "x": 541.3333333333334,
-                "y": 481.33333333333337
+                "x": 480,
+                "y": 479.99999999999994
             }
         },
         "guild1f.json#tiles": {
@@ -147,14 +147,14 @@
                 13
             ],
             "expandedObjectLayers": [
-                6,
                 12,
+                6,
                 10
             ],
             "scale": 0.75,
             "selectedLayer": 7,
             "viewCenter": {
-                "x": 1600.6666666666665,
+                "x": 1600,
                 "y": 1600
             }
         },
@@ -168,7 +168,7 @@
             "scale": 0.33,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 478.7878787878788,
+                "x": 478.78787878787875,
                 "y": 351.51515151515144
             }
         },
@@ -209,7 +209,7 @@
             "scale": 0.3218125,
             "selectedLayer": 4,
             "viewCenter": {
-                "x": 700.7185861332298,
+                "x": 798.6016702272286,
                 "y": 798.6016702272285
             }
         },
@@ -226,7 +226,7 @@
             "scale": 0.75,
             "selectedLayer": 7,
             "viewCenter": {
-                "x": 1600.6666666666665,
+                "x": 1600,
                 "y": 1600
             }
         },
@@ -244,21 +244,24 @@
         "volcano.json",
         "wetland.json",
         "ruins.json",
-        "desert_city.json"
+        "desert_city.json",
+        "snow_city.json",
+        "port_city.json",
+        "forest.json"
     ],
     "project": "rpg_map.tiled-project",
     "recentFiles": [
         "city.json",
         "guild1f.json",
-        "desert_city.json",
-        "ruins.json",
-        "wetland.json",
-        "volcano.json",
         "tutorial.json",
+        "volcano.json",
+        "wetland.json",
+        "ruins.json",
         "forest.json",
+        "port_city.json",
+        "snow_city.json",
+        "desert_city.json",
         "guild2f.json",
-        "city (1).json",
-        "forest (1).json",
-        "battle.json"
+        "city (1).json"
     ]
 }
