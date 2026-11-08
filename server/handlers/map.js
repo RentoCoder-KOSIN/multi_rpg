@@ -7,7 +7,7 @@ module.exports = function registerMapHandlers(socket, { enemyService, partyServi
     const playerId = socket.data.playerId;
 
     // プレイヤーを指定マップに参加させ、現在の状況を本人に、参加を他の人に通知する
-    function enterMap({ mapKey, x, y, hp, maxHp, level, mp, maxMp, job }) {
+    function enterMap({ mapKey, x, y, hp, maxHp, level, mp, maxMp, job, activeTitle, activeTitleColor }) {
         // Values the client did not send fall back to what we already know, then to defaults
         const prev = players[playerId];
         const stats = {
@@ -16,7 +16,9 @@ module.exports = function registerMapHandlers(socket, { enemyService, partyServi
             level: level || prev?.level || DEFAULT_LEVEL,
             mp: mp ?? prev?.mp ?? 0,
             maxMp: maxMp ?? prev?.maxMp ?? 0,
-            job: cleanJobId(job) || prev?.job || "none"
+            job: cleanJobId(job) || prev?.job || "none",
+            activeTitle: activeTitle !== undefined ? activeTitle : (prev?.activeTitle || null),
+            activeTitleColor: activeTitleColor || prev?.activeTitleColor || '#ffff00'
         };
 
         socket.data.map = mapKey;

@@ -45,6 +45,7 @@ export default class KeyGuideWindowUI extends BaseWindowUI {
             { key: 'S', label: '装備画面' },
             { key: 'P', label: 'ステータス割り振り（能力強化）' },
             { key: 'K', label: 'スキル管理（習得・強化・セット）' },
+            { key: 'B', label: '工房・オリジナル装備生成（クラフト）' },
             { key: 'Q', label: 'クエスト履歴・一覧' },
             { key: 'U', label: '実績 & 称号（頭上にセット）' },
             { key: 'R', label: '輪廻転生画面（Lv100到達時）' },

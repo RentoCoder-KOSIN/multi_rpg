@@ -159,7 +159,12 @@ export default class NetworkManager {
             console.log('[NetworkManager] Received newPlayer event:', data);
             if (data.id !== this.playerId) {
                 console.log('[NetworkManager] Adding other player:', data.id);
-                this.addOtherPlayer(data.id, data.x, data.y, data.hp, data.maxHp, data.level, data.mp, data.maxMp);
+                const other = this.addOtherPlayer(data.id, data.x, data.y, data.hp, data.maxHp, data.level, data.mp, data.maxMp);
+                if (other) {
+                    other.activeTitle = data.activeTitle || null;
+                    other.activeTitleColor = data.activeTitleColor || '#ffff00';
+                    if (other.nameUI) other.nameUI.setTitle(other.activeTitle, other.activeTitleColor);
+                }
             } else {
                 console.log('[NetworkManager] Ignoring own player');
             }
@@ -422,7 +427,12 @@ export default class NetworkManager {
         Object.keys(players).forEach(id => {
             if (id !== this.playerId) {
                 const p = players[id];
-                this.addOtherPlayer(id, p.x, p.y, p.hp, p.maxHp, p.level, p.mp, p.maxMp);
+                const other = this.addOtherPlayer(id, p.x, p.y, p.hp, p.maxHp, p.level, p.mp, p.maxMp);
+                if (other) {
+                    other.activeTitle = p.activeTitle || null;
+                    other.activeTitleColor = p.activeTitleColor || '#ffff00';
+                    if (other.nameUI) other.nameUI.setTitle(other.activeTitle, other.activeTitleColor);
+                }
             }
         });
     }
@@ -541,7 +551,11 @@ export default class NetworkManager {
     getLocalStatsPayload() {
         const s = this.scene.player?.stats;
         if (!s) return {};
-        return { hp: s.hp, maxHp: s.maxHp, level: s.level, mp: s.mp, maxMp: s.maxMp, job: s.job };
+        return {
+            hp: s.hp, maxHp: s.maxHp, level: s.level, mp: s.mp, maxMp: s.maxMp, job: s.job,
+            activeTitle: s.activeTitle || null,
+            activeTitleColor: s.activeTitleColor || '#ffff00'
+        };
     }
 
     /**

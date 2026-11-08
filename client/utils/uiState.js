@@ -21,6 +21,8 @@ export function isAnyWindowOpen(scene) {
         scene.jobSkillPreviewUI?.isOpen ||
         scene.keyGuideWindowUI?.isOpen ||
         scene.tradeUI?.isOpen ||
+        scene.craftingUI?.isOpen ||
+        scene.friendWarpDialogUI?.isOpen ||
         scene.sideMenuUI?.isExpanded ||
         (scene.settingsUI && scene.settingsUI.visible)
     );

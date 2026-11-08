@@ -3,6 +3,7 @@ import { pinToScreen } from '../utils/screenFixed.js';
 import { QUEST_UI_CONFIG } from '../gameConstants.js';
 import { UI_LAYOUT } from './uiLayout.js';
 import { getUILayout } from './UILayoutManager.js';
+import { QUESTS, QUEST_CATEGORIES } from '../data/quests.js';
 
 const MAX_VISIBLE = QUEST_UI_CONFIG.TRACKER_MAX_VISIBLE; // 残りは「他N件」、詳細はクエストウィンドウで
 
@@ -168,8 +169,12 @@ export default class QuestTrackerUI {
         const icon = this.scene.add.text(10, 10, isCompleted ? '✅' : '🎯', { fontSize: '14px' });
         container.add(icon);
 
+        const def = QUESTS[quest.id];
+        const cat = def?.category && QUEST_CATEGORIES[def.category] ? QUEST_CATEGORIES[def.category] : null;
+        const catIcon = cat ? `${cat.icon} ` : '';
+
         // タイトル
-        const title = this.scene.add.text(32, 12, quest.title, {
+        const title = this.scene.add.text(32, 12, `${catIcon}${quest.title}`, {
             fontSize: '11px',
             color: isCompleted ? '#00ffcc' : '#ffffff',
             fontFamily: UI_FONT

@@ -234,7 +234,8 @@ export default class DialogueManager {
                         'tank': 'iron_shield',
                         'ranger': 'wooden_bow',
                         'summoner': 'beginner_staff',
-                        'priest': 'beginner_staff'
+                        'priest': 'beginner_staff',
+                        'artisan': 'crafting_hammer'
                     };
                     const weaponId = jobWeapons[selectedJob.id];
                     if (weaponId) {

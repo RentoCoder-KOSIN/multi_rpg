@@ -7,8 +7,8 @@ export default class PlayerNameUI {
         this.playerName = playerName;
         this.playerId = playerId;
         this.level = player.stats?.level || 1;
-        this.title = title || player.stats?.activeTitle || null;
-        this.titleColor = titleColor || player.stats?.activeTitleColor || '#ffff00';
+        this.title = title !== undefined && title !== null ? title : (player.isLocal ? player.stats?.activeTitle || null : null);
+        this.titleColor = titleColor || (player.isLocal ? player.stats?.activeTitleColor || '#ffff00' : '#ffff00');
 
         // 称号背景
         this.titleBg = scene.add.rectangle(0, 0, 40, 14, 0x000000, 0.7)
@@ -64,12 +64,19 @@ export default class PlayerNameUI {
             return;
         }
 
-        // ローカルプレイヤーの場合、称号のリアルタイム変更を同期
+        // 称号のリアルタイム変更を同期
         if (this.player.isLocal) {
             const currentTitle = this.player.stats?.activeTitle || null;
             const currentColor = this.player.stats?.activeTitleColor || '#ffff00';
             if (currentTitle !== this.title || currentColor !== this.titleColor) {
                 this.setTitle(currentTitle, currentColor);
+            }
+        } else {
+            // リモートプレイヤーの場合
+            const remoteTitle = this.player.activeTitle !== undefined ? this.player.activeTitle : (this.player.stats?.activeTitle || null);
+            const remoteColor = this.player.activeTitleColor || this.player.stats?.activeTitleColor || '#ffff00';
+            if (remoteTitle !== this.title || remoteColor !== this.titleColor) {
+                this.setTitle(remoteTitle, remoteColor);
             }
         }
 

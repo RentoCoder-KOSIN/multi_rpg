@@ -42,7 +42,7 @@ export default class GuildQuestBoardUI extends BaseWindowUI {
         // ===== カテゴリフィルタータブ =====
         this._buildCategoryTabs(panelWidth, panelHeight);
 
-        this.descText = this.scene.add.text(0, panelHeight / 2 - 30, '↑↓で選択 / Enterで受注・報告', {
+        this.descText = this.scene.add.text(0, panelHeight / 2 - 25, '↑↓ / ホイールで選択  |  Enter / クリックで受注・報告', {
             fontSize: '11px', fontFamily: UI_FONT, color: '#aaaaaa'
         }).setOrigin(0.5);
         this.container.add(this.descText);
@@ -51,7 +51,7 @@ export default class GuildQuestBoardUI extends BaseWindowUI {
         this.maskShape = this.scene.add.graphics();
         this.maskShape.setScrollFactor(0);
         this.maskShape.fillStyle(0xffffff);
-        this.maskShape.fillRect(sceneWidth / 2 - panelWidth / 2 + 20, sceneHeight / 2 - 155, panelWidth - 40, 300);
+        this.maskShape.fillRect(sceneWidth / 2 - panelWidth / 2 + 20, sceneHeight / 2 - 150, panelWidth - 40, 320);
         this.maskShape.setVisible(false);
         const mask = this.maskShape.createGeometryMask();
 
@@ -87,6 +87,76 @@ export default class GuildQuestBoardUI extends BaseWindowUI {
         // マップ移動でUI本体はPhaserが破棄するが、キーボード監視とマスクの参照は
         // 明示的に解放しないと次回のギルド訪問時に古いUIを触ることがある。
         this.scene.events.once('shutdown', () => this.destroy());
+    }
+
+    _buildCategoryTabs(panelWidth, panelHeight) {
+        const tabs = [
+            { key: 'all',    label: 'すべて',    color: '#ffffff', hex: 0x4a90e2 },
+            { key: 'main',   label: '🌟メイン',   color: '#ffd700', hex: 0xffd700 },
+            { key: 'sub',    label: '📋サブ',     color: '#66aaff', hex: 0x66aaff },
+            { key: 'normal', label: '♻️ノーマル', color: '#66cc66', hex: 0x66cc66 },
+            { key: 'unique', label: '💎ユニーク', color: '#cc66ff', hex: 0xcc66ff }
+        ];
+
+        const tabW = 102;
+        const tabH = 26;
+        const gap = 8;
+        const totalW = tabs.length * tabW + (tabs.length - 1) * gap;
+        const startX = -totalW / 2 + tabW / 2;
+        const tabY = -178;
+
+        this.tabObjects = [];
+
+        tabs.forEach((tab, index) => {
+            const x = startX + index * (tabW + gap);
+            const tabContainer = this.scene.add.container(x, tabY);
+
+            const bg = this.scene.add.graphics();
+            tabContainer.add(bg);
+
+            const text = this.scene.add.text(0, 0, tab.label, {
+                fontSize: '11px',
+                fontFamily: UI_FONT,
+                color: tab.color,
+                style: 'bold'
+            }).setOrigin(0.5);
+            tabContainer.add(text);
+
+            tabContainer.setSize(tabW, tabH);
+            tabContainer.setInteractive({ useHandCursor: true });
+            tabContainer.on('pointerdown', (pointer, localX, localY, event) => {
+                if (event) event.stopPropagation();
+                if (this.activeCategory === tab.key) return;
+                this.activeCategory = tab.key;
+                this._updateTabHighlight();
+                this.selectedIndex = 0;
+                this.refreshList();
+                this.updateSelection();
+            });
+
+            this.container.add(tabContainer);
+            this.tabObjects.push({ key: tab.key, container: tabContainer, bg, text, info: tab, tabW, tabH });
+        });
+
+        this._updateTabHighlight();
+    }
+
+    _updateTabHighlight() {
+        this.tabObjects.forEach(({ key, bg, info, tabW, tabH }) => {
+            bg.clear();
+            const isActive = this.activeCategory === key;
+            if (isActive) {
+                bg.fillStyle(info.hex, 0.35);
+                bg.fillRoundedRect(-tabW / 2, -tabH / 2, tabW, tabH, 6);
+                bg.lineStyle(2, info.hex, 1);
+                bg.strokeRoundedRect(-tabW / 2, -tabH / 2, tabW, tabH, 6);
+            } else {
+                bg.fillStyle(0x0f1b29, 0.6);
+                bg.fillRoundedRect(-tabW / 2, -tabH / 2, tabW, tabH, 6);
+                bg.lineStyle(1, 0x4a90e2, 0.3);
+                bg.strokeRoundedRect(-tabW / 2, -tabH / 2, tabW, tabH, 6);
+            }
+        });
     }
 
     open() {
@@ -135,14 +205,23 @@ export default class GuildQuestBoardUI extends BaseWindowUI {
             }
         });
 
-        [...turnin.map(q => ({ ...q, mode: 'turnin' })),
+        const rowsToRender = [...turnin.map(q => ({ ...q, mode: 'turnin' })),
          ...active.map(q => ({ ...q, mode: 'active' })),
-         ...available.map(q => ({ ...q, mode: 'available' }))]
-            .forEach((row, index) => this.addRow(row, index));
+         ...available.map(q => ({ ...q, mode: 'available' }))];
+
+        if (rowsToRender.length === 0) {
+            const emptyText = this.scene.add.text(0, -30, '該当するクエストはありません', {
+                fontSize: '13px', fontFamily: UI_FONT, color: '#888888'
+            }).setOrigin(0.5);
+            this.listContainer.add(emptyText);
+            return;
+        }
+
+        rowsToRender.forEach((row, index) => this.addRow(row, index));
     }
 
     addRow({ id, def, mode }, index) {
-        const y = -180 + index * 80;
+        const y = -110 + index * 80;
         const box = this.scene.add.container(0, y);
 
         const boxBg = this.scene.add.graphics();
@@ -156,8 +235,10 @@ export default class GuildQuestBoardUI extends BaseWindowUI {
         const repeatCount = (q?.completedCount || 0);
         const repeatTag = def.repeatable && repeatCount > 0 ? ` ×${repeatCount}` : '';
         const repeatIcon = def.repeatable ? ' ♻' : '';
+        const cat = QUEST_CATEGORIES[def.category] || QUEST_CATEGORIES.sub;
+        const catBadge = `[${cat.icon}${cat.label}]`;
 
-        const title = this.scene.add.text(-270, -22, `${modeLabel}${repeatIcon} ${def.title}${repeatTag}`, {
+        const title = this.scene.add.text(-270, -22, `${modeLabel} ${catBadge}${repeatIcon} ${def.title}${repeatTag}`, {
             fontSize: '12px', fontFamily: UI_FONT, color: modeColor
         }).setOrigin(0, 0.5);
         box.add(title);
@@ -255,6 +336,7 @@ export default class GuildQuestBoardUI extends BaseWindowUI {
         if (this.maskShape?.active) this.maskShape.destroy();
         this.maskShape = null;
         this.rows = [];
+        this.tabObjects = [];
         super.destroy();
         this.container = null;
         this.overlay = null;

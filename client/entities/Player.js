@@ -165,9 +165,17 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             reincarnatedSkillLevels: (saved.reincarnatedSkillLevels && typeof saved.reincarnatedSkillLevels === 'object') ? { ...saved.reincarnatedSkillLevels } : {},
             unlockedSkills: saved.unlockedSkills || [],
             skillLevels: saved.skillLevels || {}, // { skillId: level }
+            customItems: (saved.customItems && typeof saved.customItems === 'object') ? { ...saved.customItems } : {},
             // スロット数を3→8に拡張。古いセーブデータ(3枠)も足りない分をnullで埋めて引き継ぐ
             activeSkills: this.padActiveSkills(saved.activeSkills)
         };
+
+        // 作成されたオリジナル装備をITEMS辞書に復元
+        if (this.stats.customItems) {
+            Object.values(this.stats.customItems).forEach(item => {
+                if (item?.id) ITEMS[item.id] = item;
+            });
+        }
 
         // 輪廻転生したプレイヤー（または既に転生スキルがある場合）、集めたスキルを確実に復元・同期
         if (this.stats.reincarnationCount > 0 || this.stats.reincarnatedSkills.length > 0) {
@@ -176,6 +184,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.stats.reincarnatedSkills = [...mergedSkills];
             this.stats.skillLevels = { ...this.stats.reincarnatedSkillLevels, ...this.stats.skillLevels };
             this.stats.reincarnatedSkillLevels = { ...this.stats.skillLevels };
+        }
+
+        // リモートプレイヤーはローカルのセーブデータ称号を引き継がないように初期化
+        if (!this.isLocal) {
+            this.stats.activeTitle = null;
+            this.stats.activeTitleColor = '#ffff00';
+            this.stats.unlockedTitles = [];
         }
 
         // ステータスポイントで割り振った分の記録（ステータスリセットの書で返還するために使う）。
@@ -532,6 +547,26 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.saveStats();
     }
 
+    removeItem(itemId, amount = 1) {
+        if (!this.stats.inventory) return;
+        let remaining = amount;
+        for (let i = this.stats.inventory.length - 1; i >= 0 && remaining > 0; i--) {
+            const entry = this.stats.inventory[i];
+            const currentId = typeof entry === 'string' ? entry : entry.id;
+            if (currentId === itemId) {
+                if (typeof entry === 'object' && entry.count && entry.count > remaining) {
+                    entry.count -= remaining;
+                    remaining = 0;
+                } else {
+                    const currentCount = typeof entry === 'object' ? (entry.count || 1) : 1;
+                    remaining -= currentCount;
+                    this.stats.inventory.splice(i, 1);
+                }
+            }
+        }
+        this.saveStats();
+    }
+
     unlockSkill(skillId) {
         if (!this.isLocal) return false;
         if (this.stats.unlockedSkills.includes(skillId)) return false; // 既に解放済み
@@ -826,6 +861,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.stats.burnChance = 0;     // 0〜1（火属性: 炎上/炎症付与率）
         this.stats.burnDamage = 0;     // 炎上の1tickあたりのダメージ
         this.stats.armorBreakChance = 0; // 0〜1（土属性: アーマーブレイク/防御崩し付与率）
+        this.stats.extraStatusEffects = []; // 新状態異常（スタン、石化、呪い、出血、沈黙、失明、混乱等）
 
         const weapon = ITEMS[this.stats.equipment.weapon];
         const armor = ITEMS[this.stats.equipment.armor];
@@ -851,12 +887,33 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             const atkSource = isMagical ? (item.matk ?? s.matk ?? item.atk ?? s.attack) : (item.atk ?? s.attack);
             this.stats.atk += getInt(atkSource);
             this.stats.def += getInt(item.def || s.defense);
+            this.stats.maxHp += getInt(item.maxHp || s.maxHp || 0);
+            this.stats.maxMp += getInt(item.maxMp || s.maxMp || 0);
+            this.stats.speedBonus += getInt(item.speedBonus || s.speedBonus || s.speed || 0);
 
             // 特殊ステータス
             this.stats.critChance += getRate(item.critChance || s.critChance);
             this.stats.lifesteal += getRate(item.lifesteal || s.lifesteal);
-            this.stats.speedBonus += getInt(item.speedBonus || s.speedBonus);
             this.stats.dodgeChanceFlat += getRate(item.dodgeChance || s.dodgeChance);
+
+            // クラフト装備等の特殊状態異常配列
+            if (Array.isArray(item.statusEffects)) {
+                item.statusEffects.forEach(se => {
+                    const ch = getRate(se.chance);
+                    if (se.key === 'freeze') this.stats.freezeChance = Math.max(this.stats.freezeChance, ch);
+                    else if (se.key === 'paralyze') this.stats.paralyzeChance = Math.max(this.stats.paralyzeChance, ch);
+                    else if (se.key === 'poison') {
+                        this.stats.poisonChance = Math.max(this.stats.poisonChance, ch);
+                        this.stats.poisonDamage = Math.max(this.stats.poisonDamage, Math.ceil(this.stats.atk * 0.15));
+                    } else if (se.key === 'burn') {
+                        this.stats.burnChance = Math.max(this.stats.burnChance, ch);
+                        this.stats.burnDamage = Math.max(this.stats.burnDamage, Math.ceil(this.stats.atk * 0.18));
+                    } else {
+                        if (!this.stats.extraStatusEffects) this.stats.extraStatusEffects = [];
+                        this.stats.extraStatusEffects.push({ key: se.key, chance: ch });
+                    }
+                });
+            }
 
             // 属性・特殊効果
             // xxxResist / xxxDamage（xxxは属性id。旧名 ice も水として集計）。値が関数の項目にも対応
@@ -968,13 +1025,23 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             if (s.expMultiplier) this.stats.expMultiplier += (getVal(s.expMultiplier) - 1.0);
         });
 
-        // 鍛冶屋で付与した属性（武器/防具のアイテムIDに紐づく）
-        this.stats.weaponElement = this.stats.itemElements?.[this.stats.equipment.weapon] || null;
-        this.stats.armorElement = this.stats.itemElements?.[this.stats.equipment.armor] || null;
+        // 鍛冶屋で付与した属性、または武器自体の属性(element/elements)
+        const customElements = (weapon?.elements && weapon.elements.length > 0)
+            ? [...weapon.elements]
+            : (weapon?.element ? [weapon.element] : []);
+        const forgedElement = this.stats.itemElements?.[this.stats.equipment.weapon];
+        if (forgedElement && !customElements.includes(forgedElement)) {
+            customElements.push(forgedElement);
+        }
+        this.stats.weaponElements = customElements;
+        this.stats.weaponElement = customElements.length > 1 ? customElements : (customElements[0] || null);
+        this.stats.armorElement = this.stats.itemElements?.[this.stats.equipment.armor] || armor?.element || null;
 
-        // 武器の属性ごとの追加効果（凍結/麻痺/毒など）。効果の中身は data/elements.js の weaponBonus で定義
-        Object.entries(getWeaponElementBonus(this.stats.weaponElement, this.stats.atk)).forEach(([key, value]) => {
-            this.stats[key] = (this.stats[key] || 0) + value;
+        // 武器の属性ごとの追加効果（凍結/麻痺/毒など）。複合属性は全属性分を適用
+        customElements.forEach(el => {
+            Object.entries(getWeaponElementBonus(el, this.stats.atk)).forEach(([key, value]) => {
+                this.stats[key] = (this.stats[key] || 0) + value;
+            });
         });
 
         // 強化ボーナスを適用（装備スロットごとの enhanceLevel × 5%）
@@ -1237,9 +1304,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         // 土属性: アーマーブレイク（防御崩し）
         const isArmorBreak = this.stats.armorBreakChance > 0 && Math.random() < this.stats.armorBreakChance;
 
+        // 特殊状態異常（スタン、石化、呪い、出血、沈黙、失明、混乱等）
+        const extraStatusHits = [];
+        if (Array.isArray(this.stats.extraStatusEffects)) {
+            this.stats.extraStatusEffects.forEach(se => {
+                if (se.chance > 0 && Math.random() < se.chance) {
+                    extraStatusHits.push(se.key);
+                }
+            });
+        }
+
         return {
             amount, isCrit, isExecute, isFreeze, isParalyze, isPoison, poisonTick,
-            isBurn, burnTick, isArmorBreak,
+            isBurn, burnTick, isArmorBreak, extraStatusHits,
             isElementAdvantage, isElementWeak, element: attackElement,
         };
     }

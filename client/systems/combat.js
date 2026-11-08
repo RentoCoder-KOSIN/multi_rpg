@@ -11,6 +11,7 @@ import { getElementColor } from '../data/elements.js';
 import { JOBS } from '../data/jobs.js';
 import { isAdminFlag } from '../ui/AdminUI.js';
 import { COMBAT_CONFIG } from '../gameConstants.js';
+import { executeFriendWarp } from '../ui/FriendWarpDialogUI.js';
 
 // 職業が未設定（none）などのときに使う通常攻撃の既定値。職業ごとの値は data/jobs.js の attackRange / attackHit
 const DEFAULT_BASIC_ATTACK_RANGE = 80;
@@ -196,6 +197,96 @@ function applyArmorBreak(scene, enemy) {
     });
 }
 
+// 出血（物理・刃物系）: 敵から鮮血が吹き出し、継続ダメージ
+function applyBleedDot(scene, enemy, player) {
+    if (!enemy || !enemy.active) return;
+    const txt = scene.add.text(enemy.x, enemy.y - 45, '🩸出血', {
+        fontSize: '13px', color: '#ff0033', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 2
+    }).setOrigin(0.5);
+    scene.tweens.add({ targets: txt, y: enemy.y - 75, alpha: 0, duration: 900, onComplete: () => txt.destroy() });
+
+    const tickDmg = Math.max(5, Math.ceil((player?.stats?.atk || 20) * 0.1));
+    let ticksLeft = 4;
+    const timer = scene.time.addEvent({
+        delay: 700,
+        repeat: 3,
+        callback: () => {
+            ticksLeft--;
+            if (!enemy || !enemy.active) { timer.remove(); return; }
+            enemy.takeDamage(tickDmg, player, null, { color: '#ff0033' });
+            if (ticksLeft <= 0) timer.remove();
+        }
+    });
+}
+
+// 呪い: 被ダメージを1.3倍にし、紫のオーラを纏わせる
+function applyCurse(scene, enemy) {
+    if (!enemy || !enemy.active) return;
+    enemy._armorBreakUntil = Math.max(enemy._armorBreakUntil || 0, Date.now() + 6000);
+    const txt = scene.add.text(enemy.x, enemy.y - 50, '💀呪縛！', {
+        fontSize: '14px', color: '#cc44ff', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 3
+    }).setOrigin(0.5);
+    scene.tweens.add({ targets: txt, y: enemy.y - 85, scale: 1.2, alpha: 0, duration: 1000, onComplete: () => txt.destroy() });
+    scene.tweens.add({
+        targets: enemy,
+        tint: 0x8800cc,
+        yoyo: true,
+        repeat: 3,
+        duration: 200,
+        onComplete: () => { if (enemy?.active && !enemy.frozenUntil) enemy.clearTint(); }
+    });
+}
+
+// スタン: 強烈な衝撃で一時行動停止
+function applyStun(scene, enemy) {
+    if (!enemy || !enemy.active) return;
+    const txt = scene.add.text(enemy.x, enemy.y - 50, '💥スタン！', {
+        fontSize: '14px', color: '#ffaa00', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 3
+    }).setOrigin(0.5);
+    scene.tweens.add({ targets: txt, y: enemy.y - 85, scale: 1.3, alpha: 0, duration: 800, onComplete: () => txt.destroy() });
+}
+
+// 石化: 敵を完全硬直させて灰色にする
+function applyPetrify(scene, enemy) {
+    if (!enemy || !enemy.active) return;
+    const txt = scene.add.text(enemy.x, enemy.y - 50, '🪨石化！', {
+        fontSize: '14px', color: '#aaaaaa', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 3
+    }).setOrigin(0.5);
+    scene.tweens.add({ targets: txt, y: enemy.y - 85, scale: 1.2, alpha: 0, duration: 1200, onComplete: () => txt.destroy() });
+    if (enemy.setTint) enemy.setTint(0x666666);
+    scene.time.delayedCall(4000, () => {
+        if (enemy?.active && !enemy.frozenUntil) enemy.clearTint();
+    });
+}
+
+// 混乱: 敵の向きを狂わせる
+function applyConfuse(scene, enemy) {
+    if (!enemy || !enemy.active) return;
+    const txt = scene.add.text(enemy.x, enemy.y - 45, '💫混乱', {
+        fontSize: '13px', color: '#ff88ff', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 2
+    }).setOrigin(0.5);
+    scene.tweens.add({ targets: txt, y: enemy.y - 75, alpha: 0, duration: 900, onComplete: () => txt.destroy() });
+    if (typeof enemy.changeDirection === 'function') enemy.changeDirection();
+}
+
+// 失明: 敵の視界を奪う
+function applyBlind(scene, enemy) {
+    if (!enemy || !enemy.active) return;
+    const txt = scene.add.text(enemy.x, enemy.y - 45, '👁️失明', {
+        fontSize: '13px', color: '#666666', fontFamily: UI_FONT, stroke: '#fff', strokeThickness: 1
+    }).setOrigin(0.5);
+    scene.tweens.add({ targets: txt, y: enemy.y - 75, alpha: 0, duration: 900, onComplete: () => txt.destroy() });
+}
+
+// 沈黙: スキル使用不可
+function applySilence(scene, enemy) {
+    if (!enemy || !enemy.active) return;
+    const txt = scene.add.text(enemy.x, enemy.y - 45, '🔇沈黙', {
+        fontSize: '13px', color: '#8888cc', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 2
+    }).setOrigin(0.5);
+    scene.tweens.add({ targets: txt, y: enemy.y - 75, alpha: 0, duration: 900, onComplete: () => txt.destroy() });
+}
+
 // 与ダメージ判定(getDamage結果)に応じて、クリティカル/即死/属性相性/状態異常の
 // 演出とサーバーへの状態異常付与をまとめて行う。基本攻撃・スキル両方から呼ばれる。
 function applyHitEffects(scene, enemy, player, damageData) {
@@ -206,6 +297,19 @@ function applyHitEffects(scene, enemy, player, damageData) {
     if (damageData.isPoison) applyPoisonDot(scene, enemy, player, damageData.poisonTick);
     if (damageData.isBurn) applyBurnDot(scene, enemy, player, damageData.burnTick);
     if (damageData.isArmorBreak) applyArmorBreak(scene, enemy);
+
+    // 特殊状態異常（スタン、石化、呪い、出血、沈黙、失明、混乱等）
+    if (Array.isArray(damageData.extraStatusHits)) {
+        damageData.extraStatusHits.forEach(statusKey => {
+            if (statusKey === 'stun') applyStun(scene, enemy);
+            else if (statusKey === 'petrify') applyPetrify(scene, enemy);
+            else if (statusKey === 'curse') applyCurse(scene, enemy);
+            else if (statusKey === 'bleed') applyBleedDot(scene, enemy, player);
+            else if (statusKey === 'confuse') applyConfuse(scene, enemy);
+            else if (statusKey === 'blind') applyBlind(scene, enemy);
+            else if (statusKey === 'silence') applySilence(scene, enemy);
+        });
+    }
 }
 
 // スキル固有の状態異常。装備由来の状態異常とは独立して抽選し、両方が発生した場合も
@@ -230,8 +334,15 @@ function getSkillStatusEffects(skill, player) {
 
 function mergeStatusEffects(damageData, skillEffects) {
     const effects = {};
-    if (damageData.isFreeze || skillEffects.freezeMs) effects.freezeMs = Math.max(skillEffects.freezeMs || 0, damageData.isFreeze ? FREEZE_DURATION_MS : 0);
-    if (!effects.freezeMs && (damageData.isParalyze || skillEffects.paralyzeMs)) effects.paralyzeMs = Math.max(skillEffects.paralyzeMs || 0, damageData.isParalyze ? PARALYZE_DURATION_MS : 0);
+    const isPetrify = damageData.extraStatusHits?.includes('petrify');
+    const isStun = damageData.extraStatusHits?.includes('stun');
+
+    if (damageData.isFreeze || skillEffects.freezeMs || isPetrify) {
+        effects.freezeMs = Math.max(skillEffects.freezeMs || 0, isPetrify ? 4000 : (damageData.isFreeze ? FREEZE_DURATION_MS : 0));
+    }
+    if (!effects.freezeMs && (damageData.isParalyze || skillEffects.paralyzeMs || isStun)) {
+        effects.paralyzeMs = Math.max(skillEffects.paralyzeMs || 0, isStun ? 2500 : (damageData.isParalyze ? PARALYZE_DURATION_MS : 0));
+    }
     if (damageData.isPoison || skillEffects.poisonMs) {
         effects.poisonMs = Math.max(skillEffects.poisonMs || 0, damageData.isPoison ? POISON_TICK_MS * POISON_TICKS : 0);
         effects.poisonTick = Math.max(skillEffects.poisonTick || 0, damageData.isPoison ? damageData.poisonTick || 0 : 0);
@@ -315,8 +426,14 @@ export function performBasicAttack(scene) {
                 const damage = damageData.amount;
 
                 const effects = {};
-                if (damageData.isFreeze) effects.freezeMs = FREEZE_DURATION_MS;
-                else if (damageData.isParalyze) effects.paralyzeMs = PARALYZE_DURATION_MS;
+                const isPetrify = damageData.extraStatusHits?.includes('petrify');
+                const isStun = damageData.extraStatusHits?.includes('stun');
+
+                if (damageData.isFreeze || isPetrify) {
+                    effects.freezeMs = isPetrify ? 4000 : FREEZE_DURATION_MS;
+                } else if (damageData.isParalyze || isStun) {
+                    effects.paralyzeMs = isStun ? 2500 : PARALYZE_DURATION_MS;
+                }
                 enemy.takeDamage(damage, player, Object.keys(effects).length ? effects : null, buildHitInfo(damageData));
                 enemy.lastHitTime = scene.time.now;
 
@@ -369,7 +486,7 @@ export function isSkillReady(player, skillId) {
  */
 export function skillNeedsAim(skillId) {
     if (!SKILLS[skillId]) return false;
-    return !isSummonSkill(skillId) && skillId !== 'command_attack';
+    return !isSummonSkill(skillId) && skillId !== 'command_attack' && skillId !== 'friend_warp';
 }
 
 /** スキル射程はスキル定義値で固定。レベルは威力だけを上げる。 */
@@ -511,6 +628,32 @@ export function usePlayerSkill(scene, skillId) {
             if (scene.notificationUI) scene.notificationUI.show('召喚獣に突撃を命じた！', 'success');
         } else {
             if (scene.notificationUI) scene.notificationUI.show('召喚獣がいません！', 'error');
+        }
+        return;
+    }
+
+    if (skillId === 'friend_warp') {
+        const nm = scene.networkManager;
+        const party = nm?.partyData;
+        const myId = nm?.getPlayerId();
+        const members = (party?.members || []).filter(m => m.id !== myId);
+
+        if (!party || members.length === 0) {
+            if (scene.notificationUI) scene.notificationUI.show('テレポート可能なパーティーメンバーがいません！', 'error');
+            player.stats.mp += mpCost;
+            delete player.skillCooldowns[skillId];
+            player.saveStats();
+            return;
+        }
+
+        if (members.length === 1) {
+            executeFriendWarp(scene, members[0]);
+        } else {
+            if (scene.friendWarpDialogUI) {
+                scene.friendWarpDialogUI.openWithMembers(members);
+            } else {
+                executeFriendWarp(scene, members[0]);
+            }
         }
         return;
     }

@@ -138,6 +138,29 @@ export const JOBS = {
         },
         nextJobs: ['exorcist', 'saint', 'war_priest', 'shadow_priest']
     }),
+    artisan: defineJob({
+        id: 'artisan',
+        type: 'physical',
+        name: '職人',
+        description: '武器や防具、宝具の真価を引き出し創り出す生産の達人。クラフト費用・素材を大幅軽減。',
+        atkBonus: 5,
+        defBonus: 5,
+        hpBonus: 30,
+        atkMult: 1.05, defMult: 1.05, hpMult: 1.1, mpMult: 1.0,
+        attackCooldownMult: 0.95,
+        attackRange: 85,
+        attackHit: 'area',
+        skills: {
+            1: ['hammer_strike'],
+            3: ['crafting_mastery'],
+            5: ['armor_reinforce'],
+            8: ['metal_temper'],
+            12: ['explosive_flask'],
+            15: ['artisan_aura'],
+            20: ['overclock_forge']
+        },
+        nextJobs: ['master_smith', 'alchemist', 'runemaster']
+    }),
 
     // --- 上位職 (Lv50〜) ---
     // 基本職ごとに上位職が4つずつ（fighter: ナイト/バーサーカー/サムライ/ドラゴンナイト ...）。
@@ -626,6 +649,60 @@ export const JOBS = {
             55: ['void_prison'],
             60: ['dark_devotion'],
             65: ['twilight_veil']
+        }
+    }),
+    master_smith: defineJob({
+        id: 'master_smith',
+        type: 'physical',
+        name: 'マスタースミス',
+        description: '鍛冶の頂を極めし名工。大槌の破壊力と至高の防具生成力を誇る。',
+        atkBonus: 20,
+        defBonus: 15,
+        hpBonus: 90,
+        reqLevel: 50,
+        atkMult: 1.25, defMult: 1.25, hpMult: 1.3, mpMult: 0.9,
+        attackCooldownMult: 0.9,
+        attackRange: 95,
+        attackHit: 'area',
+        skills: {
+            50: ['grand_slam'],
+            55: ['master_refine']
+        }
+    }),
+    alchemist: defineJob({
+        id: 'alchemist',
+        type: 'magical',
+        name: 'アルケミスト',
+        description: '物質と魔力の変成を司る錬金術師。劇薬噴射や秘薬精製を行う。',
+        atkBonus: 18,
+        defBonus: 10,
+        hpBonus: 60,
+        reqLevel: 50,
+        atkMult: 1.2, defMult: 1.1, hpMult: 1.15, mpMult: 1.5,
+        attackCooldownMult: 0.95,
+        attackRange: 180,
+        attackHit: 'area',
+        skills: {
+            50: ['acid_spray'],
+            55: ['philosopher_stone']
+        }
+    }),
+    runemaster: defineJob({
+        id: 'runemaster',
+        type: 'magical',
+        name: 'ルーンマスター',
+        description: '古代の神聖文字を刻む魔導工匠。強力な結界と魔力付与を操る。',
+        atkBonus: 16,
+        defBonus: 14,
+        hpBonus: 70,
+        reqLevel: 50,
+        atkMult: 1.2, defMult: 1.2, hpMult: 1.2, mpMult: 1.4,
+        attackCooldownMult: 0.9,
+        attackRange: 150,
+        attackHit: 'area',
+        skills: {
+            50: ['rune_shield'],
+            55: ['enchanted_weapon']
         }
     })
 };

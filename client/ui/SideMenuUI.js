@@ -11,6 +11,7 @@ const MENU_ITEMS = [
     { icon: '📊', label: 'Sta', key: 'P', color: '#ffd700', ui: 'statAllocationUI' },
     { icon: '📜', label: 'Qst', key: 'Q', color: '#00ccaa', ui: 'questLogUI' },
     { icon: '🔮', label: 'Skl', key: 'K', color: '#533483', ui: 'skillManagerUI' },
+    { icon: '🔨', label: 'Crf', key: 'B', color: '#ffaa00', ui: 'craftingUI' },
     { icon: '🏆', label: 'Ach', key: 'U', color: '#ffd700', ui: 'achievementUI' },
     { icon: '🤝', label: 'Trd', key: 'R', color: '#44aaff', ui: 'tradeUI' },
     { icon: '👥', label: 'Pty', key: 'V', color: '#00ff00', ui: 'partyUI' },

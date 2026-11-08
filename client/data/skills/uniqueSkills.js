@@ -87,4 +87,21 @@ export const UNIQUE_SKILLS = {
         description: '聖なる炎で味方を包み込む。攻撃力+50%・防御力+50%（20秒）。【クエスト限定スキル】',
         effect: { buffType: 'attack_buff', buffMult: 0.5, buffDuration: 20000 },
     }),
+
+    // ===== 時空を超える絆クエスト報酬 =====
+    // friend_warp_quest: 仲間と共に魔物を討伐 → フレンドワープ
+    friend_warp: active({
+        id: 'friend_warp',
+        name: 'フレンドワープ 【UNIQUE】',
+        targetType: 'party',
+        vfx: 'support',
+        cd: 8000,
+        mpCost: 20,
+        range: 0,
+        rangeType: 'circle',
+        color: 0x00ffff,
+        icon: '🌀',
+        description: '時空を超えてチーム内の任意のプレイヤーの元へ瞬時にテレポートする。【特殊クエスト限定スキル】',
+        hitType: 'single',
+    }),
 };

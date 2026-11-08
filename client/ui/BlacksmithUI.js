@@ -61,18 +61,24 @@ export default class BlacksmithUI extends BaseWindowUI {
 
         this._tabBtns = {};
         const tabs = [
-            { key: 'enhance', label: '⚔️ 装備強化', x: 20 },
-            { key: 'element', label: '🔮 属性付与', x: 160 },
+            { key: 'enhance', label: '⚔️ 装備強化', x: -40 },
+            { key: 'element', label: '🔮 属性付与', x: 90 },
+            { key: 'craft',   label: '🔨 クラフト',   x: 220 },
         ];
 
         tabs.forEach(t => {
-            const btn = this.scene.add.rectangle(t.x, tabY, 120, 28, 0x222244)
+            const btn = this.scene.add.rectangle(t.x, tabY, 115, 28, 0x222244)
                 .setInteractive({ useHandCursor: true });
             const lbl = this.scene.add.text(t.x, tabY, t.label, {
                 fontSize: '12px', fontFamily: UI_FONT, color: '#ffffff'
             }).setOrigin(0.5);
 
             btn.on('pointerdown', () => {
+                if (t.key === 'craft') {
+                    this.close();
+                    if (this.scene.craftingUI) this.scene.craftingUI.open();
+                    return;
+                }
                 this._currentTab = t.key;
                 this._updateTabStyles();
                 this.refresh();

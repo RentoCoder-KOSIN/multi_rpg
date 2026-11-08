@@ -13,6 +13,7 @@ import { SUMMONER_SKILLS } from './summonerSkills.js';
 import { ADVANCED_SKILLS } from './advancedSkills.js';
 import { ADVANCED_SKILLS_EXTRA } from './advancedSkillsExtra.js';
 import { PRIEST_SKILLS } from './priestSkills.js';
+import { ARTISAN_SKILLS } from './artisanSkills.js';
 import { UNIQUE_SKILLS } from './uniqueSkills.js';
 
 /**
@@ -32,6 +33,7 @@ export const SKILLS = {
     ...RANGER_SKILLS,
     ...SUMMONER_SKILLS,
     ...PRIEST_SKILLS,
+    ...ARTISAN_SKILLS,
 
     // 上位職スキル
     ...ADVANCED_SKILLS,
@@ -67,8 +69,12 @@ export const SKILLS_BY_JOB = {
     ranger: ['rapid_fire', 'arrow_rain', 'piercing_shot', 'multi_shot', 'wind_walker', 'explosive_arrow', 'hunters_focus'],
     summoner: ['summon', 'mega_summon', 'spirit_bolt', 'command_attack', 'familiar_speed', 'spirit_link', 'beast_bond'],
     priest: ['heal', 'attack_buff', 'holy_arrow', 'defense_buff', 'speed_buff', 'summon_boost', 'blessed_vitality'],
+    artisan: ['hammer_strike', 'crafting_mastery', 'armor_reinforce', 'metal_temper', 'explosive_flask', 'artisan_aura', 'overclock_forge'],
 
     // 上位職（継承元のスキルは含めず、その職業の代で新規に増える分だけ）
+    master_smith: ['grand_slam', 'master_refine'],
+    alchemist: ['acid_spray', 'philosopher_stone'],
+    runemaster: ['rune_shield', 'enchanted_weapon'],
     knight: ['judgment_cut', 'guardian_slash', 'veteran_instinct', 'last_stand'],
     archmage: ['abyss_storm', 'chain_lightning', 'arcane_efficiency', 'mind_over_matter'],
     paladin: ['holy_sanctuary', 'smite', 'aegis_of_faith', 'retribution_aura'],

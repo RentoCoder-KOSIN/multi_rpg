@@ -131,14 +131,35 @@ export function getElementMultiplier(attackElement, defenseElement) {
  */
 export function getBlendedElementMultiplier(skillElement, weaponElement, defenseElement) {
     const skillEl = skillElement || null;
-    const weaponEl = weaponElement || null;
+    // 複合属性（配列）対応: 敵の属性に対して最も有利な倍率を持つ属性を採用
+    let weaponEl = null;
+    let weaponMult = 1.0;
+    if (Array.isArray(weaponElement) && weaponElement.length > 0) {
+        let bestMult = 1.0;
+        let bestEl = weaponElement[0];
+        weaponElement.forEach(el => {
+            const m = getElementMultiplier(el, defenseElement);
+            if (m > bestMult || (bestMult === 1.0 && m !== 1.0)) {
+                bestMult = m;
+                bestEl = el;
+            }
+        });
+        weaponEl = bestEl;
+        weaponMult = bestMult;
+    } else {
+        weaponEl = weaponElement || null;
+        weaponMult = getElementMultiplier(weaponEl, defenseElement);
+    }
+
     let multiplier = 1.0;
     if (skillEl && weaponEl) {
         const { skillWeight, weaponWeight } = ELEMENT_RULES;
         multiplier = (getElementMultiplier(skillEl, defenseElement) * skillWeight
-            + getElementMultiplier(weaponEl, defenseElement) * weaponWeight) / (skillWeight + weaponWeight);
-    } else if (skillEl || weaponEl) {
-        multiplier = getElementMultiplier(skillEl || weaponEl, defenseElement);
+            + weaponMult * weaponWeight) / (skillWeight + weaponWeight);
+    } else if (skillEl) {
+        multiplier = getElementMultiplier(skillEl, defenseElement);
+    } else if (weaponEl) {
+        multiplier = weaponMult;
     }
     // 浮動小数の誤差で 1.0 がずれないよう小数2桁に丸める
     return { multiplier: Math.round(multiplier * 100) / 100, element: skillEl || weaponEl || null };

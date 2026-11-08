@@ -685,6 +685,25 @@ export const QUESTS = {
             skill: "eternal_hunter_mark",
         },
     },
+
+    friend_warp_quest: {
+        id: "friend_warp_quest",
+        title: "時空を超える絆",
+        description: "時空を超える絆の試練。魔物を25体討伐し、パーティーメンバーの元へ瞬時にテレポートする秘術「フレンドワープ」を会得せよ。",
+        type: "kill",
+        target: [
+            "slime", "goblin", "bat", "skeleton", "orc", "boss", "gargoyle", "golem",
+            "dark_knight", "dragon", "forest_hornet", "forest_wolf", "swamp_viper",
+            "ruins_gargoyle", "magma_slime", "fire_elemental", "hell_hound", "lava_golem"
+        ],
+        required: 25,
+        category: "unique",
+        reward: {
+            exp: 80000,
+            gold: 50000,
+            skill: "friend_warp",
+        },
+    },
 };
 
 // ===== マップの進行（クエストで次のマップへ進む仕組み）=====

@@ -82,6 +82,13 @@ export function registerInputHandlers(scene) {
         }
     });
 
+    // B: 工房・オリジナル装備生成 (Crafting)
+    scene.input.keyboard.on('keydown-B', () => {
+        if (!scene.shopUI?.isOpen && !scene.inventoryUI?.isOpen && !scene.equipmentUI?.isOpen) {
+            scene.craftingUI?.toggle();
+        }
+    });
+
     // M: サイドメニュー開閉
     scene.input.keyboard.on('keydown-M', () => {
         scene.sideMenuUI?.toggle();
@@ -134,6 +141,10 @@ function closeTopWindow(scene) {
         scene.skillManagerUI.toggle();
     } else if (scene.blacksmithUI && scene.blacksmithUI.isOpen) {
         scene.blacksmithUI.toggle();
+    } else if (scene.craftingUI && scene.craftingUI.isOpen) {
+        scene.craftingUI.toggle();
+    } else if (scene.friendWarpDialogUI && scene.friendWarpDialogUI.isOpen) {
+        scene.friendWarpDialogUI.close();
     } else if (scene.reincarnationUI && scene.reincarnationUI.isOpen) {
         scene.reincarnationUI.toggle();
     } else if (scene.achievementUI && scene.achievementUI.isOpen) {

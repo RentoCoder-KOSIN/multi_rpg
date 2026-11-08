@@ -192,6 +192,16 @@ export const ITEMS = {
         stats: { attack: 5 },
         description: "駆け出しの冒険者が使う剣。",
     }),
+    crafting_hammer: defineItem({
+        id: "crafting_hammer",
+        name: "見習いの鍛冶槌",
+        type: "weapon",
+        level: 1,
+        price: 150,
+        weaponClass: "axe",
+        stats: { attack: 7, defense: 3, maxHp: 15 },
+        description: "職人が駆け出しのころに使う頑丈な鉄槌。叩きごたえがある。",
+    }),
     beginner_staff: defineItem({
         id: "beginner_staff",
         name: "初心者の杖",

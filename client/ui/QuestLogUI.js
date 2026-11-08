@@ -1,6 +1,7 @@
 import { UI_FONT } from '../fontConfig.js';
 import BaseWindowUI from "./BaseWindowUI.js";
 import { QUEST_UI_CONFIG } from "../gameConstants.js";
+import { QUESTS, QUEST_CATEGORIES } from "../data/quests.js";
 
 const PER_PAGE = QUEST_UI_CONFIG.LOG_PER_PAGE;
 
@@ -109,7 +110,18 @@ export default class QuestLogUI extends BaseWindowUI {
             bg.strokeRoundedRect(-w / 2 + 30, y, w - 60, itemH, 10);
             this.bodyContainer.add(bg);
 
-            this.bodyContainer.add(this.scene.add.text(-w / 2 + 45, y + 10, `${done ? '✅' : '🎯'} ${q.title}`, {
+            const def = QUESTS[q.id];
+            const cat = def?.category && QUEST_CATEGORIES[def.category] ? QUEST_CATEGORIES[def.category] : QUEST_CATEGORIES.sub;
+
+            // カテゴリバッジ（色付き）
+            const catBadgeText = this.scene.add.text(-w / 2 + 45, y + 10, `[${cat.icon}${cat.label}]`, {
+                fontSize: '11px', fontFamily: font, color: cat.color, style: 'bold'
+            });
+            this.bodyContainer.add(catBadgeText);
+
+            // ステータス & タイトル
+            const titleX = -w / 2 + 45 + catBadgeText.width + 6;
+            this.bodyContainer.add(this.scene.add.text(titleX, y + 10, `${done ? '✅' : '🎯'} ${q.title}`, {
                 fontSize: '11px', fontFamily: font, color: done ? '#00ffcc' : '#ffffff'
             }));
             this.bodyContainer.add(this.scene.add.text(-w / 2 + 45, y + 34, q.description || '', {
