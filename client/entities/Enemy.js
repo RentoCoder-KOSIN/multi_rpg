@@ -105,6 +105,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         // 敵の種類に応じたサイズと当たり判定の調整
         this.adjustSizeAndHitbox();
 
+        // 初期の頭上位置にHPバーと名前タグを即座に配置
+        this.updateHealthBar();
+
         this.on('destroy', () => {
             if (this.hpBar) this.hpBar.destroy();
             if (this.hpBarBg) this.hpBarBg.destroy();

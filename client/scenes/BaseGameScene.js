@@ -237,6 +237,17 @@ export default class BaseGameScene extends Phaser.Scene {
         this.networkManager.checkPendingPlayers();
         this.networkManager.updateRemotePlayers();
         this.networkManager.updateEnemies(time, delta);
+
+        // ローカル管理の敵（無限の深淵や特殊イベントの敵）の更新
+        if (Array.isArray(this.enemies)) {
+            for (let i = this.enemies.length - 1; i >= 0; i--) {
+                const e = this.enemies[i];
+                if (e && e.active && !e.isServerManaged) {
+                    e.update(time, delta);
+                }
+            }
+        }
+
         updateAim(this); // 敵の位置が更新された後に、範囲と赤ハイライトを描く
 
         if (this.showEnemyDebug && this.enemyDebugText && this.enemyDebugText.visible) {

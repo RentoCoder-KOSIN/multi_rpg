@@ -40,13 +40,14 @@ export class AbyssManager {
 
     createHUD() {
         const scene = this.scene;
-        const cx = scene.scale.width / 2;
+        // カメラの実際の描画幅の中央を基準にする
+        const cx = (scene.cameras?.main?.width || scene.scale.width) / 2;
 
-        this.hudContainer = scene.add.container(cx, 40);
+        this.hudContainer = scene.add.container(cx, 30);
         this.hudContainer.setScrollFactor(0);
         this.hudContainer.setDepth(15000);
 
-        const bg = scene.add.rectangle(0, 0, 360, 48, 0x0a0a1a, 0.85)
+        const bg = scene.add.rectangle(0, 0, 260, 38, 0x0a0a1a, 0.85)
             .setStrokeStyle(2, 0xa855f7, 0.9);
 
         const isBossFloor = this.floor % 5 === 0;
@@ -54,15 +55,15 @@ export class AbyssManager {
             ? `⚔️ 【深淵 第 ${this.floor} 層 - BOSS】`
             : `💀 【深淵 第 ${this.floor} 層】`;
 
-        this.titleLabel = scene.add.text(0, -8, titleText, {
-            fontSize: '14px',
+        this.titleLabel = scene.add.text(0, -7, titleText, {
+            fontSize: '13px',
             fontFamily: UI_FONT,
             color: isBossFloor ? '#f43f5e' : '#c084fc',
             stroke: '#000',
             strokeThickness: 3
         }).setOrigin(0.5);
 
-        this.remainLabel = scene.add.text(0, 12, '敵を探知中...', {
+        this.remainLabel = scene.add.text(0, 9, '敵を探知中...', {
             fontSize: '11px',
             fontFamily: UI_FONT,
             color: '#e2e8f0',
@@ -274,7 +275,7 @@ export class AbyssManager {
         player.stats.mp = player.stats.maxMp;
 
         // プレイヤーをスタート位置（南側）へワープ
-        player.setPosition(640, 950);
+        player.setPosition(640, 760);
 
         if (this.portalGfx) {
             this.portalGfx.destroy();
