@@ -6,6 +6,7 @@ import { entryId, entryCount, removableCount, removeFromInventory } from "../uti
 
 // weaponClass ごとのアイコンマッピング
 const WEAPON_CLASS_ICONS = {
+    dagger: '🗡️',
     oneHandSword: '⚔️',
     twoHandSword: '🗡️',
     dualSword: '🗡️',

@@ -8,6 +8,7 @@ export const PRIZES = [
     { id: 'potion',               weight: 20, rarity: 'C' },
     { id: 'high_potion',          weight: 15, rarity: 'C' },
     { id: 'magic_stone',          weight: 10, rarity: 'C' },
+    { id: 'iron_dagger',          weight: 7,  rarity: 'C' },
     { id: 'short_sword',          weight: 8,  rarity: 'C' },
     { id: 'short_bow',            weight: 8,  rarity: 'C' },
     { id: 'apprentice_staff',     weight: 8,  rarity: 'C' },
@@ -17,6 +18,7 @@ export const PRIZES = [
 
     // ---- R レア（中堅武器）----
     { id: 'starlight_blade',      weight: 7,  rarity: 'R' },
+    { id: 'guardian_dagger',      weight: 5,  rarity: 'R' },
     { id: 'moon_guard',           weight: 6,  rarity: 'R' },
     { id: 'chaos_blades',         weight: 5,  rarity: 'R' },
     { id: 'composite_bow',        weight: 5,  rarity: 'R' },
@@ -29,6 +31,7 @@ export const PRIZES = [
 
     // ---- SR レア（高性能武器）----
     { id: 'comet_talisman',       weight: 3,  rarity: 'SR' },
+    { id: 'aegis_dagger',         weight: 2,  rarity: 'SR' },
     { id: 'tempest_staff',        weight: 2.5, rarity: 'SR' },
     { id: 'berserker_fangs',      weight: 2.5, rarity: 'SR' },
     { id: 'sniper_bow',           weight: 2.5, rarity: 'SR' },
@@ -41,6 +44,7 @@ export const PRIZES = [
 
     // ---- SSR レア（強力な武器・制限解除）----
     { id: 'aurora_mail',          weight: 1.5, rarity: 'SSR' },
+    { id: 'bastion_dagger',       weight: 0.8, rarity: 'SSR' },
     { id: 'limit_break_license_2', weight: 1.0, rarity: 'SSR' },
     { id: 'angel_staff',          weight: 1.0, rarity: 'SSR' },
     { id: 'sacred_twin_blades',   weight: 0.8, rarity: 'SSR' },
@@ -53,6 +57,7 @@ export const PRIZES = [
 
     // ---- UR レア（伝説・制限解除III）----
     { id: 'limit_break_license_3', weight: 0.3, rarity: 'UR' },
+    { id: 'aegis_god_dagger',      weight: 0.2, rarity: 'UR' },
     { id: 'chaos_katana_gacha',    weight: 0.25, rarity: 'UR' },
     { id: 'demon_scythe',          weight: 0.25, rarity: 'UR' },
     { id: 'genesis_bow',           weight: 0.25, rarity: 'UR' },
@@ -63,6 +68,7 @@ export const PRIZES = [
 ];
 
 export const PICKUP_ITEM_IDS = [
+    'aegis_god_dagger',
     'chaos_katana_gacha',
     'demon_scythe',
     'genesis_bow',
@@ -86,6 +92,7 @@ export const RARITY_COLOR = {
 
 export const JOB_CATEGORIES = [
     { key: 'all',    label: '全職業' },
+    { key: 'dagger', label: '短刀(タンク)' },
     { key: 'sword',  label: '片手剣' },
     { key: 'dual',   label: '双剣' },
     { key: 'katana', label: '刀' },
@@ -105,6 +112,7 @@ function getPrizeProbability(weight) {
 function getPrizeJobCategory(item) {
     if (!item) return 'other';
     const wc = item.weaponClass;
+    if (wc === 'dagger') return 'dagger';
     if (wc === 'oneHandSword') return 'sword';
     if (wc === 'dualSword') return 'dual';
     if (wc === 'katana') return 'katana';
@@ -121,6 +129,7 @@ function getWeaponClassLabel(wc, type) {
     if (type === 'consumable') return '消耗品';
     if (type === 'material') return '素材';
     const map = {
+        dagger: '短刀',
         oneHandSword: '片手剣', dualSword: '双剣', katana: '刀',
         twoHandSword: '両手剣', axe: '斧', mace: 'メイス',
         hammer: 'ハンマー', bow: '弓', crossbow: 'クロスボウ',

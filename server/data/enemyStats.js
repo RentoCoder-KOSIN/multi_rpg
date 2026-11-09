@@ -472,6 +472,7 @@ const ENEMY_STATS = {
             { id: "elixir", chance: 0.5 },
             { id: "seekers_monocle", chance: 0.2 },
             { id: "steel_claymore", chance: 0.12 },
+            { id: "guardian_dagger", chance: 0.12 },
         ],
     }),
     // 湿地のマップボス（湿地ゾーンの敵 Lv34〜42 の上）
@@ -497,6 +498,7 @@ const ENEMY_STATS = {
             { id: "elixir", chance: 0.5 },
             { id: "crystal_staff", chance: 0.12 },
             { id: "hunter_longbow", chance: 0.12 },
+            { id: "paladin_dagger", chance: 0.12 },
         ],
     }),
     // 遺跡のマップボス（遺跡ゾーンの敵 Lv46〜56 の上。湿地ボスLv52と火山Lv58〜の橋渡し）
@@ -522,6 +524,7 @@ const ENEMY_STATS = {
             { id: "thunder_spear", chance: 0.12 },
             { id: "moonlight_rapier", chance: 0.1 },
             { id: "orichalcum_plate", chance: 0.12 },
+            { id: "aegis_dagger", chance: 0.12 },
         ],
     }),
     // 火山のマップボス（最終ボス）
@@ -544,6 +547,7 @@ const ENEMY_STATS = {
             { id: "elixir", chance: 0.5 },
             { id: "dragon_heart", chance: 0.3 },
             { id: "galaxy_blade", chance: 0.15 },
+            { id: "bastion_dagger", chance: 0.15 },
         ],
     }),
 
@@ -638,6 +642,7 @@ const ENEMY_STATS = {
             { id: "elixir", chance: 0.8 },
             { id: "enhance_stone_3", chance: 0.5 },
             { id: "galaxy_blade", chance: 0.2 },
+            { id: "frost_dagger", chance: 0.15 },
         ],
     }),
 
@@ -732,6 +737,7 @@ const ENEMY_STATS = {
             { id: "elixir", chance: 1.0 },
             { id: "dragon_heart", chance: 0.6 },
             { id: "enhance_stone_3", chance: 0.8 },
+            { id: "colossus_dagger", chance: 0.18 },
         ],
     }),
 };

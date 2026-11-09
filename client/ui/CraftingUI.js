@@ -13,6 +13,7 @@ export const CRAFT_CONFIG = {
 
     baseTypes: {
         weapon: [
+            { key: 'dagger',       label: '短刀',   icon: '🗡️', atkMult: 0.90, defMult: 80, hpBonus: 1500, mpBonus: 0, speedBonus: 5, critBonus: 0.05, desc: '高い防御力と生命力を誇るタンク専用の短刀' },
             { key: 'oneHandSword', label: '片手剣', icon: '⚔️', atkMult: 1.0, defMult: 0, hpBonus: 0, mpBonus: 0, speedBonus: 0, critBonus: 0.05, desc: '攻守バランスの取れた標準的な剣' },
             { key: 'twoHandSword', label: '大剣',   icon: '🗡️', atkMult: 1.35, defMult: 0, hpBonus: 400, mpBonus: 0, speedBonus: -5, critBonus: 0.08, desc: '圧倒的な威力を誇る大型両手剣' },
             { key: 'bow',          label: '長弓',   icon: '🏹', atkMult: 0.95, defMult: 0, hpBonus: 0, mpBonus: 200, speedBonus: 10, critBonus: 0.12, desc: '身軽に遠くの標的を射抜く弓' },

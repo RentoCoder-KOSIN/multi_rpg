@@ -1242,6 +1242,98 @@ export const ITEMS = {
     }),
 
     // ---------------------------------------------------------------
+    // 【短刀】タンク系専用武器（高い防御力・HP補正・被ダメージ軽減）
+    // ---------------------------------------------------------------
+    novice_dagger: defineItem({
+        id: "novice_dagger",
+        name: "初心者の短刀",
+        type: "weapon", weaponClass: "dagger",
+        level: 1, price: 800,
+        stats: { attack: 14, defense: 8, maxHp: 60 },
+        description: "タンク入門用の小ぶりで頑丈な短刀。防御力+8、最大HP+60。",
+    }),
+    iron_dagger: defineItem({
+        id: "iron_dagger",
+        name: "アイアンダガー",
+        type: "weapon", weaponClass: "dagger",
+        level: 8, price: 3200,
+        stats: { attack: 30, defense: 20, maxHp: 150 },
+        description: "鉄で鍛えられた厚手の短刀。大盾と組み合わせる。防御力+20、最大HP+150。",
+    }),
+    knight_dagger: defineItem({
+        id: "knight_dagger",
+        name: "ナイトダガー",
+        type: "weapon", weaponClass: "dagger",
+        level: 20, price: 19000,
+        stats: { attack: 80, defense: 45, maxHp: 400 },
+        description: "騎士の護身用短刀。堅牢な造りで防御力+45、最大HP+400。",
+    }),
+    guardian_dagger: defineItem({
+        id: "guardian_dagger",
+        name: "ガーディアンダガー",
+        type: "weapon", weaponClass: "dagger",
+        level: 30, price: 68000,
+        stats: { attack: 150, defense: 75, maxHp: 800, damageReduction: 0.03 },
+        description: "守護者の加護を帯びた短刀。被ダメージ-3%、防御力+75、最大HP+800。",
+    }),
+    aegis_dagger: defineItem({
+        id: "aegis_dagger",
+        name: "イージスダガー",
+        type: "weapon", weaponClass: "dagger",
+        level: 40, price: 180000,
+        stats: { attack: 215, defense: 115, maxHp: 1300, damageReduction: 0.05 },
+        description: "神盾の破片を鋳込んだ短刀。被ダメージ-5%、防御力+115、最大HP+1300。",
+    }),
+    paladin_dagger: defineItem({
+        id: "paladin_dagger",
+        name: "パラディンダガー",
+        type: "weapon", weaponClass: "dagger",
+        level: 50, price: 360000,
+        stats: { attack: 285, defense: 170, maxHp: 1900, lightDamage: 25, damageReduction: 0.07 },
+        description: "聖なる加護を受けた聖騎士の短刀。被ダメージ-7%、光属性+25、防御力+170、最大HP+1900。",
+    }),
+    frost_dagger: defineItem({
+        id: "frost_dagger",
+        name: "フロストダガー",
+        type: "weapon", weaponClass: "dagger",
+        level: 60, price: 650000,
+        stats: { attack: 370, defense: 230, maxHp: 2700, iceDamage: 35, damageReduction: 0.09 },
+        description: "永久凍土の冷気を宿す短刀。被ダメージ-9%、氷属性+35、防御力+230、最大HP+2700。",
+    }),
+    bastion_dagger: defineItem({
+        id: "bastion_dagger",
+        name: "バスチョンダガー",
+        type: "weapon", weaponClass: "dagger",
+        level: 70, price: 1250000,
+        stats: { attack: 460, defense: 310, maxHp: 3800, damageReduction: 0.12 },
+        description: "城塞の如き圧倒的堅牢さを誇る短刀。被ダメージ-12%、防御力+310、最大HP+3800。",
+    }),
+    divine_dagger: defineItem({
+        id: "divine_dagger",
+        name: "ディバインダガー",
+        type: "weapon", weaponClass: "dagger",
+        level: 80, price: 2500000,
+        stats: { attack: 560, defense: 420, maxHp: 5200, lightDamage: 50, damageReduction: 0.15 },
+        description: "神域の守護短刀。被ダメージ-15%、光属性+50、防御力+420、最大HP+5200。",
+    }),
+    colossus_dagger: defineItem({
+        id: "colossus_dagger",
+        name: "コロシアムダガー",
+        type: "weapon", weaponClass: "dagger",
+        level: 90, price: 4900000,
+        stats: { attack: 680, defense: 540, maxHp: 7200, damageReduction: 0.18 },
+        description: "巨神の心核から作られた短刀。被ダメージ-18%、防御力+540、最大HP+7200。",
+    }),
+    aegis_god_dagger: defineItem({
+        id: "aegis_god_dagger",
+        name: "神盾短刀・アイギス",
+        type: "weapon", weaponClass: "dagger",
+        level: 100, price: 12000000,
+        stats: { attack: 820, defense: 720, maxHp: 10000, damageReduction: 0.22, allStatusResist: 0.2 },
+        description: "天地のあらゆる攻撃を弾く伝説の神盾短刀。被ダメージ-22%、防御力+720、最大HP+10000、全状態異常耐性+20%。",
+    }),
+
+    // ---------------------------------------------------------------
     // 【メイス・ハンマー】タンク / プリースト系
     // ---------------------------------------------------------------
     iron_mace: defineItem({

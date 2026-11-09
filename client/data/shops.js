@@ -3,13 +3,13 @@ import { ITEMS } from "./items.js";
 // -----------------------------
 // 共通の商品リスト定義
 // -----------------------------
-const defaultShopItems = ["wood_sword", "iron_sword", "debug_stick"];
+const defaultShopItems = ["wood_sword", "iron_sword", "novice_dagger", "debug_stick"];
 
 const allShopItems = [
     // "debug_stick",
     "god_stick",
     // --- 基本武器（職業問わず） ---
-    "wood_sword", "iron_sword", "bronze_spear", "exp_weapon", "travel_cloak",
+    "wood_sword", "iron_sword", "novice_dagger", "bronze_spear", "exp_weapon", "travel_cloak",
     "menno_kayaku", "eatable_negi", "heal_potion_small", "heal_potion_large",
     "heal_izumi", "power_seed", "shield_seed", "magic_seed", "negi_sword",
     "wood_stick", "ice_wings", "fire_sword", "cheat_sword", "brass_knuckles",
@@ -28,6 +28,9 @@ const allShopItems = [
     "lucky_clover", "windstep_anklet", "seekers_monocle",
 
     // ===== 職業別オリジナル武器 =====
+    // 【短刀】タンク専用
+    "novice_dagger", "iron_dagger", "knight_dagger", "guardian_dagger", "aegis_dagger",
+    "paladin_dagger", "frost_dagger", "bastion_dagger", "divine_dagger", "colossus_dagger",
     // 【片手剣】ファイター / タンク / ナイト
     "short_sword", "knight_sword", "paladin_blade", "holy_sword", "divine_blade",
     // 【双剣】バーサーカー / ニンジャ
@@ -129,10 +132,12 @@ export const SHOP_LOADOUTS = {
             "hunter_longbow", "dragon_bow", "phoenix_bow", "_bow",
         ]
     },
-    // タンク・プリースト系（メイス・ハンマー・片手剣）
+    // タンク・プリースト系（短刀・メイス・ハンマー・片手剣）
     tank_priest_shop: {
         title: "防衛の武器店",
         items: [
+            "novice_dagger", "iron_dagger", "knight_dagger", "guardian_dagger", "aegis_dagger",
+            "paladin_dagger", "frost_dagger", "bastion_dagger", "divine_dagger",
             "iron_mace", "guardian_mace", "sacred_mace", "war_hammer", "mjolnir",
             "short_sword", "knight_sword", "paladin_blade", "holy_sword",
             "healing_wand", "divine_wand",

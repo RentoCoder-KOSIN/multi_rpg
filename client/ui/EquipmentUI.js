@@ -5,6 +5,7 @@ import { ELEMENT_INFO } from "../data/elements.js";
 
 // weaponClass ごとのアイコンマッピング
 const WEAPON_CLASS_ICONS = {
+    dagger: '🗡️',
     oneHandSword: '⚔️',
     twoHandSword: '🗡️',
     dualSword: '🗡️',
@@ -152,7 +153,7 @@ export default class EquipmentUI extends BaseWindowUI {
         const attachedElement = item ? this.scene.player?.stats?.itemElements?.[itemId] : null;
         const elementTag = attachedElement ? ` ${ELEMENT_INFO[attachedElement].icon}` : '';
 
-        const weaponClassLabels = { oneHandSword: '片手剣', twoHandSword: '両手剣', spear: '槍', staff: '杖', wand: 'ワンド', tome: '魔導書', bow: '弓', mace: 'メイス' };
+        const weaponClassLabels = { dagger: '短刀', oneHandSword: '片手剣', twoHandSword: '両手剣', spear: '槍', staff: '杖', wand: 'ワンド', tome: '魔導書', bow: '弓', mace: 'メイス' };
         const classTag = item?.weaponClass ? ` [${weaponClassLabels[item.weaponClass] || item.weaponClass}]` : '';
         // アイコン分だけ名前テキストを右にずらす（-130 → アイコン幅 ~25px 分）
         const nameTxt = this.scene.add.text(-125, 5, `${itemName}${classTag}${elementTag}`, {

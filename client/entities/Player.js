@@ -25,6 +25,7 @@ const STATUS_DURATIONS = {
 const POISON_TICK_INTERVAL_MS = 1000;
 
 const WEAPON_CLASS_LABELS = {
+    dagger: '短刀',
     oneHandSword: '片手剣', twoHandSword: '両手剣', spear: '槍',
     dualSword: '双剣', axe: '斧', katana: '刀',
     staff: '杖', wand: 'ワンド', tome: '魔導書', orb: '魔導球',
@@ -958,7 +959,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             const atkSource = isMagical ? (item.matk ?? s.matk ?? item.atk ?? s.attack) : (item.atk ?? s.attack);
             this.stats.atk += getInt(atkSource);
             this.stats.def += getInt(item.def || s.defense);
-            this.stats.maxHp += getInt(item.maxHp || s.maxHp || 0);
+            this.stats.maxHp += getInt(item.maxHp || s.maxHp || s.hp || 0);
             this.stats.maxMp += getInt(item.maxMp || s.maxMp || 0);
             this.stats.speedBonus += getInt(item.speedBonus || s.speedBonus || s.speed || 0);
 
@@ -1599,13 +1600,18 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     canEquipWeapon(weaponClass) {
         const job = this.stats.job || '';
 
+        // --- 短刀（dagger）: タンク系専用武器！---
+        if (weaponClass === 'dagger') {
+            return ['tank', 'paladin', 'warden', 'juggernaut', 'avenger'].includes(job);
+        }
+
         // --- レンジャー系（弓・クロスボウ専用）---
         if (['ranger', 'sniper', 'wind_archer', 'gunslinger'].includes(job))
             return ['bow', 'crossbow'].includes(weaponClass);
 
-        // --- タンク系（片手剣・メイス・ハンマー・剣盾）---
+        // --- タンク系（短刀・片手剣・メイス・ハンマー・剣盾）---
         if (['tank', 'paladin', 'warden', 'juggernaut', 'avenger'].includes(job))
-            return ['oneHandSword', 'mace', 'hammer', 'shield_sword'].includes(weaponClass);
+            return ['dagger', 'oneHandSword', 'mace', 'hammer', 'shield_sword'].includes(weaponClass);
 
         // --- 双剣特化（バーサーカー・ニンジャ・サムライ・ドラゴンナイト）---
         // ※ファイター・ナイトは oneHandSword/twoHandSword/spear/katana も可
