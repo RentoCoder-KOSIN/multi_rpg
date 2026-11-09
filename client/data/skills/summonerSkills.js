@@ -6,25 +6,25 @@ import { defineSkill } from '../schema.js';
 
 export const SUMMONER_SKILLS = {
     summon: defineSkill({
-        id: 'summon', name: 'サモン', type: 'active',
+        id: 'summon', vfx: 'support', name: 'サモン', type: 'active',
         cd: 15000, mpCost: 20, unlockCost: 10,
         color: 0x9370db, icon: '👻',
         description: '召喚獣を呼び出して戦わせる。'
     }),
     mega_summon: defineSkill({
-        id: 'mega_summon', name: 'メガサモン', type: 'active',
+        id: 'mega_summon', vfx: 'support', name: 'メガサモン', type: 'active',
         cd: 30000, mpCost: 50, unlockCost: 50,
         color: 0x800080, icon: '👿',
         description: '強力な召喚獣を呼び出す。'
     }),
     command_attack: defineSkill({
-        id: 'command_attack', name: '突撃命令', type: 'active',
+        id: 'command_attack', vfx: 'support', name: '突撃命令', type: 'active',
         cd: 10000, mpCost: 30, unlockCost: 100,
         color: 0xffd700, icon: '🚩',
         description: '召喚獣に突撃させる。'
     }),
     spirit_bolt: defineSkill({
-        id: 'spirit_bolt', name: 'スピリットボルト', type: 'active',
+        id: 'spirit_bolt', vfx: 'projectile', name: 'スピリットボルト', type: 'active',
         cd: 3000, damageMult: 18, mpCost: 12, unlockCost: 80,
         range: 170, rangeType: 'circle',
         color: 0xda70d6, icon: '🔮',

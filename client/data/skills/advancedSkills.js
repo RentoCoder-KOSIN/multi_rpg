@@ -30,7 +30,7 @@ export const ADVANCED_SKILLS = {
         hitType: 'single',
     }),
     guardian_slash: defineSkill({
-        id: 'guardian_slash', name: 'ガーディアンスラッシュ', type: 'active',
+        id: 'guardian_slash', vfx: 'slash', name: 'ガーディアンスラッシュ', type: 'active',
         cd: 5000, damageMult: 48, mpCost: 30, unlockCost: 500,
         range: 150, rangeType: 'circle',
         color: 0xb0c4de, icon: '⚔️',
@@ -46,7 +46,7 @@ export const ADVANCED_SKILLS = {
         description: '深淵の嵐を呼び寄せ、全てを飲み込む。'
     }),
     chain_lightning: defineSkill({
-        id: 'chain_lightning', element: 'thunder', name: 'チェインライトニング', type: 'active',
+        id: 'chain_lightning', vfx: 'blast', element: 'thunder', name: 'チェインライトニング', type: 'active',
         cd: 6000, damageMult: 52, mpCost: 45, unlockCost: 500,
         range: 220, rangeType: 'fan',
         color: 0xffff33, icon: '⚡',
@@ -56,7 +56,7 @@ export const ADVANCED_SKILLS = {
 
     // --- パラディン (タンク上位職) ---
     holy_sanctuary: defineSkill({
-        id: 'holy_sanctuary', element: 'light', name: 'ホーリーサンクチュアリ', type: 'active',
+        id: 'holy_sanctuary', vfx: 'support', element: 'light', name: 'ホーリーサンクチュアリ', type: 'active',
         cd: 18000, damageMult: 45, mpCost: 80, unlockCost: 500,
         defScaling: 2.5,
         range: 300, rangeType: 'circle',
@@ -64,7 +64,7 @@ export const ADVANCED_SKILLS = {
         description: '神聖な領域を展開。領域内の敵に自身の防御力250%上乗せの裁きを下し、味方を守る。'
     }),
     smite: defineSkill({
-        id: 'smite', element: 'light', name: 'スマイト', type: 'active',
+        id: 'smite', vfx: 'blast', element: 'light', name: 'スマイト', type: 'active',
         cd: 5000, damageMult: 50, mpCost: 35, unlockCost: 500,
         defScaling: 4.0,
         range: 150, rangeType: 'circle',
@@ -76,14 +76,14 @@ export const ADVANCED_SKILLS = {
 
     // --- スナイパー (レンジャー上位職) ---
     death_rain: defineSkill({
-        id: 'death_rain', name: 'デスレイン', type: 'active',
+        id: 'death_rain', vfx: 'projectile', name: 'デスレイン', type: 'active',
         cd: 5000, damageMult: 55, mpCost: 45, unlockCost: 500,
         range: 400, rangeType: 'circle',
         color: 0x00ff00, icon: '🏹',
         description: '空から無数の死の矢を降らせる。'
     }),
     headshot: defineSkill({
-        id: 'headshot', name: 'ヘッドショット', type: 'active',
+        id: 'headshot', vfx: 'projectile', name: 'ヘッドショット', type: 'active',
         cd: 4000, damageMult: 60, mpCost: 30, unlockCost: 500,
         range: 320, rangeType: 'line',
         color: 0xff4444, icon: '🎯',
@@ -93,7 +93,7 @@ export const ADVANCED_SKILLS = {
 
     // --- エクソシスト (プリースト上位職) ---
     exorcism: defineSkill({
-        id: 'exorcism', element: 'light', name: 'エクソシズム', type: 'active',
+        id: 'exorcism', vfx: 'blast', element: 'light', name: 'エクソシズム', type: 'active',
         cd: 8000, damageMult: 62, mpCost: 60, unlockCost: 500,
         range: 300, rangeType: 'line',
         color: 0xfff2cc, icon: '⛧',
@@ -102,7 +102,7 @@ export const ADVANCED_SKILLS = {
         hitType: 'single',
     }),
     divine_judgment: defineSkill({
-        id: 'divine_judgment', element: 'light', name: 'ディヴァインジャッジメント', type: 'active',
+        id: 'divine_judgment', vfx: 'blast', element: 'light', name: 'ディヴァインジャッジメント', type: 'active',
         cd: 9000, damageMult: 68, mpCost: 65, unlockCost: 500,
         range: 280, rangeType: 'line',
         color: 0xffe4b5, icon: '⚡',
@@ -113,13 +113,13 @@ export const ADVANCED_SKILLS = {
 
     // --- ハイサモナー (サモナー上位職) ---
     demon_lord_summon: defineSkill({
-        id: 'demon_lord_summon', name: '魔王召喚', type: 'active',
+        id: 'demon_lord_summon', vfx: 'support', name: '魔王召喚', type: 'active',
         cd: 30000, mpCost: 150, unlockCost: 1000,
         color: 0xff0000, icon: '👑',
         description: '伝説の魔王を一時的に現世に呼び出す。'
     }),
     arcane_barrage: defineSkill({
-        id: 'arcane_barrage', name: 'アルケインバラージ', type: 'active',
+        id: 'arcane_barrage', vfx: 'blast', name: 'アルケインバラージ', type: 'active',
         cd: 7000, damageMult: 55, mpCost: 55, unlockCost: 500,
         range: 230, rangeType: 'circle',
         color: 0x9932cc, icon: '🔮',

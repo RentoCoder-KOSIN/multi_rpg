@@ -91,7 +91,7 @@ export const MAGE_SKILLS = {
         effect: { statusEffect: 'poison', statusChance: 0.50, statusDuration: 5000, poisonAtkRatio: 0.15 },
     }),
     thunder_storm: defineSkill({
-        id: "thunder_storm", element: 'thunder',
+        id: "thunder_storm", vfx: 'blast', element: 'thunder',
         name: "サンダーストーム",
         type: "active",
         cd: 9000,

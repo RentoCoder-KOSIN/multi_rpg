@@ -96,7 +96,7 @@ export const FIGHTER_SKILLS = {
         description: "真空の刃を衝撃波として前方に飛ばす遠距離攻撃。",
     }),
     ground_smash: defineSkill({
-        id: "ground_smash",
+        id: "ground_smash", vfx: 'slash',
         name: "地裂斬",
         type: "active",
         cd: 7000,

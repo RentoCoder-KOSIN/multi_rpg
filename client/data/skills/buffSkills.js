@@ -6,7 +6,7 @@ import { defineSkill } from '../schema.js';
 
 export const BUFF_SKILLS = {
     attack_buff: defineSkill({
-        id: 'attack_buff',
+        id: 'attack_buff', vfx: 'support',
         name: 'アタックブースト',
         type: 'active',
         cd: 30000,
@@ -20,7 +20,7 @@ export const BUFF_SKILLS = {
         description: '味方の攻撃力を一定時間上昇させる。'
     }),
     defense_buff: defineSkill({
-        id: 'defense_buff',
+        id: 'defense_buff', vfx: 'support',
         name: 'プロテクション',
         type: 'active',
         cd: 30000,
@@ -34,7 +34,7 @@ export const BUFF_SKILLS = {
         description: '味方の防御力を一定時間上昇させる。'
     }),
     speed_buff: defineSkill({
-        id: 'speed_buff',
+        id: 'speed_buff', vfx: 'support',
         name: 'ヘイスト',
         type: 'active',
         cd: 30000,
@@ -48,7 +48,7 @@ export const BUFF_SKILLS = {
         description: '味方の移動速度を一定時間上昇させる。'
     }),
     summon_boost: defineSkill({
-        id: 'summon_boost',
+        id: 'summon_boost', vfx: 'support',
         name: 'サモンブースト',
         type: 'active',
         cd: 45000,

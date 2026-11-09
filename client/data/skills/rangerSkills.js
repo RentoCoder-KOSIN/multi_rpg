@@ -6,7 +6,7 @@ import { defineSkill } from '../schema.js';
 
 export const RANGER_SKILLS = {
     backstep_shot: defineSkill({
-        id: 'backstep_shot', name: 'バックステップショット', type: 'active',
+        id: 'backstep_shot', vfx: 'projectile', name: 'バックステップショット', type: 'active',
         cd: 3500, damageMult: 20, mpCost: 10, unlockCost: 20,
         range: 220, rangeType: 'line',
         color: 0x38bdf8, icon: '🔄',
@@ -14,7 +14,7 @@ export const RANGER_SKILLS = {
         backstepDist: 150,
     }),
     smoke_bomb: defineSkill({
-        id: 'smoke_bomb', name: 'スモークボム', type: 'active',
+        id: 'smoke_bomb', vfx: 'support', name: 'スモークボム', type: 'active',
         cd: 12000, mpCost: 15, unlockCost: 40,
         range: 200, rangeType: 'circle',
         color: 0x64748b, icon: '💨',
@@ -22,7 +22,7 @@ export const RANGER_SKILLS = {
         effect: { smoke: true, buffType: 'evasion_buff', buffValue: 0.30, buffDuration: 8000 }
     }),
     rapid_fire: defineSkill({
-        id: 'rapid_fire', name: 'ラピッドファイア', type: 'active',
+        id: 'rapid_fire', vfx: 'projectile', name: 'ラピッドファイア', type: 'active',
         cd: 2000, damageMult: 18, mpCost: 12, unlockCost: 10,
         range: 260, rangeType: 'circle',
         color: 0x00ff00, icon: '🏹',
@@ -30,7 +30,7 @@ export const RANGER_SKILLS = {
         hitType: 'single',
     }),
     arrow_rain: defineSkill({
-        id: 'arrow_rain', name: 'アローレイン', type: 'active',
+        id: 'arrow_rain', vfx: 'projectile', name: 'アローレイン', type: 'active',
         cd: 5000, damageMult: 32, mpCost: 20, unlockCost: 50,
         range: 320, rangeType: 'circle',
         color: 0x9acd32, icon: '🌧️',
@@ -46,7 +46,7 @@ export const RANGER_SKILLS = {
         effect: { statusEffect: 'paralyze', statusChance: 0.3, statusDuration: 2000 },
     }),
     multi_shot: defineSkill({
-        id: 'multi_shot', name: 'マルチショット', type: 'active',
+        id: 'multi_shot', vfx: 'projectile', name: 'マルチショット', type: 'active',
         cd: 4000, damageMult: 25, mpCost: 18, unlockCost: 100,
         range: 220, rangeType: 'fan',
         color: 0x7fff00, icon: '🏹',
@@ -54,7 +54,7 @@ export const RANGER_SKILLS = {
         maxTargets: 4,
     }),
     explosive_arrow: defineSkill({
-        id: 'explosive_arrow', name: 'エクスプロージョンアロー', type: 'active',
+        id: 'explosive_arrow', vfx: 'blast', element: 'fire', name: 'エクスプロージョンアロー', type: 'active',
         cd: 7500, damageMult: 45, mpCost: 25, unlockCost: 150,
         range: 250, rangeType: 'circle',
         color: 0xff8c00, icon: '💥',
