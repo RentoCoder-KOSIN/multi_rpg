@@ -1,54 +1,63 @@
 /**
  * レンジャースキル
- * 素早い動きで敵を翻弄する遠距離職
- *
- * [バランス調整ログ]
- * - rapid_fire: damageMult 5→14, cd 2000（序盤スキルとして使える威力に）
- * - arrow_rain: damageMult 10→25, cd 5000（範囲AoEとして強力に）
- * - piercing_shot: damageMult 13→28, cd 3000
- * - multi_shot: damageMult 8→18, cd 4000（範囲分散のため少し控えめ）
- * - explosive_arrow: damageMult 16→38, cd 8000（大技として差別化）
+ * 超遠距離射撃と身軽な回避・撹乱を併せ持つ曲射職
  */
 import { defineSkill } from '../schema.js';
 
 export const RANGER_SKILLS = {
+    backstep_shot: defineSkill({
+        id: 'backstep_shot', name: 'バックステップショット', type: 'active',
+        cd: 3500, damageMult: 20, mpCost: 10, unlockCost: 20,
+        range: 220, rangeType: 'line',
+        color: 0x38bdf8, icon: '🔄',
+        description: '後方へ素早く跳躍宙返り（緊急離脱）しながら前方の敵を撃ち抜く。接近された時の切り返し技。',
+        backstepDist: 150,
+    }),
+    smoke_bomb: defineSkill({
+        id: 'smoke_bomb', name: 'スモークボム', type: 'active',
+        cd: 12000, mpCost: 15, unlockCost: 40,
+        range: 200, rangeType: 'circle',
+        color: 0x64748b, icon: '💨',
+        description: '足元に煙幕を炸裂させる。周囲の敵の命中率を半減させ、自身の回避率+30%＆移動速度+50（8秒間）。',
+        effect: { smoke: true, buffType: 'evasion_buff', buffValue: 0.30, buffDuration: 8000 }
+    }),
     rapid_fire: defineSkill({
         id: 'rapid_fire', name: 'ラピッドファイア', type: 'active',
-        cd: 2000, damageMult: 14, mpCost: 12, unlockCost: 10,
-        range: 250, rangeType: 'circle',
+        cd: 2000, damageMult: 18, mpCost: 12, unlockCost: 10,
+        range: 260, rangeType: 'circle',
         color: 0x00ff00, icon: '🏹',
-        description: '目にも止まぬ速射。',
+        description: '目にも止まらぬ高速連射。',
         hitType: 'single',
     }),
     arrow_rain: defineSkill({
         id: 'arrow_rain', name: 'アローレイン', type: 'active',
-        cd: 5000, damageMult: 25, mpCost: 20, unlockCost: 50,
-        range: 300, rangeType: 'circle',
+        cd: 5000, damageMult: 32, mpCost: 20, unlockCost: 50,
+        range: 320, rangeType: 'circle',
         color: 0x9acd32, icon: '🌧️',
-        description: '矢の雨を降らせる。'
+        description: '上空へ矢の束を放ち、広範囲に死の雨を降らせる。'
     }),
     piercing_shot: defineSkill({
         id: 'piercing_shot', name: 'ピアシングショット', type: 'active',
         vfx: 'projectile', vfxOptions: { projectile: 'bolt' },
-        cd: 3000, damageMult: 28, mpCost: 15, unlockCost: 80,
-        range: 260, rangeType: 'line',
+        cd: 3000, damageMult: 34, mpCost: 15, unlockCost: 80,
+        range: 280, rangeType: 'line',
         color: 0xc0c0c0, icon: '🎯',
-        description: '直線状の敵を貫く強弓。25%で敵を麻痺させる。',
-        effect: { statusEffect: 'paralyze', statusChance: 0.25, statusDuration: 1800 },
+        description: '直線上の敵を貫通する強弓。30%で敵をスタン（麻痺）させる。',
+        effect: { statusEffect: 'paralyze', statusChance: 0.3, statusDuration: 2000 },
     }),
     multi_shot: defineSkill({
         id: 'multi_shot', name: 'マルチショット', type: 'active',
-        cd: 4000, damageMult: 18, mpCost: 18, unlockCost: 100,
-        range: 200, rangeType: 'fan',
+        cd: 4000, damageMult: 25, mpCost: 18, unlockCost: 100,
+        range: 220, rangeType: 'fan',
         color: 0x7fff00, icon: '🏹',
-        description: '扇状に矢をばらまく。',
-        maxTargets: 3,
+        description: '扇状に無数の矢を斉射し、正面の敵を一掃する。',
+        maxTargets: 4,
     }),
     explosive_arrow: defineSkill({
         id: 'explosive_arrow', name: 'エクスプロージョンアロー', type: 'active',
-        cd: 8000, damageMult: 38, mpCost: 25, unlockCost: 150,
-        range: 220, rangeType: 'circle',
+        cd: 7500, damageMult: 45, mpCost: 25, unlockCost: 150,
+        range: 250, rangeType: 'circle',
         color: 0xff8c00, icon: '💥',
-        description: '着弾地点で爆発する特殊矢。'
+        description: '着弾地点で大爆発を引き起こす特殊火薬矢。'
     })
 };

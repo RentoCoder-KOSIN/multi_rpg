@@ -28,11 +28,12 @@ export const ADVANCED_SKILLS_EXTRA = {
         cd: 4500,
         damageMult: 54,
         mpCost: 35,
+        dashDist: 160,
         range: 200,
         rangeType: 'fan',
         color: 0xff3333,
         icon: '🪓',
-        description: '理性を捨てた連続斬りで、前方の敵をまとめて薙ぎ払う。',
+        description: '理性を捨てた連続斬りで前方に突進し、敵をまとめて薙ぎ払う。',
         maxTargets: 5
     }),
     blood_frenzy: active({
@@ -71,11 +72,12 @@ export const ADVANCED_SKILLS_EXTRA = {
         cd: 3500,
         damageMult: 60,
         mpCost: 30,
+        dashDist: 220,
         range: 280,
         rangeType: 'line',
         color: 0xe0e0ff,
         icon: '🗡️',
-        description: '鞘走りの一閃。一瞬で間合いを詰め、直線上の敵を斬る。'
+        description: '鞘走りの一閃。超高速で間合いを詰めてすれ違いざまに直線上の敵を両断する。'
     }),
     moonlit_blade: active({
         id: 'moonlit_blade',
@@ -116,11 +118,12 @@ export const ADVANCED_SKILLS_EXTRA = {
         cd: 4500,
         damageMult: 61,
         mpCost: 40,
+        dashDist: 220,
         range: 320,
         rangeType: 'line',
         color: 0xff6633,
         icon: '🐉',
-        description: '竜の牙のような一突き。直線上の敵を貫く。'
+        description: '竜の如き超高速突進の一突き。直線上の敵を一気に貫く。'
     }),
     dragon_breath: active({
         id: 'dragon_breath',
@@ -428,6 +431,35 @@ export const ADVANCED_SKILLS_EXTRA = {
     }),
 
     // --- ニンジャ (rangerの上位職) ---
+    utsusemi: active({
+        id: 'utsusemi',
+        name: '忍術・空蝉',
+        vfx: 'support',
+        cd: 15000,
+        mpCost: 35,
+        range: 100,
+        rangeType: 'circle',
+        color: 0xa3e635,
+        icon: '🪵',
+        description: '丸太を身代わりにする伊賀流秘術。発動後、被弾を3回まで完全に身代わり回避する。',
+        effect: { utsusemiStacks: 3, smoke: true }
+    }),
+    raiton_slash: active({
+        id: 'raiton_slash',
+        name: '雷遁・迅雷斬',
+        vfx: 'slash',
+        element: 'thunder',
+        cd: 4500,
+        damageMult: 65,
+        mpCost: 35,
+        dashDist: 220,
+        range: 240,
+        rangeType: 'line',
+        color: 0x00ffff,
+        icon: '⚡',
+        description: '雷を纏い光速で敵をすり抜け両断する。40%で敵をスタン（麻痺）させる。',
+        effect: { statusEffect: 'paralyze', statusChance: 0.4, statusDuration: 2500 }
+    }),
     shuriken_storm: active({
         id: 'shuriken_storm',
         name: '手裏剣乱舞',
@@ -435,14 +467,14 @@ export const ADVANCED_SKILLS_EXTRA = {
         vfxOptions: {"projectile": "arc"},
         element: 'wind',
         cd: 4000,
-        damageMult: 34,
+        damageMult: 45,
         mpCost: 30,
-        range: 240,
+        range: 260,
         rangeType: 'fan',
         color: 0xcccccc,
         icon: '🌀',
-        description: '無数の手裏剣を投げ放つ。',
-        maxTargets: 5
+        description: '無数の手裏剣を扇状に投げ放つ。',
+        maxTargets: 8
     }),
     shadow_assassinate: active({
         id: 'shadow_assassinate',
@@ -450,13 +482,14 @@ export const ADVANCED_SKILLS_EXTRA = {
         vfx: 'slash',
         element: 'dark',
         cd: 6000,
-        damageMult: 68,
+        damageMult: 75,
         mpCost: 45,
+        blinkDist: 180,
         range: 220,
         rangeType: 'line',
         color: 0x442266,
         icon: '🥷',
-        description: '影から飛び出し、直線上の敵を一撃で仕留める。'
+        description: '瞬時に敵の背後へワープし、直線上の敵を一撃で仕留める暗殺技。'
     }),
     shadow_step: passive({
         id: 'shadow_step',
@@ -474,13 +507,44 @@ export const ADVANCED_SKILLS_EXTRA = {
     }),
 
     // --- ガンスリンガー (rangerの上位職) ---
+    acrobatic_fire: active({
+        id: 'acrobatic_fire',
+        name: 'アクロバティックファイア',
+        vfx: 'projectile',
+        vfxOptions: { projectile: 'arc' },
+        cd: 4000,
+        damageMult: 52,
+        mpCost: 30,
+        backstepDist: 160,
+        range: 300,
+        rangeType: 'fan',
+        color: 0xfbbf24,
+        icon: '🤸‍♂️',
+        description: '後方へ華麗に宙返り離脱しながら、前方の敵へ銃弾の嵐を浴びせる。',
+        maxTargets: 6
+    }),
+    bullet_storm: active({
+        id: 'bullet_storm',
+        name: 'バレットスコール',
+        vfx: 'projectile',
+        vfxOptions: { projectile: 'bolt' },
+        cd: 7000,
+        damageMult: 48,
+        mpCost: 50,
+        range: 320,
+        rangeType: 'fan',
+        color: 0xff8800,
+        icon: '🌧️',
+        description: '二丁拳銃を乱射し、前方広範囲を蜂の巣にする弾幕スコール。',
+        maxTargets: 8
+    }),
     quick_draw: active({
         id: 'quick_draw',
         name: 'クイックドロウ',
         vfx: 'projectile',
         vfxOptions: {"projectile": "bolt"},
         cd: 3000,
-        damageMult: 41,
+        damageMult: 48,
         mpCost: 25,
         range: 340,
         rangeType: 'line',
@@ -494,7 +558,7 @@ export const ADVANCED_SKILLS_EXTRA = {
         vfx: 'projectile',
         vfxOptions: {"projectile": "arc"},
         cd: 8000,
-        damageMult: 37,
+        damageMult: 44,
         mpCost: 55,
         range: 300,
         rangeType: 'fan',

@@ -23,9 +23,10 @@ export const ADVANCED_SKILLS = {
     judgment_cut: defineSkill({
         id: 'judgment_cut', vfx: 'slash', vfxOptions: { slashColor: 0x00ffff }, name: '絶・次元斬', type: 'active',
         cd: 4000, damageMult: 65, mpCost: 40, unlockCost: 500,
+        dashDist: 200,
         range: 250, rangeType: 'line',
         color: 0x00ffff, icon: '💠',
-        description: '空間を切り裂く超高速の一閃。単体に強烈なダメージ。',
+        description: '空間を切り裂き超高速で踏み込む一閃。直線上の敵に強烈なダメージ。',
         hitType: 'single',
     }),
     guardian_slash: defineSkill({

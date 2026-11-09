@@ -684,6 +684,81 @@ export function usePlayerSkill(scene, skillId) {
     // Facing: right = 1, left = -1 (walk-left/right アニメーションを使うため flipX ではなく facingDirection を見る)
     const direction = player.facingDirection || 1;
 
+    // ダッシュ突進（dash_slash 等: 前方へ高速切り込み）
+    if (skill.dashDist) {
+        const dist = skill.dashDist;
+        const targetX = Phaser.Math.Clamp(player.x + direction * dist, 50, (scene.physics?.world?.bounds?.right || 3000) - 50);
+        for (let i = 1; i <= 3; i++) {
+            const ghostX = player.x + (targetX - player.x) * (i / 4);
+            const ghost = scene.add.sprite(ghostX, player.y, player.texture?.key || 'player', player.frame?.name);
+            ghost.setAlpha(0.45).setTint(0xffaa00);
+            ghost.setFlipX(direction < 0);
+            scene.tweens.add({
+                targets: ghost,
+                alpha: 0,
+                duration: 250,
+                onComplete: () => ghost.destroy()
+            });
+        }
+        player.setPosition(targetX, player.y);
+    }
+
+    // ブリンク / 瞬間移動（blink, shadow_step 等）
+    if (skill.blinkDist) {
+        const dist = skill.blinkDist;
+        const targetX = Phaser.Math.Clamp(player.x + direction * dist, 50, (scene.physics?.world?.bounds?.right || 3000) - 50);
+        if (scene.add?.circle) {
+            const warpOut = scene.add.circle(player.x, player.y, 25, 0x00ffff, 0.7);
+            scene.tweens.add({ targets: warpOut, scale: 0.1, alpha: 0, duration: 200, onComplete: () => warpOut.destroy() });
+            const warpIn = scene.add.circle(targetX, player.y, 10, 0x00ffff, 0.8);
+            scene.tweens.add({ targets: warpIn, scale: 2.2, alpha: 0, duration: 300, onComplete: () => warpIn.destroy() });
+        }
+        player.setPosition(targetX, player.y);
+    }
+
+    // バックステップ（backstep_shot 等: 後方宙返り離脱）
+    if (skill.backstepDist) {
+        const dist = skill.backstepDist;
+        const targetX = Phaser.Math.Clamp(player.x - direction * dist, 50, (scene.physics?.world?.bounds?.right || 3000) - 50);
+        const originalY = player.y;
+        scene.tweens.add({
+            targets: player,
+            y: originalY - 25,
+            yoyo: true,
+            duration: 150,
+            ease: 'Quad.easeOut'
+        });
+        player.setPosition(targetX, player.y);
+    }
+
+    // 空蝉の術（身代わり回避スタック）
+    if (skill.effect?.utsusemiStacks) {
+        player.activeBuffs['utsusemi'] = { count: skill.effect.utsusemiStacks };
+        if (scene.notificationUI) {
+            scene.notificationUI.show(`🍃 空蝉の術発動！（${skill.effect.utsusemiStacks}回身代わり回避）`, 'success');
+        }
+    }
+
+    // スモークボム（煙幕演出）
+    if (skill.effect?.smoke) {
+        for (let i = 0; i < 7; i++) {
+            const smoke = scene.add.circle(
+                player.x + Phaser.Math.Between(-35, 35),
+                player.y + Phaser.Math.Between(-25, 25),
+                Phaser.Math.Between(20, 32),
+                0x64748b,
+                0.6
+            );
+            scene.tweens.add({
+                targets: smoke,
+                scale: 1.8,
+                alpha: 0,
+                duration: 1000 + Phaser.Math.Between(0, 300),
+                onComplete: () => smoke.destroy()
+            });
+        }
+    }
+
     // 挑発・集敵・タンク自己バフ等のスキル効果
     if (skill.effect?.taunt) {
         player.tauntEndTime = Date.now() + (skill.effect.tauntDuration || 8000);
@@ -775,12 +850,8 @@ function applyPartySkill(scene, skillId, skill, range) {
     });
 
     targets.forEach(({ player: target, id: targetId }) => {
-        // 専用処理のある heal / *_buff 以外の味方スキル（上位職の回復・バフ）は effect の内容で汎用的に処理する
-        const isGenericHeal = skillId !== 'heal' && skill.effect?.healPower && !skill.effect?.buffType;
-        const genericBuff = skill.effect?.buffType && !['attack_buff', 'defense_buff', 'speed_buff', 'summon_boost'].includes(skillId)
-            ? skill.effect : null;
-
-        if (skillId === 'heal' || isGenericHeal) {
+        // 回復効果
+        if (skillId === 'heal' || skill.effect?.healPower) {
             const skillLevel = player.stats.skillLevels?.[skillId] || 1;
             const int = player.stats.int || 5;
             const baseHeal = skill.effect?.healPower || 50;
@@ -799,19 +870,35 @@ function applyPartySkill(scene, skillId, skill, range) {
             } else {
                 scene.networkManager.healPlayer(targetId, healAmount);
             }
-        } else if (skillId === 'attack_buff') {
-            // 持続時間はクールタイム(30000ms)より短くし、常時バフ状態にならないようにする
-            giveBuff(scene, target, targetId, 'attack_buff', Math.ceil(target.stats.atk * 0.5), 15000); // +50% ATK
+        }
+
+        // バフ付与
+        if (skillId === 'attack_buff') {
+            giveBuff(scene, target, targetId, 'attack_buff', Math.ceil(target.stats.atk * 0.5), 15000);
         } else if (skillId === 'defense_buff') {
-            giveBuff(scene, target, targetId, 'defense_buff', Math.ceil(target.stats.def * 0.5), 15000); // +50% DEF
+            giveBuff(scene, target, targetId, 'defense_buff', Math.ceil(target.stats.def * 0.5), 15000);
         } else if (skillId === 'speed_buff') {
-            giveBuff(scene, target, targetId, 'speed_buff', 50, 15000); // +50 speed
+            giveBuff(scene, target, targetId, 'speed_buff', 50, 15000);
         } else if (skillId === 'summon_boost') {
-            giveBuff(scene, target, targetId, 'summon_power_up', Math.ceil(player.stats.int * 2), 20000); // scales with INT
-        } else if (genericBuff) {
-            // effect.buffType = 'attack_buff' | 'defense_buff'。現在のATK/DEFの buffMult 倍を buffDuration(ms) のあいだ加算する
-            const baseValue = genericBuff.buffType === 'defense_buff' ? target.stats.def : target.stats.atk;
-            giveBuff(scene, target, targetId, genericBuff.buffType, Math.ceil(baseValue * (genericBuff.buffMult || 0.5)), genericBuff.buffDuration || 15000);
+            giveBuff(scene, target, targetId, 'summon_power_up', Math.ceil(player.stats.int * 2), 20000);
+        } else if (skill.effect?.buffType) {
+            const bt = skill.effect.buffType;
+            let val = skill.effect.buffValue;
+            if (skill.effect.buffValueMult) {
+                const base = bt === 'defense_buff' ? (target.stats.def || 10) : (target.stats.atk || 10);
+                val = Math.ceil(base * skill.effect.buffValueMult);
+            } else if (val === undefined) {
+                val = Math.ceil((target.stats[bt.replace('_buff', '')] || 10) * 0.3);
+            }
+            giveBuff(scene, target, targetId, bt, val, skill.effect.buffDuration || 15000);
+        }
+
+        // 追加バフ付与（extraBuff: blessing 等で複数のバフを同時付与）
+        if (skill.effect?.extraBuff) {
+            const eb = skill.effect.extraBuff;
+            const base = eb.type === 'defense_buff' ? (target.stats.def || 10) : (target.stats.atk || 10);
+            const val = Math.ceil(base * (eb.mult || 0.3));
+            giveBuff(scene, target, targetId, eb.type, val, eb.duration || 15000);
         }
     });
 }

@@ -1923,6 +1923,39 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             return;
         }
 
+        // 忍術「空蝉の術（身代わり回避）」: 攻撃を完全に身代わりで回避
+        if (this.activeBuffs['utsusemi']) {
+            this.activeBuffs['utsusemi'].count = (this.activeBuffs['utsusemi'].count || 1) - 1;
+            if (this.activeBuffs['utsusemi'].count <= 0) {
+                delete this.activeBuffs['utsusemi'];
+            }
+            const subText = this.scene.add.text(this.x, this.y - 30, '🪵空蝉回避!', {
+                fontSize: '12px',
+                color: '#a3e635',
+                fontFamily: UI_FONT,
+                stroke: '#000',
+                strokeThickness: 2
+            }).setOrigin(0.5);
+            this.scene.tweens.add({
+                targets: subText,
+                y: this.y - 60,
+                alpha: 0,
+                duration: 600,
+                onComplete: () => subText.destroy()
+            });
+            if (this.scene.add?.circle) {
+                const smoke = this.scene.add.circle(this.x, this.y, 25, 0x888888, 0.6);
+                this.scene.tweens.add({
+                    targets: smoke,
+                    scale: 2,
+                    alpha: 0,
+                    duration: 400,
+                    onComplete: () => smoke.destroy()
+                });
+            }
+            return;
+        }
+
         let finalAmount = amount;
 
         // 防御力によるダメージ軽減（逓減方式: DEFが高いほど軽減率が上がるが0にはならない）
@@ -1961,6 +1994,30 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         if (this.activeBuffs['damage_cut_buff']) {
             const cutRate = Math.min(0.90, this.activeBuffs['damage_cut_buff'].value || 0.5);
             finalAmount *= Math.max(0.1, 1 - cutRate);
+        }
+
+        // メイジスキル「マナシールド」によるMP肩代わり
+        if (this.activeBuffs['mana_shield'] && this.stats.mp > 0) {
+            const absorbRate = this.activeBuffs['mana_shield'].value || 0.5;
+            const mpAbsorbTarget = Math.round(finalAmount * absorbRate);
+            const actualMpAbsorb = Math.min(this.stats.mp, mpAbsorbTarget);
+            this.stats.mp -= actualMpAbsorb;
+            finalAmount -= actualMpAbsorb;
+
+            const shieldText = this.scene.add.text(this.x, this.y - 45, `🛡️MANA -${actualMpAbsorb}`, {
+                fontSize: '11px',
+                color: '#38bdf8',
+                fontFamily: UI_FONT,
+                stroke: '#000',
+                strokeThickness: 2,
+            }).setOrigin(0.5);
+            this.scene.tweens.add({
+                targets: shieldText,
+                y: this.y - 75,
+                alpha: 0,
+                duration: 600,
+                onComplete: () => shieldText.destroy(),
+            });
         }
 
         finalAmount = Math.max(this.stats.damageReduction >= 1 ? 0 : 1, Math.round(finalAmount));

@@ -63,12 +63,12 @@ export function getSkillData(skillId) {
  * 基本職側の配列を参照すること。
  */
 export const SKILLS_BY_JOB = {
-    fighter: ['slash', 'whirlwind', 'heavy_slash', 'sonic_wave', 'ground_smash', 'fighting_spirit', 'counter_stance'],
-    mage: ['fireball', 'ice_needle', 'big_fireball', 'dark_nova', 'meteor_swarm', 'thunder_storm', 'mana_well'],
-    tank: ['guard', 'iron_defense', 'shield_bash', 'immovable_body', 'spike_guard', 'stalwart_heart', 'retaliate'],
-    ranger: ['rapid_fire', 'arrow_rain', 'piercing_shot', 'multi_shot', 'wind_walker', 'explosive_arrow', 'hunters_focus'],
+    fighter: ['dash_slash', 'slash', 'whirlwind', 'blade_storm', 'heavy_slash', 'sonic_wave', 'ground_smash', 'fighting_spirit', 'counter_stance'],
+    mage: ['fireball', 'blink', 'ice_needle', 'mana_shield', 'big_fireball', 'dark_nova', 'thunder_storm', 'mana_well', 'meteor_swarm'],
+    tank: ['guard', 'war_cry', 'iron_defense', 'shield_bash', 'immovable_body', 'spike_guard', 'stalwart_heart', 'retaliate'],
+    ranger: ['rapid_fire', 'backstep_shot', 'arrow_rain', 'smoke_bomb', 'piercing_shot', 'multi_shot', 'wind_walker', 'explosive_arrow', 'hunters_focus'],
     summoner: ['summon', 'mega_summon', 'spirit_bolt', 'command_attack', 'familiar_speed', 'spirit_link', 'beast_bond'],
-    priest: ['heal', 'attack_buff', 'holy_arrow', 'defense_buff', 'speed_buff', 'summon_boost', 'blessed_vitality'],
+    priest: ['heal', 'attack_buff', 'holy_arrow', 'blessing', 'defense_buff', 'judgment_light', 'speed_buff', 'sanctuary', 'summon_boost', 'blessed_vitality'],
     artisan: ['hammer_strike', 'crafting_mastery', 'armor_reinforce', 'metal_temper', 'explosive_flask', 'artisan_aura', 'overclock_forge'],
 
     // 上位職（継承元のスキルは含めず、その職業の代で新規に増える分だけ）
@@ -92,8 +92,8 @@ export const SKILLS_BY_JOB = {
     warden: ['bulwark_bash', 'fortress_aura', 'ironwall', 'vital_bastion'],
     avenger: ['vengeful_strike', 'wrath_of_the_fallen', 'grudge', 'unyielding_wrath'],
     juggernaut: ['colossus_slam', 'earthquake', 'titan_hide', 'unstoppable'],
-    ninja: ['shuriken_storm', 'shadow_assassinate', 'shadow_step', 'killer_instinct'],
-    gunslinger: ['quick_draw', 'bullet_hell', 'sharpshooter', 'gun_kata'],
+    ninja: ['utsusemi', 'raiton_slash', 'shuriken_storm', 'shadow_assassinate', 'shadow_step', 'killer_instinct'],
+    gunslinger: ['acrobatic_fire', 'bullet_storm', 'quick_draw', 'bullet_hell', 'sharpshooter', 'gun_kata'],
     wind_archer: ['gale_arrow', 'storm_volley', 'wind_veil', 'zephyr_focus'],
     necromancer: ['undead_knight_summon', 'death_bolt', 'grave_call', 'undead_pact', 'soul_harvest'],
     beast_lord: ['beast_king_summon', 'primal_roar', 'wild_charge', 'pack_leader', 'wild_instinct'],

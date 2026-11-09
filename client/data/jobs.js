@@ -14,11 +14,12 @@ export const JOBS = {
         attackRange: 80,
         attackHit: 'area',
         skills: {
-            1: ['slash'],
+            1: ['dash_slash', 'slash'],
             3: ['whirlwind'],
-            5: ['heavy_slash'],
-            7: ['sonic_wave'],
-            10: ['ground_smash'],
+            5: ['blade_storm'],
+            8: ['heavy_slash'],
+            10: ['sonic_wave'],
+            13: ['ground_smash'],
             15: ['fighting_spirit'],
             20: ['counter_stance']
         },
@@ -37,13 +38,14 @@ export const JOBS = {
         attackRange: 200,
         attackHit: 'single',
         skills: {
-            1: ['fireball'],
+            1: ['fireball', 'blink'],
             3: ['ice_needle'],
-            5: ['big_fireball'],
-            8: ['dark_nova'],
-            10: ['meteor_swarm'],
-            12: ['thunder_storm'],
-            15: ['mana_well']
+            5: ['mana_shield'],
+            7: ['big_fireball'],
+            10: ['dark_nova'],
+            13: ['thunder_storm'],
+            15: ['mana_well'],
+            18: ['meteor_swarm']
         },
         nextJobs: ['archmage', 'elementalist', 'warlock', 'sage']
     }),
@@ -83,8 +85,9 @@ export const JOBS = {
         attackRange: 260,
         attackHit: 'single',
         skills: {
-            1: ['rapid_fire'],
+            1: ['rapid_fire', 'backstep_shot'],
             5: ['arrow_rain'],
+            8: ['smoke_bomb'],
             10: ['piercing_shot'],
             13: ['multi_shot'],
             15: ['wind_walker'],
@@ -131,9 +134,10 @@ export const JOBS = {
         skills: {
             1: ['heal', 'attack_buff'],
             3: ['holy_arrow'],
-            5: ['defense_buff'],
+            5: ['blessing', 'defense_buff'],
+            8: ['judgment_light'],
             10: ['speed_buff'],
-            15: ['summon_boost'],
+            15: ['sanctuary', 'summon_boost'],
             20: ['blessed_vitality']
         },
         nextJobs: ['exorcist', 'saint', 'war_priest', 'shadow_priest']
@@ -485,10 +489,10 @@ export const JOBS = {
         attackRange: 160,
         attackHit: 'single',
         skills: {
-            50: ['shuriken_storm'],
-            55: ['shadow_assassinate'],
+            50: ['shuriken_storm', 'utsusemi'],
+            55: ['raiton_slash'],
             60: ['shadow_step'],
-            65: ['killer_instinct']
+            65: ['shadow_assassinate', 'killer_instinct']
         }
     }),
     gunslinger: defineJob({
@@ -505,10 +509,10 @@ export const JOBS = {
         attackRange: 300,
         attackHit: 'single',
         skills: {
-            50: ['quick_draw'],
-            55: ['bullet_hell'],
+            50: ['quick_draw', 'acrobatic_fire'],
+            55: ['bullet_storm'],
             60: ['sharpshooter'],
-            65: ['gun_kata']
+            65: ['bullet_hell', 'gun_kata']
         }
     }),
     wind_archer: defineJob({
