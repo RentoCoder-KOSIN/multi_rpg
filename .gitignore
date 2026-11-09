@@ -40,3 +40,6 @@ temp/
 
 # Coverage
 coverage/
+
+# accounts data
+accounts.json
