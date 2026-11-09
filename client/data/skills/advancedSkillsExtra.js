@@ -295,13 +295,15 @@ export const ADVANCED_SKILLS_EXTRA = {
         vfx: 'blast',
         element: 'earth',
         cd: 6000,
-        damageMult: 34,
+        damageMult: 58,
+        defScaling: 4.5,
         mpCost: 30,
-        range: 140,
+        range: 220,
         rangeType: 'circle',
         color: 0xb0a080,
         icon: '🛡️',
-        description: '大盾で周囲を殴りつけ、敵を押し返す。'
+        description: '大盾で周囲を叩き割り、周囲の敵を目の前に引き寄せながら自身の防御力450%の追加ダメージを与える。',
+        effect: { pullEnemies: true }
     }),
     fortress_aura: active({
         id: 'fortress_aura',
@@ -339,13 +341,14 @@ export const ADVANCED_SKILLS_EXTRA = {
         vfx: 'slash',
         element: 'light',
         cd: 5000,
-        damageMult: 44,
+        damageMult: 65,
+        defScaling: 3.5,
         mpCost: 35,
         range: 150,
         rangeType: 'circle',
         color: 0xffe066,
         icon: '⚔️',
-        description: '怒りを込めた一撃を叩き込む。',
+        description: '被弾の怒りを込めた一撃。自身の防御力350%が加算され、HPが減っているほど威力が増大（最大2倍）。',
         hitType: 'single'
     }),
     wrath_of_the_fallen: active({
@@ -384,13 +387,16 @@ export const ADVANCED_SKILLS_EXTRA = {
         vfx: 'blast',
         element: 'earth',
         cd: 9000,
-        damageMult: 65,
+        damageMult: 75,
+        hpScaling: 0.12,
+        defScaling: 3.0,
         mpCost: 50,
-        range: 200,
+        range: 220,
         rangeType: 'circle',
         color: 0xcc9944,
         icon: '🦣',
-        description: '巨体を叩きつけ、周囲の敵を粉砕する。'
+        description: '超巨体を叩きつける。自身の最大HP12%＋防御力300%が上乗せされ、敵をスタンさせる。',
+        effect: { statusEffect: 'paralyze', statusChance: 0.85, statusDuration: 2500 }
     }),
     earthquake: active({
         id: 'earthquake',

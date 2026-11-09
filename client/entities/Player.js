@@ -1957,7 +1957,36 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             finalAmount *= Math.max(0, 1 - this.stats.damageReduction);
         }
 
+        // タンクスキル等によるダメージカットバフ (damage_cut_buff)
+        if (this.activeBuffs['damage_cut_buff']) {
+            const cutRate = Math.min(0.90, this.activeBuffs['damage_cut_buff'].value || 0.5);
+            finalAmount *= Math.max(0.1, 1 - cutRate);
+        }
+
         finalAmount = Math.max(this.stats.damageReduction >= 1 ? 0 : 1, Math.round(finalAmount));
+
+        // スパイクガードによる自動反撃（自身のDEFに応じた反射ダメージ）
+        if (this.activeBuffs['spike_guard'] && attacker && attacker.takeDamage && !attacker.isDead) {
+            const reflectRatio = this.activeBuffs['spike_guard'].value || 1.2;
+            const reflectDamage = Math.max(1, Math.ceil(this.getDefense() * reflectRatio));
+            attacker.takeDamage(reflectDamage, this);
+
+            // 反撃エフェクト
+            const spikeText = this.scene.add.text(this.x, this.y - 45, `⚡COUNTER ${reflectDamage}`, {
+                fontSize: '11px',
+                color: '#facc15',
+                fontFamily: UI_FONT,
+                stroke: '#000',
+                strokeThickness: 2,
+            }).setOrigin(0.5);
+            this.scene.tweens.add({
+                targets: spikeText,
+                y: this.y - 75,
+                alpha: 0,
+                duration: 600,
+                onComplete: () => spikeText.destroy(),
+            });
+        }
 
         this.stats.hp = Math.max(0, this.stats.hp - finalAmount);
         this.saveStats();

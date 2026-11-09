@@ -283,12 +283,14 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         const player = this.scene.player;
         let candidates = [];
 
-        // プレイヤー
+        // プレイヤー（挑発中はヘイト倍率を10倍にして最優先ターゲット化）
         if (player && player.active) {
             const dist = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
+            const isTaunting = player.tauntEndTime && player.tauntEndTime > Date.now();
+            const playerHate = isTaunting ? 10.0 : 1.0;
             candidates.push({
                 target: player,
-                effectiveDist: dist,
+                effectiveDist: dist / playerHate,
                 realDist: dist,
                 isSummon: false
             });

@@ -61,9 +61,9 @@ export const JOBS = {
         attackHit: 'area',
         skills: {
             1: ['guard'],
-            5: ['iron_defense'],
-            10: ['shield_bash'],
-            15: ['immovable_body'],
+            5: ['war_cry'],
+            10: ['iron_defense'],
+            15: ['shield_bash', 'immovable_body'],
             18: ['spike_guard'],
             20: ['stalwart_heart'],
             25: ['retaliate']

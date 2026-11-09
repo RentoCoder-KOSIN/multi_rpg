@@ -57,16 +57,18 @@ export const ADVANCED_SKILLS = {
     holy_sanctuary: defineSkill({
         id: 'holy_sanctuary', element: 'light', name: 'ホーリーサンクチュアリ', type: 'active',
         cd: 18000, damageMult: 45, mpCost: 80, unlockCost: 500,
+        defScaling: 2.5,
         range: 300, rangeType: 'circle',
         color: 0xffff00, icon: '✝️',
-        description: '神聖な領域を展開し、敵には裁きを、味方には加護を。'
+        description: '神聖な領域を展開。領域内の敵に自身の防御力250%上乗せの裁きを下し、味方を守る。'
     }),
     smite: defineSkill({
         id: 'smite', element: 'light', name: 'スマイト', type: 'active',
         cd: 5000, damageMult: 50, mpCost: 35, unlockCost: 500,
+        defScaling: 4.0,
         range: 150, rangeType: 'circle',
         color: 0xfff2cc, icon: '⚡',
-        description: '天罰を下す一撃。アンデッド系に1.5倍のダメージ。',
+        description: '天罰を下す聖なる一撃。自身の防御力の400%が上乗せされ、アンデッド系に1.5倍のダメージ。',
         effect: { vsUndead: 1.5 },
         hitType: 'single',
     }),

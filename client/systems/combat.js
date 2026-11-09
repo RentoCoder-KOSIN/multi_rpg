@@ -684,6 +684,63 @@ export function usePlayerSkill(scene, skillId) {
     // Facing: right = 1, left = -1 (walk-left/right アニメーションを使うため flipX ではなく facingDirection を見る)
     const direction = player.facingDirection || 1;
 
+    // 挑発・集敵・タンク自己バフ等のスキル効果
+    if (skill.effect?.taunt) {
+        player.tauntEndTime = Date.now() + (skill.effect.tauntDuration || 8000);
+        if (scene.notificationUI) {
+            scene.notificationUI.show('📢 周囲の敵を挑発し、ターゲットを引きつけた！', 'warning', 3000);
+        }
+    }
+
+    if (skill.effect?.pullEnemies) {
+        const pullTargets = enemies.filter(enemy => {
+            if (!enemy || !enemy.active) return false;
+            return Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y) <= (skill.range || 350);
+        });
+        pullTargets.forEach(enemy => {
+            const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
+            const pullDist = 120;
+            const targetX = enemy.x + Math.cos(angle) * pullDist;
+            const targetY = enemy.y + Math.sin(angle) * pullDist;
+            if (scene.tweens) {
+                scene.tweens.add({
+                    targets: enemy,
+                    x: targetX,
+                    y: targetY,
+                    duration: 250,
+                    ease: 'Power2'
+                });
+            }
+            if (skill.effect?.taunt) {
+                const mark = scene.add.text(enemy.x, enemy.y - 35, '💢 PROVOKED!', {
+                    fontSize: '11px',
+                    color: '#ff4444',
+                    fontFamily: UI_FONT,
+                    stroke: '#000',
+                    strokeThickness: 2
+                }).setOrigin(0.5);
+                scene.tweens.add({ targets: mark, y: enemy.y - 65, alpha: 0, duration: 800, onComplete: () => mark.destroy() });
+            }
+        });
+    }
+
+    if (skill.effect?.buffType) {
+        const dur = skill.effect.buffDuration || 10000;
+        let val = skill.effect.buffValue;
+        if (skill.effect.buffValueMult) {
+            val = Math.ceil((player.stats?.def || 10) * skill.effect.buffValueMult);
+        }
+        player.applyBuff(skill.effect.buffType, val, dur);
+        applyBuffVisual(scene, player, skill.effect.buffType, val, dur);
+    }
+    if (skill.effect?.extraBuff) {
+        const eb = skill.effect.extraBuff;
+        const dur = eb.duration || 10000;
+        const val = Math.ceil((player.stats?.def || 10) * (eb.mult || 1.0));
+        player.applyBuff(eb.type, val, dur);
+        applyBuffVisual(scene, player, eb.type, val, dur);
+    }
+
     if (skill.targetType === 'party') {
         applyPartySkill(scene, skillId, skill, range);
     } else {
@@ -782,6 +839,22 @@ function applyDamageSkill(scene, skill, { enemies, range, rangeType, direction, 
 
                 const damageData = player.getDamage(damageMultiplier, enemy, skill.element || null);
                 let damage = damageData.amount;
+
+                // タンク専用: 防御力(DEF)またはHPによる追加ダメージ加算
+                if (skill.defScaling) {
+                    const defBonus = Math.ceil((player.getDefense ? player.getDefense() : (player.stats?.def || 0)) * skill.defScaling);
+                    damage += defBonus;
+                }
+                if (skill.hpScaling) {
+                    const hpBonus = Math.ceil((player.stats?.maxHp || 100) * skill.hpScaling);
+                    damage += hpBonus;
+                }
+                // アベンジャーの失ったHP比例（最大2倍）
+                if (skill.id === 'vengeful_strike') {
+                    const lostRatio = Math.max(0, 1 - (player.stats.hp / Math.max(1, player.stats.maxHp)));
+                    damage = Math.ceil(damage * (1 + lostRatio));
+                }
+
                 const statusEffects = mergeStatusEffects(damageData, getSkillStatusEffects(skill, player));
 
                 // アンデッド特効（エクソシズムなど effect.vsUndead を持つスキル）
