@@ -558,6 +558,17 @@ export const ADVANCED_SKILLS_EXTRA = {
     }),
 
     // --- ネクロマンサー (summonerの上位職) ---
+    undead_knight_summon: active({
+        id: 'undead_knight_summon',
+        name: '冥界騎士召喚',
+        vfx: 'blast',
+        element: 'dark',
+        cd: 25000,
+        mpCost: 120,
+        color: 0xa855f7,
+        icon: '💀',
+        description: '冥府の重騎士を召喚する。敵のヘイトを強く引きつけ、鉄壁の盾となって敵の猛攻を受け止める。'
+    }),
     death_bolt: active({
         id: 'death_bolt',
         name: 'デスボルト',
@@ -603,6 +614,17 @@ export const ADVANCED_SKILLS_EXTRA = {
     }),
 
     // --- ビーストロード (summonerの上位職) ---
+    beast_king_summon: active({
+        id: 'beast_king_summon',
+        name: '百獣王召喚',
+        vfx: 'slash',
+        element: 'earth',
+        cd: 25000,
+        mpCost: 120,
+        color: 0xf59e0b,
+        icon: '🐺',
+        description: '原初の百獣の王を召喚する。敵を引きつけながら高速突進と強烈な噛みつきで前線を制圧する。'
+    }),
     primal_roar: active({
         id: 'primal_roar',
         name: 'プライマルロア',
@@ -646,6 +668,17 @@ export const ADVANCED_SKILLS_EXTRA = {
     }),
 
     // --- スピリットマスター (summonerの上位職) ---
+    great_spirit_summon: active({
+        id: 'great_spirit_summon',
+        name: '大精霊召喚',
+        vfx: 'blast',
+        element: 'light',
+        cd: 25000,
+        mpCost: 120,
+        color: 0x06b6d4,
+        icon: '🧚',
+        description: '高位の大精霊を召喚する。精霊障壁で敵のターゲットを引きつけ、範囲魔法で後衛を援護する。'
+    }),
     spirit_lance: active({
         id: 'spirit_lance',
         name: 'スピリットランス',

@@ -545,7 +545,7 @@ export const JOBS = {
         attackRange: 200,
         attackHit: 'single',
         skills: {
-            50: ['death_bolt'],
+            50: ['undead_knight_summon', 'death_bolt'],
             55: ['grave_call'],
             60: ['undead_pact'],
             65: ['soul_harvest']
@@ -565,7 +565,7 @@ export const JOBS = {
         attackRange: 190,
         attackHit: 'single',
         skills: {
-            50: ['primal_roar'],
+            50: ['beast_king_summon', 'primal_roar'],
             55: ['wild_charge'],
             60: ['pack_leader'],
             65: ['wild_instinct']
@@ -585,7 +585,7 @@ export const JOBS = {
         attackRange: 210,
         attackHit: 'single',
         skills: {
-            50: ['spirit_lance'],
+            50: ['great_spirit_summon', 'spirit_lance'],
             55: ['spirit_storm'],
             60: ['spirit_communion'],
             65: ['ethereal_veil']

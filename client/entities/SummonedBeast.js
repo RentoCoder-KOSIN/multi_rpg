@@ -6,11 +6,13 @@ import { COMBAT_CONFIG } from "../gameConstants.js";
 
 export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, owner, type = "normal", skillLevel = 1) {
-        // type: 'normal', 'mega', 'demon_lord'
+        // type: 'normal', 'mega', 'demon_lord', 'undead_knight', 'beast_king', 'great_spirit'
         let texture = "slime";
         if (type === "mega" || type === "mega_summon") texture = "dragon_boss";
-        if (type === "demon_lord" || type === "demon_lord_summon")
-            texture = "demon_boss"; // demon_boss がある前提 or ドラゴンを赤くする
+        if (type === "demon_lord" || type === "demon_lord_summon") texture = "demon_boss";
+        if (type === "undead_knight" || type === "undead_knight_summon") texture = "ruins_skeleton";
+        if (type === "beast_king" || type === "beast_king_summon") texture = "dire_wolf";
+        if (type === "great_spirit" || type === "great_spirit_summon") texture = "fire_elemental";
 
         super(scene, x, y, texture);
         this.owner = owner;
@@ -20,7 +22,13 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
             type === "mega" ||
             type === "mega_summon" ||
             type === "demon_lord" ||
-            type === "demon_lord_summon";
+            type === "demon_lord_summon" ||
+            type === "undead_knight" ||
+            type === "undead_knight_summon" ||
+            type === "beast_king" ||
+            type === "beast_king_summon" ||
+            type === "great_spirit" ||
+            type === "great_spirit_summon";
 
         scene.add.existing(this);
         scene.physics.add.existing(this);
@@ -31,27 +39,32 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
             this.setTint(0xff00ff);
         } else if (type === "demon_lord" || type === "demon_lord_summon") {
             this.setTint(0xff5555); // 禍々しい赤
+        } else if (type === "undead_knight" || type === "undead_knight_summon") {
+            this.setTint(0xa855f7); // 紫紺のアンデッド
+        } else if (type === "beast_king" || type === "beast_king_summon") {
+            this.setTint(0xf59e0b); // 琥珀色の獣王
+        } else if (type === "great_spirit" || type === "great_spirit_summon") {
+            this.setTint(0x06b6d4); // 水晶色の精霊
         }
 
-        // 表示サイズ: 敵より少し大きい程度に統一する。
-        // 以前は元画像（slime1.pngは480x480など、敵の当たり判定より遥かに解像度が高い）に
-        // 直接setScale(0.8/1.2/1.8)をかけていたため、実際の表示サイズが
-        // 敵(40〜80px程度)よりはるかに巨大（384px超）になってしまっていた。
-        // Enemy.adjustSizeAndHitbox()と同様に、元画像の実寸から
-        // 「狙った表示幅になる倍率」を逆算して設定する。
+        // 表示サイズ: 敵より少し大きい程度に統一する
         const SUMMON_TARGET_WIDTH = {
-            normal: 55, // 通常の敵(40〜60px)より少し大きい程度
-            mega: 100, // ボス(80px)より少し大きい程度
-            demon_lord: 130, // 最上位、さらに一回り大きい程度
+            normal: 55,
+            mega: 100,
+            demon_lord: 130,
+            undead_knight: 95,
+            beast_king: 110,
+            great_spirit: 90,
         };
         const sizeKey =
-            type === "mega" || type === "mega_summon"
-                ? "mega"
-                : type === "demon_lord" || type === "demon_lord_summon"
-                  ? "demon_lord"
-                  : "normal";
-        const targetWidth = SUMMON_TARGET_WIDTH[sizeKey];
-        const sourceImage = scene.textures.get(texture).getSourceImage();
+            (type === "mega" || type === "mega_summon") ? "mega" :
+            (type === "demon_lord" || type === "demon_lord_summon") ? "demon_lord" :
+            (type === "undead_knight" || type === "undead_knight_summon") ? "undead_knight" :
+            (type === "beast_king" || type === "beast_king_summon") ? "beast_king" :
+            (type === "great_spirit" || type === "great_spirit_summon") ? "great_spirit" : "normal";
+
+        const targetWidth = SUMMON_TARGET_WIDTH[sizeKey] || 70;
+        const sourceImage = scene.textures.get(texture)?.getSourceImage();
         const baseWidth = sourceImage ? sourceImage.width : 32;
         this.setScale(targetWidth / baseWidth);
 
@@ -60,18 +73,44 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
         let atkMultiplier = 1.8;
         let speedBonus = 0;
         let atkBaseMult = 2;
+        let hateMultiplier = 2.5; // ヘイト集約倍率（敵がプレイヤーより召喚獣を狙いやすくなる）
 
         if (type === "mega" || type === "mega_summon") {
             baseHp = 150000;
             atkMultiplier = 3.5;
             speedBonus = 50;
             atkBaseMult = 3;
+            hateMultiplier = 3.0;
         } else if (type === "demon_lord" || type === "demon_lord_summon") {
-            baseHp = 500000; // 圧倒的タフネス
-            atkMultiplier = 7.0; // 圧倒的攻撃力
+            baseHp = 500000;
+            atkMultiplier = 7.0;
             speedBonus = 100;
             atkBaseMult = 5;
+            hateMultiplier = 4.0;
+        } else if (type === "undead_knight" || type === "undead_knight_summon") {
+            // ネクロマンサーの冥界騎士: 超硬い盾役（ヘイト最大）
+            baseHp = 480000;
+            atkMultiplier = 4.5;
+            speedBonus = 40;
+            atkBaseMult = 3;
+            hateMultiplier = 5.0; // 最優先で敵のターゲットを集める
+        } else if (type === "beast_king" || type === "beast_king_summon") {
+            // ビーストロードの百獣王: 高速＆前衛アタッカー
+            baseHp = 380000;
+            atkMultiplier = 6.0;
+            speedBonus = 80;
+            atkBaseMult = 4;
+            hateMultiplier = 3.5;
+        } else if (type === "great_spirit" || type === "great_spirit_summon") {
+            // スピリットマスターの大精霊: 精霊障壁＆高知力攻撃
+            baseHp = 420000;
+            atkMultiplier = 5.5;
+            speedBonus = 50;
+            atkBaseMult = 4.5;
+            hateMultiplier = 3.5;
         }
+
+        this.hateMultiplier = hateMultiplier;
 
         // スキルレベルによる倍率 (レベル1で1.0倍、レベル10で2.25倍程度)
         const levelMult = 1 + (skillLevel - 1) * COMBAT_CONFIG.SKILL_LEVEL_BONUS;
@@ -115,8 +154,10 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
         this.hpBarBg = scene.add.rectangle(0, 0, 30, 4, 0x000000).setDepth(10);
         let barColor = 0x9370db;
         if (type === "mega" || type === "mega_summon") barColor = 0xff00ff;
-        if (type === "demon_lord" || type === "demon_lord_summon")
-            barColor = 0xff0000;
+        if (type === "demon_lord" || type === "demon_lord_summon") barColor = 0xff0000;
+        if (type === "undead_knight" || type === "undead_knight_summon") barColor = 0xa855f7;
+        if (type === "beast_king" || type === "beast_king_summon") barColor = 0xf59e0b;
+        if (type === "great_spirit" || type === "great_spirit_summon") barColor = 0x06b6d4;
         this.hpBar = scene.add.rectangle(0, 0, 30, 4, barColor).setDepth(11);
 
         // パーティクルエフェクト
@@ -127,6 +168,12 @@ export default class SummonedBeast extends Phaser.Physics.Arcade.Sprite {
             pTint =
                 type === "demon_lord" || type === "demon_lord_summon"
                     ? 0xff0000
+                    : type === "undead_knight" || type === "undead_knight_summon"
+                    ? 0xa855f7
+                    : type === "beast_king" || type === "beast_king_summon"
+                    ? 0xf59e0b
+                    : type === "great_spirit" || type === "great_spirit_summon"
+                    ? 0x06b6d4
                     : 0xff00ff;
         }
 

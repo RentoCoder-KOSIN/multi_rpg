@@ -275,32 +275,69 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     /**
          * AIが無効な場合のデフォルト動作：プレイヤーを追跡して攻撃【改善・復元版】
          */
-    defaultBehavior(time) {
+        /**
+     * 敵の攻撃対象（プレイヤーまたは召喚獣）をヘイトを考慮して選定する
+     * 召喚獣はヘイト倍率（hateMultiplier）を持つため、プレイヤーより優先して狙われる
+     */
+    findTarget() {
         const player = this.scene.player;
-        
-        if (!player || !player.active) {
-            // プレイヤーがいない場合はランダム移動
+        let candidates = [];
+
+        // プレイヤー
+        if (player && player.active) {
+            const dist = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
+            candidates.push({
+                target: player,
+                effectiveDist: dist,
+                realDist: dist,
+                isSummon: false
+            });
+        }
+
+        // 召喚獣（ヘイト倍率で実質距離を短縮評価し、優先的にターゲット）
+        const summons = (this.scene.activeSummons || []).filter(s => s && s.active);
+        summons.forEach(s => {
+            const dist = Phaser.Math.Distance.Between(this.x, this.y, s.x, s.y);
+            const hateMult = s.hateMultiplier || 2.5;
+            candidates.push({
+                target: s,
+                effectiveDist: dist / hateMult,
+                realDist: dist,
+                isSummon: true
+            });
+        });
+
+        if (candidates.length === 0) return null;
+
+        // effectiveDistが最も小さいターゲットを選択
+        candidates.sort((a, b) => a.effectiveDist - b.effectiveDist);
+        return candidates[0];
+    }
+
+    defaultBehavior(time) {
+        const targetInfo = this.findTarget();
+        if (!targetInfo) {
             this.setVelocity(this.direction.x * this.speed, this.direction.y * this.speed);
             return;
         }
 
-        // プレイヤーとの距離を計算
-        const distance = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
+        const target = targetInfo.target;
+        const distance = targetInfo.realDist;
 
         if (distance < this.detectRange) {
             // 攻撃範囲内にいる場合
             if (distance < this.attackRange) {
                 // 攻撃を試みる
-                this.attemptAttack(time, player);
+                this.attemptAttack(time, target);
 
                 // 攻撃クールダウン中であっても、固まらずにプレイヤーへ向かって微速進行・押す動作を入れる
                 if (time - this.lastAttackTime < this.attackCooldown) {
-                    const angle = Phaser.Math.Angle.Between(this.x, this.y, player.x, player.y);
+                    const angle = Phaser.Math.Angle.Between(this.x, this.y, target.x, target.y);
                     this.setVelocity(Math.cos(angle) * (this.speed * 0.5), Math.sin(angle) * (this.speed * 0.5));
                 }
             } else {
                 // 検出範囲内・攻撃範囲外：プレイヤーに向かって移動（接近時は加速）
-                const angle = Phaser.Math.Angle.Between(this.x, this.y, player.x, player.y);
+                const angle = Phaser.Math.Angle.Between(this.x, this.y, target.x, target.y);
                 const moveSpeed = distance < 100 ? this.speed * 1.5 : this.speed;
                 const vx = Math.cos(angle) * moveSpeed;
                 const vy = Math.sin(angle) * moveSpeed;
@@ -315,36 +352,48 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     /**
      * プレイヤーへの攻撃を試みる
      */
-    attemptAttack(time, player) {
-        // クールダウンをチェック
+    attemptAttack(time, target) {
         if (time - this.lastAttackTime < this.attackCooldown) return;
-
         this.lastAttackTime = time;
 
-        // プレイヤーがいて、アクティブであれば、ダメージを与える
-        if (player && player.active) {
-            // プレイヤーにダメージを与える
-            if (player.takeDamage) {
+        if (target && target.active) {
+            if (target.takeDamage) {
                 const buff = this.activeBuffs['attack_buff'];
                 const bonus = buff ? (buff.value || 0) : 0;
                 let damage = Math.ceil(this.atk + bonus);
 
-                // レベル差補正（ターゲットが召喚獣の場合も適用）
-                const targetLevel = (player.level !== undefined) ? player.level : (player.stats?.level ?? 1);
+                const targetLevel = (target.level !== undefined) ? target.level : (target.stats?.level ?? 1);
                 damage = Math.ceil(damage * getLevelDiffMultiplier(this.level, targetLevel));
 
-                player.takeDamage(damage, this);
+                target.takeDamage(damage, this);
+
+                if (target.isSummon) {
+                    const shieldText = this.scene.add.text(target.x, target.y - 40, '🛡️ GUARD', {
+                        fontSize: '11px',
+                        color: '#60a5fa',
+                        fontFamily: UI_FONT,
+                        stroke: '#000',
+                        strokeThickness: 2,
+                    }).setOrigin(0.5);
+                    this.scene.tweens.add({
+                        targets: shieldText,
+                        y: target.y - 70,
+                        alpha: 0,
+                        duration: 600,
+                        onComplete: () => shieldText.destroy(),
+                    });
+                }
             }
 
-            // AI の報酬計算（敵AIが有効な場合）
             if (this.ai && this.ai.notifyDamageDealt) {
                 this.ai.notifyDamageDealt(this.atk);
             }
 
-            // ビジュアル・オーディオフィードバック
-            if (isCameraShakeEnabled(this.scene)) this.scene.cameras.main.shake(50, 0.002);
+            if (!target.isSummon && isCameraShakeEnabled(this.scene)) {
+                this.scene.cameras.main.shake(50, 0.002);
+            }
 
-            console.log(`[Enemy] ${this.type} attacked player for ${this.atk} damage!`);
+            console.log(`[Enemy] ${this.type} attacked ${target.isSummon ? 'summon' : 'player'} for ${this.atk} damage!`);
         }
     }
 

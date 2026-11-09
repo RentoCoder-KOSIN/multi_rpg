@@ -1,5 +1,6 @@
 // NetworkManager.js
 import { SERVER_CONFIG } from '../config.js';
+import { UI_FONT } from '../fontConfig.js';
 import Player from '../entities/Player.js';
 import { areEffectsEnabled, isCameraShakeEnabled } from '../utils/effectsSettings.js';
 import { getSession, disableSaving, logout } from '../utils/saveStore.js';
@@ -262,6 +263,43 @@ export default class NetworkManager {
         this.socket.on('enemyAttack', (data) => {
             const player = this.scene?.player;
             if (!player || !player.active) return;
+
+            // 召喚獣が盾役として身代わりガードする判定
+            const activeSummons = (this.scene?.activeSummons || []).filter(s => s && s.active);
+            if (activeSummons.length > 0) {
+                // プレイヤーの近く（280px以内）にいる最も近い召喚獣が身代わりに
+                const nearestSummon = activeSummons.reduce((best, s) => {
+                    const dist = Phaser.Math.Distance.Between(player.x, player.y, s.x, s.y);
+                    if (dist <= 280 && (!best || dist < best.dist)) {
+                        return { summon: s, dist };
+                    }
+                    return best;
+                }, null);
+
+                if (nearestSummon) {
+                    const s = nearestSummon.summon;
+                    s.takeDamage(data.damage || 0);
+
+                    // 身代わりエフェクト・テキスト
+                    const shieldText = this.scene.add.text(s.x, s.y - 45, '🛡️ 召喚獣が身代わりガード！', {
+                        fontSize: '12px',
+                        color: '#38bdf8',
+                        fontFamily: UI_FONT,
+                        stroke: '#000',
+                        strokeThickness: 3,
+                    }).setOrigin(0.5);
+                    this.scene.tweens.add({
+                        targets: shieldText,
+                        y: s.y - 80,
+                        alpha: 0,
+                        duration: 800,
+                        onComplete: () => shieldText.destroy(),
+                    });
+
+                    console.log(`[NetworkManager] Summon intercepted enemyAttack from ${data.enemyType} for ${data.damage} dmg!`);
+                    return; // プレイヤーへのダメージを完全遮断！
+                }
+            }
 
             // プレイヤーにダメージを与える
             if (player.takeDamage) {

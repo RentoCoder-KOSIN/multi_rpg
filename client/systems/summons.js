@@ -6,7 +6,14 @@ import { applySkillEffect } from './skillEffects.js';
 import { getLevelDiffMultiplier } from '../utils/levelScaling.js';
 
 export function isSummonSkill(skillId) {
-    return skillId === 'summon' || skillId === 'mega_summon' || skillId === 'demon_lord_summon';
+    return (
+        skillId === 'summon' ||
+        skillId === 'mega_summon' ||
+        skillId === 'demon_lord_summon' ||
+        skillId === 'undead_knight_summon' ||
+        skillId === 'beast_king_summon' ||
+        skillId === 'great_spirit_summon'
+    );
 }
 
 let summonIdCounter = 0;

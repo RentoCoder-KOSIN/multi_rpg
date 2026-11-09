@@ -35,12 +35,23 @@ export function updateEnemyContactDamage(scene) {
         if (distance < ENEMY_TOUCH_DISTANCE) {
             if (!enemy.lastAttackTime || now - enemy.lastAttackTime > ENEMY_TOUCH_COOLDOWN_MS) {
                 enemy.lastAttackTime = now;
-                // レベル差補正を先にかけてから防御力で軽減する
-                const levelMult = getLevelDiffMultiplier(enemy.level, player.stats?.level ?? 1);
-                const scaledAtk = (enemy.atk || 10) * levelMult;
-                const finalDamage = Math.max(1, scaledAtk - (player.getDefense ? player.getDefense() : 0));
-                player.takeDamage(finalDamage);
-                if (enemy.ai) enemy.ai.notifyDamageDealt(finalDamage);
+                // 召喚獣が身代わりガードするか判定
+                const summons = (scene.activeSummons || []).filter(s => s && s.active);
+                const nearSummon = summons.find(s => Phaser.Math.Distance.Between(player.x, player.y, s.x, s.y) <= 120);
+
+                if (nearSummon) {
+                    const levelMult = getLevelDiffMultiplier(enemy.level, nearSummon.level ?? 1);
+                    const scaledAtk = (enemy.atk || 10) * levelMult;
+                    nearSummon.takeDamage(Math.max(1, Math.ceil(scaledAtk)));
+                    if (enemy.ai) enemy.ai.notifyDamageDealt(scaledAtk);
+                } else {
+                    // レベル差補正を先にかけてから防御力で軽減する
+                    const levelMult = getLevelDiffMultiplier(enemy.level, player.stats?.level ?? 1);
+                    const scaledAtk = (enemy.atk || 10) * levelMult;
+                    const finalDamage = Math.max(1, scaledAtk - (player.getDefense ? player.getDefense() : 0));
+                    player.takeDamage(finalDamage);
+                    if (enemy.ai) enemy.ai.notifyDamageDealt(finalDamage);
+                }
             }
         }
     });

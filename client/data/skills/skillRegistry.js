@@ -95,9 +95,9 @@ export const SKILLS_BY_JOB = {
     ninja: ['shuriken_storm', 'shadow_assassinate', 'shadow_step', 'killer_instinct'],
     gunslinger: ['quick_draw', 'bullet_hell', 'sharpshooter', 'gun_kata'],
     wind_archer: ['gale_arrow', 'storm_volley', 'wind_veil', 'zephyr_focus'],
-    necromancer: ['death_bolt', 'grave_call', 'undead_pact', 'soul_harvest'],
-    beast_lord: ['primal_roar', 'wild_charge', 'pack_leader', 'wild_instinct'],
-    spirit_master: ['spirit_lance', 'spirit_storm', 'spirit_communion', 'ethereal_veil'],
+    necromancer: ['undead_knight_summon', 'death_bolt', 'grave_call', 'undead_pact', 'soul_harvest'],
+    beast_lord: ['beast_king_summon', 'primal_roar', 'wild_charge', 'pack_leader', 'wild_instinct'],
+    spirit_master: ['great_spirit_summon', 'spirit_lance', 'spirit_storm', 'spirit_communion', 'ethereal_veil'],
     saint: ['holy_radiance', 'benediction', 'divine_grace', 'saintly_aura'],
     war_priest: ['holy_smash', 'sanctified_strike', 'zealous_might', 'holy_resolve'],
     shadow_priest: ['shadow_bolt', 'void_prison', 'dark_devotion', 'twilight_veil']
