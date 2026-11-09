@@ -25,7 +25,7 @@ export const SUMMONER_SKILLS = {
     }),
     spirit_bolt: defineSkill({
         id: 'spirit_bolt', name: 'スピリットボルト', type: 'active',
-        cd: 3000, damageMult: 8, mpCost: 12, unlockCost: 80,
+        cd: 3000, damageMult: 18, mpCost: 12, unlockCost: 80,
         range: 170, rangeType: 'circle',
         color: 0xda70d6, icon: '🔮',
         description: '精霊の力を凝縮した弾を放つ。'

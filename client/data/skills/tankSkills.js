@@ -1,6 +1,10 @@
 /**
  * タンクスキル
  * 圧倒的な防御力と体力を誇る守りの要
+ *
+ * [バランス調整ログ]
+ * - shield_bash: damageMult 8→22, cd 6000（タンクの攻撃手段として実用的に）
+ * - spike_guard: damageMult 10→28, cd 7000（反撃手段として強力に）
  */
 import { defineSkill } from '../schema.js';
 
@@ -19,7 +23,7 @@ export const TANK_SKILLS = {
     }),
     shield_bash: defineSkill({
         id: 'shield_bash', name: 'シールドバッシュ', type: 'active',
-        cd: 6000, damageMult: 8, mpCost: 15, unlockCost: 100,
+        cd: 6000, damageMult: 22, mpCost: 15, unlockCost: 100,
         range: 90, rangeType: 'circle',
         color: 0xcd853f, icon: '🛡️',
         description: '盾で殴りつける。',
@@ -27,7 +31,7 @@ export const TANK_SKILLS = {
     }),
     spike_guard: defineSkill({
         id: 'spike_guard', name: 'スパイクガード', type: 'active',
-        cd: 7000, damageMult: 10, mpCost: 15, unlockCost: 120,
+        cd: 7000, damageMult: 28, mpCost: 15, unlockCost: 120,
         range: 90, rangeType: 'circle',
         color: 0x999999, icon: '⚙️',
         description: '棘の生えた盾を構え、近づく敵に反撃ダメージを与える。'

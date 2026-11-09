@@ -1,6 +1,14 @@
 /**
  * メイジスキル
  * 高い攻撃力を誇るが、防御力が低い魔法職
+ *
+ * [バランス調整ログ]
+ * - fireball: damageMult 8→15, cd 2500→2000（序盤主力として使いやすく）
+ * - ice_needle: damageMult 11→20, cd 4000→3500
+ * - big_fireball: damageMult 14→28, cd 5000→4500
+ * - dark_nova: damageMult 16→32, cd 7000→6000
+ * - meteor_swarm: damageMult 28→55, cd 15000（大技として差別化）
+ * - thunder_storm: damageMult 20→40, cd 10000（継続AoEとして強力に）
  */
 import { defineSkill } from "../schema.js";
 
@@ -9,8 +17,8 @@ export const MAGE_SKILLS = {
         id: "fireball", vfx: 'blast', element: 'fire',
         name: "ファイアボール",
         type: "active",
-        cd: 2500,
-        damageMult: 8,
+        cd: 2000,
+        damageMult: 15,
         mpCost: 10,
         unlockCost: 10,
         range: 160,
@@ -24,8 +32,8 @@ export const MAGE_SKILLS = {
         id: "ice_needle", vfx: 'projectile', element: 'water',
         name: "アイスニードル",
         type: "active",
-        cd: 4000,
-        damageMult: 11,
+        cd: 3500,
+        damageMult: 20,
         mpCost: 15,
         unlockCost: 30,
         range: 180,
@@ -40,8 +48,8 @@ export const MAGE_SKILLS = {
         id: "big_fireball", vfx: 'blast', vfxOptions: { shake: true }, element: 'fire',
         name: "爆裂魔法",
         type: "active",
-        cd: 5000,
-        damageMult: 14,
+        cd: 4500,
+        damageMult: 28,
         mpCost: 25,
         unlockCost: 50,
         range: 220,
@@ -54,8 +62,8 @@ export const MAGE_SKILLS = {
         id: "dark_nova", vfx: 'blast', element: 'dark',
         name: "ダークノヴァ",
         type: "active",
-        cd: 7000,
-        damageMult: 16,
+        cd: 6000,
+        damageMult: 32,
         mpCost: 30,
         unlockCost: 80,
         range: 200,
@@ -70,7 +78,7 @@ export const MAGE_SKILLS = {
         name: "メテオスウォーム",
         type: "active",
         cd: 15000,
-        damageMult: 28,
+        damageMult: 55,
         mpCost: 60,
         unlockCost: 100,
         range: 280,
@@ -84,7 +92,7 @@ export const MAGE_SKILLS = {
         name: "サンダーストーム",
         type: "active",
         cd: 10000,
-        damageMult: 20,
+        damageMult: 40,
         mpCost: 40,
         unlockCost: 80,
         range: 170,

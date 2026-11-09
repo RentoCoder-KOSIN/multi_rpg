@@ -22,7 +22,7 @@ export const ADVANCED_SKILLS = {
     // --- ナイト (騎士 - ファイター上位職) ---
     judgment_cut: defineSkill({
         id: 'judgment_cut', vfx: 'slash', vfxOptions: { slashColor: 0x00ffff }, name: '絶・次元斬', type: 'active',
-        cd: 4000, damageMult: 38, mpCost: 40, unlockCost: 500,
+        cd: 4000, damageMult: 65, mpCost: 40, unlockCost: 500,
         range: 250, rangeType: 'line',
         color: 0x00ffff, icon: '💠',
         description: '空間を切り裂く超高速の一閃。単体に強烈なダメージ。',
@@ -30,7 +30,7 @@ export const ADVANCED_SKILLS = {
     }),
     guardian_slash: defineSkill({
         id: 'guardian_slash', name: 'ガーディアンスラッシュ', type: 'active',
-        cd: 5000, damageMult: 23, mpCost: 30, unlockCost: 500,
+        cd: 5000, damageMult: 48, mpCost: 30, unlockCost: 500,
         range: 150, rangeType: 'circle',
         color: 0xb0c4de, icon: '⚔️',
         description: '守りの構えから繰り出す近接範囲の一撃。'
@@ -39,14 +39,14 @@ export const ADVANCED_SKILLS = {
     // --- アークメイジ (メイジ上位職) ---
     abyss_storm: defineSkill({
         id: 'abyss_storm', vfx: 'blast', vfxOptions: { particleCount: 30, shake: true }, element: 'dark', name: 'アビスストーム', type: 'active',
-        cd: 15000, damageMult: 42, mpCost: 100, unlockCost: 500,
+        cd: 15000, damageMult: 80, mpCost: 100, unlockCost: 500,
         range: 350, rangeType: 'circle',
         color: 0x4b0082, icon: '🌀',
         description: '深淵の嵐を呼び寄せ、全てを飲み込む。'
     }),
     chain_lightning: defineSkill({
         id: 'chain_lightning', element: 'thunder', name: 'チェインライトニング', type: 'active',
-        cd: 6000, damageMult: 28, mpCost: 45, unlockCost: 500,
+        cd: 6000, damageMult: 52, mpCost: 45, unlockCost: 500,
         range: 220, rangeType: 'fan',
         color: 0xffff33, icon: '⚡',
         description: '雷撃が周囲の敵を連鎖して撃つ。',
@@ -56,14 +56,14 @@ export const ADVANCED_SKILLS = {
     // --- パラディン (タンク上位職) ---
     holy_sanctuary: defineSkill({
         id: 'holy_sanctuary', element: 'light', name: 'ホーリーサンクチュアリ', type: 'active',
-        cd: 18000, damageMult: 22, mpCost: 80, unlockCost: 500,
+        cd: 18000, damageMult: 45, mpCost: 80, unlockCost: 500,
         range: 300, rangeType: 'circle',
         color: 0xffff00, icon: '✝️',
         description: '神聖な領域を展開し、敵には裁きを、味方には加護を。'
     }),
     smite: defineSkill({
         id: 'smite', element: 'light', name: 'スマイト', type: 'active',
-        cd: 5000, damageMult: 22, mpCost: 35, unlockCost: 500,
+        cd: 5000, damageMult: 50, mpCost: 35, unlockCost: 500,
         range: 150, rangeType: 'circle',
         color: 0xfff2cc, icon: '⚡',
         description: '天罰を下す一撃。アンデッド系に1.5倍のダメージ。',
@@ -74,14 +74,14 @@ export const ADVANCED_SKILLS = {
     // --- スナイパー (レンジャー上位職) ---
     death_rain: defineSkill({
         id: 'death_rain', name: 'デスレイン', type: 'active',
-        cd: 5000, damageMult: 25, mpCost: 45, unlockCost: 500,
+        cd: 5000, damageMult: 55, mpCost: 45, unlockCost: 500,
         range: 400, rangeType: 'circle',
         color: 0x00ff00, icon: '🏹',
         description: '空から無数の死の矢を降らせる。'
     }),
     headshot: defineSkill({
         id: 'headshot', name: 'ヘッドショット', type: 'active',
-        cd: 4000, damageMult: 30, mpCost: 30, unlockCost: 500,
+        cd: 4000, damageMult: 60, mpCost: 30, unlockCost: 500,
         range: 320, rangeType: 'line',
         color: 0xff4444, icon: '🎯',
         description: '急所を正確に撃ち抜く必殺の一射。',
@@ -91,7 +91,7 @@ export const ADVANCED_SKILLS = {
     // --- エクソシスト (プリースト上位職) ---
     exorcism: defineSkill({
         id: 'exorcism', element: 'light', name: 'エクソシズム', type: 'active',
-        cd: 8000, damageMult: 34, mpCost: 60, unlockCost: 500,
+        cd: 8000, damageMult: 62, mpCost: 60, unlockCost: 500,
         range: 300, rangeType: 'line',
         color: 0xfff2cc, icon: '⛧',
         description: '邪悪なる存在を祓い清める神聖なる裁き。アンデッド系に2倍のダメージ。',
@@ -100,7 +100,7 @@ export const ADVANCED_SKILLS = {
     }),
     divine_judgment: defineSkill({
         id: 'divine_judgment', element: 'light', name: 'ディヴァインジャッジメント', type: 'active',
-        cd: 9000, damageMult: 36, mpCost: 65, unlockCost: 500,
+        cd: 9000, damageMult: 68, mpCost: 65, unlockCost: 500,
         range: 280, rangeType: 'line',
         color: 0xffe4b5, icon: '⚡',
         description: '天より下る裁きの光。アンデッド系に1.5倍のダメージ。',
@@ -117,7 +117,7 @@ export const ADVANCED_SKILLS = {
     }),
     arcane_barrage: defineSkill({
         id: 'arcane_barrage', name: 'アルケインバラージ', type: 'active',
-        cd: 7000, damageMult: 28, mpCost: 55, unlockCost: 500,
+        cd: 7000, damageMult: 55, mpCost: 55, unlockCost: 500,
         range: 230, rangeType: 'circle',
         color: 0x9932cc, icon: '🔮',
         description: '無数の魔力弾を降らせる。'

@@ -10,7 +10,7 @@ export const PRIEST_SKILLS = {
         name: 'ホーリーアロー',
         type: 'active',
         cd: 2000,
-        damageMult: 12,
+        damageMult: 20,
         mpCost: 8,
         unlockCost: 20,
         range: 250,
