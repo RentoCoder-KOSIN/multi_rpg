@@ -1541,6 +1541,14 @@ export const ITEMS = {
         price: 50000,
         description: "永久凍土の冷気が宿る宝珠。装備に氷結属性を付与する素材。",
     }),
+    // ice属性はwater属性のエイリアス。鍛冶屋UIがwater_orbを参照するため同一アイテムを別名で定義
+    water_orb: defineItem({
+        id: "water_orb",
+        name: "💧 水結のオーブ",
+        type: "material",
+        price: 50000,
+        description: "永久凍土の冷気が宿る宝珠。装備に水・氷結属性を付与する素材。",
+    }),
     thunder_orb: defineItem({
         id: "thunder_orb",
         name: "⚡ 雷光のオーブ",
