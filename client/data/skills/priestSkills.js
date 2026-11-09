@@ -72,9 +72,9 @@ export const PRIEST_SKILLS = {
         range: 250,
         color: 0xa7f3d0,
         icon: '🕊️',
-        description: '自身を中心に10秒間の神聖領域を展開。領域内の味方のHPを毎秒持続回復し（回復量は術者のINTに依存）、受ける被ダメージを30%軽減する。',
+        description: '自身の足元に10秒間の神聖領域（円）を展開。円の中にいる味方のHPを毎秒持続回復し（回復量は術者のINTに依存）、受ける被ダメージを30%軽減する。円から出ると効果は切れる。',
         // healPerSec: 毎秒の基礎回復量（術者のINT・スキルレベル・回復力補正で伸びる）。healDuration の間、1秒ごとに回復する
-        effect: { healPerSec: 15, healDuration: 10000, buffType: 'damage_cut_buff', buffValue: 0.3, buffDuration: 10000 }
+        effect: { healPerSec: 15, healDuration: 10000, buffType: 'damage_cut_buff', buffValue: 0.3, buffDuration: 10000, zone: { duration: 10000 } }
     }),
     purifying_ward: defineSkill({
         id: 'purifying_ward', targetType: 'party', vfx: 'support',
@@ -83,11 +83,11 @@ export const PRIEST_SKILLS = {
         cd: 45000,
         mpCost: 45,
         unlockCost: 100,
-        range: 300,
+        range: 200,
         color: 0xbae6fd,
         icon: '🔰',
-        description: '聖なる結界を張り、12秒間、範囲内の味方（自分を含む）を凍結・麻痺・毒などの状態異常から完全に守る。発動時にすでにかかっている状態異常も浄化する。',
+        description: '足元に聖なる結界（円）を12秒間展開する。円の中にいる味方（自分を含む）は凍結・麻痺・毒などの状態異常を完全に防ぎ、入った時点でかかっている状態異常も浄化される。円から出ると効果は切れる。',
         // status_immunity_buff: 期間中は状態異常を一切受けず、発動時に現在の状態異常も解除する（重ねがけは時間の更新のみ）
-        effect: { buffType: 'status_immunity_buff', buffValue: 1, buffDuration: 12000 }
+        effect: { buffType: 'status_immunity_buff', buffValue: 1, buffDuration: 12000, zone: { duration: 12000 } }
     })
 };

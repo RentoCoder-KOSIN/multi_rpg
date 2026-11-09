@@ -4,6 +4,7 @@ import Enemy from '../entities/Enemy.js';
 import { SKILLS } from '../data/skills.js';
 import { isAnyWindowOpen } from '../utils/uiState.js';
 import { applySkillEffect, showHitEffect, showCriticalEffect } from './skillEffects.js';
+import { startSkillZone } from './zones.js';
 import { applyBuffVisual } from './buffVisuals.js';
 import { spawnSummon, destroySummon, isSummonSkill } from './summons.js';
 import { areEffectsEnabled, isCameraShakeEnabled } from '../utils/effectsSettings.js';
@@ -1002,13 +1003,7 @@ function startHealingZone(scene, caster, skillId, skill) {
     const cx = caster.x, cy = caster.y;
     const ticks = Math.max(1, Math.round(healDuration / 1000));
 
-    if (areEffectsEnabled(scene) && scene.add?.circle) {
-        const zone = scene.add.circle(cx, cy, range, skill.color || 0xa7f3d0, 0.12)
-            .setStrokeStyle(2, skill.color || 0xa7f3d0, 0.6).setDepth(1);
-        if (scene.minimapCameraIgnore) scene.minimapCameraIgnore(zone);
-        scene.tweens.add({ targets: zone, alpha: 0.5, yoyo: true, repeat: -1, duration: 700 });
-        scene.time.delayedCall(healDuration, () => zone.destroy());
-    }
+    // 円の描画と範囲内バフの判定は systems/zones.js（startSkillZone）が担当する。ここは回復だけ。
 
     const tick = () => {
         if (!caster.active || caster.stats.hp <= 0) return;
@@ -1038,6 +1033,13 @@ function applyPartySkill(scene, skillId, skill, range) {
 
     // 持続回復の領域スキル（サンクチュアリ）
     if (skill.effect?.healPerSec) startHealingZone(scene, player, skillId, skill);
+
+    // 円形ゾーン型（結界など）: 発動地点に円を張り、円の中にいる間だけバフを受ける。
+    // 即時バフは付けない（円に入っている味方が各自のクライアントで受け取る）。
+    if (skill.effect?.zone) {
+        startSkillZone(scene, skillId, player.x, player.y);
+        return;
+    }
 
     const myId = scene.networkManager.getPlayerId();
     const partyMemberIds = scene.networkManager.partyData?.members?.map(m => m.id) || [myId];

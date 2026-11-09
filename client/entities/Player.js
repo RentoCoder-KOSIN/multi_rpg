@@ -1519,6 +1519,30 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     /**
+     * 円形ゾーン（結界など）の中にいる間のバフ。スタックせず、毎回「あと少し」だけ延長する。
+     * 円から出ると短時間で切れる。新しくかかった瞬間だけ true を返す。
+     * 別のスキル由来の同種バフが有効なときは上書きしない。
+     */
+    refreshZoneBuff(buffType, value, duration) {
+        const now = Date.now();
+        const current = this.activeBuffs[buffType];
+        const active = current && current.endTime > now;
+        if (active && !current.fromZone) return false;
+
+        this.activeBuffs[buffType] = { baseValue: value, value, stacks: 1, endTime: now + duration, fromZone: true };
+
+        if (buffType === 'status_immunity_buff' && !active && this.isLocal) this.cleanseStatusEffects();
+        if (buffType === 'speed_buff') {
+            this.speed = Math.min(SPEED_CONFIG.BASE_SPEED + this.stats.speedBonus + value, SPEED_CONFIG.MAX_TOTAL_SPEED);
+        }
+        if (!active && this.isLocal && this.scene.playerStatsUI) {
+            this.scene.playerStatsUI._lastUpdateTime = 0;
+            this.scene.playerStatsUI.update();
+        }
+        return !active;
+    }
+
+    /**
      * 期限切れのバフを削除
      */
     updateBuffs() {

@@ -9,7 +9,7 @@ const REMOTE_EFFECT_SCALE = 0.5;
  * プロシージャル Canvas テクスチャの初期化（初回呼び出し時に自動生成）
  * 外部画像アセットに依存せず、常に鮮明で多彩なパーティクルと図形を提供する
  */
-function ensureVfxTextures(scene) {
+export function ensureVfxTextures(scene) {
     if (!scene || !scene.textures || scene.textures.exists('vfx_flare')) return;
 
     try {

@@ -106,7 +106,7 @@ export default class PlayerStatsUI {
             return `+${b.value}`;
         };
         const buffText = buffs.length
-            ? buffs.map(([t, b]) => `${BUFF_LABELS[t] || esc(t)} ${fmtBuffValue(t, b)}${b.stacks > 1 ? ` (×${b.stacks})` : ''}${b.endTime ? ` ${secLeft(b.endTime)}秒` : ''}`).join('<br>')
+            ? buffs.map(([t, b]) => `${BUFF_LABELS[t] || esc(t)} ${fmtBuffValue(t, b)}${b.stacks > 1 ? ` (×${b.stacks})` : ''}${b.fromZone ? ' 範囲内' : (b.endTime ? ` ${secLeft(b.endTime)}秒` : '')}`).join('<br>')
             : 'なし';
         const hpPct = Math.round(((stats.hp || 0) / (stats.maxHp || 1)) * 100);
         const state = [

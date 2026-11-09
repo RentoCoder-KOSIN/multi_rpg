@@ -5,6 +5,7 @@ import { areEffectsEnabled, isPartyEffectsEnabled } from '../../utils/effectsSet
 import { onEnemyKill } from '../../systems/achievementTracker.js';
 import { addOtherPlayer, spawnEnemyFromServer } from '../../systems/entitySetup.js';
 import { applySkillEffect, showHitEffect } from '../../systems/skillEffects.js';
+import { startSkillZone, isZoneSkill } from '../../systems/zones.js';
 import { handleSummonUpdate } from '../../systems/summons.js';
 import { applyBuffVisual } from '../../systems/buffVisuals.js';
 import { applyAdminAction } from '../../ui/AdminUI.js';
@@ -51,6 +52,14 @@ export function registerNetworkCallbacks(scene) {
         // 1. パーティ間のみエフェクトを共有（パーティメンバーでなければ表示しない）
         if (!net.isPartyMember(id)) {
             return;
+        }
+
+        // 1.5 円形ゾーン（結界など）は効果そのものなので、演出設定に関わらず展開する。
+        //     円の描画だけ、エフェクト設定に従う
+        if (isZoneSkill(skillId) && Number.isFinite(Number(data.x)) && Number.isFinite(Number(data.y))) {
+            startSkillZone(scene, skillId, Number(data.x), Number(data.y), {
+                visual: isPartyEffectsEnabled(scene) && areEffectsEnabled(scene)
+            });
         }
 
         // 2. 設定でパーティエフェクト共有がONになっているか確認
