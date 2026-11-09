@@ -62,6 +62,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         // 注意: このゲームは walk-left / walk-right の専用アニメーションを使うため
         // flipX は常に false のまま。方向判定には必ず facingDirection を使うこと。
         this.facingDirection = 1;
+        // 向いている方向の単位ベクトル。facingDirection が左右だけなのに対し、こちらは縦・斜めも表す。
+        // ブリンク/ダッシュ/バックステップや、一直線・扇のスキルの向きに使う（最後に歩いた方向）。
+        this.facingVec = { x: 1, y: 0 };
         this.setCollideWorldBounds(true);
         this.setOrigin(0.5, 1);
 
@@ -1899,7 +1902,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const agi = Math.max(0, this.stats.agi || 0);
         const fromAgi = AGI_CONFIG.MAX_DODGE_CHANCE * agi / (agi + AGI_CONFIG.HALF_POINT);
         const flat = this.stats.dodgeChanceFlat || 0;
-        return Math.min(AGI_CONFIG.MAX_DODGE_CHANCE, Math.max(0, fromAgi + flat));
+        // スモークボム等の一時的な回避率バフ（evasion_buff）。期限切れは updateBuffs() が消す
+        const evasionBuff = this.activeBuffs?.['evasion_buff']?.value || 0;
+        // 恒常分（AGI・装備・パッシブ）は従来どおり上限でクランプし、一時バフは上限の外に上乗せする
+        // （上限に埋もれて「+30%」が効かなくならないように）。最終的な上限は80%。
+        const base = Math.min(AGI_CONFIG.MAX_DODGE_CHANCE, Math.max(0, fromAgi + flat));
+        return Math.min(0.8, base + evasionBuff);
     }
 
     // 回避判定。成功したらMISS表示を出して true を返す（ダメージ・状態異常はすべて無効）。
@@ -2282,6 +2290,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
                 if (cursors.up.isDown) body.setVelocityY(-this.speed);
                 else if (cursors.down.isDown) body.setVelocityY(this.speed);
+
+                // 押しているキーの合成方向を向きベクトルにする（縦だけ・斜めも含む）
+                const ix = cursors.left.isDown ? -1 : (cursors.right.isDown ? 1 : 0);
+                const iy = cursors.up.isDown ? -1 : (cursors.down.isDown ? 1 : 0);
+                const il = Math.hypot(ix, iy);
+                if (il > 0) this.facingVec = { x: ix / il, y: iy / il };
             } else if (this.moveTarget) {
                 // 自動移動 (moveTo)
                 const distance = Phaser.Math.Distance.Between(this.x, this.y, this.moveTarget.x, this.moveTarget.y);
@@ -2296,6 +2310,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
                     const vy = Math.sin(angle) * this.speed;
 
                     body.setVelocity(vx, vy);
+                    this.facingVec = { x: Math.cos(angle), y: Math.sin(angle) };
 
                     // アニメーション向き
                     if (Math.abs(vx) > Math.abs(vy)) {
@@ -2358,6 +2373,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             else { this.x += dx * this.lerpSpeed; this.y += dy * this.lerpSpeed; }
 
             if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+                const rl = Math.hypot(dx, dy);
+                this.facingVec = { x: dx / rl, y: dy / rl };
                 if (Math.abs(dx) > Math.abs(dy)) {
                     this.flipX = false;
                     this.facingDirection = dx > 0 ? 1 : -1;

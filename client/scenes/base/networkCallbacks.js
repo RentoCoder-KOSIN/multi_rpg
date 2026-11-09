@@ -66,6 +66,13 @@ export function registerNetworkCallbacks(scene) {
         // Play the effect on the remote player who cast it
         const otherPlayer = net.getOtherPlayers()[id];
         if (otherPlayer && otherPlayer.active) {
+            // 撃った側の向き（縦・斜めを含む）で演出する。古いクライアントは aimX/aimY が無いので左右だけで代用
+            const ax = Number(data.aimX), ay = Number(data.aimY);
+            const al = Math.hypot(ax, ay);
+            if (al > 0 && Number.isFinite(al)) {
+                otherPlayer.facingVec = { x: ax / al, y: ay / al };
+                if (Math.abs(ax / al) > 0.01) otherPlayer.facingDirection = ax > 0 ? 1 : -1;
+            }
             applySkillEffect(scene, skillId, otherPlayer, true);
         }
     });

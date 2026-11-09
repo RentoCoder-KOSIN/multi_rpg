@@ -89,6 +89,11 @@ export function defineSkill({
     vfx = null,
     // 演出の細かい調整: { slashColor, particleCount, shake, projectile: 'arc'|'bolt' }
     vfxOptions = {},
+    // 上記以外の固有フィールド（blinkDist / dashDist / backstepDist / defScaling / hpScaling / multiHits など）。
+    // 以前はここで黙って捨てられていたため、ブリンクがワープしない・ダッシュ突進しない・
+    // DEF依存ダメージが乗らない、といった「説明どおりに動かない」不具合の原因になっていた。
+    // 必ず結果へ引き継ぐこと（defineItem と同じ方式）。
+    ...rest
 } = {}) {
     assert(id, 'skill is missing an id');
     assert(name, `skill "${id}": missing a name`);
@@ -102,7 +107,7 @@ export function defineSkill({
     assert(vfx === null || VALID_VFX_TYPES.includes(vfx), `skill "${id}": vfx must be one of ${VALID_VFX_TYPES.join(', ')}`);
     assert(element === null || ELEMENTS.includes(element), `skill "${id}": unknown element "${element}"`);
 
-    return { id, name, type, description, icon, color, cd, mpCost, unlockCost, damageMult, range, rangeType, targetType, hitType, maxTargets, effect, element, vfx, vfxOptions };
+    return { ...rest, id, name, type, description, icon, color, cd, mpCost, unlockCost, damageMult, range, rangeType, targetType, hitType, maxTargets, effect, element, vfx, vfxOptions };
 }
 
 /**

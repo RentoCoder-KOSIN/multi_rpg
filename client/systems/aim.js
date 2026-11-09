@@ -17,7 +17,8 @@ import {
     skillNeedsAim,
     getSkillAimSpec,
     getSkillEnemyPool,
-    findNearestEnemyDirection,
+    resolveSkillAimVec,
+    getMovementDestination,
     selectSkillTargets,
     isSkillReady
 } from './combat.js';
@@ -152,46 +153,73 @@ function drawSkillAim(scene, gfx, player, skillId) {
 
     const enemies = getSkillEnemyPool(scene);
 
-    // 発動時と同じ向きの決め方（fan/lineは一番近い敵の方を向く）
-    let direction = player.facingDirection || 1;
-    if (rangeType === 'fan' || rangeType === 'line') {
-        direction = findNearestEnemyDirection(player, enemies, range) || direction;
-    }
+    // 発動時と同じ向きの決め方（fan/lineは一番近い敵の方を向く。それ以外は最後に歩いた方向。縦・斜めも含む）
+    const vec = resolveSkillAimVec(player, enemies, range, rangeType);
 
     const ox = player.x;
     const oy = player.y - 20; // 判定の中心は腰あたり（selectSkillTargetsと同じ）
     const base = isSkillReady(player, skillId) ? (skill.color ?? READY_COLOR) : NOT_READY_COLOR;
 
+    // 突進・ワープで動くスキルの着地点（判定は動く前の位置から行われる。combat.js と同じ）
+    const dest = getMovementDestination(scene, player, skill, vec);
+
     if (rangeType === 'line') {
-        // 正面に伸びる帯：|dx| < range, |dy| < 40
-        const x = direction > 0 ? ox : ox - range;
-        fillShape(gfx, base, () => gfx.fillRect(x, oy - 40, range, 80), () => gfx.strokeRect(x, oy - 40, range, 80));
+        drawLineBand(gfx, base, ox, oy, range, vec);
     } else if (rangeType === 'fan') {
-        drawFan(gfx, base, ox, oy, range, direction);
+        drawFan(gfx, base, ox, oy, range, vec);
     } else {
         fillShape(gfx, base, () => gfx.fillCircle(ox, oy, range), () => gfx.strokeCircle(ox, oy, range));
     }
 
-    const targets = selectSkillTargets(player, skill, { enemies, range, rangeType, direction });
+    // ブリンク/ダッシュ/バックステップの着地点（向いている方向）を示す
+    if (dest) drawDestination(gfx, base, player, dest);
+
+    const targets = selectSkillTargets(player, skill, { enemies, range, rangeType, direction: vec });
     highlightTargets(scene, gfx, targets);
 }
 
-// fanの判定は「正面 かつ dist < range かつ |dy| < |dx| + 20」。その境界をそのまま多角形にする
-function drawFan(gfx, color, ox, oy, range, direction) {
+// 向きベクトルに対して (f=前方, s=横) の局所座標を、画面座標に直す
+function localToWorld(ox, oy, vec, f, s) {
+    return { x: ox + f * vec.x - s * vec.y, y: oy + f * vec.y + s * vec.x };
+}
+
+// lineの判定は「前方 0〜range かつ 横のずれ < 40」。その帯をそのまま多角形にする
+function drawLineBand(gfx, color, ox, oy, range, vec) {
+    const pts = [
+        localToWorld(ox, oy, vec, 0, -40),
+        localToWorld(ox, oy, vec, range, -40),
+        localToWorld(ox, oy, vec, range, 40),
+        localToWorld(ox, oy, vec, 0, 40),
+    ];
+    fillShape(gfx, color, () => gfx.fillPoints(pts, true), () => gfx.strokePoints(pts, true));
+}
+
+// fanの判定は「前方 かつ dist < range かつ 横のずれ < 前方距離 + 20」。その境界をそのまま多角形にする
+function drawFan(gfx, color, ox, oy, range, vec) {
     const r = Math.max(range, 15);
-    // 境界線 |dy| = dx + 20 と半径rの円の交点
+    // 境界線 |s| = f + 20 と半径rの円の交点
     const ix = (-40 + Math.sqrt(Math.max(0, 8 * r * r - 1600))) / 4;
     const iy = ix + 20;
     const a = Math.atan2(iy, ix);
 
-    const points = [{ x: ox, y: oy - 20 }];
+    const points = [localToWorld(ox, oy, vec, 0, -20)];
     for (let i = 0; i <= FAN_SEGMENTS; i++) {
         const t = -a + (2 * a * i) / FAN_SEGMENTS;
-        points.push({ x: ox + direction * r * Math.cos(t), y: oy + r * Math.sin(t) });
+        points.push(localToWorld(ox, oy, vec, r * Math.cos(t), r * Math.sin(t)));
     }
-    points.push({ x: ox, y: oy + 20 });
+    points.push(localToWorld(ox, oy, vec, 0, 20));
 
     fillShape(gfx, color, () => gfx.fillPoints(points, true), () => gfx.strokePoints(points, true));
+}
+
+// 移動系スキルの着地点: 現在地から着地点への線と、着地点の円
+function drawDestination(gfx, color, player, dest) {
+    gfx.lineStyle(2, color, 0.8);
+    gfx.lineBetween(player.x, player.y, dest.x, dest.y);
+    gfx.fillStyle(color, 0.35);
+    gfx.fillCircle(dest.x, dest.y, 12);
+    gfx.lineStyle(2, color, 0.9);
+    gfx.strokeCircle(dest.x, dest.y, 12);
 }
 
 // ---- 描画の共通処理 -------------------------------------------------------

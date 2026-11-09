@@ -18,7 +18,10 @@ const { getEnemyStats, isBossType } = require("../data/enemyStats");
 const MOVE_SCALE = AI_UPDATE_INTERVAL / 1000;
 
 function isTooFarFromSpawn(enemy, hasTarget = false) {
-    const limit = hasTarget ? ENEMY_LEASH_RADIUS * 1.2 : ENEMY_LEASH_RADIUS;
+    let limit = hasTarget ? ENEMY_LEASH_RADIUS * 1.2 : ENEMY_LEASH_RADIUS;
+    // 挑発中は、タンクが少し離れた場所に立っていても追い続けられるよう帰還距離を広げる
+    // （でないと挑発した直後に元の場所へ瞬間移動で戻されてしまう）
+    if (enemy.tauntUntil && enemy.tauntUntil > Date.now()) limit = ENEMY_LEASH_RADIUS * 2;
     return Math.hypot(enemy.x - enemy.spawnX, enemy.y - enemy.spawnY) > limit;
 }
 
@@ -56,6 +59,12 @@ function tryAttack(io, aiManager, enemy, result, mapPlayers) {
 
     const now = Date.now();
     if (enemy.lastAttackTime && now - enemy.lastAttackTime < ENEMY_ATTACK_COOLDOWN_MS) return;
+
+    // 煙幕（スモークボム）で命中率が下がっている間は、一定確率で空振りする（攻撃は消費される）
+    if (enemy.missUntil && enemy.missUntil > now && Math.random() < (enemy.missChance || 0)) {
+        enemy.lastAttackTime = now;
+        return;
+    }
 
     const def = getEnemyStats(enemy.type);
     const attackRange = def?.size === 'boss' ? 160 : (def?.size === 'large' ? 100 : ENEMY_ATTACK_RANGE);
@@ -98,17 +107,24 @@ const BOSS_LEASH_RADIUS = 350;   // px: スポーン地点からこれ以上離�
 const BOSS_MOVE_SPEED = 70;      // px/秒
 
 function updateBoss(io, aiManager, enemy, mapPlayers) {
-    // 最も近い生存プレイヤーを狙う
+    // 最も近い生存プレイヤーを狙う（挑発中は挑発したプレイヤーを優先）
     let target = null;
     let nearest = Infinity;
-    for (const p of Object.values(mapPlayers)) {
-        const d = Math.hypot(enemy.x - p.x, enemy.y - p.y);
-        if (d < nearest) { nearest = d; target = p; }
+    const taunter = (enemy.tauntUntil && enemy.tauntUntil > Date.now()) ? mapPlayers[enemy.tauntTargetId] : null;
+    if (taunter) {
+        target = taunter;
+        nearest = Math.hypot(enemy.x - taunter.x, enemy.y - taunter.y);
+    } else {
+        for (const p of Object.values(mapPlayers)) {
+            const d = Math.hypot(enemy.x - p.x, enemy.y - p.y);
+            if (d < nearest) { nearest = d; target = p; }
+        }
     }
 
     const tooFar = Math.hypot(enemy.x - enemy.spawnX, enemy.y - enemy.spawnY) > BOSS_LEASH_RADIUS;
 
-    if (tooFar || !target || nearest > BOSS_AGGRO_RADIUS) {
+    const isTaunted = !!taunter;
+    if (tooFar || !target || (nearest > BOSS_AGGRO_RADIUS && !isTaunted)) {
         // 最大距離を超えたか、近くに誰もいなければスポーン地点へ瞬間移動して戻る
         if (Math.hypot(enemy.x - enemy.spawnX, enemy.y - enemy.spawnY) > 5) returnToSpawn(enemy);
         return "idle";

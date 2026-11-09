@@ -274,10 +274,17 @@ export function applySkillEffect(scene, skillId, sourceUser, isRemote = false) {
     const remoteScale = isRemote ? REMOTE_EFFECT_SCALE : 1;
     const lowSpecScale = lowSpec ? 0.35 : 1.0;
     const direction = sourceUser.facingDirection || 1;
+    // 向いている方向（単位ベクトル。縦・斜めを含む）。無ければ左右(direction)から作る
+    const fv = sourceUser.facingVec;
+    const fl = fv ? Math.hypot(fv.x, fv.y) : 0;
+    const vec = fl > 0 ? { x: fv.x / fl, y: fv.y / fl } : { x: direction, y: 0 };
+    // 縦向きが優位なときだけ、斬撃・光線を回転させる（横向きは従来の見た目のまま）
+    const vertical = Math.abs(vec.y) > Math.abs(vec.x);
+    const rot = Math.atan2(vec.y, vec.x);
 
     const ctx = {
         scene, skill, skillId, isRemote, actualRange, effectScale, startX, startY, remoteScale,
-        direction, lowSpec, lowSpecScale, skillColor
+        direction, vec, vertical, rot, lowSpec, lowSpecScale, skillColor
     };
 
     // 汎用パーティクル生成ヘルパー
@@ -322,7 +329,7 @@ export function applySkillEffect(scene, skillId, sourceUser, isRemote = false) {
 // ⚔️ 1. 近接・剣撃・突進系エフェクト (slash)
 // ==========================================
 function playSlashEffect(ctx) {
-    const { scene, skill, skillId, direction, startX, startY, actualRange, effectScale, lowSpec, skillColor } = ctx;
+    const { scene, skill, skillId, direction, vec, vertical, rot, startX, startY, actualRange, effectScale, lowSpec, skillColor } = ctx;
     const slashColor = skill.vfxOptions?.slashColor ?? skillColor;
 
     // A. 連撃技 / 乱舞技（blade_storm, rampage_slash 等）
@@ -336,8 +343,8 @@ function playSlashEffect(ctx) {
         strikes.forEach(({ angle, delay, dy }) => {
             scene.time.delayedCall(delay, () => {
                 if (scene.textures.exists('vfx_crescent')) {
-                    const slash = scene.add.image(startX + direction * (50 * effectScale), startY + dy, 'vfx_crescent');
-                    slash.setTint(slashColor).setScale(direction * 1.4 * effectScale, 1.4 * effectScale).setAngle(direction * angle);
+                    const slash = scene.add.image(startX + vec.x * (50 * effectScale), startY + vec.y * (50 * effectScale) + dy, 'vfx_crescent');
+                    slash.setTint(slashColor).setScale(direction * 1.4 * effectScale, 1.4 * effectScale).setAngle(vertical ? Phaser.Math.RadToDeg(rot) + angle : direction * angle);
                     slash.setBlendMode('ADD');
                     scene.tweens.add({
                         targets: slash,
@@ -356,10 +363,12 @@ function playSlashEffect(ctx) {
 
     // B. 超高速居合・突進一閃（iai_slash, judgment_cut, raiton_slash, dash_slash, dragon_thrust）
     if (skill.dashDist || skillId === 'iai_slash' || skillId === 'judgment_cut' || skillId === 'raiton_slash') {
-        const hitX = startX + (direction * actualRange / 2);
+        const hitX = startX + (vec.x * actualRange / 2);
+        const hitY = startY + (vec.y * actualRange / 2);
 
-        // 鋭い光の閃光ビームライン
-        const flashLine = scene.add.rectangle(hitX, startY, actualRange * 1.1, 4 * effectScale, 0xffffff).setOrigin(0.5);
+        // 鋭い光の閃光ビームライン（縦・斜め向きなら進行方向へ回転）
+        const flashLine = scene.add.rectangle(hitX, hitY, actualRange * 1.1, 4 * effectScale, 0xffffff).setOrigin(0.5);
+        flashLine.setRotation(rot);
         flashLine.setBlendMode('ADD');
         scene.tweens.add({
             targets: flashLine,
@@ -371,8 +380,8 @@ function playSlashEffect(ctx) {
 
         // 軌道上の三日月衝撃波
         if (scene.textures.exists('vfx_crescent')) {
-            const crescent = scene.add.image(hitX, startY, 'vfx_crescent');
-            crescent.setTint(slashColor).setScale(direction * 1.8 * effectScale, 1.8 * effectScale).setAngle(direction * -15);
+            const crescent = scene.add.image(hitX, hitY, 'vfx_crescent');
+            crescent.setTint(slashColor).setScale(direction * 1.8 * effectScale, 1.8 * effectScale).setAngle(vertical ? Phaser.Math.RadToDeg(rot) : direction * -15);
             crescent.setBlendMode('ADD');
             scene.tweens.add({
                 targets: crescent,
@@ -430,10 +439,11 @@ function playSlashEffect(ctx) {
     }
 
     // D. 通常の単発・直線スラッシュ
-    const hitX = startX + (direction * actualRange / 2);
+    const hitX = startX + (vec.x * actualRange / 2);
+    const hitY = startY + (vec.y * actualRange / 2);
     if (scene.textures.exists('vfx_crescent')) {
-        const crescent = scene.add.image(hitX, startY, 'vfx_crescent');
-        crescent.setTint(slashColor).setScale(direction * 1.5 * effectScale, 1.5 * effectScale).setAngle(direction * -25);
+        const crescent = scene.add.image(hitX, hitY, 'vfx_crescent');
+        crescent.setTint(slashColor).setScale(direction * 1.5 * effectScale, 1.5 * effectScale).setAngle(vertical ? Phaser.Math.RadToDeg(rot) : direction * -25);
         crescent.setBlendMode('ADD');
         scene.tweens.add({
             targets: crescent,
@@ -444,8 +454,9 @@ function playSlashEffect(ctx) {
             onComplete: () => crescent.destroy()
         });
     } else {
-        const slashLine = scene.add.rectangle(hitX, startY, actualRange, 10 * effectScale, slashColor).setOrigin(0.5);
-        scene.tweens.add({ targets: slashLine, alpha: 0, scaleY: 8, angle: direction * 45, duration: 200, onComplete: () => slashLine.destroy() });
+        const slashLine = scene.add.rectangle(hitX, hitY, actualRange, 10 * effectScale, slashColor).setOrigin(0.5);
+        slashLine.setRotation(rot);
+        scene.tweens.add({ targets: slashLine, alpha: 0, scaleY: 8, duration: 200, onComplete: () => slashLine.destroy() });
     }
     ctx.createBurst(slashColor, 8, 120, 'vfx_spark');
 }
@@ -701,30 +712,33 @@ function targetY(scene, y) {
 // 🏹 3. 遠距離射撃・弾幕・手裏剣 (projectile)
 // ==========================================
 function playProjectileEffect(ctx) {
-    const { scene, skill, skillId, direction, startX, startY, actualRange, effectScale, remoteScale, skillColor } = ctx;
+    const { scene, skill, skillId, direction, vec, rot, startX, startY, actualRange, effectScale, remoteScale, skillColor } = ctx;
     const color = skillColor;
-    const targetX = startX + (direction * actualRange);
+    const targetX = startX + (vec.x * actualRange);
+    const aimTargetY = startY + (vec.y * actualRange);
 
     // A. ガンスリンガー銃弾（マズルフラッシュ＋超高速ビーム弾道＋火花着弾）
     if (skillId === 'quick_draw' || skillId === 'bullet_storm' || skillId === 'acrobatic_fire' || skillId === 'bullet_hell') {
         // マズルフラッシュ
         if (scene.textures.exists('vfx_spark')) {
-            const muzz = scene.add.image(startX + direction * 16, startY, 'vfx_spark').setTint(0xffea00).setScale(0.8);
+            const muzz = scene.add.image(startX + vec.x * 16, startY + vec.y * 16, 'vfx_spark').setTint(0xffea00).setScale(0.8);
             muzz.setBlendMode('ADD');
             scene.tweens.add({ targets: muzz, scale: 1.4, alpha: 0, duration: 90, onComplete: () => muzz.destroy() });
         }
 
         // 高速ビーム光弾
-        const bullet = scene.add.rectangle(startX + direction * 20, startY, 35 * effectScale, 4 * effectScale, 0xfff0aa);
+        const bullet = scene.add.rectangle(startX + vec.x * 20, startY + vec.y * 20, 35 * effectScale, 4 * effectScale, 0xfff0aa);
+        bullet.setRotation(rot);
         bullet.setBlendMode('ADD');
         scene.tweens.add({
             targets: bullet,
             x: targetX,
+            y: aimTargetY,
             duration: 160,
             onComplete: () => {
                 bullet.destroy();
                 // 着弾火花
-                showHitEffect(scene, targetX, startY, 0xffbb00);
+                showHitEffect(scene, targetX, aimTargetY, 0xffbb00);
             }
         });
         return;
@@ -735,7 +749,7 @@ function playProjectileEffect(ctx) {
         const count = 5;
         for (let i = 0; i < count; i++) {
             const spreadAngle = (i - 2) * 12;
-            const rad = Phaser.Math.DegToRad(direction === 1 ? spreadAngle : 180 - spreadAngle);
+            const rad = rot + Phaser.Math.DegToRad(spreadAngle);
             const dist = actualRange * Phaser.Math.FloatBetween(0.85, 1.05);
             const destX = startX + Math.cos(rad) * dist;
             const destY = startY + Math.sin(rad) * dist;
@@ -756,7 +770,7 @@ function playProjectileEffect(ctx) {
 
     // C. 弓矢・ボルト（arrow_rain, piercing_shot 等）
     const arrow = scene.add.rectangle(startX, startY, 32 * effectScale, 3 * effectScale, color).setOrigin(0.5);
-    arrow.setAngle(direction === 1 ? 0 : 180);
+    arrow.setRotation(rot);
     arrow.setBlendMode('ADD');
 
     // トレイルパーティクル
@@ -773,11 +787,12 @@ function playProjectileEffect(ctx) {
     scene.tweens.add({
         targets: arrow,
         x: targetX,
+        y: aimTargetY,
         duration: 350,
         onComplete: () => {
             arrow.destroy();
             trail.destroy();
-            showHitEffect(scene, targetX, startY, color);
+            showHitEffect(scene, targetX, aimTargetY, color);
         }
     });
 }

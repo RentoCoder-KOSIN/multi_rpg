@@ -29,7 +29,8 @@ export default class NetworkManager {
             onChatMessage: null,
             onHealed: null,
             onBuffApplied: null,
-            onAdminAction: null
+            onAdminAction: null,
+            onSkillUsed: null
         };
         this.partyData = null; // { partyId, leader, members: [] }
         this.partyList = [];
@@ -660,7 +661,10 @@ export default class NetworkManager {
         if (!this.partyData?.members) return false;
         return this.partyData.members.some(m => m.id === id);
     }
-    sendSkillUse(skillId, x, y, direction) { if (this.socket && this.socket.connected) this.socket.emit('playerSkill', { skillId, x, y, direction }); }
+    // 挑発・引き寄せ・煙幕など、サーバーが持つ敵の挙動に影響するスキル効果を通知する
+    sendAreaEffect(payload) { if (this.socket && this.socket.connected) this.socket.emit('playerAreaEffect', payload); }
+    // aimX/aimY: スキルを撃った向き（単位ベクトル。縦・斜めを含む）。相手の画面の演出の向きに使う
+    sendSkillUse(skillId, x, y, direction, aimX, aimY) { if (this.socket && this.socket.connected) this.socket.emit('playerSkill', { skillId, x, y, direction, aimX, aimY }); }
     sendTitleUpdate(title, color) { if (this.socket && this.socket.connected) this.socket.emit('playerTitleUpdate', { title, color }); }
 
     // ===== トレード関連 =====

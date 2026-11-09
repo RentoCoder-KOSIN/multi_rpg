@@ -19,7 +19,7 @@ export const RANGER_SKILLS = {
         range: 200, rangeType: 'circle',
         color: 0x64748b, icon: '💨',
         description: '足元に煙幕を炸裂させる。周囲の敵の命中率を半減させ、自身の回避率+30%＆移動速度+50（8秒間）。',
-        effect: { smoke: true, buffType: 'evasion_buff', buffValue: 0.30, buffDuration: 8000 }
+        effect: { smoke: true, buffType: 'evasion_buff', buffValue: 0.30, buffDuration: 8000, moveSpeedBuff: 50, smokeEnemyMissChance: 0.5 }
     }),
     rapid_fire: defineSkill({
         id: 'rapid_fire', vfx: 'projectile', name: 'ラピッドファイア', type: 'active',

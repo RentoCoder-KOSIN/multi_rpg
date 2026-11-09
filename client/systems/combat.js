@@ -10,7 +10,7 @@ import { areEffectsEnabled, isCameraShakeEnabled } from '../utils/effectsSetting
 import { getElementColor } from '../data/elements.js';
 import { JOBS } from '../data/jobs.js';
 import { isAdminFlag } from '../ui/AdminUI.js';
-import { COMBAT_CONFIG } from '../gameConstants.js';
+import { COMBAT_CONFIG, SPEED_CONFIG } from '../gameConstants.js';
 import { executeFriendWarp } from '../ui/FriendWarpDialogUI.js';
 
 // 職業が未設定（none）などのときに使う通常攻撃の既定値。職業ごとの値は data/jobs.js の attackRange / attackHit
@@ -31,12 +31,14 @@ function getBasicAttackSpec(player) {
 }
 
 // HP吸収(lifesteal)、MP吸収(manaSteal)の共通処理（※ノックバックは廃止）
-function applyCombatVampAndKnockback(scene, player, enemy, damage) {
+// extraLifesteal: スキル固有の吸収率（void_reaver の effect.lifestealOnHit など）を装備の吸収率に上乗せする
+function applyCombatVampAndKnockback(scene, player, enemy, damage, extraLifesteal = 0) {
     if (!damage || damage <= 0) return;
 
     // HP吸収
-    if (player.stats?.lifesteal > 0) {
-        const heal = Math.ceil(damage * player.stats.lifesteal);
+    const lifestealRate = (player.stats?.lifesteal || 0) + extraLifesteal;
+    if (lifestealRate > 0) {
+        const heal = Math.ceil(damage * lifestealRate);
         player.stats.hp = Math.min(player.stats.maxHp, player.stats.hp + heal);
         const healText = scene.add.text(player.x, player.y - 40, `+${heal}`, {
             fontSize: '12px', color: '#00ff00', fontFamily: UI_FONT
@@ -53,6 +55,76 @@ function applyCombatVampAndKnockback(scene, player, enemy, damage) {
         }).setOrigin(0.5);
         scene.tweens.add({ targets: mpText, y: player.y - 95, alpha: 0, duration: 800, onComplete: () => mpText.destroy() });
     }
+}
+
+// スキルのバフ量を決める。定義側の書き方が複数あるため、ここで一本化する。
+//   buffValueMult / buffMult : 対象のステータス（攻撃/防御/速度）に掛ける倍率（buffMult は後から増えた別名）
+//   buffValue               : そのまま使う固定値
+// 以前は buffMult を誰も読んでおらず、防具補強・ルーンバリア・フォートレスオーラ・ベネディクション等の
+// バフが「説明の数値」ではなくほぼ+3程度の固定値になっていた（自分用の経路では undefined → NaN）。
+function resolveBuffValue(effect, buffType, stats = {}) {
+    const mult = effect.buffValueMult ?? effect.buffMult;
+    if (mult !== undefined) {
+        const base = buffType === 'defense_buff' ? (stats.def || 10)
+            : buffType === 'speed_buff' ? SPEED_CONFIG.BASE_SPEED
+            : (stats.atk || 10);
+        return Math.ceil(base * mult);
+    }
+    if (effect.buffValue !== undefined) return effect.buffValue;
+    return Math.ceil((stats[String(buffType).replace('_buff', '')] || 10) * 0.3);
+}
+
+// 移動系スキル（ダッシュ/ブリンク/バックステップ）の移動先を、壁にめり込まないよう手前で止める。
+// 現在地から (targetX, targetY) へ直線で進み、衝突タイルに当たる直前の位置を返す。
+// 衝突レイヤーが無いマップ（街など）では目標地点をそのまま返す。
+function findSafeTarget(scene, player, targetX, targetY) {
+    const layers = scene.collidableLayers || [];
+    const total = Math.hypot(targetX - player.x, targetY - player.y);
+    if (layers.length === 0 || total === 0) return { x: targetX, y: targetY };
+    const ux = (targetX - player.x) / total, uy = (targetY - player.y) / total;
+
+    const isBlocked = (x, y) => layers.some(layer => {
+        try {
+            const tile = layer.getTileAtWorldXY(x, y, true);
+            return !!(tile && tile.collides);
+        } catch (e) { return false; }
+    });
+
+    const step = 12;
+    let safe = { x: player.x, y: player.y };
+    for (let travelled = step; ; travelled += step) {
+        const d = Math.min(travelled, total);
+        const x = player.x + ux * d, y = player.y + uy * d;
+        if (isBlocked(x, y)) break;
+        safe = { x, y };
+        if (d >= total) break;
+    }
+    return safe;
+}
+
+// 向いている方向（単位ベクトル）。縦・斜めも表せる。facingVec が無ければ左右(facingDirection)から作る
+export function getFacingVec(player) {
+    const v = player.facingVec;
+    const len = v ? Math.hypot(v.x, v.y) : 0;
+    if (len > 0) return { x: v.x / len, y: v.y / len };
+    return { x: player.facingDirection || 1, y: 0 };
+}
+
+// 移動系スキルの移動先。dashDist=向いている方向へ / blinkDist=向いている方向へワープ / backstepDist=向きと逆へ。
+// 該当しないスキルは null。ワールド境界・壁を考慮する（実際の発動と範囲プレビューで同じ結果にするためここに置く）。
+export function getMovementDestination(scene, player, skill, vec) {
+    let dist = 0, sign = 1, kind = null;
+    if (skill.dashDist) { dist = skill.dashDist; kind = 'dash'; }
+    else if (skill.blinkDist) { dist = skill.blinkDist; kind = 'blink'; }
+    else if (skill.backstepDist) { dist = skill.backstepDist; sign = -1; kind = 'backstep'; }
+    else return null;
+
+    const bounds = scene.physics?.world?.bounds;
+    const maxX = (bounds?.right ?? 3000) - 50;
+    const maxY = (bounds?.bottom ?? 3000) - 50;
+    const tx = Phaser.Math.Clamp(player.x + vec.x * sign * dist, 50, maxX);
+    const ty = Phaser.Math.Clamp(player.y + vec.y * sign * dist, 50, maxY);
+    return { ...findSafeTarget(scene, player, tx, ty), kind };
 }
 
 // 通常攻撃の届く範囲を一瞬だけ輪で見せる（職業ごとの射程の違いが分かるように）
@@ -316,6 +388,11 @@ function applyHitEffects(scene, enemy, player, damageData) {
 // 最も長い行動不能時間・最も高い毒ダメージを使う。
 function getSkillStatusEffects(skill, player) {
     const effect = skill.effect || {};
+    // 鍛冶打撃のような簡易記法（paralyzeChance / paralyzeMs）も statusEffect 記法に読み替える
+    if (!effect.statusEffect && effect.paralyzeChance) {
+        if (Math.random() >= Phaser.Math.Clamp(Number(effect.paralyzeChance), 0, 1)) return {};
+        return { paralyzeMs: Math.max(0, Number(effect.paralyzeMs) || PARALYZE_DURATION_MS) };
+    }
     const type = effect.statusEffect;
     if (!['freeze', 'paralyze', 'poison'].includes(type)) return {};
     const chance = Phaser.Math.Clamp(Number(effect.statusChance ?? 1), 0, 1);
@@ -514,6 +591,38 @@ export function getSkillEnemyPool(scene) {
     return scene.children.list.filter(child => child instanceof Enemy && child.active);
 }
 
+// fan / line スキルの自動向き補正（ベクトル版）: 射程の1.5倍以内で一番近い敵へ向かう単位ベクトル。いなければnull。
+// 敵の真正面を狙えるよう、縦方向の差も含める（判定の中心は腰あたり=player.y-20）
+export function findNearestEnemyVec(player, enemies, range) {
+    let nearest = null;
+    let minDist = range * 1.5;
+    enemies.forEach(e => {
+        const d = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
+        if (d < minDist) {
+            minDist = d;
+            nearest = e;
+        }
+    });
+    if (!nearest) return null;
+    const dx = nearest.x - player.x;
+    const dy = nearest.y - (player.y - 20);
+    const len = Math.hypot(dx, dy);
+    return len > 1 ? { x: dx / len, y: dy / len } : null;
+}
+
+/**
+ * スキル発動時の向き（単位ベクトル）を決める。fan / line は一番近い敵の方へ自動で向き、
+ * それ以外（circle など）はプレイヤーの向き（最後に歩いた方向。縦・斜めを含む）を使う。
+ * 実際の発動・範囲プレビュー・演出で同じ向きになるよう、決め方はここだけに置く。
+ */
+export function resolveSkillAimVec(player, enemies, range, rangeType) {
+    if (rangeType === 'fan' || rangeType === 'line') {
+        const toEnemy = findNearestEnemyVec(player, enemies, range);
+        if (toEnemy) return toEnemy;
+    }
+    return getFacingVec(player);
+}
+
 // fan / line スキルの自動向き補正: 射程の1.5倍以内で一番近い敵の方向（-1 / 1）。いなければnull
 export function findNearestEnemyDirection(player, enemies, range) {
     let nearest = null;
@@ -533,24 +642,30 @@ export function findNearestEnemyDirection(player, enemies, range) {
  * 実際の攻撃と範囲プレビューで同じ結果になるよう、判定はここだけに置く。
  * 判定の中心は腰あたり(player.y - 20)。
  */
+// direction は 1 / -1（左右）か、{x, y} の単位ベクトル（縦・斜めを含む）のどちらでもよい。
 export function selectSkillTargets(player, skill, { enemies, range, rangeType, direction }) {
+    const v = (typeof direction === 'number') ? { x: direction >= 0 ? 1 : -1, y: 0 } : direction;
     const candidates = [];
     enemies.forEach(enemy => {
         const dx = enemy.x - player.x;
         const dy = enemy.y - (player.y - 20); // measure from around the waist
         const dist = Math.sqrt(dx * dx + dy * dy);
 
-        let isHit = false;
-        const inFront = (direction > 0) ? dx > 0 : dx < 0;
+        // 向きベクトルに対する「前方への距離 f」と「横方向のずれ p」。
+        // 左右向き(v=(±1,0))なら f=±dx, p=|dy| で、従来の判定と同じ結果になる。
+        const f = dx * v.x + dy * v.y;
+        const p = Math.abs(dx * v.y - dy * v.x);
+        const inFront = f > 0;
 
+        let isHit = false;
         if (rangeType === 'circle') {
             isHit = dist < range;
         } else if (rangeType === 'line') {
-            // Straight line ahead (about +-40 vertically)
-            isHit = inFront && Math.abs(dx) < range && Math.abs(dy) < 40;
+            // 向いている方向に伸びる帯（幅は左右に約40pxずつ）
+            isHit = inFront && f < range && p < 40;
         } else if (rangeType === 'fan') {
-            // Cone ahead (about 90 degrees)
-            isHit = inFront && dist < range && Math.abs(dy) < Math.abs(dx) + 20;
+            // 向いている方向の扇（約90度）
+            isHit = inFront && dist < range && p < f + 20;
         }
 
         if (isHit) candidates.push({ enemy, dist });
@@ -616,11 +731,18 @@ export function usePlayerSkill(scene, skillId) {
 
     player.saveStats();
 
+    // 向き（縦・斜めを含む単位ベクトル）を、演出・移動・命中判定より先に確定させる。
+    // fan / line は一番近い敵の方へ自動で向き、それ以外はプレイヤーの向き（最後に歩いた方向）を使う。
+    const aimEnemies = getSkillEnemyPool(scene);
+    const aimVec = resolveSkillAimVec(player, aimEnemies, skill.range || 80, skill.rangeType || 'circle');
+    player.facingVec = aimVec;
+    if (Math.abs(aimVec.x) > 0.01) player.facingDirection = aimVec.x > 0 ? 1 : -1;
+
     applySkillEffect(scene, skillId, player);
 
-    // 同じマップのパーティメンバーへスキル使用エフェクトを共有
+    // 同じマップのパーティメンバーへスキル使用エフェクトを共有（向きも一緒に送る）
     if (scene.networkManager) {
-        scene.networkManager.sendSkillUse(skillId, player.x, player.y, player.facingDirection || 1);
+        scene.networkManager.sendSkillUse(skillId, player.x, player.y, player.facingDirection || 1, aimVec.x, aimVec.y);
     }
 
     if (isSummonSkill(skillId)) {
@@ -675,22 +797,20 @@ export function usePlayerSkill(scene, skillId) {
     const damageMultiplier = (skill.damageMult || 1) * levelBonus * COMBAT_CONFIG.SKILL_DAMAGE_SCALE;
     const enemies = getSkillEnemyPool(scene);
 
-    // Auto-face the nearest enemy for fan / line skills
-    if (rangeType === 'fan' || rangeType === 'line') {
-        const autoDir = findNearestEnemyDirection(player, enemies, range);
-        if (autoDir) player.facingDirection = autoDir;
-    }
-
-    // Facing: right = 1, left = -1 (walk-left/right アニメーションを使うため flipX ではなく facingDirection を見る)
+    // Facing: 向きは上で確定済み（aimVec / player.facingVec）。direction は左右成分のみ（従来の ±1）
     const direction = player.facingDirection || 1;
+    const vec = aimVec;
 
-    // ダッシュ突進（dash_slash 等: 前方へ高速切り込み）
-    if (skill.dashDist) {
-        const dist = skill.dashDist;
-        const targetX = Phaser.Math.Clamp(player.x + direction * dist, 50, (scene.physics?.world?.bounds?.right || 3000) - 50);
+    // 移動系スキル（ダッシュ突進 / ブリンク / バックステップ）。向いている方向へ、縦・斜めにも動く。
+    // 突進・ワープ系は「移動前の位置」から範囲判定する（進路上の敵にも当たるように）。
+    const moveFrom = { x: player.x, y: player.y };
+    const dest = getMovementDestination(scene, player, skill, vec);
+    if (dest && dest.kind === 'dash') {
         for (let i = 1; i <= 3; i++) {
-            const ghostX = player.x + (targetX - player.x) * (i / 4);
-            const ghost = scene.add.sprite(ghostX, player.y, player.texture?.key || 'player', player.frame?.name);
+            const ghost = scene.add.sprite(
+                player.x + (dest.x - player.x) * (i / 4),
+                player.y + (dest.y - player.y) * (i / 4),
+                player.texture?.key || 'player', player.frame?.name);
             ghost.setAlpha(0.45).setTint(0xffaa00);
             ghost.setFlipX(direction < 0);
             scene.tweens.add({
@@ -700,35 +820,25 @@ export function usePlayerSkill(scene, skillId) {
                 onComplete: () => ghost.destroy()
             });
         }
-        player.setPosition(targetX, player.y);
-    }
-
-    // ブリンク / 瞬間移動（blink, shadow_step 等）
-    if (skill.blinkDist) {
-        const dist = skill.blinkDist;
-        const targetX = Phaser.Math.Clamp(player.x + direction * dist, 50, (scene.physics?.world?.bounds?.right || 3000) - 50);
+        player.setPosition(dest.x, dest.y);
+    } else if (dest && dest.kind === 'blink') {
         if (scene.add?.circle) {
             const warpOut = scene.add.circle(player.x, player.y, 25, 0x00ffff, 0.7);
             scene.tweens.add({ targets: warpOut, scale: 0.1, alpha: 0, duration: 200, onComplete: () => warpOut.destroy() });
-            const warpIn = scene.add.circle(targetX, player.y, 10, 0x00ffff, 0.8);
+            const warpIn = scene.add.circle(dest.x, dest.y, 10, 0x00ffff, 0.8);
             scene.tweens.add({ targets: warpIn, scale: 2.2, alpha: 0, duration: 300, onComplete: () => warpIn.destroy() });
         }
-        player.setPosition(targetX, player.y);
-    }
-
-    // バックステップ（backstep_shot 等: 後方宙返り離脱）
-    if (skill.backstepDist) {
-        const dist = skill.backstepDist;
-        const targetX = Phaser.Math.Clamp(player.x - direction * dist, 50, (scene.physics?.world?.bounds?.right || 3000) - 50);
-        const originalY = player.y;
+        player.setPosition(dest.x, dest.y);
+    } else if (dest && dest.kind === 'backstep') {
+        player.setPosition(dest.x, dest.y);
+        // 後方宙返りの小さな跳ね（着地点を基準に上へ跳ねて戻る）
         scene.tweens.add({
             targets: player,
-            y: originalY - 25,
+            y: dest.y - 25,
             yoyo: true,
             duration: 150,
             ease: 'Quad.easeOut'
         });
-        player.setPosition(targetX, player.y);
     }
 
     // 空蝉の術（身代わり回避スタック）
@@ -737,6 +847,16 @@ export function usePlayerSkill(scene, skillId) {
         if (scene.notificationUI) {
             scene.notificationUI.show(`🍃 空蝉の術発動！（${skill.effect.utsusemiStacks}回身代わり回避）`, 'success');
         }
+    }
+
+    // スモークボム: 周囲の敵の命中率を下げる（敵の攻撃判定はサーバー側なのでサーバーへ通知）
+    if (skill.effect?.smoke && scene.networkManager && skill.effect.smokeEnemyMissChance) {
+        scene.networkManager.sendAreaEffect({
+            type: 'smoke',
+            range: skill.range || 200,
+            duration: skill.effect.buffDuration || 8000,
+            missChance: skill.effect.smokeEnemyMissChance
+        });
     }
 
     // スモークボム（煙幕演出）
@@ -767,6 +887,18 @@ export function usePlayerSkill(scene, skillId) {
         }
     }
 
+    // 敵のAI・ターゲット選定・位置はサーバーが持っているため、挑発（ヘイト集中）と引き寄せは
+    // サーバーへ通知して初めて効く。以前はクライアントのローカル変数(tauntEndTime)を立てて
+    // 見た目だけ動かしており、サーバー管理の敵には何の効果も無かった。
+    if (scene.networkManager && (skill.effect?.taunt || skill.effect?.pullEnemies)) {
+        scene.networkManager.sendAreaEffect({
+            type: 'provoke',
+            range: skill.range || 350,
+            duration: skill.effect.taunt ? (skill.effect.tauntDuration || 8000) : 0,
+            pull: !!skill.effect.pullEnemies
+        });
+    }
+
     if (skill.effect?.pullEnemies) {
         const pullTargets = enemies.filter(enemy => {
             if (!enemy || !enemy.active) return false;
@@ -777,7 +909,9 @@ export function usePlayerSkill(scene, skillId) {
             const pullDist = 120;
             const targetX = enemy.x + Math.cos(angle) * pullDist;
             const targetY = enemy.y + Math.sin(angle) * pullDist;
-            if (scene.tweens) {
+            // サーバー管理の敵は位置の持ち主がサーバー。ここでtweenしても次の同期で戻される
+            // （実際の引き寄せはサーバーが行い enemyMoved で届く）ので、ローカルの敵だけ動かす
+            if (scene.tweens && !enemy.isServerManaged) {
                 scene.tweens.add({
                     targets: enemy,
                     x: targetX,
@@ -799,16 +933,22 @@ export function usePlayerSkill(scene, skillId) {
         });
     }
 
-    if (skill.effect?.buffType) {
+    // 味方対象スキル(targetType:'party')は、術者も applyPartySkill の対象に含まれる。
+    // ここで自分にも掛けると同じバフが2回スタックしてしまう（効果が倍になる）ので、party は除外する。
+    const isPartySkill = skill.targetType === 'party';
+    if (skill.effect?.buffType && !isPartySkill) {
         const dur = skill.effect.buffDuration || 10000;
-        let val = skill.effect.buffValue;
-        if (skill.effect.buffValueMult) {
-            val = Math.ceil((player.stats?.def || 10) * skill.effect.buffValueMult);
-        }
+        const val = resolveBuffValue(skill.effect, skill.effect.buffType, player.stats);
         player.applyBuff(skill.effect.buffType, val, dur);
         applyBuffVisual(scene, player, skill.effect.buffType, val, dur);
     }
-    if (skill.effect?.extraBuff) {
+    // スモークボム: 説明にある「移動速度+50」
+    if (skill.effect?.moveSpeedBuff && !isPartySkill) {
+        const dur = skill.effect.buffDuration || 8000;
+        player.applyBuff('speed_buff', skill.effect.moveSpeedBuff, dur);
+        applyBuffVisual(scene, player, 'speed_buff', skill.effect.moveSpeedBuff, dur);
+    }
+    if (skill.effect?.extraBuff && !isPartySkill) {
         const eb = skill.effect.extraBuff;
         const dur = eb.duration || 10000;
         const val = Math.ceil((player.stats?.def || 10) * (eb.mult || 1.0));
@@ -819,7 +959,11 @@ export function usePlayerSkill(scene, skillId) {
     if (skill.targetType === 'party') {
         applyPartySkill(scene, skillId, skill, range);
     } else {
-        applyDamageSkill(scene, skill, { enemies, range, rangeType, direction, damageMultiplier });
+        applyDamageSkill(scene, skill, {
+            enemies, range, rangeType, direction: vec, damageMultiplier,
+            // 突進・ワープで動いた場合は、動く前の位置から判定する（進路上の敵にも当たる）
+            origin: (dest && (dest.kind === 'dash' || dest.kind === 'blink')) ? moveFrom : null
+        });
     }
 
     if (scene.notificationUI) {
@@ -827,9 +971,74 @@ export function usePlayerSkill(scene, skillId) {
     }
 }
 
+// 回復量: 術者（スキル使用者）のINT・スキルレベル・回復力補正に依存する
+function calcHealAmount(caster, skillId, baseHeal) {
+    const skillLevel = caster.stats.skillLevels?.[skillId] || 1;
+    const int = caster.stats.int || 5;
+    return Math.ceil(baseHeal * (1 + (int * 0.1)) * (1 + (skillLevel - 1) * 0.2) * (caster.stats.healPowerMult ?? 1));
+}
+
+// 対象（術者本人 or 味方）のHPを回復し、数値表示とHP同期を行う
+function applyHealToTarget(scene, caster, target, targetId, healAmount) {
+    target.stats.hp = Math.min(target.stats.maxHp, target.stats.hp + healAmount);
+    const healText = scene.add.text(target.x, target.y - 40, `+${healAmount}`, {
+        fontSize: '16px', color: '#00ff00', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 3
+    }).setOrigin(0.5);
+    scene.tweens.add({ targets: healText, y: target.y - 80, alpha: 0, duration: 800, onComplete: () => healText.destroy() });
+    showHitEffect(scene, target.x, target.y, 0x00ff00);
+
+    if (target === caster) {
+        scene.networkManager.sendPlayerStats(caster.stats.hp, caster.stats.maxHp);
+    } else {
+        scene.networkManager.healPlayer(targetId, healAmount);
+    }
+}
+
+// 神聖領域（サンクチュアリ）: 発動地点に領域を張り、duration の間 1秒ごとに領域内の味方を回復する。
+// 回復量は毎tick、術者のINT等から計算する（effect.healPerSec が基礎値）。
+function startHealingZone(scene, caster, skillId, skill) {
+    const { healPerSec, healDuration = 10000 } = skill.effect;
+    const range = skill.range || 250;
+    const cx = caster.x, cy = caster.y;
+    const ticks = Math.max(1, Math.round(healDuration / 1000));
+
+    if (areEffectsEnabled(scene) && scene.add?.circle) {
+        const zone = scene.add.circle(cx, cy, range, skill.color || 0xa7f3d0, 0.12)
+            .setStrokeStyle(2, skill.color || 0xa7f3d0, 0.6).setDepth(1);
+        if (scene.minimapCameraIgnore) scene.minimapCameraIgnore(zone);
+        scene.tweens.add({ targets: zone, alpha: 0.5, yoyo: true, repeat: -1, duration: 700 });
+        scene.time.delayedCall(healDuration, () => zone.destroy());
+    }
+
+    const tick = () => {
+        if (!caster.active || caster.stats.hp <= 0) return;
+        const nm = scene.networkManager;
+        const myId = nm.getPlayerId();
+        const amount = calcHealAmount(caster, skillId, healPerSec);
+        const targets = [];
+        if (Math.hypot(caster.x - cx, caster.y - cy) < range) targets.push({ target: caster, id: myId });
+
+        const memberIds = nm.partyData?.members?.map(m => m.id) || [];
+        const others = nm.getOtherPlayers();
+        memberIds.forEach(id => {
+            if (id === myId) return;
+            const other = others[id];
+            if (other && other.active && Math.hypot(other.x - cx, other.y - cy) < range) targets.push({ target: other, id });
+        });
+        targets.forEach(({ target, id }) => applyHealToTarget(scene, caster, target, id, amount));
+    };
+
+    tick(); // 発動の瞬間に1回目
+    if (ticks > 1) scene.time.addEvent({ delay: 1000, repeat: ticks - 2, callback: tick });
+}
+
 // Heal / buff the caster and party members within range
 function applyPartySkill(scene, skillId, skill, range) {
     const player = scene.player;
+
+    // 持続回復の領域スキル（サンクチュアリ）
+    if (skill.effect?.healPerSec) startHealingZone(scene, player, skillId, skill);
+
     const myId = scene.networkManager.getPlayerId();
     const partyMemberIds = scene.networkManager.partyData?.members?.map(m => m.id) || [myId];
     const otherPlayers = scene.networkManager.getOtherPlayers();
@@ -850,26 +1059,9 @@ function applyPartySkill(scene, skillId, skill, range) {
     });
 
     targets.forEach(({ player: target, id: targetId }) => {
-        // 回復効果
+        // 回復効果（回復量は常に術者のINT・スキルレベル・回復力補正で決まる）
         if (skillId === 'heal' || skill.effect?.healPower) {
-            const skillLevel = player.stats.skillLevels?.[skillId] || 1;
-            const int = player.stats.int || 5;
-            const baseHeal = skill.effect?.healPower || 50;
-            const healAmount = Math.ceil(baseHeal * (1 + (int * 0.1)) * (1 + (skillLevel - 1) * 0.2) * (player.stats.healPowerMult ?? 1));
-
-            target.stats.hp = Math.min(target.stats.maxHp, target.stats.hp + healAmount);
-            const healText = scene.add.text(target.x, target.y - 40, `+${healAmount}`, {
-                fontSize: '16px', color: '#00ff00', fontFamily: UI_FONT, stroke: '#000', strokeThickness: 3
-            }).setOrigin(0.5);
-            scene.tweens.add({ targets: healText, y: target.y - 80, alpha: 0, duration: 800, onComplete: () => healText.destroy() });
-            showHitEffect(scene, target.x, target.y, 0x00ff00);
-
-            // Sync HP
-            if (target === player) {
-                scene.networkManager.sendPlayerStats(player.stats.hp, player.stats.maxHp);
-            } else {
-                scene.networkManager.healPlayer(targetId, healAmount);
-            }
+            applyHealToTarget(scene, player, target, targetId, calcHealAmount(player, skillId, skill.effect?.healPower || 50));
         }
 
         // バフ付与
@@ -883,13 +1075,7 @@ function applyPartySkill(scene, skillId, skill, range) {
             giveBuff(scene, target, targetId, 'summon_power_up', Math.ceil(player.stats.int * 2), 20000);
         } else if (skill.effect?.buffType) {
             const bt = skill.effect.buffType;
-            let val = skill.effect.buffValue;
-            if (skill.effect.buffValueMult) {
-                const base = bt === 'defense_buff' ? (target.stats.def || 10) : (target.stats.atk || 10);
-                val = Math.ceil(base * skill.effect.buffValueMult);
-            } else if (val === undefined) {
-                val = Math.ceil((target.stats[bt.replace('_buff', '')] || 10) * 0.3);
-            }
+            const val = resolveBuffValue(skill.effect, bt, target.stats);
             giveBuff(scene, target, targetId, bt, val, skill.effect.buffDuration || 15000);
         }
 
@@ -913,18 +1099,21 @@ function giveBuff(scene, target, targetId, buffType, value, duration) {
 // Damage the enemies inside the skill's area (circle / line / fan).
 // skill.hitType === 'single' なら範囲内で一番近い1体だけ、'area' なら範囲内の全員
 // （skill.maxTargets があれば近い順にその数まで）に当てる。
-function applyDamageSkill(scene, skill, { enemies, range, rangeType, direction, damageMultiplier }) {
+function applyDamageSkill(scene, skill, { enemies, range, rangeType, direction, damageMultiplier, origin = null }) {
     const player = scene.player;
 
-    const targets = selectSkillTargets(player, skill, { enemies, range, rangeType, direction });
+    const targets = selectSkillTargets(origin || player, skill, { enemies, range, rangeType, direction });
 
     targets.forEach(enemy => {
-        const hits = Math.max(1, player.stats?.multiHit || 1);
+        // 装備の multiHit（1ヒットごとに満額）に加え、スキル自体の連続ヒット数（ブレイドストーム等の skill.multiHits）。
+        // skill.multiHits は「damageMult を N 回に分けて当てる」意味にする（同ティアのスキルと総威力を揃えるため）。
+        const skillHits = Math.max(1, skill.multiHits || 1);
+        const hits = Math.max(1, player.stats?.multiHit || 1) * skillHits;
         for (let hitIndex = 0; hitIndex < hits; hitIndex++) {
             const executeSkillHit = () => {
                 if (!enemy || !enemy.active) return;
 
-                const damageData = player.getDamage(damageMultiplier, enemy, skill.element || null);
+                const damageData = player.getDamage(damageMultiplier / skillHits, enemy, skill.element || null);
                 let damage = damageData.amount;
 
                 // タンク専用: 防御力(DEF)またはHPによる追加ダメージ加算
@@ -959,7 +1148,13 @@ function applyDamageSkill(scene, skill, { enemies, range, rangeType, direction, 
                     poisonTick: statusEffects.poisonTick || damageData.poisonTick,
                 });
 
-                applyCombatVampAndKnockback(scene, player, enemy, damage);
+                // 爆炎フラスコ等: スキル固有の炎上（effect.burnChance / burnMs）
+                if (skill.effect?.burnChance && Math.random() < skill.effect.burnChance) {
+                    applyBurnDot(scene, enemy, player, Math.max(8, Math.ceil((player.stats?.atk || 20) * 0.12)));
+                }
+
+                // 虚無の刃: 与ダメージの一部を吸収（effect.lifestealOnHit）
+                applyCombatVampAndKnockback(scene, player, enemy, damage, skill.effect?.lifestealOnHit || 0);
                 showHitEffect(scene, enemy.x, enemy.y, skill.color || 0xffffff);
             };
 

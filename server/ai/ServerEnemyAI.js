@@ -71,14 +71,25 @@ class EnemyAgentInstance {
         let nearestPlayer = null;
         let minDist = Infinity;
 
-        Object.values(players).forEach(p => {
-            if (!p || p.hp <= 0) return;
-            const d = dist(this.enemy.x, this.enemy.y, p.x, p.y);
-            if (d < minDist) {
-                minDist = d;
-                nearestPlayer = p;
-            }
-        });
+        // 挑発（タンクのウォークライ等）中は、近さに関係なく挑発したプレイヤーを最優先で狙う。
+        // 挑発主が死亡・マップ移動などで players に居なければ通常の「一番近い相手」に戻る。
+        const taunter = (this.enemy.tauntUntil && this.enemy.tauntUntil > Date.now())
+            ? players[this.enemy.tauntTargetId]
+            : null;
+        const isTaunted = !!(taunter && taunter.hp > 0);
+        if (isTaunted) {
+            nearestPlayer = taunter;
+            minDist = dist(this.enemy.x, this.enemy.y, taunter.x, taunter.y);
+        } else {
+            Object.values(players).forEach(p => {
+                if (!p || p.hp <= 0) return;
+                const d = dist(this.enemy.x, this.enemy.y, p.x, p.y);
+                if (d < minDist) {
+                    minDist = d;
+                    nearestPlayer = p;
+                }
+            });
+        }
 
         if (!nearestPlayer) return null;
 
@@ -102,7 +113,9 @@ class EnemyAgentInstance {
             nearbyAllies: Math.min(nearbyAllies, 3),
             detectRange: DETECT_RANGE,
             attackRange: ATTACK_RANGE,
-            inDetectRange: minDist <= DETECT_RANGE,
+            // 挑発中は索敵範囲の外からでも追ってくる
+            inDetectRange: isTaunted || minDist <= DETECT_RANGE,
+            isTaunted,
             targetX: nearestPlayer.x,
             targetY: nearestPlayer.y,
             targetPlayerId: nearestPlayer.id
@@ -238,7 +251,8 @@ class EnemyAgentInstance {
 
         // ----- 行動選択 -----
         // 学習OFF時は ε=minEpsilon 固定（純粋な活用モード）
-        const action = this.agent.selectAction(state, isLearning);
+        // 挑発中は学習済みの行動（様子見・周回など）より「挑発主へ詰め寄って殴る」を優先する
+        const action = state.isTaunted ? 'aggressive' : this.agent.selectAction(state, isLearning);
 
         // 検出範囲外ならプレイヤーへは接近せず、スポーン地点周辺にとどまる
         let result;

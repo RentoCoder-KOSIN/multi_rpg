@@ -72,7 +72,8 @@ export const PRIEST_SKILLS = {
         range: 250,
         color: 0xa7f3d0,
         icon: '🕊️',
-        description: '自身を中心に10秒間の神聖領域を展開。領域内の味方のHPを毎秒持続回復し、受ける被ダメージを30%軽減する。',
-        effect: { healPower: 80, buffType: 'damage_cut_buff', buffValue: 0.3, buffDuration: 10000 }
+        description: '自身を中心に10秒間の神聖領域を展開。領域内の味方のHPを毎秒持続回復し（回復量は術者のINTに依存）、受ける被ダメージを30%軽減する。',
+        // healPerSec: 毎秒の基礎回復量（術者のINT・スキルレベル・回復力補正で伸びる）。healDuration の間、1秒ごとに回復する
+        effect: { healPerSec: 15, healDuration: 10000, buffType: 'damage_cut_buff', buffValue: 0.3, buffDuration: 10000 }
     })
 };

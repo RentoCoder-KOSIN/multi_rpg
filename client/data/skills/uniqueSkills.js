@@ -85,7 +85,7 @@ export const UNIQUE_SKILLS = {
         color: 0xff6600,
         icon: '🔥',
         description: '聖なる炎で味方を包み込む。攻撃力+50%・防御力+50%（20秒）。【クエスト限定スキル】',
-        effect: { buffType: 'attack_buff', buffMult: 0.5, buffDuration: 20000 },
+        effect: { buffType: 'attack_buff', buffMult: 0.5, buffDuration: 20000, extraBuff: { type: 'defense_buff', mult: 0.5, duration: 20000 } },
     }),
 
     // ===== 時空を超える絆クエスト報酬 =====
