@@ -68,7 +68,7 @@ export const SKILLS_BY_JOB = {
     tank: ['guard', 'war_cry', 'iron_defense', 'shield_bash', 'immovable_body', 'spike_guard', 'stalwart_heart', 'retaliate'],
     ranger: ['rapid_fire', 'backstep_shot', 'arrow_rain', 'smoke_bomb', 'piercing_shot', 'multi_shot', 'wind_walker', 'explosive_arrow', 'hunters_focus'],
     summoner: ['summon', 'mega_summon', 'spirit_bolt', 'command_attack', 'familiar_speed', 'spirit_link', 'beast_bond'],
-    priest: ['heal', 'attack_buff', 'holy_arrow', 'blessing', 'defense_buff', 'judgment_light', 'speed_buff', 'sanctuary', 'summon_boost', 'blessed_vitality'],
+    priest: ['heal', 'attack_buff', 'holy_arrow', 'blessing', 'defense_buff', 'judgment_light', 'speed_buff', 'sanctuary', 'purifying_ward', 'summon_boost', 'blessed_vitality'],
     artisan: ['hammer_strike', 'crafting_mastery', 'armor_reinforce', 'metal_temper', 'explosive_flask', 'artisan_aura', 'overclock_forge'],
 
     // 上位職（継承元のスキルは含めず、その職業の代で新規に増える分だけ）

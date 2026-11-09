@@ -6,6 +6,7 @@ const BUFF_ICONS = {
     attack_buff: { emoji: '⚔️', color: 0xff4444, name: '攻撃力UP' },
     defense_buff: { emoji: '🛡️', color: 0x4444ff, name: '防御力UP' },
     speed_buff: { emoji: '💨', color: 0x44ff44, name: '速度UP' },
+    status_immunity_buff: { emoji: '🔰', color: 0x38bdf8, name: '状態異常無効' },
     summon_power_up: { emoji: '🐲', color: 0xff44ff, name: '召喚強化' }
 };
 

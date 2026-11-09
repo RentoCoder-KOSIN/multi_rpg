@@ -5,7 +5,7 @@ import { ELEMENTS, getElementName } from '../data/elements.js';
 import { getMapDisplayName } from '../data/maps.js';
 import { getJobLabel } from '../utils/jobLabel.js';
 import {
-    AGI_CONFIG, COMBAT_CONFIG, REINCARNATION_CONFIG, TOTAL_SKILL_SLOTS,
+    AGI_CONFIG, COMBAT_CONFIG, SPEED_CONFIG, REINCARNATION_CONFIG, TOTAL_SKILL_SLOTS,
     getRebirthDamageTakenMult, getRebirthRewardMult
 } from '../gameConstants.js';
 
@@ -22,7 +22,19 @@ const pct = (v, digits = 0) => `${((v || 0) * 100).toFixed(digits)}%`;
 const row = (label, value) => `<div class="sr"><span>${label}</span><b>${value}</b></div>`;
 const section = (title, body) => `<div class="ss"><h3>${title}</h3>${body}</div>`;
 
-const BUFF_LABELS = { attack_buff: '攻撃UP', defense_buff: '防御UP', speed_buff: '速度UP' };
+const BUFF_LABELS = {
+    attack_buff: '攻撃UP', defense_buff: '防御UP', speed_buff: '速度UP',
+    evasion_buff: '回避UP', damage_cut_buff: 'ダメージカット', mana_shield: 'マナシールド',
+    spike_guard: '反射', utsusemi: '空蝉', summon_power_up: '召喚強化',
+    status_immunity_buff: '結界(状態異常無効)'
+};
+// 割合で表示するバフ（それ以外は数値加算として表示）
+const RATE_BUFFS = new Set(['evasion_buff', 'damage_cut_buff', 'mana_shield']);
+const BUFF_COLOR = '#4ade80';
+// バフ込みの値を「合計 (基礎 +バフ)」で表示する
+const withBuff = (total, base, bonus, fmt = (v) => v) => (bonus > 0
+    ? `<span style="color:${BUFF_COLOR};font-weight:bold;">${fmt(total)}</span> <small>(${fmt(base)} <span style="color:${BUFF_COLOR};">+${fmt(bonus)}</span>)</small>`
+    : `${fmt(total)}`);
 const STATUS_LABELS = { freeze: '❄️凍結', paralyze: '⚡麻痺', poison: '☠️毒' };
 
 export default class PlayerStatsUI {
@@ -85,9 +97,16 @@ export default class PlayerStatsUI {
         const effectText = effects.length
             ? effects.map(([t, e]) => `${STATUS_LABELS[t] || esc(t)} ${secLeft(e.endTime)}秒${t === 'poison' && e.tickDamage ? `(毎${e.tickDamage}ダメ)` : ''}`).join('<br>')
             : 'なし';
-        const buffs = Object.entries(p.activeBuffs || {}).filter(([, b]) => b && b.endTime > now);
+        const buffs = Object.entries(p.activeBuffs || {}).filter(([, b]) => b && (b.endTime === undefined || b.endTime > now));
+        const fmtBuffValue = (t, b) => {
+            if (t === 'utsusemi') return `残り${b.count || 0}回`;
+            if (t === 'status_immunity_buff') return '';
+            if (t === 'spike_guard') return `反射×${b.value}`;
+            if (RATE_BUFFS.has(t)) return `${Math.round((b.value || 0) * 100)}%`;
+            return `+${b.value}`;
+        };
         const buffText = buffs.length
-            ? buffs.map(([t, b]) => `${BUFF_LABELS[t] || esc(t)} +${b.value}${b.stacks > 1 ? ` (×${b.stacks})` : ''} ${secLeft(b.endTime)}秒`).join('<br>')
+            ? buffs.map(([t, b]) => `${BUFF_LABELS[t] || esc(t)} ${fmtBuffValue(t, b)}${b.stacks > 1 ? ` (×${b.stacks})` : ''}${b.endTime ? ` ${secLeft(b.endTime)}秒` : ''}`).join('<br>')
             : 'なし';
         const hpPct = Math.round(((stats.hp || 0) / (stats.maxHp || 1)) * 100);
         const state = [
@@ -104,20 +123,33 @@ export default class PlayerStatsUI {
         const agi = Math.max(0, stats.agi || 0);
         const dodgeAgi = AGI_CONFIG.MAX_DODGE_CHANCE * agi / (agi + AGI_CONFIG.HALF_POINT);
         const dodgeTotal = p.getDodgeChance ? p.getDodgeChance() : dodgeAgi + (stats.dodgeChanceFlat || 0);
+        const liveBuff = (t) => {
+            const b = p.activeBuffs?.[t];
+            return (b && (b.endTime === undefined || b.endTime > now)) ? (b.value || 0) : 0;
+        };
+        const atkBuff = liveBuff('attack_buff');
+        const defBuff = liveBuff('defense_buff');
+        const evasionBuff = liveBuff('evasion_buff');
+        const cutBuff = Math.min(0.90, liveBuff('damage_cut_buff'));
+        const baseSpeed = Math.min(SPEED_CONFIG.BASE_SPEED + (stats.speedBonus || 0), SPEED_CONFIG.MAX_TOTAL_SPEED);
+        const speedBuff = Math.max(0, (p.speed || 0) - baseSpeed);
+        const pctFmt = (v) => `${(v * 100).toFixed(1)}%`;
         const combat = [
-            row('ATK', stats.atk || 0),
-            row('DEF', stats.def || 0),
+            row('ATK', withBuff((stats.atk || 0) + atkBuff, stats.atk || 0, atkBuff)),
+            row('DEF', withBuff((stats.def || 0) + defBuff, stats.def || 0, defBuff)),
             row('攻撃倍率', `×${(stats.atkMultiplier || 1).toFixed(2)}`),
             row('通常攻撃間隔', `×${(stats.attackCooldownMult || 1).toFixed(2)}`),
             row('マルチ攻撃', `${stats.multiHit || 1}連撃${stats.forceAreaAttack ? '（全体化）' : ''}`),
             row('会心率', pct(stats.critChance, 1)),
             row('会心ダメージ', `×${(stats.critDamageMultiplier || COMBAT_CONFIG.CRIT_MULTIPLIER).toFixed(1)}`),
             row('防御無視', pct(stats.defenseIgnore, 1)),
-            row('回避率', `${pct(dodgeTotal, 1)}（AGI ${pct(dodgeAgi, 1)} + 固定 ${pct(stats.dodgeChanceFlat, 1)}）`),
-            row('移動速度', p.speed || 0),
+            row('回避率', `${withBuff(dodgeTotal, Math.max(0, dodgeTotal - evasionBuff), evasionBuff, pctFmt)}（AGI ${pct(dodgeAgi, 1)} + 固定 ${pct(stats.dodgeChanceFlat, 1)}）`),
+            row('移動速度', withBuff(p.speed || 0, baseSpeed, speedBuff)),
             row('HP吸収', pct(stats.lifesteal, 1)),
             row('MP吸収', pct(stats.manaSteal, 1)),
-            row('被ダメ軽減', pct(stats.damageReduction, 1)),
+            row('被ダメ軽減', cutBuff > 0
+                ? withBuff(1 - (1 - (stats.damageReduction || 0)) * (1 - cutBuff), stats.damageReduction || 0, 1 - (1 - (stats.damageReduction || 0)) * (1 - cutBuff) - (stats.damageReduction || 0), pctFmt)
+                : pct(stats.damageReduction, 1)),
             row('自然回復', `HP+${stats.hpRegen || 0}/s  MP+${stats.mpRegen || 0}/s`),
             row('GOLD倍率', `×${(stats.goldMultiplier || 1).toFixed(2)}`),
             row('EXP倍率', `×${(stats.expMultiplier || 1).toFixed(2)}`),
@@ -131,7 +163,7 @@ export default class PlayerStatsUI {
             row('毒付与率', `${pct(stats.poisonChance, 1)}${stats.poisonDamage ? `（毎${stats.poisonDamage}ダメ）` : ''}`),
             row('炎上付与率', `${pct(stats.burnChance, 1)}${stats.burnDamage ? `（毎${stats.burnDamage}ダメ）` : ''}`),
             row('防崩付与率', pct(stats.armorBreakChance, 1)),
-            stats.statusImmunity ? row('状態異常', '<span style="color:#00ff88;font-weight:bold;">完全無効</span>') : '',
+            (stats.statusImmunity || liveBuff('status_immunity_buff')) ? row('状態異常', `<span style="color:#00ff88;font-weight:bold;">完全無効</span>${liveBuff('status_immunity_buff') && !stats.statusImmunity ? ' <small>(結界)</small>' : ''}`) : '',
             row('状態異常耐性', `凍結 ${Math.min(100, (stats.statusResist?.freeze || 0) + (stats.allStatusResist || 0))}%  麻痺 ${Math.min(100, (stats.statusResist?.paralyze || 0) + (stats.allStatusResist || 0))}%  毒 ${Math.min(100, (stats.statusResist?.poison || 0) + (stats.allStatusResist || 0))}%`),
             (stats.knockback) ? row('ノックバック', `${stats.knockback}px`) : '',
             (stats.bonusAtk || stats.bonusDef) ? row('種の加算', `ATK+${stats.bonusAtk || 0} / DEF+${stats.bonusDef || 0}`) : '',

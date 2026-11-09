@@ -1463,6 +1463,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const now = Date.now();
         const current = this.activeBuffs[buffType];
 
+        // 状態異常無効の結界: スタックせず時間だけ更新し、すでにかかっている状態異常も浄化する
+        if (buffType === 'status_immunity_buff') {
+            this.activeBuffs[buffType] = { baseValue: 1, value: 1, stacks: 1, endTime: now + duration };
+            if (this.isLocal) this.cleanseStatusEffects();
+            if (this.isLocal && this.scene.notificationUI) {
+                this.scene.notificationUI.show('🔰 結界が状態異常を防ぐ！', 'success', 2000);
+            }
+            if (this.isLocal && this.scene.playerStatsUI) {
+                this.scene.playerStatsUI._lastUpdateTime = 0;
+                this.scene.playerStatsUI.update();
+            }
+            return;
+        }
+
         if (current && current.endTime > now) {
             // 既存バフがある場合はスタック加算
             const stacks = Math.min((current.stacks || 1) + 1, maxStacks);
@@ -1495,6 +1509,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             };
             const label = buffNames[buffType] || buffType;
             this.scene.notificationUI.show(`✨ ${label} が重ねがけされた！ (${buff.stacks}スタック)`, 'info', 2000);
+        }
+
+        // 右側の戦闘能力パネルへ即反映（通常は250ms間隔の更新を待たない）
+        if (this.isLocal && this.scene.playerStatsUI) {
+            this.scene.playerStatsUI._lastUpdateTime = 0;
+            this.scene.playerStatsUI.update();
         }
     }
 
@@ -2086,8 +2106,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     applyStatusEffect(type, duration, tickDamage = 0) {
         if (!this.isLocal || !this.active) return;
 
-        // 状態異常完全無効化
-        if (this.stats.statusImmunity) {
+        // 状態異常完全無効化（装備・パッシブ、または結界バフ）
+        if (this.stats.statusImmunity || this.hasStatusImmunityBuff()) {
             if (this.scene.notificationUI) {
                 const labels = { freeze: '❄️凍結を防いだ！', paralyze: '⚡麻痺を防いだ！', poison: '☠️毒を防いだ！' };
                 this.scene.notificationUI.show(labels[type] || `${type}を防いだ！`, 'info');
@@ -2129,6 +2149,22 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             const tint = type === 'freeze' ? 0x99ddff : 0xffee55;
             this.setTint(tint);
         }
+    }
+
+    /**
+     * 状態異常（凍結・麻痺・毒）をすべて解除する（浄化）。
+     */
+    cleanseStatusEffects() {
+        this.statusEffects = {};
+        if (this.clearTint) this.clearTint();
+    }
+
+    /**
+     * 結界（status_immunity_buff）による状態異常無効が有効か
+     */
+    hasStatusImmunityBuff() {
+        const b = this.activeBuffs?.['status_immunity_buff'];
+        return !!(b && b.endTime > Date.now());
     }
 
     /**

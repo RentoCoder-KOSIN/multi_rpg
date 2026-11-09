@@ -137,6 +137,7 @@ export const JOBS = {
             5: ['blessing', 'defense_buff'],
             8: ['judgment_light'],
             10: ['speed_buff'],
+            12: ['purifying_ward'],
             15: ['sanctuary', 'summon_boost'],
             20: ['blessed_vitality']
         },
