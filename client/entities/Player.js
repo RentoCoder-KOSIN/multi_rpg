@@ -2084,10 +2084,18 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         finalAmount = Math.max(this.stats.damageReduction >= 1 ? 0 : 1, Math.round(finalAmount));
 
         // スパイクガードによる自動反撃（自身のDEFに応じた反射ダメージ）
-        if (this.activeBuffs['spike_guard'] && attacker && attacker.takeDamage && attacker.active && !attacker.isDead) {
+        if (this.activeBuffs['spike_guard'] && attacker && !attacker.isDead &&
+            ((attacker.isServerManaged && attacker.id && this.scene?.networkManager?.sendEnemyHit) ||
+                (attacker.takeDamage && attacker.active))) {
             const reflectRatio = this.activeBuffs['spike_guard'].value || 1.2;
             const reflectDamage = Math.max(1, Math.ceil(this.getDefense() * reflectRatio));
-            attacker.takeDamage(reflectDamage, this);
+            if (attacker.isServerManaged) {
+                // サーバー管理の敵はクライアントに実体の takeDamage() がないため、
+                // 通常攻撃と同じ enemyHit 経路でサーバー側HPを減らす。
+                this.scene.networkManager.sendEnemyHit(attacker.id, reflectDamage);
+            } else {
+                attacker.takeDamage(reflectDamage, this);
+            }
 
             // 反撃エフェクト
             const spikeText = this.scene.add.text(this.x, this.y - 45, `⚡COUNTER ${reflectDamage}`, {

@@ -324,7 +324,11 @@ export default class NetworkManager {
                     poisonMs: se.type === 'poison' ? se.duration : undefined,
                     poisonTick: se.type === 'poison' ? se.tickDamage : undefined,
                 } : null;
-                player.takeDamage(data.damage || 0, { type: data.enemyType }, effects);
+                player.takeDamage(data.damage || 0, {
+                    id: data.enemyId,
+                    type: data.enemyType,
+                    isServerManaged: true,
+                }, effects);
                 console.log(`[NetworkManager] enemyAttack from ${data.enemyType} (${data.enemyId}): ${data.damage} dmg`);
             }
         });

@@ -666,7 +666,8 @@ export const ADVANCED_SKILLS_EXTRA = {
         rangeType: 'circle',
         color: 0x664488,
         icon: '⚰️',
-        description: '墓場から亡者の手を呼び出し、周囲の敵を掴み引きずる。'
+        description: '墓場から亡者の手を呼び出し、周囲の敵を掴んで自身の近くへ引き寄せる。',
+        effect: { pullEnemies: true }
     }),
     undead_pact: passive({
         id: 'undead_pact',
@@ -707,7 +708,8 @@ export const ADVANCED_SKILLS_EXTRA = {
         rangeType: 'circle',
         color: 0xcc9944,
         icon: '🦁',
-        description: '原初の咆哮で周囲の敵を怯ませる。'
+        description: '原初の咆哮で周囲の敵を怯ませ、1秒間行動を止める。',
+        effect: { statusEffect: 'paralyze', statusChance: 1, statusDuration: 1000 }
     }),
     wild_charge: active({
         id: 'wild_charge',
