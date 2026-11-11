@@ -11,6 +11,8 @@ import { applyBuffVisual } from '../../systems/buffVisuals.js';
 import { applyAdminAction } from '../../ui/AdminUI.js';
 import { ITEMS } from '../../data/items.js';
 import { rollRandomOptions } from '../../data/randomOptions.js';
+import { showAbyssInvite, closeAbyssInvite } from '../../systems/abyssInvite.js';
+import { leaveAbyss } from '../../systems/abyssEntry.js';
 
 /**
  * Register every NetworkManager callback the game scene reacts to.
@@ -40,6 +42,17 @@ export function registerNetworkCallbacks(scene) {
     net.setCallback('onChatMessage', (data) => {
         scene.chatUI?.addMessage(data);
         if (!scene.chatUI?.isOpen) scene.notificationUI?.show(`[${data.channel === 'party' ? 'TEAM' : 'ALL'}] ${data.fromName}: ${data.text}`, 'info');
+    });
+
+    // 無限の深淵（パーティー）。階層の進行は scene.abyssManager（深淵のマップだけに存在）が処理する
+    net.setCallback('onAbyssPartyEntered', (data) => showAbyssInvite(scene, data));
+    net.setCallback('onAbyssPartyClosed', (data) => closeAbyssInvite(net, data));
+    net.setCallback('onAbyssRoomUpdate', (data) => scene.abyssManager?.handleRoomUpdate(data));
+    net.setCallback('onAbyssStarted', () => { /* 待機室でだけ使う */ });
+    net.setCallback('onAbyssFloorCleared', (data) => scene.abyssManager?.handleFloorCleared(data));
+    net.setCallback('onAbyssFloorStarted', (data) => scene.abyssManager?.handleFloorStarted(data));
+    net.setCallback('onAbyssRunInvalid', (data) => {
+        leaveAbyss(scene, `🌀 ${data?.error || '無限の深淵に参加できませんでした'}`);
     });
 
     net.setCallback('onHealed', (data) => handleHealed(scene, data));

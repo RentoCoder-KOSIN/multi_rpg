@@ -537,7 +537,7 @@ const ENEMY_STATS = {
         hp: 1300000,
         atk: 10915,
         def: 500,
-        exp: 25000000,
+        exp: 500000,
         gold: 10000000,
         element: "fire", // 火属性: fireResist装備で被ダメージを軽減できる
         drops: [
@@ -561,7 +561,7 @@ const ENEMY_STATS = {
         hp: 180000,
         atk: 6800,
         def: 450,
-        exp: 6500000,
+        exp: 95000,
         gold: 30000,
         element: "water",
         drops: [
@@ -579,7 +579,7 @@ const ENEMY_STATS = {
         hp: 280000,
         atk: 7800,
         def: 520,
-        exp: 11000000,
+        exp: 110000,
         gold: 45000,
         element: "water",
         drops: [
@@ -597,7 +597,7 @@ const ENEMY_STATS = {
         hp: 450000,
         atk: 9200,
         def: 620,
-        exp: 18000000,
+        exp: 134000,
         gold: 70000,
         element: "water",
         drops: [
@@ -615,7 +615,7 @@ const ENEMY_STATS = {
         hp: 700000,
         atk: 11000,
         def: 750,
-        exp: 28000000,
+        exp: 151000,
         gold: 100000,
         element: "water",
         drops: [
@@ -633,7 +633,7 @@ const ENEMY_STATS = {
         hp: 3500000,
         atk: 15000,
         def: 900,
-        exp: 80000000,
+        exp: 1120000,
         gold: 2000000,
         element: "water",
         drops: [
@@ -656,7 +656,7 @@ const ENEMY_STATS = {
         hp: 950000,
         atk: 12500,
         def: 820,
-        exp: 38000000,
+        exp: 177000,
         gold: 150000,
         element: "earth",
         drops: [
@@ -674,7 +674,7 @@ const ENEMY_STATS = {
         hp: 1300000,
         atk: 14200,
         def: 920,
-        exp: 55000000,
+        exp: 194000,
         gold: 220000,
         element: "dark",
         drops: [
@@ -692,7 +692,7 @@ const ENEMY_STATS = {
         hp: 1800000,
         atk: 16500,
         def: 1050,
-        exp: 80000000,
+        exp: 213000,
         gold: 320000,
         element: "dark",
         drops: [
@@ -710,7 +710,7 @@ const ENEMY_STATS = {
         hp: 2500000,
         atk: 19000,
         def: 1200,
-        exp: 120000000,
+        exp: 231000,
         gold: 450000,
         element: "dark",
         drops: [
@@ -728,7 +728,7 @@ const ENEMY_STATS = {
         hp: 8500000,
         atk: 25000,
         def: 1500,
-        exp: 350000000,
+        exp: 2000000,
         gold: 10000000,
         element: "dark",
         drops: [

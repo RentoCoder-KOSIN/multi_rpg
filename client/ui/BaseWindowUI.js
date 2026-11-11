@@ -14,6 +14,7 @@ export default class BaseWindowUI {
             titleStroke: 0xe94560,
             ...config
         };
+        this.fullScreen = !!this.config.fullScreen;
 
         this.isOpen = false;
         this.container = null;
@@ -25,6 +26,11 @@ export default class BaseWindowUI {
         if (this.container) return;
 
         const { width: sceneWidth, height: sceneHeight } = this.scene.scale;
+        if (this.fullScreen) {
+            this.config.width = sceneWidth;
+            this.config.height = sceneHeight;
+            this.config.overlayAlpha = 0;
+        }
         const { width, height, depth, overlayAlpha, title, titleColor, titleStroke } = this.config;
 
         // 1. Overlay
@@ -43,6 +49,13 @@ export default class BaseWindowUI {
             this.overlay.setSize(gameSize.width, gameSize.height);
             if (this.overlay.input?.hitArea) this.overlay.input.hitArea.setSize(gameSize.width, gameSize.height);
             this.container.setPosition(gameSize.width / 2, gameSize.height / 2);
+            if (this.fullScreen) {
+                this.config.width = gameSize.width;
+                this.config.height = gameSize.height;
+                this.blocker?.setSize(gameSize.width, gameSize.height);
+                if (this.blocker?.input?.hitArea) this.blocker.input.hitArea.setSize(gameSize.width, gameSize.height);
+                this.drawBackground(gameSize.width, gameSize.height);
+            }
         };
         this.scene.scale.on('resize', this._onGameResize);
         this.scene.events.once('shutdown', () => this.scene.scale.off('resize', this._onGameResize));
@@ -95,6 +108,14 @@ export default class BaseWindowUI {
         this.bgGfx.clear();
 
         const themeColor = this.config.themeColor;
+
+        if (this.fullScreen) {
+            this.bgGfx.fillStyle(0x10182b, 0.98);
+            this.bgGfx.fillRect(-width / 2, -height / 2, width, height);
+            this.bgGfx.lineStyle(3, themeColor, 0.85);
+            this.bgGfx.lineBetween(-width / 2, -height / 2 + 66, width / 2, -height / 2 + 66);
+            return;
+        }
 
         // Pseudo Glow
         this.bgGfx.lineStyle(6, themeColor, 0.2);

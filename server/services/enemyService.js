@@ -79,8 +79,16 @@ function createEnemyService({ io, aiManager }) {
             exp: stats.exp,
             gold: stats.gold,
             drops: stats.drops,
-            element: stats.element || null
+            element: stats.element || null,
+            // trueの場合、スポーン地点から離れても瞬間移動で帰還しない（無限の深淵のような閉じた広場用）
+            noLeash: !!spawn.noLeash
         };
+
+        // 無限の深淵など、階層ごとにステータスを変えたい敵用の上書き（hp / atk / level / exp / gold / drops）
+        if (spawn.overrides) {
+            Object.assign(enemy, spawn.overrides);
+            enemy.maxHp = enemy.hp;
+        }
 
         enemies[mapKey][id] = enemy;
 
@@ -125,7 +133,18 @@ function createEnemyService({ io, aiManager }) {
         return Object.values(enemies[mapKey] || {});
     }
 
-    return { spawnEnemy, respawnEnemy, spawnInitialEnemies, getEnemiesOnMap, spawnBossOnDemand };
+    // マップ上の敵を全て消す（無限の深淵の階層切り替え・部屋の破棄用）。
+    // 撃破扱いにはしない（学習への死亡通知や報酬は発生しない）
+    function clearEnemies(mapKey) {
+        const mapEnemies = enemies[mapKey];
+        if (!mapEnemies) return;
+        for (const id of Object.keys(mapEnemies)) {
+            if (aiManager.instances) delete aiManager.instances[id];
+        }
+        delete enemies[mapKey];
+    }
+
+    return { spawnEnemy, respawnEnemy, spawnInitialEnemies, getEnemiesOnMap, spawnBossOnDemand, clearEnemies };
 }
 
 module.exports = { createEnemyService };

@@ -257,7 +257,7 @@ export default class GachaUI extends BaseWindowUI {
         const bannerBg = this.scene.add.rectangle(0, -90, 620, 80, 0x1c1335, 0.9)
             .setStrokeStyle(2, 0xf59e0b, 0.8);
 
-        const bannerTitle = this.scene.add.text(-290, -118, '⭐ 【超絶PICK UP!】 目玉限定装備 排出率大幅UP中！', {
+        const bannerTitle = this.scene.add.text(-290, -118, '⭐ PICK UP! 限定装備の排出率アップ', {
             fontSize: '12px',
             fontFamily: UI_FONT,
             color: '#fbbf24',
@@ -271,17 +271,18 @@ export default class GachaUI extends BaseWindowUI {
             '【創世の神杖 (UR)】',
             '【オーロラメイル (SSR)】'
         ];
-        const bannerDesc = this.scene.add.text(-290, -95, pickupSamples.join('  '), {
+        const bannerDesc = this.scene.add.text(-290, -96, pickupSamples.join('  '), {
             fontSize: '11px',
             fontFamily: UI_FONT,
-            color: '#e2e8f0'
+            color: '#e2e8f0',
+            wordWrap: { width: 430 }, maxLines: 2, lineSpacing: 1
         });
 
         // ピックアップ確認リンクボタン
-        const checkBtnBg = this.scene.add.rectangle(230, -85, 130, 28, 0x7c3aed, 0.9)
+        const checkBtnBg = this.scene.add.rectangle(225, -63, 140, 26, 0x7c3aed, 0.9)
             .setStrokeStyle(1, 0xc084fc)
             .setInteractive({ useHandCursor: true });
-        const checkBtnText = this.scene.add.text(230, -85, '🔍 確率・一覧確認', {
+        const checkBtnText = this.scene.add.text(225, -63, '🔍 確率・一覧確認', {
             fontSize: '11px',
             fontFamily: UI_FONT,
             color: '#ffffff'
@@ -443,7 +444,8 @@ export default class GachaUI extends BaseWindowUI {
             fontSize: '13px',
             fontFamily: UI_FONT,
             color: '#f8fafc',
-            fontStyle: 'bold'
+            fontStyle: 'bold',
+            wordWrap: { width: 590 }, maxLines: 1
         });
 
         this.detailDesc = this.scene.add.text(-295, 168, '', {
@@ -451,6 +453,7 @@ export default class GachaUI extends BaseWindowUI {
             fontFamily: UI_FONT,
             color: '#94a3b8',
             wordWrap: { width: 590 },
+            maxLines: 2,
             lineSpacing: 4
         });
 
@@ -651,7 +654,8 @@ export default class GachaUI extends BaseWindowUI {
             const nameText = this.scene.add.text(nameX, y, item.name, {
                 fontSize: '12px',
                 fontFamily: UI_FONT,
-                color: isPickup ? '#fef08a' : '#ffffff'
+                color: isPickup ? '#fef08a' : '#ffffff',
+                wordWrap: { width: 205 }, maxLines: 1
             }).setOrigin(0, 0.5);
 
             // 武器種別 / カテゴリ

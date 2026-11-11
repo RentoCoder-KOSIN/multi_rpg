@@ -410,6 +410,9 @@ export default class EnemyAI {
                 break;
         }
 
+        // 攻撃の反撃などでこの敵が倒されて destroy() 済みなら、速度設定などは行わない
+        if (!this.enemy.active || !this.enemy.scene) return;
+
         // 速度を設定
         if (this.enemy.body) {
             this.enemy.setVelocity(vx, vy);

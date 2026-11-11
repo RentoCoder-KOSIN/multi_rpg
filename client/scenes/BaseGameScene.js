@@ -44,6 +44,7 @@ import { showHitEffect } from '../systems/skillEffects.js';
 import { destroySummon } from '../systems/summons.js';
 import { addOtherPlayer, spawnEnemyFromServer } from '../systems/entitySetup.js';
 import { AbyssManager } from '../systems/abyssManager.js';
+import { ABYSS_LOBBY_SCENE_KEY } from '../systems/abyssEntry.js';
 import { MapAtmosphere } from '../systems/mapAtmosphere.js';
 
 // ウィンドウが開いている間、Player.update()に「キー入力なし」を伝えるためのダミー。
@@ -80,6 +81,13 @@ export default class BaseGameScene extends Phaser.Scene {
             this._isTeleporting = false;
         });
         const config = this.getSceneConfig();
+
+        // 無限の深淵は、待機室でホストが開始した挑戦（abyssRun）からしか入れない。
+        // ワープなどで待機室を通らずに来た場合は、待機室へ回す（開始済みで入れなければ元の場所へ戻される）
+        if (config.mapKey === 'abyss' && !this.registry.get('abyssRun')) {
+            this.scene.start(ABYSS_LOBBY_SCENE_KEY, {});
+            return;
+        }
 
         // --- QuestManager (shared across scenes through the registry) ---
         this.questManager = this.registry.get('questManager') || new QuestManager(this);
@@ -120,6 +128,11 @@ export default class BaseGameScene extends Phaser.Scene {
         }
 
         this.currentMapKey = data?.mapKey || config.mapKey;
+        // サーバーと同期するときのマップキー。無限の深淵はパーティーごとのインスタンス（abyss:<roomId>）なので、
+        // 同じ挑戦のメンバー同士でしか、敵も仲間も見えない
+        this.networkMapKey = this.currentMapKey === 'abyss'
+            ? (this.registry.get('abyssRun')?.networkMapKey || this.currentMapKey)
+            : this.currentMapKey;
         if (this.player && this.player.markMapVisited) {
             this.player.markMapVisited(this.currentMapKey);
         }
@@ -134,7 +147,7 @@ export default class BaseGameScene extends Phaser.Scene {
 
         registerNetworkCallbacks(this);
 
-        this.networkManager.connect(this.currentMapKey, () => {
+        this.networkManager.connect(this.networkMapKey, () => {
             this.socket = this.networkManager.getSocket();
             this.player.socket = this.socket;
             // The newPlayer event is sent inside NetworkManager.connect()

@@ -2,6 +2,7 @@
 import { isAnyWindowOpen } from '../../utils/uiState.js';
 import { TOTAL_SKILL_SLOTS } from '../../gameConstants.js';
 import { createAim, beginBasicAim, releaseAim } from '../../systems/aim.js';
+import { hasPendingAbyssInvite, acceptAbyssInvite, declineAbyssInvite } from '../../systems/abyssInvite.js';
 
 /**
  * Create the gameplay keys polled in update().
@@ -67,11 +68,17 @@ export function registerInputHandlers(scene) {
         }
     });
 
-    // Y/N: トレード申請の承認/拒否
+    // Y/N: トレード申請の承認/拒否、無限の深淵の待機室への参加/見送り
+    // （NPCとの会話中・チャット入力中は、その画面のY/Nを優先して反応しない）
+    const abyssInviteKeyAllowed = () =>
+        hasPendingAbyssInvite(scene) && !scene.dialogue?.isTalking && !scene.chatUI?.isOpen;
+
     scene.input.keyboard.on('keydown-Y', () => {
         if (scene._pendingTradeFrom) {
             scene.networkManager?.sendTradeAccept(scene._pendingTradeFrom.fromId);
             scene._pendingTradeFrom = null;
+        } else if (abyssInviteKeyAllowed()) {
+            acceptAbyssInvite(scene.networkManager);
         }
     });
     scene.input.keyboard.on('keydown-N', () => {
@@ -79,6 +86,8 @@ export function registerInputHandlers(scene) {
             scene.networkManager?.sendTradeDecline(scene._pendingTradeFrom.fromId);
             scene._pendingTradeFrom = null;
             scene.notificationUI?.show('トレード申請を拒否しました', 'info');
+        } else if (abyssInviteKeyAllowed()) {
+            declineAbyssInvite(scene.networkManager);
         }
     });
 

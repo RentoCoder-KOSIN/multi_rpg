@@ -2,8 +2,8 @@ import { UI_FONT } from '../fontConfig.js';
 import BaseWindowUI from "./BaseWindowUI.js";
 import { getJobLabel } from "../utils/jobLabel.js";
 
-function button(scene, x, y, label, color, onClick, width = 110) {
-    const box = scene.add.rectangle(x, y, width, 28, color).setStrokeStyle(1, 0xffffff).setInteractive({ useHandCursor: true });
+function button(scene, x, y, label, color, onClick, width = 110, height = 28) {
+    const box = scene.add.rectangle(x, y, width, height, color).setStrokeStyle(1, 0xffffff).setInteractive({ useHandCursor: true });
     const text = scene.add.text(x, y, label, { fontSize: "11px", color: "#ffffff", fontFamily: UI_FONT }).setOrigin(0.5);
     box.on("pointerdown", onClick);
     return [box, text];
@@ -11,7 +11,7 @@ function button(scene, x, y, label, color, onClick, width = 110) {
 
 export default class PartyUI extends BaseWindowUI {
     constructor(scene) {
-        super(scene, { title: "PARTY FINDER  [V]", width: 620, height: 520 });
+        super(scene, { title: "PARTY FINDER  [V]", width: 620, height: 520, fullScreen: true });
         this.partyData = null;
         this.partyList = [];
     }
@@ -26,6 +26,9 @@ export default class PartyUI extends BaseWindowUI {
         this.container.add(button(this.scene, -75, -205, "REFRESH", 0x4a90e2, () => this.scene.networkManager.requestPartyList()));
         this.container.add(button(this.scene, 65, -205, "LEAVE", 0xe94560, () => this.scene.networkManager.leaveParty()));
         this.container.add(this.scene.add.text(155, -205, "パーティー一覧", { fontSize: "12px", color: "#ffd700", fontFamily: UI_FONT }).setOrigin(0.5));
+        this.container.add(this.scene.add.text(0, 238, "作成・更新・脱退 / 一覧から参加　｜　Escで閉じる", {
+            fontSize: "10px", color: "#aebbd2", fontFamily: UI_FONT
+        }).setOrigin(0.5));
         this.refresh();
     }
 
@@ -62,15 +65,17 @@ export default class PartyUI extends BaseWindowUI {
         const current = this.partyData;
         const isLeader = current?.leader === myId;
 
-        this.currentContainer.add(this.scene.add.text(-275, -165, current ? `現在: ${current.name || "Party"}${isLeader ? "（リーダー）" : ""}` : "現在: パーティー未所属", {
-            fontSize: "12px", color: "#00ffff", fontFamily: UI_FONT
+        this.currentContainer.add(this.scene.add.text(-250, -165, current ? `所属中: ${current.name || "Party"}  ${current.members?.length || 0}/4${isLeader ? "  👑リーダー" : ""}` : "現在: パーティー未所属", {
+            fontSize: "12px", color: "#8fe8ee", fontFamily: UI_FONT,
+            wordWrap: { width: isLeader ? 345 : 520 }, maxLines: 2, lineSpacing: 1
         }));
         if (current) {
             if (isLeader) this.currentContainer.add(button(this.scene, 205, -165, "ID/名前で招待", 0x4a90e2, () => this.invite(), 110));
             current.members.forEach((member, index) => {
                 const y = -135 + index * 32;
-                this.currentContainer.add(this.scene.add.text(-275, y, `${member.id === current.leader ? "👑 " : ""}${member.name}  Lv.${member.level}  [${getJobLabel(member.job)}]  ${member.map}`, {
-                    fontSize: "11px", color: "#ffffff", fontFamily: UI_FONT
+                this.currentContainer.add(this.scene.add.text(-250, y, `${member.id === current.leader ? "👑 " : ""}${member.name}  Lv.${member.level}  [${getJobLabel(member.job)}]  ${member.map}`, {
+                    fontSize: "10px", color: "#ffffff", fontFamily: UI_FONT,
+                    wordWrap: { width: isLeader && member.id !== myId ? 390 : 515 }, maxLines: 2, lineSpacing: 1
                 }));
                 if (isLeader && member.id !== myId) {
                     this.currentContainer.add(button(this.scene, 215, y + 5, "KICK", 0xb03040, () => this.scene.networkManager.kickFromParty(member.id), 70));
@@ -88,13 +93,13 @@ export default class PartyUI extends BaseWindowUI {
 
                 if (nearbyCandidates.length > 0) {
                     const candidateY = -5;
-                    this.currentContainer.add(this.scene.add.text(-275, candidateY - 14, "📍 近くのプレイヤーを招待:", {
+                    this.currentContainer.add(this.scene.add.text(-250, candidateY - 14, "📍 近くのプレイヤーを招待:", {
                         fontSize: "11px", color: "#88ccff", fontFamily: UI_FONT
                     }));
                     nearbyCandidates.forEach((candId, idx) => {
                         const cy = candidateY + 8 + idx * 28;
                         const cName = playerNames[candId] || `Player ${candId.substring(0, 6)}`;
-                        this.currentContainer.add(this.scene.add.text(-265, cy, `${cName}`, {
+                        this.currentContainer.add(this.scene.add.text(-240, cy, `${cName}`, {
                             fontSize: "11px", color: "#ffffff", fontFamily: UI_FONT
                         }));
                         this.currentContainer.add(button(this.scene, 215, cy + 4, "招待", 0x258a50, () => {
@@ -106,22 +111,23 @@ export default class PartyUI extends BaseWindowUI {
             }
         }
 
-        this.listContainer.add(this.scene.add.text(-275, 110, "参加できるパーティー", {
+        this.listContainer.add(this.scene.add.text(-250, 98, `参加できるパーティー（${this.partyList.length}件）`, {
             fontSize: "12px", color: "#ffd700", fontFamily: UI_FONT
         }));
         if (this.partyList.length === 0) {
-            this.listContainer.add(this.scene.add.text(-275, 140, "公開中のパーティーはありません。CREATEで作成できます。", {
-                fontSize: "11px", color: "#aaaaaa", fontFamily: UI_FONT
+            this.listContainer.add(this.scene.add.text(-250, 128, "公開中のパーティーはありません。CREATEで作成できます。", {
+                fontSize: "10px", color: "#aaaaaa", fontFamily: UI_FONT, wordWrap: { width: 500 }
             }));
             return;
         }
-        this.partyList.slice(0, 6).forEach((entry, index) => {
-            const y = 140 + index * 32;
+        this.partyList.slice(0, 4).forEach((entry, index) => {
+            const y = 123 + index * 30;
             const locked = entry.hasPassword ? "🔒" : "OPEN";
-            this.listContainer.add(this.scene.add.text(-275, y, `${locked} ${entry.name}  ${entry.memberCount}/${entry.maxMembers}  leader:${entry.leaderName}`, {
-                fontSize: "11px", color: "#ffffff", fontFamily: UI_FONT
+            this.listContainer.add(this.scene.add.text(-250, y, `${locked} ${entry.name}  ${entry.memberCount}/${entry.maxMembers}  主催:${entry.leaderName}`, {
+                fontSize: "10px", color: "#ffffff", fontFamily: UI_FONT,
+                wordWrap: { width: 410 }, maxLines: 2, lineSpacing: 1
             }));
-            this.listContainer.add(button(this.scene, 230, y + 4, "JOIN", 0x258a50, () => this.joinParty(entry), 75));
+            this.listContainer.add(button(this.scene, 230, y + 4, "参加", 0x258a50, () => this.joinParty(entry), 68, 24));
         });
     }
 

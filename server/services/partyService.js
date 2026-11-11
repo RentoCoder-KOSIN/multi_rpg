@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const { players, playerNames, parties, playerToParty } = require("../state");
 const { findSocketByPlayerId } = require("../utils/socketUtils");
+const { toPublicMapKey } = require("../utils/mapKeys");
 
 const MAX_PARTY_NAME_LENGTH = 24;
 const MAX_PARTY_MEMBERS = 8;
@@ -53,7 +54,7 @@ function createPartyService({ io }) {
                 maxMp: p?.maxMp || 0,
                 level: p?.level || 1,
                 job: p?.job || "none",
-                map: p?.map || "unknown"
+                map: toPublicMapKey(p?.map) || "unknown"
             };
         });
 

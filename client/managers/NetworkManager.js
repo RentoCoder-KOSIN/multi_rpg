@@ -30,7 +30,15 @@ export default class NetworkManager {
             onHealed: null,
             onBuffApplied: null,
             onAdminAction: null,
-            onSkillUsed: null
+            onSkillUsed: null,
+            // 無限の深淵（パーティー）
+            onAbyssPartyEntered: null,  // 仲間が待機室に入った（参加しますか？）
+            onAbyssPartyClosed: null,   // その募集が終わった（開始済み / 取りやめ）
+            onAbyssRoomUpdate: null,    // 待機室・挑戦中の部屋のメンバー変化
+            onAbyssStarted: null,       // ホストが開始した
+            onAbyssFloorCleared: null,  // 階層の敵を倒しきった（報酬つき）
+            onAbyssFloorStarted: null,  // 次の階層が始まった
+            onAbyssRunInvalid: null     // 参加資格が無い / 終了済みの挑戦に入ろうとした
         };
         this.partyData = null; // { partyId, leader, members: [] }
         this.partyList = [];
@@ -393,6 +401,20 @@ export default class NetworkManager {
             }
         });
 
+        // ===== 無限の深淵（パーティー） =====
+        const abyssEvents = {
+            abyssPartyEntered: 'onAbyssPartyEntered',
+            abyssPartyClosed: 'onAbyssPartyClosed',
+            abyssRoomUpdate: 'onAbyssRoomUpdate',
+            abyssStarted: 'onAbyssStarted',
+            abyssFloorCleared: 'onAbyssFloorCleared',
+            abyssFloorStarted: 'onAbyssFloorStarted',
+            abyssRunInvalid: 'onAbyssRunInvalid'
+        };
+        Object.entries(abyssEvents).forEach(([event, callbackName]) => {
+            this.socket.on(event, (data) => this.callbacks[callbackName]?.(data));
+        });
+
         // ===== マップ変更 =====
         // サーバーからの mapChange イベントは存在しないため、このハンドラーは削除
         // マップ変更時は changeMap() を呼び出し、サーバーから currentPlayers が送られてくる
@@ -578,6 +600,21 @@ export default class NetworkManager {
         Object.keys(this.enemies).forEach(id => this.removeEnemyById(id));
     }
 
+    /**
+     * マップを持たないシーン（無限の深淵の待機室など）に入る前の後片付け。
+     * 前のマップのスプライトの参照を捨て、次のシーンの connect() が必ず mapChange を送るようにする
+     * （参照が残ると、同じIDの敵が「既に居る」扱いで作られず見えなくなる）。
+     */
+    detachFromMap() {
+        this.clearAllOtherPlayers();
+        this.clearAllEnemies();
+        this.pendingPlayers = [];
+        this.pendingEnemies = [];
+        this.pendingCurrentPlayers = null;
+        this.currentMapKey = null;
+        this._mapChanged = false;
+    }
+
     sendPlayerPosition(x, y) { if (this.socket && this.socket.connected) this.socket.emit('playerMove', { x, y }); }
     sendPlayerStats(hp, maxHp, level, mp, maxMp, job) {
         if (this.socket && this.socket.connected) {
@@ -630,6 +667,26 @@ export default class NetworkManager {
         if (this.socket && this.socket.connected) this.socket.emit('enemyHit', { id: enemyId, damage, ...(effects || {}) });
     }
     requestAIStats() { if (this.socket && this.socket.connected) this.socket.emit('getAIStats'); }
+
+    // 無限の深淵（パーティー）。サーバーの返事（ack）を待つものは Promise で返す
+    emitWithAck(event, payload = {}, timeoutMs = 5000) {
+        return new Promise(resolve => {
+            if (!this.socket || !this.socket.connected) {
+                resolve({ ok: false, error: 'サーバーに接続されていません' });
+                return;
+            }
+            const timer = setTimeout(() => resolve({ ok: false, error: 'サーバーから応答がありません' }), timeoutMs);
+            this.socket.emit(event, payload, (res) => {
+                clearTimeout(timer);
+                resolve(res || { ok: false });
+            });
+        });
+    }
+    abyssEnter() { return this.emitWithAck('abyssEnter'); }
+    abyssLeave() { return this.emitWithAck('abyssLeave'); }
+    abyssStart() { return this.emitWithAck('abyssStart'); }
+    abyssSync() { return this.emitWithAck('abyssSync'); }
+    abyssAdvance(floor) { if (this.socket && this.socket.connected) this.socket.emit('abyssAdvance', { floor }); }
 
     // パーティー系
     inviteToParty(targetId) {

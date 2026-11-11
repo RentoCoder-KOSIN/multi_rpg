@@ -8,7 +8,7 @@ function rollDrops(enemy) {
         .map(drop => drop.id);
 }
 
-module.exports = function registerEnemyHandlers(socket, { io, aiManager, enemyService }) {
+module.exports = function registerEnemyHandlers(socket, { io, aiManager, enemyService, abyssService }) {
     const playerId = socket.data.playerId;
 
     // 撃破通知を送る。パーティーがある場合は同じマップのメンバーで経験値・ゴールドを等分する
@@ -67,6 +67,9 @@ module.exports = function registerEnemyHandlers(socket, { io, aiManager, enemySe
             delete enemies[mapKey][id];
 
             notifyDefeat(mapKey, enemy, rollDrops(enemy));
+
+            // 無限の深淵: 階層の敵を倒しきったらクリア報酬を配る
+            abyssService.onEnemyDefeated(mapKey);
 
             // クエスト用ボスなど noAutoRespawn な敵は、倒された後に自動では復活しない。
             // 再度挑戦したい場合は requestBossSpawn で明示的にスポーンし直す。

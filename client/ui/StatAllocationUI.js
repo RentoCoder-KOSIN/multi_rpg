@@ -8,6 +8,7 @@ export default class StatAllocationUI extends BaseWindowUI {
             title: '📊 STATS ALLOCATION',
             width: 530,
             height: 480,
+            fullScreen: true,
             depth: 200000,
             themeColor: 0x4a90e2
         });
@@ -43,7 +44,7 @@ export default class StatAllocationUI extends BaseWindowUI {
 
         stats.forEach(stat => {
             // ステータス名と現在値
-            const statText = this.scene.add.text(-width / 2 + 30, stat.y, `${stat.label}: 5`, {
+            const statText = this.scene.add.text(-width / 2 + 30, stat.y - 12, `${stat.label}: 5`, {
                 fontSize: '12px',
                 fontFamily: UI_FONT,
                 color: '#ffffff'
@@ -51,14 +52,14 @@ export default class StatAllocationUI extends BaseWindowUI {
             this.statTexts[stat.key] = statText;
 
             // 説明テキスト
-            const descText = this.scene.add.text(-width / 2 + 110, stat.y, stat.desc, {
+            const descText = this.scene.add.text(-width / 2 + 30, stat.y + 5, stat.desc, {
                 fontSize: '11px',
                 fontFamily: UI_FONT,
                 color: '#aaaaaa'
             });
 
             // 効果表示（実際の数値・装備補正込みの値は refresh() で更新する）
-            const effectText = this.scene.add.text(-width / 2 + 30, stat.y + 12, stat.effect, {
+            const effectText = this.scene.add.text(-width / 2 + 30, stat.y + 5, stat.effect, {
                 fontSize: '11px',
                 fontFamily: UI_FONT,
                 color: '#00ff00'
@@ -122,6 +123,8 @@ export default class StatAllocationUI extends BaseWindowUI {
                 if (event) event.stopPropagation();
                 this._promptStatInput(stat.key, stat.label);
             });
+
+            descText.setVisible(false);
 
             this.container.add([
                 statText, descText, effectText,

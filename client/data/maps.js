@@ -51,5 +51,7 @@ export function getMapKeyForScene(sceneKey) {
 
 /** 画面に出すマップ名（転移先の案内用）。未登録ならキーを大文字にして返す */
 export function getMapDisplayName(name) {
+    // 無限の深淵の待機室はマップではなくサーバー上の居場所なので、表示名だけここで持つ
+    if (name === 'abyss_lobby') return '無限の深淵（待機室）';
     return findMap(name)?.name || String(name).toUpperCase();
 }

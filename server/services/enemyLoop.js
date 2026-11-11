@@ -18,6 +18,7 @@ const { getEnemyStats, isBossType } = require("../data/enemyStats");
 const MOVE_SCALE = AI_UPDATE_INTERVAL / 1000;
 
 function isTooFarFromSpawn(enemy, hasTarget = false) {
+    if (enemy.noLeash) return false; // 無限の深淵の敵は、広場のどこまでも追ってくる
     let limit = hasTarget ? ENEMY_LEASH_RADIUS * 1.2 : ENEMY_LEASH_RADIUS;
     // 挑発中は、タンクが少し離れた場所に立っていても追い続けられるよう帰還距離を広げる
     // （でないと挑発した直後に元の場所へ瞬間移動で戻されてしまう）
@@ -121,10 +122,12 @@ function updateBoss(io, aiManager, enemy, mapPlayers) {
         }
     }
 
-    const tooFar = Math.hypot(enemy.x - enemy.spawnX, enemy.y - enemy.spawnY) > BOSS_LEASH_RADIUS;
+    // noLeash の敵（無限の深淵のボスなど）は、距離に関係なく最も近いプレイヤーを追い続ける
+    const noLeash = !!enemy.noLeash;
+    const tooFar = !noLeash && Math.hypot(enemy.x - enemy.spawnX, enemy.y - enemy.spawnY) > BOSS_LEASH_RADIUS;
 
     const isTaunted = !!taunter;
-    if (tooFar || !target || (nearest > BOSS_AGGRO_RADIUS && !isTaunted)) {
+    if (tooFar || !target || (!noLeash && nearest > BOSS_AGGRO_RADIUS && !isTaunted)) {
         // 最大距離を超えたか、近くに誰もいなければスポーン地点へ瞬間移動して戻る
         if (Math.hypot(enemy.x - enemy.spawnX, enemy.y - enemy.spawnY) > 5) returnToSpawn(enemy);
         return "idle";
@@ -209,7 +212,9 @@ function logAIStats(aiManager) {
 // 敵のAI駆動ループを開始する（サーバーが稼働している限り学習し続ける）
 function startEnemyLoop({ io, aiManager, saveAIData }) {
     setInterval(() => {
-        KNOWN_MAPS.forEach(mapKey => updateMapEnemies(io, aiManager, mapKey));
+        // 固定マップに加えて、無限の深淵のインスタンス（abyss:<roomId>）など実行中に増減するマップも動かす
+        const mapKeys = new Set([...KNOWN_MAPS, ...Object.keys(enemies)]);
+        mapKeys.forEach(mapKey => updateMapEnemies(io, aiManager, mapKey));
 
         // 定期的にAIデータを自動保存
         aiManager.checkAutoSave(saveAIData);

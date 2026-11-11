@@ -8,7 +8,7 @@ export function createNPCsFromMap(scene, map, layerName = 'NPCs') {
 
     npcLayer.objects.forEach(obj => {
         const texture = obj.properties?.find(p => p.name === 'texture')?.value || 'npc';
-        const name = obj.properties?.find(p => p.name === 'name')?.value || 'NPC';
+        const name = obj.properties?.find(p => p.name === 'name')?.value || obj.name || 'NPC';
         const questId = obj.properties?.find(p => p.name === 'questId')?.value ?? null;
         const jobQuest = obj.properties?.find(p => p.name === 'jobQuest')?.value ?? null;
         const jobsProp = obj.properties?.find(p => p.name === 'jobs');
@@ -47,6 +47,18 @@ export function createNPCsFromMap(scene, map, layerName = 'NPCs') {
             abyssTriggerProp.value === 'true' ||
             String(abyssTriggerProp.value).toLowerCase() === 'true'
         );
+        if (npc.abyssTrigger) {
+            npc.setScale(1.25);
+            npc.abyssLabel = scene.add.text(obj.x, obj.y - 42, '🌀 無限の深淵', {
+                fontSize: '14px', fontFamily: 'sans-serif', color: '#fff4b0',
+                backgroundColor: '#24134ddd', padding: { x: 8, y: 5 },
+                stroke: '#120a20', strokeThickness: 3
+            }).setOrigin(0.5, 1).setDepth(1000);
+            npc.abyssPrompt = scene.add.text(obj.x, obj.y - 20, '話しかけて挑戦', {
+                fontSize: '10px', fontFamily: 'sans-serif', color: '#ffffff',
+                backgroundColor: '#111827cc', padding: { x: 5, y: 3 }
+            }).setOrigin(0.5, 1).setDepth(1000);
+        }
         npcs.push(npc);
     });
 

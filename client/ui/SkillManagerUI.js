@@ -16,6 +16,7 @@ export default class SkillManagerUI extends BaseWindowUI {
             title: '🔮 SKILL MANAGER',
             width: 700,
             height: 500,
+            fullScreen: true,
             depth: 120000,
             themeColor: 0x4a90e2,
             overlayAlpha: 0.7
@@ -44,22 +45,25 @@ export default class SkillManagerUI extends BaseWindowUI {
         this.refreshActiveSkillsDisplay();
 
         // Scrollable List Area
-        const { width: sceneWidth, height: sceneHeight } = this.scene.scale;
         this.listContainer = this.scene.add.container(0, 0);
         const maskShape = this.scene.add.graphics();
         maskShape.setScrollFactor(0);
-        maskShape.fillStyle(0xffffff);
-        maskShape.fillRect(sceneWidth / 2 - panelWidth / 2 + 20, sceneHeight / 2 - 80, panelWidth - 40, 275);
+        this.listMaskShape = maskShape;
+        this.updateListViewport();
         const mask = maskShape.createGeometryMask();
         maskShape.setVisible(false);
         this.listContainer.setMask(mask);
         this.container.add(this.listContainer);
+        this._onSkillResize = () => this.updateListViewport();
+        this.scene.scale.on('resize', this._onSkillResize);
+        this.scene.events.once('shutdown', () => this.scene.scale.off('resize', this._onSkillResize));
 
         // Guidance Text
         this.guidanceText = this.scene.add.text(0, panelHeight / 2 - 30, `Arrows/Wheel: 移動 | Enter: 習得/転職 | 1-${TOTAL_SKILL_SLOTS}: セット | L: 強化 | V: スキル詳細`, {
             fontSize: '12px', fontFamily: UI_FONT, color: '#ffffff', align: 'center', stroke: '#000', strokeThickness: 2
         }).setOrigin(0.5);
         this.container.add(this.guidanceText);
+        this.createSkillDetailModal();
 
         // Input Handling (Number keys, Arrow keys, Wheel, V key)
         this.keyHandler = (event) => {
@@ -102,6 +106,21 @@ export default class SkillManagerUI extends BaseWindowUI {
         this.scene.input.on('wheel', this.wheelHandler);
     }
 
+    updateListViewport() {
+        if (!this.listMaskShape || !this.config) return;
+        const { width, height } = this.scene.scale;
+        const panelWidth = this.config.width;
+        const panelHeight = this.config.height;
+        this.listMaskShape.clear();
+        this.listMaskShape.fillStyle(0xffffff);
+        const top = height / 2 - 80;
+        const bottom = height - 65;
+        this.listMaskShape.fillRect(width / 2 - panelWidth / 2 + 20, top,
+            Math.max(0, panelWidth - 40), Math.max(0, bottom - top));
+        if (this.activeSkillsContainer) this.activeSkillsContainer.setY(-panelHeight / 2 + 125);
+        if (this.guidanceText) this.guidanceText.setY(panelHeight / 2 - 30);
+    }
+
     open() {
         if (!this.container) this.createUI();
         super.open();
@@ -140,17 +159,78 @@ export default class SkillManagerUI extends BaseWindowUI {
 
             if (quickItem) {
                 const icon = this.scene.add.text(x, y - 6, quickItem.stats?.healMp ? '🔷' : '🧪', { fontSize: '24px' }).setOrigin(0.5);
-                const name = this.scene.add.text(x, y + 20, quickItem.name, { fontSize: '11px', color: '#8dffb3', align: 'center' }).setOrigin(0.5);
+                const name = this.scene.add.text(x, y + 20, quickItem.name, {
+                    fontSize: '9px', color: '#8dffb3', align: 'center', wordWrap: { width: 68 }, maxLines: 1
+                }).setOrigin(0.5);
                 this.activeSkillsContainer.add([icon, name]);
             } else if (skillDef) {
                 const icon = this.scene.add.text(x, y - 6, skillDef.icon, { fontSize: '24px' }).setOrigin(0.5);
-                const name = this.scene.add.text(x, y + 20, skillDef.name, { fontSize: '11px', color: '#ffffff', align: 'center' }).setOrigin(0.5);
+                const name = this.scene.add.text(x, y + 20, skillDef.name, {
+                    fontSize: '9px', color: '#ffffff', align: 'center', wordWrap: { width: 68 }, maxLines: 1
+                }).setOrigin(0.5);
                 this.activeSkillsContainer.add([icon, name]);
             } else {
                 const empty = this.scene.add.text(x, y, 'Empty', { fontSize: '11px', color: '#444455' }).setOrigin(0.5);
                 this.activeSkillsContainer.add(empty);
             }
         }
+    }
+
+    createSkillDetailModal() {
+        this.skillDetailModal = this.scene.add.container(0, 0).setVisible(false);
+        const overlay = this.scene.add.rectangle(0, 0, this.config.width, this.config.height, 0x050812, 0.82)
+            .setInteractive();
+        overlay.on('pointerdown', (pointer, x, y, event) => event?.stopPropagation());
+
+        const panel = this.scene.add.graphics();
+        panel.fillStyle(0x111a2d, 1);
+        panel.fillRoundedRect(-270, -150, 540, 300, 14);
+        panel.lineStyle(2, 0x73b7ff, 1);
+        panel.strokeRoundedRect(-270, -150, 540, 300, 14);
+
+        this.skillDetailTitle = this.scene.add.text(-238, -116, '', {
+            fontSize: '18px', fontFamily: UI_FONT, color: '#ffe07a',
+            wordWrap: { width: 420 }, maxLines: 2
+        });
+        this.skillDetailMeta = this.scene.add.text(-238, -62, '', {
+            fontSize: '12px', fontFamily: UI_FONT, color: '#8fc1ff',
+            wordWrap: { width: 470 }, maxLines: 2
+        });
+        this.skillDetailDescription = this.scene.add.text(-238, -18, '', {
+            fontSize: '14px', fontFamily: UI_FONT, color: '#f1f5f9',
+            wordWrap: { width: 470, useAdvancedWrap: true }, lineSpacing: 5, maxLines: 5
+        });
+        const closeBg = this.scene.add.rectangle(0, 112, 130, 34, 0x285b91, 1)
+            .setStrokeStyle(1, 0xa9d4ff, 1).setInteractive({ useHandCursor: true });
+        const closeText = this.scene.add.text(0, 112, '閉じる', {
+            fontSize: '13px', fontFamily: UI_FONT, color: '#ffffff'
+        }).setOrigin(0.5);
+        closeBg.on('pointerdown', (pointer, x, y, event) => {
+            event?.stopPropagation();
+            this.skillDetailModal.setVisible(false);
+        });
+        this.skillDetailModal.add([overlay, panel, this.skillDetailTitle, this.skillDetailMeta,
+            this.skillDetailDescription, closeBg, closeText]);
+        this.container.add(this.skillDetailModal);
+    }
+
+    showSkillDetails(skillId, skillDef) {
+        const element = skillDef.element ? ELEMENT_INFO[skillDef.element] : null;
+        const target = skillDef.targetType === 'enemy' ? '敵対象' :
+            skillDef.targetType === 'ally' ? '味方対象' : skillDef.targetType === 'self' ? '自身対象' : '';
+        const range = skillDef.range ? `射程 ${skillDef.range}` : '';
+        const cost = `MP ${skillDef.mpCost || 0}`;
+        const tags = [cost, target, range, element ? `${element.icon}${element.name}属性` : '', skillDef.type === 'passive' ? 'パッシブ' : '']
+            .filter(Boolean).join('　｜　');
+        this.skillDetailTitle.setText(`${skillDef.icon || '✨'} ${skillDef.name || skillId}`);
+        this.skillDetailMeta.setText(tags);
+        const skillLevel = this.scene.player?.stats?.skillLevels?.[skillId] || 0;
+        const passiveDetails = skillDef.type === 'passive'
+            ? this.getPassiveEffectText(skillDef, skillLevel)
+            : '';
+        this.skillDetailDescription.setText([skillDef.description || '説明はありません。', passiveDetails].filter(Boolean).join('\n\n'));
+        this.skillDetailModal.setVisible(true);
+        this.container.bringToTop(this.skillDetailModal);
     }
 
     refreshList() {
@@ -275,11 +355,13 @@ export default class SkillManagerUI extends BaseWindowUI {
                 }
                 const skillPreviewStr = jobSkillNames.length > 0 ? `習得: ${jobSkillNames.join(' / ')}` : nextJob.description;
 
-                const skillPreviewText = this.scene.add.text(-225, 3, skillPreviewStr, {
-                    fontSize: '11px', fontFamily: UI_FONT, color: '#aaccff', wordWrap: { width: 330 }
+                const skillPreviewText = this.scene.add.text(-225, 0, skillPreviewStr, {
+                    fontSize: '10px', fontFamily: UI_FONT, color: '#aaccff', wordWrap: { width: 330 },
+                    lineSpacing: 1
                 });
-                const desc = this.scene.add.text(-225, 17, nextJob.description, {
-                    fontSize: '10px', color: '#aaaaaa', wordWrap: { width: 330 }
+                const desc = this.scene.add.text(-225, 22, nextJob.description, {
+                    fontSize: '9px', color: '#aaaaaa', wordWrap: { width: 330 },
+                    maxLines: 2, lineSpacing: 1
                 });
                 container.add([icon, name, skillPreviewText, desc]);
 
@@ -317,10 +399,11 @@ export default class SkillManagerUI extends BaseWindowUI {
                 container.add([detailBtn, detailTxt, detailHit]);
 
                 const canPromote = player.stats.level >= skillInfo.reqLevel;
-                const statusStr = canPromote ? 'READY TO UPGRADE!' : `Req. Lv.${skillInfo.reqLevel}`;
+                // Keep the status in its own compact column so it cannot collide with the preview button.
+                const statusStr = canPromote ? '転職可能' : `Lv.${skillInfo.reqLevel}必要`;
                 const statusColor = canPromote ? '#00ff00' : '#ff5555';
                 const statusText = this.scene.add.text(285, 0, statusStr, {
-                    fontSize: '11px', fontFamily: UI_FONT, color: statusColor, style: 'bold'
+                    fontSize: '10px', fontFamily: UI_FONT, color: statusColor, style: 'bold'
                 }).setOrigin(1, 0.5);
                 container.add(statusText);
 
@@ -370,9 +453,18 @@ export default class SkillManagerUI extends BaseWindowUI {
                 }
                 const descStr = `MP:${mpCost}  ${hitTag}${elTag}${skillDef.description}`;
                 const desc = this.scene.add.text(-220, 15, descStr, {
-                    fontSize: '11px', color: '#aaaaaa'
+                    fontSize: '9px', color: '#aaaaaa', wordWrap: { width: 255 }, maxLines: 1
                 });
-                container.add([name, levelText, desc]);
+                const detailBg = this.scene.add.rectangle(210, 22, 64, 22, 0x244b72, 1)
+                    .setStrokeStyle(1, 0x78baff, 1).setInteractive({ useHandCursor: true });
+                const detailText = this.scene.add.text(210, 22, '詳細', {
+                    fontSize: '10px', fontFamily: UI_FONT, color: '#ffffff'
+                }).setOrigin(0.5);
+                detailBg.on('pointerdown', (pointer, x, y, event) => {
+                    event?.stopPropagation();
+                    this.showSkillDetails(skillInfo.id, skillDef);
+                });
+                container.add([name, levelText, desc, detailBg, detailText]);
 
                 // パッシブスキルのレベル効果表示
                 if (skillDef.type === 'passive') {
@@ -380,7 +472,8 @@ export default class SkillManagerUI extends BaseWindowUI {
                     const passiveEffectStr = this.getPassiveEffectText(skillDef, passiveLv);
                     if (passiveEffectStr) {
                         const passiveEffectText = this.scene.add.text(-220, 29, passiveEffectStr, {
-                            fontSize: '10px', color: '#88ffdd', fontFamily: UI_FONT
+                            fontSize: '9px', color: '#88ffdd', fontFamily: UI_FONT,
+                            wordWrap: { width: 255 }, maxLines: 1
                         });
                         container.add(passiveEffectText);
                     }

@@ -27,8 +27,8 @@ export default class PartyHUDUI {
         const otherMembers = this.partyData.members.filter(m => m.id !== myId);
 
         // タイトル
-        const title = this.scene.add.text(0, -20, 'PARTY MEMBERS', {
-            fontSize: '11px', color: '#4a90e2', fontFamily: UI_FONT,
+        const title = this.scene.add.text(0, -20, `PARTY  ${otherMembers.length + 1}人`, {
+            fontSize: '12px', color: '#8fc8ff', fontFamily: UI_FONT,
             stroke: '#000', strokeThickness: 2
         });
         this.container.add(title);
@@ -57,16 +57,24 @@ export default class PartyHUDUI {
             const hpWidth = 180;
             const hpX = 10;
             const hpY = 24;
-            const hpRatio = Phaser.Math.Clamp(member.hp / member.maxHp, 0, 1);
+            const maxHp = Math.max(1, member.maxHp || 1);
+            const hp = Math.max(0, member.hp || 0);
+            const hpRatio = Phaser.Math.Clamp(hp / maxHp, 0, 1);
             const hpBg = this.scene.add.rectangle(hpX, hpY, hpWidth, 6, 0x222222).setOrigin(0, 0);
             const hpBar = this.scene.add.rectangle(hpX, hpY, hpWidth * hpRatio, 6, 0xff5e5e).setOrigin(0, 0);
             memberContainer.add([hpBg, hpBar]);
+            const hpText = this.scene.add.text(190, 21, `${Math.ceil(hp)}/${maxHp}`, {
+                fontSize: '9px', color: '#ffd5d7', fontFamily: UI_FONT
+            }).setOrigin(1, 0);
+            memberContainer.add(hpText);
 
             // MP Bar
             const mpWidth = 180;
             const mpX = 10;
             const mpY = 34;
-            const mpRatio = Phaser.Math.Clamp((member.mp || 0) / (member.maxMp || 1), 0, 1);
+            const maxMp = Math.max(1, member.maxMp || 1);
+            const mp = Math.max(0, member.mp || 0);
+            const mpRatio = Phaser.Math.Clamp(mp / maxMp, 0, 1);
             const mpBg = this.scene.add.rectangle(mpX, mpY, mpWidth, 4, 0x222222).setOrigin(0, 0);
             const mpBar = this.scene.add.rectangle(mpX, mpY, mpWidth * mpRatio, 4, 0x5e5eff).setOrigin(0, 0);
             memberContainer.add([mpBg, mpBar]);

@@ -7,12 +7,13 @@ const registerEnemyHandlers = require("./enemy");
 const registerPartyHandlers = require("./party");
 const registerAIHandlers = require("./ai");
 const registerTradeHandlers = require("./trade");
+const registerAbyssHandlers = require("./abyss");
 const accounts = require("../services/accountStore");
 const { findSocketByPlayerId } = require("../utils/socketUtils");
 
 // 接続ごとに各イベントハンドラを登録する
 function registerConnectionHandler(ctx) {
-    const { io, partyService } = ctx;
+    const { io, partyService, abyssService } = ctx;
 
     // 接続時にトークンを検証する。無効なら接続を拒否（クライアントはログイン画面へ戻る）。
     // playerId はアカウントIDになるので、別のPCからでも同じキャラクターとして扱われる。
@@ -55,6 +56,7 @@ function registerConnectionHandler(ctx) {
         registerPartyHandlers(socket, ctx);
         registerAIHandlers(socket, ctx);
         registerTradeHandlers(socket, ctx);
+        registerAbyssHandlers(socket, ctx);
 
         socket.on("disconnect", () => {
             console.log("[disconnect]", socket.id, "playerId:", playerId);
@@ -65,6 +67,9 @@ function registerConnectionHandler(ctx) {
 
             const mapKey = socket.data.map;
             delete players[playerId];
+
+            // 無限の深淵の待機室・挑戦中の部屋から抜ける（ホストなら次の人に引き継ぐ）
+            abyssService.onDisconnect(playerId);
 
             if (lobbyPlayers[playerId]) {
                 delete lobbyPlayers[playerId];

@@ -49,5 +49,7 @@ export default class NPC extends Phaser.Physics.Arcade.Sprite {
         if (this.questIcon) {
             this.questIcon.setPosition(this.x, this.y - 32);
         }
+        if (this.abyssLabel) this.abyssLabel.setPosition(this.x, this.y - 46);
+        if (this.abyssPrompt) this.abyssPrompt.setPosition(this.x, this.y - 22);
     }
 }

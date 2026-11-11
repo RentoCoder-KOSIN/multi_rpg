@@ -16,6 +16,7 @@ export default class QuestLogUI extends BaseWindowUI {
             title: '📜 クエスト',
             width: 560,
             height: 520,
+            fullScreen: true,
             depth: 120000,
             themeColor: 0x00ccaa,
             titleStroke: 0x00ccaa,

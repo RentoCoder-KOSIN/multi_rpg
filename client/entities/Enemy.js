@@ -358,45 +358,59 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         if (time - this.lastAttackTime < this.attackCooldown) return;
         this.lastAttackTime = time;
 
-        if (target && target.active) {
-            if (target.takeDamage) {
-                const buff = this.activeBuffs['attack_buff'];
-                const bonus = buff ? (buff.value || 0) : 0;
-                let damage = Math.ceil(this.atk + bonus);
+        if (!target || !target.active) return;
 
-                const targetLevel = (target.level !== undefined) ? target.level : (target.stats?.level ?? 1);
-                damage = Math.ceil(damage * getLevelDiffMultiplier(this.level, targetLevel));
+        // target.takeDamage() の中で、プレイヤーの反射ダメージ(spike_guard)などにより
+        // この敵自身が倒されて destroy() されることがある。destroy() されると this.scene が
+        // undefined になるので、先に scene を手元に控え、ダメージ後は生存を確認してから続きを行う。
+        const scene = this.scene;
+        if (!scene) return;
 
-                target.takeDamage(damage, this);
+        if (target.takeDamage) {
+            const buff = this.activeBuffs['attack_buff'];
+            const bonus = buff ? (buff.value || 0) : 0;
+            let damage = Math.ceil(this.atk + bonus);
 
-                if (target.isSummon) {
-                    const shieldText = this.scene.add.text(target.x, target.y - 40, '🛡️ GUARD', {
-                        fontSize: '11px',
-                        color: '#60a5fa',
-                        fontFamily: UI_FONT,
-                        stroke: '#000',
-                        strokeThickness: 2,
-                    }).setOrigin(0.5);
-                    this.scene.tweens.add({
-                        targets: shieldText,
-                        y: target.y - 70,
-                        alpha: 0,
-                        duration: 600,
-                        onComplete: () => shieldText.destroy(),
-                    });
-                }
-            }
+            const targetLevel = (target.level !== undefined) ? target.level : (target.stats?.level ?? 1);
+            damage = Math.ceil(damage * getLevelDiffMultiplier(this.level, targetLevel));
 
-            if (this.ai && this.ai.notifyDamageDealt) {
-                this.ai.notifyDamageDealt(this.atk);
-            }
+            target.takeDamage(damage, this);
 
-            if (!target.isSummon && isCameraShakeEnabled(this.scene)) {
-                this.scene.cameras.main.shake(50, 0.002);
-            }
+            // 反撃で倒された場合は、これ以上何もしない
+            if (!this.active || !this.scene) return;
 
-            console.log(`[Enemy] ${this.type} attacked ${target.isSummon ? 'summon' : 'player'} for ${this.atk} damage!`);
+            if (target.isSummon) this.showGuardText(target);
         }
+
+        if (this.ai && this.ai.notifyDamageDealt) {
+            this.ai.notifyDamageDealt(this.atk);
+        }
+
+        if (!target.isSummon && isCameraShakeEnabled(scene)) {
+            scene.cameras?.main?.shake(50, 0.002);
+        }
+
+        console.log(`[Enemy] ${this.type} attacked ${target.isSummon ? 'summon' : 'player'} for ${this.atk} damage!`);
+    }
+
+    // 召喚獣が身代わりに攻撃を受けたときの「GUARD」表示
+    showGuardText(target) {
+        const scene = this.scene;
+        if (!scene) return;
+        const shieldText = scene.add.text(target.x, target.y - 40, '🛡️ GUARD', {
+            fontSize: '11px',
+            color: '#60a5fa',
+            fontFamily: UI_FONT,
+            stroke: '#000',
+            strokeThickness: 2,
+        }).setOrigin(0.5);
+        scene.tweens.add({
+            targets: shieldText,
+            y: target.y - 70,
+            alpha: 0,
+            duration: 600,
+            onComplete: () => shieldText.destroy(),
+        });
     }
 
     setPosition(x, y) {

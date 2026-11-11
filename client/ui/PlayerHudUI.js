@@ -5,20 +5,20 @@ import { getUILayout } from './UILayoutManager.js';
 // 詳細な情報は画面横のDOMパネル(PlayerStatsUI)にあるが、画面から目を離さずに
 // name / Lv / HP / MP / EXP が確認できるように、同じ値をここにも表示する。
 // 見た目は右のサイドパネルと揃える(濃紺の背景 + 青い枠)。
-const W = 232;
-const H = 76;
+const W = 250;
+const H = 82;
 const PAD = 10;
 const LABEL_W = 30;
 const BAR_X = PAD + LABEL_W;
-const BAR_W = 108;
+const BAR_W = 116;
 const BAR_H = 10;
 const VALUE_RIGHT = W - PAD;
 
 // color: バー本体 / light: 上半分のハイライト / dark: 空き部分の背景
 const ROWS = [
-    { key: 'hp',  label: 'HP',  color: 0xe8575d, light: 0xff8a8f, dark: 0x3a1a20, text: '#ff9ea2', y: 27 },
-    { key: 'mp',  label: 'MP',  color: 0x4f8cf0, light: 0x86b4ff, dark: 0x16233f, text: '#9cc2ff', y: 43 },
-    { key: 'exp', label: 'EXP', color: 0xe9b84a, light: 0xffd983, dark: 0x3a2f14, text: '#ffd98a', y: 59 }
+    { key: 'hp',  label: 'HP',  color: 0xe8575d, light: 0xff8a8f, dark: 0x3a1a20, text: '#ff9ea2', y: 29 },
+    { key: 'mp',  label: 'MP',  color: 0x4f8cf0, light: 0x86b4ff, dark: 0x16233f, text: '#9cc2ff', y: 45 },
+    { key: 'exp', label: 'EXP', color: 0xe9b84a, light: 0xffd983, dark: 0x3a2f14, text: '#ffd98a', y: 61 }
 ];
 
 export default class PlayerHudUI {
@@ -28,7 +28,7 @@ export default class PlayerHudUI {
         this._last = '';
 
         this.container = scene.add.container(0, 0).setScrollFactor(0).setDepth(1500);
-        getUILayout(scene).register('playerHud', this.container);
+        getUILayout(scene).setSize('playerHud', W, H).register('playerHud', this.container);
 
         const bg = scene.add.graphics();
         bg.fillStyle(0x080d1d, 0.92);
@@ -37,7 +37,7 @@ export default class PlayerHudUI {
         bg.strokeRoundedRect(1, 1, W - 2, H - 2, 10);
         // 名前行との区切り線
         bg.lineStyle(1, 0x4a90e2, 0.35);
-        bg.lineBetween(PAD, 22, W - PAD, 22);
+        bg.lineBetween(PAD, 24, W - PAD, 24);
         this.container.add(bg);
 
         // 影のある白文字(黒い縁取りは文字が汚く見えるので使わない)
@@ -110,6 +110,11 @@ export default class PlayerHudUI {
             const row = this.rows[k];
             this.drawBar(row, cur / max);
             row.value.setText(`${cur}/${max}`);
+            if (k === 'hp') {
+                const critical = cur / max <= 0.25;
+                row.value.setColor(critical ? '#ff626a' : '#e6eefc');
+                row.def.color = critical ? 0xff343d : 0xe8575d;
+            }
         });
     }
 

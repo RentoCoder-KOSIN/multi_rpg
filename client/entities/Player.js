@@ -178,7 +178,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             // 訪れたことのあるマップ一覧（フレンドワープの移動可能制限などに使用）
             visitedMaps: Array.isArray(saved.visitedMaps) ? [...saved.visitedMaps] : ['city', 'tutorial'],
             // スロット数を3→8に拡張。古いセーブデータ(3枠)も足りない分をnullで埋めて引き継ぐ
-            activeSkills: this.padActiveSkills(saved.activeSkills)
+            activeSkills: this.padActiveSkills(saved.activeSkills),
+            // スキルバーの表示形式・回転位置はマップ移動後も維持する
+            skillBarLayout: saved.skillBarLayout === 'grid' ? 'grid' : 'dial',
+            skillBarRotation: Number.isFinite(Number(saved.skillBarRotation)) ? Number(saved.skillBarRotation) : 0
         };
 
         // 作成されたオリジナル装備をITEMS辞書に復元
@@ -2081,7 +2084,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         finalAmount = Math.max(this.stats.damageReduction >= 1 ? 0 : 1, Math.round(finalAmount));
 
         // スパイクガードによる自動反撃（自身のDEFに応じた反射ダメージ）
-        if (this.activeBuffs['spike_guard'] && attacker && attacker.takeDamage && !attacker.isDead) {
+        if (this.activeBuffs['spike_guard'] && attacker && attacker.takeDamage && attacker.active && !attacker.isDead) {
             const reflectRatio = this.activeBuffs['spike_guard'].value || 1.2;
             const reflectDamage = Math.max(1, Math.ceil(this.getDefense() * reflectRatio));
             attacker.takeDamage(reflectDamage, this);

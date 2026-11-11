@@ -52,6 +52,7 @@ export default class EquipmentUI extends BaseWindowUI {
             title: '🛡️ EQUIPMENT',
             width: 400,
             height: 430, // 宝具(RELIC)スロット追加分だけ高さを拡張
+            fullScreen: true,
             depth: 115000,
             themeColor: 0x4a90e2
         });
@@ -156,21 +157,23 @@ export default class EquipmentUI extends BaseWindowUI {
         const weaponClassLabels = { dagger: '短刀', oneHandSword: '片手剣', twoHandSword: '両手剣', spear: '槍', staff: '杖', wand: 'ワンド', tome: '魔導書', bow: '弓', mace: 'メイス' };
         const classTag = item?.weaponClass ? ` [${weaponClassLabels[item.weaponClass] || item.weaponClass}]` : '';
         // アイコン分だけ名前テキストを右にずらす（-130 → アイコン幅 ~25px 分）
-        const nameTxt = this.scene.add.text(-125, 5, `${itemName}${classTag}${elementTag}`, {
-            fontSize: '14px', fontFamily: UI_FONT, color: itemColor
+        const nameTxt = this.scene.add.text(-125, 4, `${itemName}${classTag}${elementTag}`, {
+            fontSize: '14px', fontFamily: UI_FONT, color: itemColor,
+            wordWrap: { width: 210 }, maxLines: 2
         });
         slot.add(nameTxt);
 
         if (item) {
             const power = this.scene.player?.getEquipmentPowerMultiplier?.(item) ?? 1;
             const powerTag = power < 1 ? ` ${Math.round(power * 100)}%` : '';
-            const statTxt = this.scene.add.text(105, 5, `${this.summarizeStats(item)}${powerTag}`, {
-                fontSize: '11px', fontFamily: UI_FONT, color: '#00ff00'
-            }).setOrigin(1, 0);
+            const statTxt = this.scene.add.text(-125, 25, `${this.summarizeStats(item)}${powerTag}`, {
+                fontSize: '10px', fontFamily: UI_FONT, color: '#00ff00',
+                wordWrap: { width: 205 }, maxLines: 1
+            });
             slot.add(statTxt);
 
             // 装備品の直接改名ボタン
-            const renameBtn = this.scene.add.text(148, -20, '✏️改名', {
+            const renameBtn = this.scene.add.text(145, -20, '✏️改名', {
                 fontSize: '11px', fontFamily: UI_FONT, color: '#88ffff', style: 'bold'
             }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
             renameBtn.on('pointerdown', (p, lx, ly, e) => {

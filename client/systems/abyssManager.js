@@ -1,42 +1,198 @@
 import { UI_FONT } from '../fontConfig.js';
-import Enemy from '../entities/Enemy.js';
 import { rollRandomOptions } from '../data/randomOptions.js';
+import { ITEMS } from '../data/items.js';
+import { leaveAbyss } from './abyssEntry.js';
+
+// 階層の開始位置（南側）と、次層ポータルの位置（中央）
+const START_POS = { x: 640, y: 760 };
+const PORTAL_POS = { x: 640, y: 320 };
+const PORTAL_TOUCH_DISTANCE = 45;
 
 /**
- * 無限の深淵ダンジョン（Abyss Dungeon）進行管理クラス
+ * 無限の深淵ダンジョン（Abyss Dungeon）のクライアント側進行管理。
+ *
+ * 敵の生成・階層クリアの判定・次の階層への切り替えは、すべてサーバー（abyssService）が行う。
+ * パーティーの全員が同じ敵を見て戦うため、ここでは
+ *   - 階層の表示（HUD）
+ *   - クリア報酬の受け取り
+ *   - 次層ポータルの表示と接触判定
+ *   - 退出ボタン
+ * だけを受け持つ。
  */
 export class AbyssManager {
     constructor(scene) {
         this.scene = scene;
-        this.floor = scene.registry.get('abyssStartFloor') || 1;
-        this.monsters = [];
+        this.net = scene.networkManager;
+        const run = scene.registry.get('abyssRun');
+        this.floor = run?.floor || 1;
         this.cleared = false;
+        this.advanceRequested = false;
+        this.memberCount = 1;
         this.hudContainer = null;
-        this.portalZone = null;
         this.portalGfx = null;
+        this.portalLabel = null;
+        this.portalTween = null;
+        this.destroyed = false;
 
-        if (scene.currentMapKey === 'abyss') {
-            this.initAbyss();
+        this.createHUD();
+        this.recordFloor(this.floor);
+
+        // 毎フレーム: 残り敵数の表示とポータル接触判定
+        scene.events.on('update', this.onUpdate, this);
+
+        // 死亡後の復帰などでシーンが作り直されたときも、サーバーの状態に合わせる
+        this.syncWithServer();
+    }
+
+    // ---------- サーバーとの同期 ----------
+
+    async syncWithServer() {
+        const state = await this.net.abyssSync();
+        if (this.destroyed) return;
+        if (!state.ok) return; // 参加資格が無い場合は abyssRunInvalid が別途届く
+
+        this.floor = state.floor;
+        this.cleared = state.cleared;
+        this.memberCount = state.room?.members?.length || 1;
+        this.scene.registry.set('abyssRun', { ...this.scene.registry.get('abyssRun'), floor: this.floor });
+        this.recordFloor(this.floor);
+        this.refreshTitle();
+        if (this.cleared) this.showPortal();
+    }
+
+    /** 最高到達階層の記録を更新する */
+    recordFloor(floor) {
+        const player = this.scene.player;
+        if (!player?.stats) return;
+        if (!player.stats.abyssMaxFloor) player.stats.abyssMaxFloor = 0;
+        if (floor > player.stats.abyssMaxFloor) {
+            player.stats.abyssMaxFloor = floor;
+            player.saveStats();
         }
     }
 
-    initAbyss() {
+    handleRoomUpdate(room) {
+        this.memberCount = room.members.length;
+        const log = (text, type = 'info') => this.scene.notificationUI?.show(`🌀 ${text}`, type);
+        const e = room.lastEvent;
+        if (e?.type === 'left' || e?.type === 'hostChanged') log(`${e.name} が深淵から離脱しました`);
+        else if (e?.type === 'rejoined') log(`${e.name} が深淵に戻ってきました`, 'success');
+    }
+
+    // ---------- 階層クリア ----------
+
+    handleFloorCleared({ floor, rewards }) {
+        if (this.cleared || floor !== this.floor) return;
+        this.cleared = true;
         const scene = this.scene;
         const player = scene.player;
 
-        // 最高到達階層の記録更新
-        if (!player.stats.abyssMaxFloor) player.stats.abyssMaxFloor = 0;
-        if (this.floor > player.stats.abyssMaxFloor) {
-            player.stats.abyssMaxFloor = this.floor;
-            player.saveStats();
+        scene.notificationUI?.show(`🎉 【深淵 第 ${floor} 層 突破！】 次層ポータルが出現！`, 'success');
+
+        // 次の階層まで進んだ記録
+        this.recordFloor(floor + 1);
+
+        if (player && rewards) this.grantRewards(player, rewards);
+        this.showPortal();
+    }
+
+    grantRewards(player, { exp, level, gold, magicStone, equip }) {
+        player.gainExp(exp, level); // 階層の敵レベルを渡して、格下の周回にはレベル差補正がかかるようにする
+        player.gainGold(gold);
+        if (magicStone > 0) player.addItem('magic_stone', magicStone);
+
+        if (equip && ITEMS[equip.id]) {
+            const rolled = rollRandomOptions(ITEMS[equip.id].type || 'weapon', equip.level);
+            player.addItem(equip.id, 1, equip.level, rolled);
+        }
+    }
+
+    // ---------- 次の階層 ----------
+
+    handleFloorStarted({ floor }) {
+        const scene = this.scene;
+        const player = scene.player;
+
+        this.floor = floor;
+        this.cleared = false;
+        this.advanceRequested = false;
+        scene.registry.set('abyssRun', { ...scene.registry.get('abyssRun'), floor });
+        this.recordFloor(floor);
+
+        this.hidePortal();
+
+        if (player?.active) {
+            // 層間休憩: HP/MPを回復して、スタート位置（南側）へ
+            player.stats.hp = player.stats.maxHp;
+            player.stats.mp = player.stats.maxMp;
+            player.setPosition(START_POS.x, START_POS.y);
         }
 
-        this.createHUD();
-        this.spawnFloorWave();
-
-        // 敵死亡イベントの監視
-        scene.events.on('update', this.checkWaveStatus, this);
+        this.refreshTitle();
+        scene.notificationUI?.show(`💀 【深淵 第 ${floor} 層】 開始！`, 'warning');
     }
+
+    showPortal() {
+        const scene = this.scene;
+        this.hidePortal();
+
+        this.portalGfx = scene.add.circle(PORTAL_POS.x, PORTAL_POS.y, 40, 0x8b5cf6, 0.4)
+            .setStrokeStyle(3, 0xc084fc, 1)
+            .setDepth(5);
+
+        this.portalTween = scene.tweens.add({
+            targets: this.portalGfx,
+            scale: { from: 1, to: 1.25 },
+            alpha: { from: 0.4, to: 0.7 },
+            duration: 800,
+            yoyo: true,
+            repeat: -1
+        });
+
+        this.portalLabel = scene.add.text(PORTAL_POS.x, PORTAL_POS.y - 60, `▼ 第 ${this.floor + 1} 層へ進む ▼`, {
+            fontSize: '13px',
+            fontFamily: UI_FONT,
+            color: '#e9d5ff',
+            stroke: '#000',
+            strokeThickness: 3
+        }).setOrigin(0.5).setDepth(6);
+    }
+
+    hidePortal() {
+        if (this.portalTween) {
+            this.portalTween.stop();
+            this.portalTween = null;
+        }
+        if (this.portalGfx) {
+            this.portalGfx.destroy();
+            this.portalGfx = null;
+        }
+        if (this.portalLabel) {
+            this.portalLabel.destroy();
+            this.portalLabel = null;
+        }
+    }
+
+    // ---------- 毎フレーム ----------
+
+    onUpdate() {
+        if (this.destroyed) return;
+        this.updateRemainLabel();
+
+        // ポータルに触れたら、次の階層をサーバーに要求する（パーティー全員が一緒に進む）
+        const player = this.scene.player;
+        if (this.cleared && !this.advanceRequested && this.portalGfx && player?.active) {
+            const dist = Phaser.Math.Distance.Between(player.x, player.y, PORTAL_POS.x, PORTAL_POS.y);
+            if (dist < PORTAL_TOUCH_DISTANCE) {
+                this.advanceRequested = true;
+                this.net.abyssAdvance(this.floor);
+                // 返事（abyssFloorStarted）が来なかった場合に備えて、少し後に再要求できるようにする
+                this.scene.time.delayedCall(2000, () => { this.advanceRequested = false; });
+            }
+        }
+    }
+
+    // ---------- HUD ----------
 
     createHUD() {
         const scene = this.scene;
@@ -50,15 +206,10 @@ export class AbyssManager {
         const bg = scene.add.rectangle(0, 0, 260, 38, 0x0a0a1a, 0.85)
             .setStrokeStyle(2, 0xa855f7, 0.9);
 
-        const isBossFloor = this.floor % 5 === 0;
-        const titleText = isBossFloor
-            ? `⚔️ 【深淵 第 ${this.floor} 層 - BOSS】`
-            : `💀 【深淵 第 ${this.floor} 層】`;
-
-        this.titleLabel = scene.add.text(0, -7, titleText, {
+        this.titleLabel = scene.add.text(0, -7, '', {
             fontSize: '13px',
             fontFamily: UI_FONT,
-            color: isBossFloor ? '#f43f5e' : '#c084fc',
+            color: '#c084fc',
             stroke: '#000',
             strokeThickness: 3
         }).setOrigin(0.5);
@@ -71,233 +222,47 @@ export class AbyssManager {
             strokeThickness: 2
         }).setOrigin(0.5);
 
-        this.hudContainer.add([bg, this.titleLabel, this.remainLabel]);
+        // 退出ボタン（挑戦から抜けてゲートの前へ戻る）
+        const leaveBox = scene.add.rectangle(160, 0, 54, 26, 0x7f1d1d, 0.95)
+            .setStrokeStyle(1, 0xfca5a5, 0.9)
+            .setInteractive({ useHandCursor: true });
+        const leaveText = scene.add.text(160, 0, '退出', {
+            fontSize: '12px', fontFamily: UI_FONT, color: '#fff'
+        }).setOrigin(0.5);
+        leaveBox.on('pointerdown', () => this.confirmLeave());
+
+        this.hudContainer.add([bg, this.titleLabel, this.remainLabel, leaveBox, leaveText]);
+        this.refreshTitle();
     }
 
-    spawnFloorWave() {
-        const scene = this.scene;
-        this.cleared = false;
-        this.monsters = [];
-
-        // 階層に応じたモンスター選択
-        // 階層ごとに敵レベルがスケーリング (Floor 1: Lv15 〜 Floor 50: Lv150 〜 Floor 100+: Lv250)
+    refreshTitle() {
+        if (!this.titleLabel) return;
         const isBossFloor = this.floor % 5 === 0;
-        const enemyList = this.getEnemyListForFloor(this.floor, isBossFloor);
-
-        // スポーン座標（中央広場周辺 x: 400〜880, y: 350〜750）
-        enemyList.forEach((type, idx) => {
-            const angle = (idx / enemyList.length) * Math.PI * 2;
-            const dist = isBossFloor && idx === 0 ? 0 : (150 + Math.random() * 120);
-            const x = 640 + Math.cos(angle) * dist;
-            const y = 520 + Math.sin(angle) * dist;
-
-            const textureKey = scene.textures.exists(type) ? type : 'slime';
-            const enemy = new Enemy(scene, x, y, textureKey, type, null, null, null, {});
-            enemy.noRespawn = true;
-
-            // 階層倍率をステータスに上乗せ (階層が進むほど強くなる)
-            const floorMult = 1.0 + (this.floor - 1) * 0.08;
-            enemy.hp = Math.round(enemy.hp * floorMult);
-            enemy.maxHp = enemy.hp;
-            enemy.atk = Math.round(enemy.atk * floorMult);
-            enemy.level = 20 + this.floor * 2;
-
-            // コライダー設定
-            if (scene.collidableLayers) {
-                scene.collidableLayers.forEach(layer => scene.physics.add.collider(enemy, layer));
-            }
-            if (scene.player) {
-                scene.physics.add.overlap(scene.player, enemy, () => {
-                    const now = scene.time.now;
-                    if (scene.player.active && enemy.active && enemy.hp > 0) {
-                        if (!scene.player.lastHitTime || now - scene.player.lastHitTime > 1000) {
-                            scene.player.takeDamage(Math.max(1, enemy.atk));
-                            if (scene.player) scene.player.lastHitTime = now;
-                        }
-                    }
-                });
-            }
-
-            // 撃破時報酬フック
-            enemy.on('destroy', () => {
-                if (scene.player && scene.player.active) {
-                    const baseExp = Math.round(200 * Math.pow(1.08, this.floor));
-                    const baseGold = Math.round(80 * Math.pow(1.06, this.floor));
-                    scene.player.gainExp(baseExp, enemy.level);
-                    scene.player.gainGold(baseGold);
-                    // 18%確率でランダムOP装備ドロップ
-                    if (Math.random() < 0.18) {
-                        const equipPool = ['iron_sword', 'steel_sword', 'mythril_sword', 'leather_armor', 'iron_armor', 'mythril_armor', 'crystal_pendant', 'warrior_ring'];
-                        const dropId = Phaser.Utils.Array.GetRandom(equipPool);
-                        const rolled = rollRandomOptions('weapon', enemy.level);
-                        scene.player.addItem(dropId, 1, enemy.level, rolled);
-                    }
-                }
-            });
-
-            scene.enemies = scene.enemies || [];
-            scene.enemies.push(enemy);
-            this.monsters.push(enemy);
-
-            // スポーンエフェクト
-            scene.tweens.add({
-                targets: enemy,
-                alpha: { from: 0, to: 1 },
-                scale: { from: 0.2, to: 1 },
-                duration: 400,
-                ease: 'Back.easeOut'
-            });
-        });
-
-        this.updateHUDText();
+        this.titleLabel.setText(isBossFloor
+            ? `⚔️ 【深淵 第 ${this.floor} 層 - BOSS】`
+            : `💀 【深淵 第 ${this.floor} 層】`);
+        this.titleLabel.setColor(isBossFloor ? '#f43f5e' : '#c084fc');
     }
 
-    getEnemyListForFloor(floor, isBoss) {
-        if (isBoss) {
-            if (floor >= 50) return ['chaos_emperor', 'anubis_knight', 'anubis_knight'];
-            if (floor >= 30) return ['blizzard_dragon', 'frost_golem', 'frost_golem'];
-            if (floor >= 20) return ['dragon_boss', 'lava_golem', 'lava_golem'];
-            if (floor >= 10) return ['swamp_boss', 'ruins_boss'];
-            return ['forest_boss', 'skeleton', 'skeleton'];
-        }
-
-        // 通常階層 (3〜6体)
-        const count = Math.min(8, 3 + Math.floor(floor / 8));
-        const list = [];
-        for (let i = 0; i < count; i++) {
-            if (floor >= 40) list.push(Phaser.Utils.Array.GetRandom(['anubis_knight', 'mummy_lord', 'desert_scorpion', 'frost_golem']));
-            else if (floor >= 25) list.push(Phaser.Utils.Array.GetRandom(['frost_golem', 'yeti', 'ice_wolf', 'magma_slime']));
-            else if (floor >= 15) list.push(Phaser.Utils.Array.GetRandom(['ruins_wolf', 'ruins_gargoyle', 'dire_wolf', 'hell_hound']));
-            else if (floor >= 8) list.push(Phaser.Utils.Array.GetRandom(['skeleton', 'goblin', 'swamp_viper', 'red_slime']));
-            else list.push(Phaser.Utils.Array.GetRandom(['slime', 'forest_slime', 'forest_wolf', 'bat']));
-        }
-        return list;
-    }
-
-    checkWaveStatus() {
-        if (this.cleared) return;
-
-        // 生きている敵をカウント
-        this.monsters = this.monsters.filter(m => m && m.active && m.hp > 0);
-        this.updateHUDText();
-
-        if (this.monsters.length === 0) {
-            this.onFloorCleared();
-        }
-    }
-
-    updateHUDText() {
+    updateRemainLabel() {
         if (!this.remainLabel) return;
-        this.remainLabel.setText(`残存モンスター: ${this.monsters.length} 体`);
+        const enemies = Object.values(this.net.getEnemies()).filter(e => e && e.active && e.hp > 0);
+        const party = this.memberCount > 1 ? `  👥${this.memberCount}人` : '';
+        this.remainLabel.setText(`残存モンスター: ${enemies.length} 体${party}`);
     }
 
-    onFloorCleared() {
-        this.cleared = true;
-        const scene = this.scene;
-        const player = scene.player;
-
-        // 突破アナウンス
-        if (scene.notificationUI) {
-            scene.notificationUI.show(`🎉 【深淵 第 ${this.floor} 層 突破！】 次層ポータルが出現！`, 'success', 4000);
-        }
-
-        // 最高到達更新
-        if (this.floor >= (player.stats.abyssMaxFloor || 0)) {
-            player.stats.abyssMaxFloor = this.floor + 1;
-            player.saveStats();
-        }
-
-        // クリア報酬（EXP、Gold、魔石、高確率のランダムOP装備）
-        const expReward = Math.round(5000 * Math.pow(1.15, this.floor));
-        const goldReward = Math.round(2000 * Math.pow(1.12, this.floor));
-        player.gainExp(expReward);
-        player.gainGold(goldReward);
-        player.addItem('magic_stone', Math.max(1, Math.floor(this.floor / 3)));
-
-        // 5階層ごと、または20%確率で高OP装備確定ドロップ
-        if (this.floor % 5 === 0 || Math.random() < 0.3) {
-            const equipPool = ['mythril_sword', 'dragon_scale_armor', 'ancient_grimoire', 'void_aegis', 'genesis_bow', 'titan_armor'];
-            const dropId = Phaser.Utils.Array.GetRandom(equipPool);
-            const rolled = rollRandomOptions('weapon', this.floor * 2);
-            player.addItem(dropId, 1, this.floor * 2, rolled);
-        }
-
-        // 次層ポータル（中央 x: 640, y: 320）を起動・表示
-        this.activateNextFloorPortal();
-    }
-
-    activateNextFloorPortal() {
-        const scene = this.scene;
-
-        if (this.portalGfx) this.portalGfx.destroy();
-        this.portalGfx = scene.add.circle(640, 320, 40, 0x8b5cf6, 0.4)
-            .setStrokeStyle(3, 0xc084fc, 1);
-        this.portalGfx.setDepth(5);
-
-        scene.tweens.add({
-            targets: this.portalGfx,
-            scale: { from: 1, to: 1.25 },
-            alpha: { from: 0.4, to: 0.7 },
-            duration: 800,
-            yoyo: true,
-            repeat: -1
-        });
-
-        this.portalLabel = scene.add.text(640, 260, `▼ 第 ${this.floor + 1} 層へ進む ▼`, {
-            fontSize: '13px',
-            fontFamily: UI_FONT,
-            color: '#e9d5ff',
-            stroke: '#000',
-            strokeThickness: 3
-        }).setOrigin(0.5).setDepth(6);
-
-        // プレイヤー接触判定
-        const checkPortalTouch = () => {
-            if (!this.cleared || !scene.player) return;
-            const dist = Phaser.Math.Distance.Between(scene.player.x, scene.player.y, 640, 320);
-            if (dist < 45) {
-                scene.events.off('update', checkPortalTouch);
-                this.advanceToNextFloor();
-            }
-        };
-        scene.events.on('update', checkPortalTouch);
-    }
-
-    advanceToNextFloor() {
-        const scene = this.scene;
-        const player = scene.player;
-
-        this.floor += 1;
-        scene.registry.set('abyssStartFloor', this.floor);
-
-        // プレイヤーHP/MP回復（層間休憩）
-        player.stats.hp = player.stats.maxHp;
-        player.stats.mp = player.stats.maxMp;
-
-        // プレイヤーをスタート位置（南側）へワープ
-        player.setPosition(640, 760);
-
-        if (this.portalGfx) {
-            this.portalGfx.destroy();
-            this.portalGfx = null;
-        }
-        if (this.portalLabel) {
-            this.portalLabel.destroy();
-            this.portalLabel = null;
-        }
-
-        // 次の層を開始
-        const isBoss = this.floor % 5 === 0;
-        this.titleLabel.setText(isBoss ? `⚔️ 【深淵 第 ${this.floor} 層 - BOSS】` : `💀 【深淵 第 ${this.floor} 層】`);
-        this.titleLabel.setColor(isBoss ? '#f43f5e' : '#c084fc');
-
-        this.spawnFloorWave();
+    confirmLeave() {
+        const message = this.memberCount > 1
+            ? '深淵から退出しますか？\n（仲間は挑戦を続けます）'
+            : '深淵から退出しますか？（この挑戦は終了します）';
+        if (confirm(message)) leaveAbyss(this.scene, '深淵から退出しました');
     }
 
     destroy() {
+        this.destroyed = true;
+        this.scene.events.off('update', this.onUpdate, this);
+        this.hidePortal();
         if (this.hudContainer) this.hudContainer.destroy();
-        if (this.portalGfx) this.portalGfx.destroy();
-        if (this.portalLabel) this.portalLabel.destroy();
-        this.scene.events.off('update', this.checkWaveStatus, this);
+        this.hudContainer = null;
     }
 }

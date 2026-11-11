@@ -1,6 +1,7 @@
 import { UI_FONT } from '../fontConfig.js';
 import { JOBS } from "../data/jobs.js";
 import { QUESTS } from "../data/quests.js";
+import { enterAbyssLobby } from "../systems/abyssEntry.js";
 
 
 export default class DialogueManager {
@@ -175,7 +176,7 @@ export default class DialogueManager {
                     this.scene.input.keyboard.off('keydown-SPACE', this.showNextLine);
                     this.showNextLine = null;
 
-                    this.startTypewriter(`【無限の深淵】に突入しますか？\n(最高到達記録: 第 ${maxFloor} 層)  [Y] 突入 / [N] 準備する`);
+                    this.startTypewriter(`【無限の深淵】の待機室に入りますか？\n(最高到達記録: 第 ${maxFloor} 層 / パーティーの仲間にも通知されます)  [Y] 入る / [N] 準備する`);
                     this.choiceText.setVisible(true);
 
                     this.choiceHandler = (event) => {
@@ -185,21 +186,15 @@ export default class DialogueManager {
                             this.scene.input.keyboard.off('keydown', this.choiceHandler);
                             this.showSystemMessage("深淵へのゲートが開かれた…！");
 
-                            this.scene.registry.set('abyssStartFloor', 1);
-
-                            this.scene.time.delayedCall(1000, () => {
+                            this.scene.time.delayedCall(800, () => {
                                 this.hideDialogueUI();
                                 this.isTalking = false;
                                 npc.talking = false;
                                 this.currentNPC = null;
 
-                                this.scene.cameras.main.fadeOut(300, 0, 0, 0);
-                                this.scene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-                                    this.scene.scene.start('abyss', {
-                                        mapKey: 'abyss',
-                                        spawn: 'default'
-                                    });
-                                });
+                                // 待機室へ。パーティーの仲間には「入りました。参加しますか？」が届く。
+                                // すでに開始済みで入れない場合は、理由がアクティビティログに出る
+                                enterAbyssLobby(this.scene);
                             });
                         } else if (key === 'n') {
                             this.choiceText.setVisible(false);

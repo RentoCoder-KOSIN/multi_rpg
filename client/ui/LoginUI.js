@@ -4,7 +4,7 @@ import { login, register, getLegacySave, clearLegacySave, parseAccountJson, rest
 const STYLE_ID = "login-ui-style";
 
 const CSS = `
-.lg-overlay{position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;background:rgba(5,5,16,.92);font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;color:#fff}
+.lg-overlay{position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;overflow:auto;padding:24px 12px;background:rgba(5,5,16,.94);font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;color:#fff}
 .lg-panel{width:min(92vw,440px);box-sizing:border-box;padding:26px 24px 20px;background:#0a0a1a;border:3px solid #4a90e2;border-radius:18px;box-shadow:0 0 28px rgba(74,144,226,.35);transition:border-color .2s}
 .lg-panel.dragover{border-color:#55f088;box-shadow:0 0 32px rgba(85,240,136,.4)}
 .lg-title{margin:0 0 4px;text-align:center;font:18px "Press Start 2P",monospace;color:#fff;text-shadow:0 0 8px #4a90e2}
@@ -24,6 +24,8 @@ const CSS = `
 .lg-switch-wrap{text-align:center;margin:12px 0 0;font-size:12px;color:#8aa4c8}
 .lg-link-btn{background:none;border:none;color:#4a90e2;cursor:pointer;font-size:12px;padding:0;text-decoration:underline}
 .lg-link-btn:hover{color:#8fc1ff}
+.lg-tab:focus-visible,.lg-link-btn:focus-visible,.lg-submit:focus-visible,.lg-dropzone:focus-visible,.lg-file-reset:focus-visible{outline:3px solid #ffe07a;outline-offset:3px}
+.lg-field input:focus-visible{border-color:#ffe07a;outline:2px solid #ffe07a;outline-offset:2px}
 
 /* JSONインポート用UI */
 .lg-dropzone{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px 16px;background:#14142a;border:2px dashed #4a90e2;border-radius:10px;cursor:pointer;transition:all .2s;text-align:center}
@@ -42,6 +44,15 @@ const CSS = `
 .lg-badge{display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;margin-bottom:8px}
 .lg-badge-auth{background:#143d22;color:#55f088;border:1px solid #2ecc40}
 .lg-badge-noauth{background:#3d3014;color:#f0c055;border:1px solid #e2a02c}
+@media(max-width:520px){
+ .lg-overlay{align-items:flex-start;padding:12px}
+ .lg-panel{width:100%;max-width:440px;padding:22px 18px 18px;border-width:2px;border-radius:14px}
+ .lg-title{font-size:15px}
+ .lg-tabs{gap:4px}
+ .lg-tab{padding:10px 2px;font-size:12px}
+ .lg-dropzone{padding:20px 12px}
+}
+@media(max-height:620px){.lg-overlay{align-items:flex-start}.lg-panel{margin:auto}}
 `;
 
 export default class LoginUI {

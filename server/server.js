@@ -7,6 +7,7 @@ const { PORT, HOST, CLIENT_DIR } = require("./config");
 const { aiManager, loadAIData, saveAIData, flushAIData } = require("./services/aiStorage");
 const { createEnemyService } = require("./services/enemyService");
 const { createPartyService } = require("./services/partyService");
+const { createAbyssService } = require("./services/abyssService");
 const { startEnemyLoop } = require("./services/enemyLoop");
 const { registerConnectionHandler } = require("./handlers");
 const { getPublicEnemyStats } = require("./data/enemyStats");
@@ -110,11 +111,12 @@ async function main() {
 
     const enemyService = createEnemyService({ io, aiManager });
     const partyService = createPartyService({ io });
+    const abyssService = createAbyssService({ io, enemyService, partyService });
 
     enemyService.spawnInitialEnemies();
     startEnemyLoop({ io, aiManager, saveAIData });
 
-    registerConnectionHandler({ io, aiManager, enemyService, partyService });
+    registerConnectionHandler({ io, aiManager, enemyService, partyService, abyssService });
 
     server.listen(PORT, HOST, () => {
         console.log(`Server running http://localhost:${PORT}`);

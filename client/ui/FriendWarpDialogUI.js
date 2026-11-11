@@ -30,6 +30,11 @@ export function createWarpBurst(scene, x, y) {
     }
 }
 
+// 無限の深淵の待機室 / ダンジョン（サーバーが返すマップキー）
+function isAbyssLocation(mapKey) {
+    return mapKey === 'abyss' || mapKey === 'abyss_lobby';
+}
+
 export function executeFriendWarp(scene, targetMember) {
     const player = scene.player;
     const nm = scene.networkManager;
@@ -60,6 +65,13 @@ export function executeFriendWarp(scene, targetMember) {
 
         scene.notificationUI?.show(`「${targetMember.name}」のそばへワープしました！`, 'success', 3500);
     } else {
+        // 無限の深淵（待機室・挑戦中）へは、ゲートから待機室に入る以外では行けない
+        // （開始後の途中参加を防ぐため、仲間のいる場所へのワープも不可）
+        if (isAbyssLocation(targetMember.map)) {
+            scene.notificationUI?.show('無限の深淵へはワープできません。ゲートから待機室に入ってください', 'error', 3500);
+            return;
+        }
+
         // 自力で到達したことのあるマップかチェック
         const canWarp = player.hasVisitedMap ? player.hasVisitedMap(targetMember.map) : true;
         if (!canWarp) {
@@ -156,8 +168,11 @@ export default class FriendWarpDialogUI extends BaseWindowUI {
 
             const player = this.scene.player;
             const isSame = m.map === this.scene.currentMapKey;
-            const hasVisited = isSame || (player?.hasVisitedMap ? player.hasVisitedMap(m.map) : true);
-            const mapTag = isSame ? '📍同マップ' : (hasVisited ? `🌐${getMapDisplayName(m.map)}` : `🔒${getMapDisplayName(m.map)} (未到達)`);
+            const abyssLocked = !isSame && isAbyssLocation(m.map);
+            const hasVisited = isSame || (!abyssLocked && (player?.hasVisitedMap ? player.hasVisitedMap(m.map) : true));
+            const mapTag = isSame ? '📍同マップ'
+                : abyssLocked ? `🔒${getMapDisplayName(m.map)} (ゲートから入室)`
+                    : (hasVisited ? `🌐${getMapDisplayName(m.map)}` : `🔒${getMapDisplayName(m.map)} (未到達)`);
 
             const nameText = this.scene.add.text(-w / 2 + 40, 10, `${m.name} (Lv.${m.level || 1})`, {
                 fontSize: '12px', fontFamily: UI_FONT, color: '#ffffff', style: 'bold'

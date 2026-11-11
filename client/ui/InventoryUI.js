@@ -53,6 +53,7 @@ export default class InventoryUI extends BaseWindowUI {
             title: '🎒 INVENTORY',
             width: 620,
             height: 480,
+            fullScreen: true,
             depth: 110000,
             titleStroke: 0xe94560
         });

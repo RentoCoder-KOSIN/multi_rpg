@@ -2,12 +2,22 @@ const { DEFAULT_HP, DEFAULT_LEVEL } = require("../config");
 const { players, playerToParty } = require("../state");
 const { getPlayersOnMap } = require("../utils/socketUtils");
 const { cleanJobId } = require("../utils/sanitize");
+const { isAbyssInstanceKey } = require("../utils/mapKeys");
 
-module.exports = function registerMapHandlers(socket, { enemyService, partyService }) {
+module.exports = function registerMapHandlers(socket, { enemyService, partyService, abyssService }) {
     const playerId = socket.data.playerId;
 
     // プレイヤーを指定マップに参加させ、現在の状況を本人に、参加を他の人に通知する
     function enterMap({ mapKey, x, y, hp, maxHp, level, mp, maxMp, job, activeTitle, activeTitleColor }) {
+        // 無限の深淵の挑戦中インスタンスには、開始済みの部屋のメンバーしか入れない
+        // （開始後の途中参加の禁止。ワープなどで直接入ろうとしても弾く）
+        if (isAbyssInstanceKey(mapKey) && !abyssService.canEnterInstance(playerId, mapKey)) {
+            socket.emit("abyssRunInvalid", { error: "この挑戦には参加できません（すでに終了したか、開始後のため参加できません）" });
+            return;
+        }
+        // ダンジョン以外のマップへ移ったら、待機室・挑戦中の部屋から抜けたことにする
+        abyssService.onMapEntered(playerId, mapKey);
+
         // Values the client did not send fall back to what we already know, then to defaults
         const prev = players[playerId];
         const stats = {

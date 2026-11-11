@@ -8,6 +8,7 @@ export default class AchievementUI extends BaseWindowUI {
             title: '🏆 実績・称号',
             width: 720,
             height: 560,
+            fullScreen: true,
             depth: 120000,
             themeColor: 0xffd700,
             titleStroke: 0xffaa00,
